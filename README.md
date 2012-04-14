@@ -1,6 +1,6 @@
 Trigger Rally Online Edition
 ============================
 
+http://triggerrally.com
 
-README file.
-
+Trigger Rally Online Edition is made available under the [GPL v3](http://www.gnu.org/licenses/gpl-3.0.html).
