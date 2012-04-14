@@ -8,8 +8,9 @@ body {
 }
 .content {
   background: #fff;
-  padding: 20px;
   margin: 0 auto;
+  padding: 20px;
+  position: relative;
   width: 940px;
 }
 .header {
