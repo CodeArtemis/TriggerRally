@@ -3,8 +3,8 @@ Trigger Rally Online Edition
 
 http://triggerrally.com
 
-Code copyright (c) 2012 [jareiko](https://github.com/jareiko)  
-Released under the [GPL v3](http://www.gnu.org/licenses/gpl-3.0.html)
+Code copyright (c) 2012 [jareiko](https://github.com/jareiko)
+and released under the [GPL v3](http://www.gnu.org/licenses/gpl-3.0.html)
 
 Directories with mixed ownership and licensing:
 
