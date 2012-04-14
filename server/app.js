@@ -354,7 +354,7 @@ app.get('/logout', function(req, res){
 // Backward compatibility
 
 app.get('/drive', function(req, res) {
-  res.redirect('/x/Preview/Arbusu/drive');
+  res.redirect('/x/Preview/Arbusu/drive', 301);
 });
 
 app.listen(PORT);
