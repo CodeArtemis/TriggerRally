@@ -1,0 +1,18 @@
+!=partial('partial/header', { login: 1 })
+
+.content
+
+  h1= urlCar.name
+
+  .section Information
+
+  dl
+    dt Name
+    dd= urlCar.name
+
+  dl
+    dt Created by
+    dd
+      !=partial('partial/user', {user:urlCar.user})
+
+  !=partial('partial/footer')

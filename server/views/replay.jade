@@ -1,0 +1,50 @@
+!=partial('partial/header', { login: 1 })
+
+.content
+
+  p Replay of run by 
+    !=partial('partial/user', {user:urlRun.user})
+    |  &mdash;
+    a(href="/run/#{urlRun.pub_id}") Run info
+    |  &mdash;
+    a(href="/x/#{urlRun.track.pub_id}/#{urlRun.car.pub_id}/drive") Drive!
+
+  .frame3d
+    .loading
+      div(style="height: 6em")
+      h1 Trigger Rally
+      div(style="height: 3em")
+      h2.loading Loading&hellip;
+
+    <div id="checkpoints"></div>
+    <div id="timer" class="running"></div>
+    <div id="countdown"></div>
+
+  p
+    a(href="#")#fullscreenlink Full screen (experimental)
+
+  !=partial('partial/footer')
+
+script(src="/js/Three.js")
+script(src="/js/Detector.js")
+//- script(src="/js/Stats.js")
+
+script
+  var TRIGGER = {
+    TRACK: {
+      ID: '#{urlRun.track.pub_id}',
+      NAME: '#{urlRun.track.name}',
+      CONFIG: !{JSON.stringify(urlRun.track.config)}
+    },
+    CAR: {
+      ID: '#{urlRun.car.pub_id}',
+      NAME: '#{urlRun.car.name}',
+      CONFIG: !{JSON.stringify(urlRun.car.config)}
+    },
+    RUN: {
+      INPUT: !{JSON.stringify(urlRun.record_i)},
+      PROGRESS: !{JSON.stringify(urlRun.record_p)},
+    }
+  };
+
+script(src="/js/trigger.js")

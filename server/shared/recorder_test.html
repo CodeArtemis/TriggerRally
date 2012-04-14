@@ -1,0 +1,57 @@
+<html>
+<head>
+<script src="../public/js/underscore-min.js"></script>
+<script src="recorder.js"></script>
+</head>
+<body>
+<div id="log"></div>
+<script>
+
+var log = function(msg) {
+  var el = document.createElement('div');
+  el.innerHTML = msg;
+  document.getElementById('log').appendChild(el);
+};
+
+log('hello');
+
+var data = [
+  { x: 0, y: [1, 2] },
+  { x: 1, y: [1, 2] },
+  { x: 0, y: [1, 2] },
+  { x: 1, y: [1, 3] },
+  { x: 0, y: [1, 2] },
+  { x: 0, y: [1, 2] },
+  { x: 0, y: [1, 2] },
+  { x: 1, y: [1, 2] },
+  { x: 1, y: [2, 2] },
+  { x: 1, y: [2, 2] },
+  { x: 0, y: [2, 2] },
+  { x: 1, y: [2, 2] },
+];
+
+var obj = {};
+
+var keys = { x: 0, y: [0] };
+
+var rec = new recorder.StateRecorder(obj, keys);
+
+var i;
+for (i = 0; i < data.length; ++i) {
+  _.extend(obj, data[i]);
+  rec.observe();
+}
+
+var serial = rec.serialize();
+log(JSON.stringify(serial));
+
+var play = new recorder.StatePlayback(obj, serial);
+
+for (i = 0; i < data.length; ++i) {
+  play.step();
+  log(JSON.stringify({ ex: data[i], ac: obj }));
+}
+
+</script>
+</body>
+</html>

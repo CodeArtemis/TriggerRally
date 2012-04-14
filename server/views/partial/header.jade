@@ -1,0 +1,13 @@
+.header
+  .container
+    .navpath
+      h1 <a href="/">Trigger Rally</a> 
+        span.version online edition&nbsp;
+    .userinfo
+      - if (user)
+        !=partial('user', {user:user})
+        span &nbsp;&mdash;&nbsp;
+        a(href='/logout') Log Out
+      - else//- if (login)
+        span
+          a(href="/login")<strong>Log in</strong>

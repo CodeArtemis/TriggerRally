@@ -1,0 +1,57 @@
+!=partial('partial/header', { login: 1 })
+
+.content
+
+  p Current leader: 
+    span!= partial('partial/user', {user: runs[0].user})
+    | 
+    a(href="/run/#{runs[0].pub_id}") #{runs[0].time_readable}
+    |  &mdash;
+    a(href="/run/#{runs[0].pub_id}/replay") watch replay
+
+  .frame3d
+    .loading
+      div(style="height: 6em")
+      h1 Trigger Rally
+      div(style="height: 3em")
+      h2.loading Loading&hellip;
+
+    <div id="checkpoints"></div>
+    <div id="timer" class="running"></div>
+    <div id="countdown"></div>
+    <a id="twitterlink" href="#">Share your time on Twitter</a>
+
+  p
+    a(href="#")#fullscreenlink Full screen (experimental)
+
+  - if (user)
+    p
+      a(href="#")#savereplaylink Save replay now
+      |  (will save automatically at the end of the race)
+
+  p.note Controls: arrow keys or W/S/A/D to drive, space for handbrake, C for camera.
+
+  !=partial('partial/footer')
+
+script(src="/js/Three.js")
+script(src="/js/Detector.js")
+//- script(src="/js/Stats.js")
+
+script
+  var TRIGGER = {
+    TRACK: {
+      ID: '#{urlTrack.pub_id}',
+      NAME: '#{urlTrack.name}',
+      CONFIG: !{JSON.stringify(urlTrack.config)}
+    },
+    CAR: {
+      ID: '#{urlCar.pub_id}',
+      NAME: '#{urlCar.name}',
+      CONFIG: !{JSON.stringify(urlCar.config)}
+    }
+  };
+
+- if (user)
+  script TRIGGER.USER_LOGGED_IN = '#{user.pub_id}';
+
+script(src="/js/trigger.js")

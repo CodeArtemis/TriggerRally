@@ -1,0 +1,41 @@
+!=partial('partial/header', { login: 1 })
+
+.content
+
+  h1 Top runs
+
+  p 
+    | For track 
+    a(href="/track/#{urlTrack.pub_id}")
+      =urlTrack.name
+    |  with car
+    a(href="/car/#{urlCar.pub_id}")
+      =urlCar.name
+    | .
+
+  p
+    a.button.special(href="/x/#{urlTrack.pub_id}/#{urlCar.pub_id}/drive") Drive!
+
+  .section Runs
+
+  table
+    tr
+      td
+      td Driver
+      td Time
+      td
+      td
+      td Recorded
+    each run, rank in runs
+      tr
+        td= rank + 1
+        td
+          !=partial('partial/user', {user: run.user})
+        td= run.time_readable
+        td
+          a(href="/run/#{run.pub_id}/replay") Watch replay
+        td
+          a(href="/run/#{run.pub_id}") Details
+        td= run.created_ago
+
+  !=partial('partial/footer')

@@ -1,0 +1,48 @@
+!=partial('partial/header', { login: 1 })
+
+.content
+
+  p Fast arcade rally racing action!
+
+  div
+    a.button.special(href="/x/Preview/Arbusu/drive") Play Now!
+    a.button(href="/x/Preview/Arbusu/top") Top runs
+    - if (!user)
+      a.button(href="/login") Log in
+
+  a(href="/x/Preview/Arbusu/drive")
+    img(src="/images/screen1.jpg", alt="Screenshot of Trigger Rally")
+
+  .section News
+  .twitterfeeds
+    <script charset="utf-8" src="http://widgets.twimg.com/j/2/widget.js"></script>
+    script
+      new TWTR.Widget({
+        version: 2,
+        type: 'search',
+        search: 'TriggerRally',
+        interval: 10000,
+        title: 'What people are saying about',
+        subject: 'TriggerRally',
+        width: 940,
+        height: 310,
+        theme: {
+          shell: {
+            background: '#496b35',
+            color: '#ffffff'
+          },
+          tweets: {
+            background: '#000000',
+            color: '#ffffff',
+            links: '#4aed05'
+          }
+        },
+        features: {
+          scrollbar: true,
+          loop: false,
+          live: true,
+          behavior: 'default'
+        }
+      }).render().start();
+
+  !=partial('partial/footer')

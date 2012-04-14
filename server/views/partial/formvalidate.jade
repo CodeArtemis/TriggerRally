@@ -1,0 +1,44 @@
+<script>
+| var validators = {};
+each fn, key in validate
+  | validators.#{key} = !{fn.toString()};
+</script>
+
+script
+  var errorSet = {};
+  for (var k in validators) {
+    if (k in document.theform)
+      errorSet[k] = validators[k](document.theform[k].value);
+  }
+  var any = function(obj) {
+    for (var k in obj) {
+      if (obj[k]) return true;
+    }
+    return false;
+  };
+  var onInput = function(fieldName) {
+    var fieldEl = document.theform[fieldName];
+    fieldEl.classList.remove('invalid');
+    verifyInput(fieldName);
+  };
+  var verifyInput = _.debounce(function(fieldName) {
+    var validator = validators[fieldName];
+    if (validator) {
+      var fields = {};
+      for (var k in validators) {
+        fields[k] = document.theform[k].value;
+      }
+      var fieldEl = document.theform[fieldName];
+      var button = document.getElementById('submitbutton');
+      var fielderror = document.getElementById('fielderror-' + fieldName);
+      var error = validator(fieldEl.value, fields);
+      errorSet[fieldName] = error;
+      fielderror.innerText = error;
+      if (error) {
+        fieldEl.classList.add('invalid');
+      } else {
+        fieldEl.classList.remove('invalid');
+      }
+      //button.disabled = !!any(errorSet);
+    }
+  }, 750);

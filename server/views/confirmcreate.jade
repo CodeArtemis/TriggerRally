@@ -1,0 +1,17 @@
+!=partial('partial/header', { login: 1 })
+
+.content
+
+  h1 Confirm create new account
+  
+  p This login is new to Trigger Rally: #{userPassport.id_prov}
+  
+  form(name="theform", action="save", method="post")
+    input(type="button", value="Confirm and create new account")
+
+  p If you already have an account, you may have used a different login.
+    |  You can try <a href="/login">logging in</a> again.
+
+  !=partial('partial/footer')
+
+!=partial('partial/formvalidate')

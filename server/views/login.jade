@@ -1,0 +1,22 @@
+!=partial('partial/header', { login: 0 })
+
+.content
+
+  - if (user)
+    p You are already logged in.
+    a(href="/")
+      .button Home
+    a(href="/logout")
+      .button Log out
+  - else
+
+    !=partial('partial/thirdparty')
+  
+  .section Terms of use
+  
+  | Trigger Rally online edition is very alpha, and it may change or break at any time.
+  | No warranty!
+
+  !=partial('partial/footer')
+
+!=partial('partial/formvalidate')

@@ -1,0 +1,14 @@
+{
+    "name": "trigger-server"
+  , "version": "0.0.1"
+  , "private": true
+  , "dependencies": {
+      "express": "2.5.8"
+    , "jade": ">= 0.0.1"
+    , "mongodb": ">= 0.9.6-7"
+    , "mongoose": ">= 0.2.5"
+    , "passport": ">= 0.1.8"
+    , "passport-google": ">= 0.1.1"
+    , "stylus": ">= 0.0.1"
+  }
+}
