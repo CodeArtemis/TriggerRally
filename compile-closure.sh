@@ -1,8 +1,8 @@
 #!/bin/sh
 
 
-#LEVEL=SIMPLE_OPTIMIZATIONS
-LEVEL=WHITESPACE_ONLY
+LEVEL=SIMPLE_OPTIMIZATIONS
+#LEVEL=WHITESPACE_ONLY
 
 java -jar $HOME/src/closure-compiler/compiler.jar \
   --compilation_level $LEVEL \
