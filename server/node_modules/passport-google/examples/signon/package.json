@@ -1,0 +1,10 @@
+{
+  "name": "passport-google-examples-signon",
+  "version": "0.0.0",
+  "dependencies": {
+    "express": ">= 0.0.0",
+    "ejs": ">= 0.0.0",
+    "passport": ">= 0.0.0",
+    "passport-google": ">= 0.0.0"
+  }
+}

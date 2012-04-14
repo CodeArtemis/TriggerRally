@@ -1,0 +1,417 @@
+.\" Generated with Ronnjs/v0.1
+.\" http://github.com/kapouer/ronnjs/
+.
+.TH "MIMELIB" "1" "May 2011" "" ""
+.
+.SH "NAME"
+\fBmimelib\fR \-\- MIME functions for Node\.JS
+.
+.SH "DESCRIPTION"
+This document lists all the available methods for mimelib\. You can include mimelib
+in your projects with \fBvar mimelib = require("mimelib");\fR
+.
+.P
+When installed with npm dependency module iconv will also be installed if not already
+present\.
+.
+.SH "contentTypes"
+\fBmimelib\.contentTypes\fR is an object to provide content type strings for common
+file extensions
+.
+.IP "" 4
+.
+.nf
+mimelib\.contentTypes["xls"]; // "application/vnd\.ms\-excel"
+.
+.fi
+.
+.IP "" 0
+.
+.SH "foldLine"
+Folds a long line according to the RFC 5322 \fIhttp://tools\.ietf\.org/html/rfc5322#section\-2\.1\.1\fR
+.
+.IP "" 4
+.
+.nf
+mimelib\.foldLine(str [, maxLength][, foldAnywhere]) \-> String
+.
+.fi
+.
+.IP "" 0
+.
+.IP "\(bu" 4
+\fBstr\fR (String): mime string that might need folding
+.
+.IP "\(bu" 4
+\fBmaxLength\fR (Number): max length for a line, defaults to 78
+.
+.IP "\(bu" 4
+\fBfoldAnywhere\fR (Boolean): can fold at any location (ie\. in base64)
+.
+.IP "\(bu" 4
+\fBafterSpace\fR (Boolean): If \fBtrue\fR fold after the space
+.
+.IP "" 0
+.
+.P
+For example:
+.
+.IP "" 4
+.
+.nf
+Content\-Type: multipart/alternative; boundary="\-\-\-\-zzzz\-\-\-\-"
+.
+.fi
+.
+.IP "" 0
+.
+.P
+will become
+.
+.IP "" 4
+.
+.nf
+Content\-Type: multipart/alternative;
+     boundary="\-\-\-\-zzzz\-\-\-\-"
+.
+.fi
+.
+.IP "" 0
+.
+.SH "encodeMimeWord"
+Encodes a string into mime encoded word format \fIhttp://en\.wikipedia\.org/wiki/MIME#Encoded\-Word\fR  (see also \fBdecodeMimeWord\fR)
+.
+.IP "" 4
+.
+.nf
+mimelib\.encodeMimeWord = function(str [, encoding][, charset])
+.
+.fi
+.
+.IP "" 0
+.
+.IP "\(bu" 4
+\fBstr\fR (String): String to be encoded
+.
+.IP "\(bu" 4
+\fBencoding\fR (String): Encoding Q for quoted printable or B (def\.) for base64
+.
+.IP "\(bu" 4
+\fBcharset\fR (String): Charset to be used
+.
+.IP "" 0
+.
+.P
+For example:
+.
+.IP "" 4
+.
+.nf
+See on õhin test
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Becomes with UTF\-8 and Quoted\-printable encoding
+.
+.IP "" 4
+.
+.nf
+=?UTF\-8?q?See_on_=C3=B5hin_test?=
+.
+.fi
+.
+.IP "" 0
+.
+.SH "decodeMimeWord"
+Decodes a string from mime encoded word format (see also \fBencodeMimeWord\fR)
+.
+.IP "" 4
+.
+.nf
+mimelib\.decodeMimeWord(str [, encoding][, charset]) \-> String
+.
+.fi
+.
+.IP "" 0
+.
+.IP "\(bu" 4
+\fBstr\fR (String): String to be encoded
+.
+.IP "\(bu" 4
+\fBencoding\fR (String): Encoding Q for quoted printable or B (def\.) for base64
+.
+.IP "\(bu" 4
+\fBcharset\fR (String): Charset to be used, defaults to UTF\-8
+.
+.IP "" 0
+.
+.SH "encodeQuotedPrintable"
+Encodes a string into Quoted\-printable format (see also \fBdecodeQuotedPrintable\fR)
+.
+.IP "" 4
+.
+.nf
+mimelib\.encodeQuotedPrintable(str [, mimeWord][, charset]) \-> String
+.
+.fi
+.
+.IP "" 0
+.
+.IP "\(bu" 4
+\fBstr\fR (String): String to be encoded into Quoted\-printable
+.
+.IP "\(bu" 4
+\fBmimeWord\fR (Boolean): Use mime\-word mode (defaults to false)
+.
+.IP "\(bu" 4
+\fBcharset\fR (String): Destination charset, defaults to UTF\-8
+.
+.IP "" 0
+.
+.P
+TODO: Currently only allowed charsets: UTF\-8, LATIN1
+.
+.SH "decodeQuotedPrintable"
+Decodes a string from Quoted\-printable format  (see also \fBencodeQuotedPrintable\fR)
+.
+.IP "" 4
+.
+.nf
+mimelib\.deccodeQuotedPrintable(str [, mimeWord][, charset]) \-> String
+.
+.fi
+.
+.IP "" 0
+.
+.IP "\(bu" 4
+\fBstr\fR (String): String to be decoded
+.
+.IP "\(bu" 4
+\fBmimeWord\fR (Boolean): Use mime\-word mode (defaults to false)
+.
+.IP "\(bu" 4
+\fBcharset\fR (String): Charset to be used, defaults to UTF\-8
+.
+.IP "" 0
+.
+.SH "encodeBase64"
+Encodes a string into Base64 format\. Base64 is mime\-word safe (see also \fBdecodeBase64\fR)
+.
+.IP "" 4
+.
+.nf
+mimelib\.encodeBase64(str [, charset]) \-> String
+.
+.fi
+.
+.IP "" 0
+.
+.IP "\(bu" 4
+\fBstr\fR (String): String to be encoded into Base64
+.
+.IP "\(bu" 4
+\fBcharset\fR (String): Destination charset, defaults to UTF\-8
+.
+.IP "" 0
+.
+.SH "decodeBase64"
+Decodes a string from Base64 format\. Base64 is mime\-word safe (see also \fBencodeBase64\fR)
+.
+.P
+NB! Always returns UTF\-8
+.
+.IP "" 4
+.
+.nf
+mimelib\.decodeBase64(str) \-> String
+.
+.fi
+.
+.IP "" 0
+.
+.IP "\(bu" 4
+\fBstr\fR (String): String to be decoded from Base64
+.
+.IP "\(bu" 4
+\fBcharset\fR (String): Source charset, defaults to UTF\-8
+.
+.IP "" 0
+.
+.SH "parseHeaders"
+Parses header lines into an array of objects (see \fBparseHeaderLine\fR)
+.
+.IP "" 4
+.
+.nf
+mimelib\.parseHeaders(headers) \-> Array
+.
+.fi
+.
+.IP "" 0
+.
+.IP "\(bu" 4
+\fBheaders\fR (String): header section of the e\-mail
+.
+.IP "" 0
+.
+.P
+Example:
+.
+.IP "" 4
+.
+.nf
+var headers = [
+    "From: andris@node\.ee",
+    "To: juulius@node\.ee",
+    "To: juulius2@node\.ee",
+    "Content\-type: text/html;",
+    "    charset=utf\-8"
+    ]\.join("\\r\\n");
+mimelib\.parseHeaders(headers);
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Results in 
+.
+.IP "" 4
+.
+.nf
+{"from": [ \'andris@node\.ee\' ],
+ "to": [ \'juulius@node\.ee\', \'juulius2@node\.ee\' ],
+ "content\-type": [ \'text/html;    charset=utf\-8\' ] }
+.
+.fi
+.
+.IP "" 0
+.
+.SH "parseAddresses"
+Parses names and addresses from a from, to, cc or bcc line
+.
+.IP "" 4
+.
+.nf
+mimelib\.parseAddresses(addresses) \-> Array
+.
+.fi
+.
+.IP "" 0
+.
+.IP "\(bu" 4
+\fBaddresses\fR (String): string with comma separated e\-mail addresses  
+.
+.IP "" 0
+.
+.P
+Example:
+.
+.IP "" 4
+.
+.nf
+var to = \'"Andris Reinman" <andris@node\.ee>, juulius@node\.ee\'
+mimelib\.parseAddresses(to);
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Results in
+.
+.IP "" 4
+.
+.nf
+[{ address: \'andris@node\.ee\', name: \'Andris Reinman\' },
+ { address: \'juulius@node\.ee\', name: false }]
+.
+.fi
+.
+.IP "" 0
+.
+.SH "parseMimeWords"
+Parses mime\-words into UTF\-8 strings
+.
+.IP "" 4
+.
+.nf
+mimelib\.parseMimeWords(str) \-> String
+.
+.fi
+.
+.IP "" 0
+.
+.IP "\(bu" 4
+\fBstr\fR (String): string to be parsed, if includes any mime words, then these are converted to UTF\-8 strings
+.
+.IP "" 0
+.
+.P
+For example:
+.
+.IP "" 4
+.
+.nf
+mimelib\.parseMimeWords("Hello: =?UTF\-8?q?See_on_=C3=B5hin_test?=");
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Results in
+.
+.IP "" 4
+.
+.nf
+"Hello: See on õhin test"
+.
+.fi
+.
+.IP "" 0
+.
+.SH "parseHeaderLine"
+Parses a header line to search for additional parameters\.
+.
+.IP "" 4
+.
+.nf
+mimelib\.parseHeaderLine(line) \-> Object
+.
+.fi
+.
+.IP "" 0
+.
+.IP "\(bu" 4
+\fBline\fR (String): a line from a message headers
+.
+.IP "" 0
+.
+.P
+For example:
+.
+.IP "" 4
+.
+.nf
+mimelib\.parseHeaderLine("text/plain; charset=utf\-8")imelib
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Results in
+.
+.IP "" 4
+.
+.nf
+{"defaultValue": \'text/plain\',
+ "charset": \'utf\-8\' }
+.
+.fi
+.
+.IP "" 0
