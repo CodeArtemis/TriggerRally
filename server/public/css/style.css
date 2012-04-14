@@ -1,0 +1,265 @@
+body {
+  background: #dec;
+  color: #000;
+  padding: 0;
+  margin: 0;
+  font-family: "Ubuntu", sans-serif;
+  text-shadow: 0 1px 0 #fff;
+}
+.content {
+  background: #fff;
+  padding: 20px;
+  margin: 0 auto;
+  width: 940px;
+}
+.header {
+  background: #fda;
+  box-shadow: 0 0 25px rgba(0,0,0,0.47);
+  padding: 5px;
+  position: relative;
+  height: 40px;
+}
+.header .container {
+  margin: 0 auto;
+  width: 940px;
+}
+.navpath {
+  float: left;
+  display: inline-block;
+}
+.userinfo {
+  float: right;
+  margin-top: 10px;
+}
+.user img {
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+  vertical-align: -20%;
+}
+.editprofile {
+  float: right;
+}
+h1 img {
+  vertical-align: -25%;
+  margin-right: 10px;
+}
+.realname {
+  opacity: 0.6;
+}
+.section {
+  background: #dec;
+  color: rgba(0,0,0,0.50);
+  font-style: italic;
+  margin: 30px 0px 20px;
+  padding: 10px 5px 7px 10px;
+}
+input {
+  font: inherit;
+}
+input[type=text],
+input[type=password] {
+  margin-top: -5px;
+  width: 250px;
+}
+input.invalid {
+  background: #fcc;
+}
+.fielderror {
+  color: #500;
+  font-style: italic;
+  margin-left: 10px;
+}
+dl {
+  margin-top: 10px;
+}
+dt {
+  float: left;
+  opacity: 0.6;
+  width: 160px;
+}
+.note {
+  font-size: 80%;
+  opacity: 0.6;
+}
+table tr:nth-child(even) {
+  background: #eee;
+}
+table tr:nth-child(odd) {
+  background: #ddd;
+}
+td {
+  padding: 0 20px;
+}
+a,
+a:visited {
+  color: #462;
+  text-decoration: none;
+}
+a:hover {
+  color: #000;
+  text-shadow: 0 0 4px #6f1;
+}
+a:active {
+  color: #684;
+}
+a.disabled,
+a.disabled:hover,
+a.disabled:active,
+a.disabled:visited {
+  color: #777;
+  text-shadow: inherit;
+  cursor: default;
+}
+.frame3d a {
+  color: #03f;
+  text-decoration: underline;
+}
+.logo {
+  width: 64px;
+  height: 64px;
+  margin-right: 1em;
+}
+h1,
+h2 {
+  font-family: 'Ubuntu', sans-serif;
+  font-style: italic;
+  font-weight: bold;
+  margin: 0;
+}
+.version {
+  opacity: 0.3;
+}
+.frame3d:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+}
+.button {
+  display: inline-block;
+  background: #bda;
+  background: linear-gradient(-90deg, #bda, #ceb);
+  background: -webkit-linear-gradient(-90deg, #bda, #ceb);
+  border-radius: 0.5em;
+  box-shadow: -1px -2px 1px #fff, 1px 2px 1px #361;
+  margin: 1em;
+  padding: 0.8em 1.5em;
+}
+a.disabled .button {
+  background: #ccc;
+  box-shadow: -1px -2px 1px #fff, 1px 2px 1px #333;
+}
+.button.special {
+  background: linear-gradient(-90deg, #be9, #cfa);
+  background: -webkit-linear-gradient(-90deg, #be9, #cfa);
+}
+.button img {
+  margin-right: 15px;
+  vertical-align: -40%;
+}
+.twitterfeeds {
+  text-shadow: none;
+}
+.card {
+  background: #ddd;
+  border-radius: 15.9px;
+box-shadow
+  display: inline-block;
+  width: 428px;
+  height: 269.9px;
+}
+.hidden {
+  display: none;
+}
+.footer img.logo {
+  float: left;
+}
+.clearboth {
+  clear: both;
+}
+.frame3d {
+  box-shadow: 0 0 15px #000;
+  position: relative;
+  width: 940px;
+  height: 529px;
+}
+canvas {
+  pointer-events: none;
+}
+.frame3d .loading {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  z-index: 1;
+  text-align: center;
+  pointer-events: none;
+}
+.frame3d .loading h1,
+.frame3d .loading h2 {
+  margin: 0;
+  padding: 0;
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  -webkit-transition: opacity 0.5s;
+}
+.frame3d .loading h1 {
+  font-size: 6em;
+}
+.frame3d .loading h2 {
+  font-size: 3em;
+}
+.frame3d .loading.loaded h2,
+.frame3d .loading.loaded h1 {
+  opacity: 0;
+}
+#checkpoints {
+  color: #000;
+  position: absolute;
+  top: 1em;
+  left: 2em;
+  font-size: 3em;
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  z-index: 2;
+}
+#timer {
+  color: #040;
+  position: absolute;
+  top: 1em;
+  right: 3em;
+  font-size: 3em;
+  -webkit-transition: -webkit-transform 2s;
+  -webkit-transform: scale(2);
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  z-index: 2;
+}
+#timer.running {
+  color: #000;
+  -webkit-transform: scale(1);
+}
+#countdown {
+  color: #000;
+  position: absolute;
+  top: 1em;
+  left: 0;
+  right: 0;
+  font-size: 8em;
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  text-align: center;
+  z-index: 2;
+  opacity: 1;
+  -webkit-transition: opacity 1s;
+}
+#countdown.fadeout {
+  opacity: 0;
+}
+#twitterlink {
+  display: none;
+  position: absolute;
+  top: 8em;
+  right: 5em;
+  font-size: 1em;
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  z-index: 3;
+}
+#twitterlink.visible {
+  display: block;
+  position: absolute;
+}
