@@ -19,4 +19,4 @@ Other server code is in server/
 
 
 On the server, we use the node.js module system ('require').  
-On the client, all the code is concatenated into a single file.
+On the client, all the code is compiled into a single file with compile-closure.sh.
