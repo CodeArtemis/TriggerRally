@@ -683,7 +683,7 @@ function uploadRun() {
   formData.append('user', TRIGGER.USER_LOGGED_IN);
   formData.append('track', TRIGGER.TRACK.ID);
   formData.append('car', TRIGGER.CAR.ID);
-  formData.append('time', JSON.stringify(followProgress.finishTime()));
+  formData.append('time', JSON.stringify(followProgress.finishTime() - game.startTime));
   formData.append('record_i', JSON.stringify(carRecorder1.serialize()));
   formData.append('record_p', JSON.stringify(carRecorder2.serialize()));
   var request = new XMLHttpRequest();
