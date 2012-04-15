@@ -148,7 +148,7 @@ function topRuns(track, car, limit, callback) {
     .where('time', { $not: { $type: 10 } })  // Exclude null times.
     .limit(limit)
     .asc('time')
-    .populate('user', ['pub_id', 'name'])
+    .populate('user', ['pub_id', 'name', 'email'])
     .run(callback);
 };
 
