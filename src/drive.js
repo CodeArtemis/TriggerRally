@@ -30,6 +30,7 @@ var runTimerEl = $('timer');
 var twitterLinkEl = $('twitterlink');
 var fullscreenLinkEl = $('fullscreenlink');
 var saveReplayLinkEl = $('savereplaylink');
+var replaysContainerEl = $('replays');
 
 var keyDown = [];
 
@@ -683,7 +684,11 @@ function uploadRun() {
   formData.append('user', TRIGGER.USER_LOGGED_IN);
   formData.append('track', TRIGGER.TRACK.ID);
   formData.append('car', TRIGGER.CAR.ID);
-  formData.append('time', JSON.stringify(followProgress.finishTime() - game.startTime));
+  var time = followProgress.finishTime();
+  if (time) {
+    time -= game.startTime;
+  }
+  formData.append('time', JSON.stringify(time));
   formData.append('record_i', JSON.stringify(carRecorder1.serialize()));
   formData.append('record_p', JSON.stringify(carRecorder2.serialize()));
   var request = new XMLHttpRequest();
@@ -691,9 +696,14 @@ function uploadRun() {
   request.open('POST', url, true);
   request.onload = function() {
     var runId = JSON.parse(request.responseText).run;
-    twitterLinkEl.innerHTML = 'View stats and replay';
-    twitterLinkEl.href = '/run/' + runId;
-    twitterLinkEl.className = 'visible';
+    var linkEl = document.createElement('a');
+    linkEl.innerHTML = 'View stats and replay';
+    linkEl.href = '/run/' + runId;
+    linkEl.className = 'highlight';
+    replaysContainerEl.appendChild(linkEl);
+    _.defer(function() {
+      linkEl.className = '';
+    });
   };
   request.send(formData);
 }

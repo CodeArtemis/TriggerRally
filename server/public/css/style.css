@@ -177,6 +177,14 @@ box-shadow
 .clearboth {
   clear: both;
 }
+#replays a {
+  background: #fda;
+  display: block;
+  -webkit-transition: background-color 1s;
+}
+#replays a.highlight {
+  background: #f80;
+}
 .frame3d {
   box-shadow: 0 0 15px #000;
   position: relative;
