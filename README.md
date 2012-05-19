@@ -3,16 +3,6 @@ Trigger Rally Online Edition
 
 http://triggerrally.com
 
-Code copyright (c) 2012 [jareiko](https://github.com/jareiko)
-and released under the [GPL v3](http://www.gnu.org/licenses/gpl-3.0.html)
-
-Directories with mixed ownership and licensing:
-
-    server/THREE/code/
-    server/node_modules/
-    server/public/
-
-
 Code structure
 --------------
 
@@ -25,3 +15,15 @@ Other server code is in [server/](https://github.com/jareiko/TriggerRallyOE/tree
 
 On the server, we use the node.js module system ('require').  
 On the client, all the code is compiled into a single file with compile-closure.sh.
+
+Copyright & License
+-------------------
+
+Code copyright (c) 2012 [jareiko](https://github.com/jareiko)
+and released under the [GPL v3](http://www.gnu.org/licenses/gpl-3.0.html)
+
+Directories with mixed ownership and licensing:
+
+    server/THREE/code/
+    server/node_modules/
+    server/public/
