@@ -18,7 +18,7 @@ Code structure
 
 TROE uses JavaScript on both the client and server.
 
-Client-only code is in src/  
+Client-only code is in [src/](https://github.com/jareiko/TriggerRallyOE/tree/master/src)
 Shared code is in server/shared/  
 Other server code is in server/
 
