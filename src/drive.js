@@ -73,9 +73,9 @@ function init() {
   sceneHUD.add(cameraHUD);
 
   var revMeterGeom = new THREE.Geometry();
-  revMeterGeom.vertices.push(new THREE.Vertex(new Vec3(1, 0, 0)));
-  revMeterGeom.vertices.push(new THREE.Vertex(new Vec3(-0.1, -0.02, 0)));
-  revMeterGeom.vertices.push(new THREE.Vertex(new Vec3(-0.1, 0.02, 0)));
+  revMeterGeom.vertices.push(new Vec3(1, 0, 0));
+  revMeterGeom.vertices.push(new Vec3(-0.1, -0.02, 0));
+  revMeterGeom.vertices.push(new Vec3(-0.1, 0.02, 0));
   revMeterGeom.faces.push(new THREE.Face3(0, 1, 2));
   revMeterGeom.computeCentroids();
   var revMeterMat = new THREE.MeshBasicMaterial();
@@ -385,11 +385,11 @@ function drawArrow() {
     depthWrite: false
   });
   var geom = new THREE.Geometry();
-  geom.vertices.push(new THREE.Vertex(new Vec3(0, 0, 0.6)));
-  geom.vertices.push(new THREE.Vertex(new Vec3(0.1, 0, 0.3)));
-  geom.vertices.push(new THREE.Vertex(new Vec3(-0.1, 0, 0.3)));
-  geom.vertices.push(new THREE.Vertex(new Vec3(0.1, 0, -0.2)));
-  geom.vertices.push(new THREE.Vertex(new Vec3(-0.1, 0, -0.2)));
+  geom.vertices.push(new Vec3(0, 0, 0.6));
+  geom.vertices.push(new Vec3(0.1, 0, 0.3));
+  geom.vertices.push(new Vec3(-0.1, 0, 0.3));
+  geom.vertices.push(new Vec3(0.1, 0, -0.2));
+  geom.vertices.push(new Vec3(-0.1, 0, -0.2));
   geom.faces.push(new THREE.Face3(0, 2, 1));
   geom.faces.push(new THREE.Face4(1, 2, 4, 3));
   meshArrow = new THREE.Mesh(geom, mat);
@@ -408,9 +408,9 @@ var drawTrack = function(terrainTile) {
   var x, y, i = 0;
   for (y = 0; y <= terrainTile.size; ++y) {
     for (x = 0; x <= terrainTile.size; ++x) {
-      geometry.vertices[i].position.x = x * terrain.scaleHz;
-      geometry.vertices[i].position.y = y * terrain.scaleHz;
-      geometry.vertices[i].position.z = terrainTile.heightMap[i];
+      geometry.vertices[i].x = x * terrain.scaleHz;
+      geometry.vertices[i].y = y * terrain.scaleHz;
+      geometry.vertices[i].z = terrainTile.heightMap[i];
       ++i;
     }
   }
@@ -436,8 +436,8 @@ var drawTrack = function(terrainTile) {
   });
   xm.ambient = xm.color;
   
-  var mesh = new THREE.Mesh( geometry, xm );
-  mesh.position.set( 0, 0, 0 );
+  var mesh = new THREE.Mesh(geometry, xm);
+  mesh.position.set(0, 0, 0);
   // Grrr Y up.
   mesh.rotation.x = -Math.PI/2;
   mesh.castShadow = false;
