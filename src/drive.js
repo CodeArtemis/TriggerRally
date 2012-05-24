@@ -137,6 +137,7 @@ function init() {
   webglRenderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
   webglRenderer.shadowMapEnabled = true;
   webglRenderer.shadowMapSoft = true;
+  webglRenderer.shadowMapCullFrontFaces = false;
   webglRenderer.autoClear = false;
   onWindowResize();
 
