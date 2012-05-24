@@ -103,7 +103,6 @@ function init() {
   scene.fog = new THREE.FogExp2(0xdddddd, 0.001);
 
   var ambient = new THREE.AmbientLight( 0x446680 );
-  //var ambient = new THREE.AmbientLight( 0xffffff );
   scene.add(ambient);
 
   sunLightPos = new Vec3(0, 10, -15);
@@ -128,7 +127,7 @@ function init() {
   sunLight.shadowMapWidth = SHADOW_MAP_WIDTH;
   sunLight.shadowMapHeight = SHADOW_MAP_HEIGHT;
 
-  scene.add( sunLight );
+  scene.add(sunLight);
 
   // RENDERER
   webglRenderer = new THREE.WebGLRenderer({
@@ -144,7 +143,6 @@ function init() {
   containerEl.appendChild(webglRenderer.domElement);
 
   fullscreenLinkEl.addEventListener('click', function(ev) {
-    //var el = webglRenderer.domElement;
     var el = containerEl;
     var reqFS = el.requestFullScreenWithKeys ||
                 el.webkitRequestFullScreenWithKeys ||
@@ -547,15 +545,15 @@ function animate() {
     cpVec = new Vec2(car.vehic.body.pos.x - meshCheckpoint.position.x,
                      car.vehic.body.pos.z - meshCheckpoint.position.z);
     var cpVecCamSpace = new Vec2(
-        cpVec.x * camera.matrixWorld.n31 - cpVec.y * camera.matrixWorld.n33,
-        cpVec.x * camera.matrixWorld.n11 - cpVec.y * camera.matrixWorld.n13);
+        cpVec.x * camera.matrixWorld.elements[2] - cpVec.y * camera.matrixWorld.elements[10],
+        cpVec.x * camera.matrixWorld.elements[0] - cpVec.y * camera.matrixWorld.elements[8]);
     meshArrow.rotation.y = Math.atan2(-cpVecCamSpace.y, cpVecCamSpace.x);
   }
   if (nextCpNext) {
     cpVec = new Vec2(car.vehic.body.pos.x - nextCpNext.x, car.vehic.body.pos.z - nextCpNext.z);
     cpVecCamSpace = new Vec2(
-        cpVec.x * camera.matrixWorld.n31 - cpVec.y * camera.matrixWorld.n33,
-        cpVec.x * camera.matrixWorld.n11 - cpVec.y * camera.matrixWorld.n13);
+        cpVec.x * camera.matrixWorld.elements[2] - cpVec.y * camera.matrixWorld.elements[10],
+        cpVec.x * camera.matrixWorld.elements[0] - cpVec.y * camera.matrixWorld.elements[8]);
     meshArrowNext.rotation.y = Math.atan2(-cpVecCamSpace.y, cpVecCamSpace.x) - meshArrow.rotation.y;
   }
 
