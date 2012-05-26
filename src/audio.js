@@ -10,10 +10,17 @@ var MODULE = 'audio';
   exports.WebkitAudio = function() {
     if (true && 'webkitAudioContext' in window) {
       this.audio = new webkitAudioContext();
+      this.master = this.audio.createGainNode();
+      this.master.connect(this.audio.destination);
     }
 
     // Map from url to buffer.
     this.buffers = {};
+  };
+
+  exports.WebkitAudio.prototype.setGain = function(gain) {
+    if (!this.audio) return;
+    this.master.gain.value = gain;
   };
 
   // Return buffer iff already loaded.
@@ -49,7 +56,7 @@ var MODULE = 'audio';
   exports.WebkitAudio.prototype.playSound = function(buffer, loop, gain, rate) {
     var source = this.audio.createBufferSource();
     source.buffer = buffer;
-    source.connect(this.audio.destination);
+    source.connect(this.master);
     source.loop = loop;
     source.gain.value = gain;
     source.playbackRate.value = (rate === undefined) ? 1 : rate;

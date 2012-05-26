@@ -489,6 +489,16 @@ function onWindowResize() {
   camera.updateProjectionMatrix();
 };
 
+
+var debouncedMuteAudio = _.debounce(function() {
+  aud.setGain(0);
+}, 500);
+
+function muteAudioIfStopped() {
+  aud.setGain(1);
+  debouncedMuteAudio();
+};
+
 //
 
 function animate() {
@@ -592,16 +602,20 @@ function animate() {
   case 1:
     camera.useQuaternion = true;
     camera.updateMatrix();
-    camera.position.x = car.root.position.x + camera.matrix.n12 * 0.7;
-    camera.position.y = car.root.position.y + camera.matrix.n22 * 0.7;
-    camera.position.z = car.root.position.z + camera.matrix.n32 * 0.7;
+    camera.position.x = car.root.position.x + camera.matrix.elements[1] * 0.7;
+    camera.position.y = car.root.position.y + camera.matrix.elements[5] * 0.7;
+    camera.position.z = car.root.position.z + camera.matrix.elements[9] * 0.7;
     camera.matrix.setPosition(camera.position);
     break;
   case 2:
     camera.useQuaternion = true;
     camera.updateMatrix();
-    var camUp = new Vec3(camera.matrix.n12, camera.matrix.n22, camera.matrix.n32);
-    var camRight = new Vec3(camera.matrix.n11, camera.matrix.n21, camera.matrix.n31);
+    var camUp = new Vec3(camera.matrix.elements[4],
+                         camera.matrix.elements[5],
+                         camera.matrix.elements[6]);
+    var camRight = new Vec3(camera.matrix.elements[0],
+                            camera.matrix.elements[1],
+                            camera.matrix.elements[2]);
     camera.position.add(car.root.position, camUp.multiplyScalar(0));
     camera.position.addSelf(camRight.multiplyScalar(1));
     camera.matrix.setPosition(camera.position);
@@ -631,6 +645,8 @@ function animate() {
   if (stats) {
     stats.update();
   }
+
+  muteAudioIfStopped();
 
   requestAnimationFrame(animate);
 }
