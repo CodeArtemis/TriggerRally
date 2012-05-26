@@ -247,7 +247,7 @@ var MODULE = 'pvehicle';
     var body = this.body;
     if (!state) {
       // Work out which way vehicle is facing.
-      var angleY = Math.atan2(body.oriMat.n13, body.oriMat.n11);
+      var angleY = Math.atan2(body.oriMat.elements[8], body.oriMat.elements[0]);
       var newOri = new Quat().setFromAxisAngle(new Vec3(0,1,0), Math.PI -angleY);
 
       // Make sure we take the shortest path.
@@ -306,7 +306,7 @@ var MODULE = 'pvehicle';
     this.crashLevel = PULLTOWARD(this.crashLevel, 0, delta * 5);
     this.skidLevel = 0;
 
-    if (this.body.oriMat.n22 <= 0.1 ||
+    if (this.body.oriMat.elements[5] <= 0.1 ||
         this.recoverTimer >= this.cfg.recover.triggerTime) {
       this.recoverTimer += delta;
       
