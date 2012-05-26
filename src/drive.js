@@ -720,7 +720,7 @@ function showTwitterLink() {
       'Just finished ' + TRIGGER.TRACK.NAME +
       ' with the ' + TRIGGER.CAR.NAME +
       ' in ' + runTimerEl.innerHTML +
-      '. ' + exclamation + ' @triggerrally');
+      '. ' + exclamation + ' @TriggerRally');
   twitterLinkEl.className = 'visible';
 }
 
