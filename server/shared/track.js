@@ -10,12 +10,29 @@ var MODULE = 'track';
   var pterrain = this.pterrain || require('./pterrain');
 
   var Vec3 = THREE.Vector3;
+  
+  exports.Scenery = function(config) {
+    this.config = config;
+    // TODO: Purge LRU cache entries.
+    this.cache = {};
+  };
+
+  exports.Scenery.prototype.getZone = function(x, y) {
+  };
 
   exports.Track = function() {
     this.config = {};
     this.checkpoints = [];
     // TODO: Convert trees into some more generic object type.
     this.trees = [];
+    var sc_config = {
+      "layers": [
+        {
+          "id": "trees",
+        }
+      ]
+    };
+    this.scenery = new exports.Scenery(sc_config);
   };
 
   exports.Track.prototype.loadWithConfig = function(config, callback) {
