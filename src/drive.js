@@ -60,8 +60,8 @@ var lastTime = Date.now();
 init();
 
 function init() {
-  if ( ! Detector.webgl ) {
-    Detector.addGetWebGLMessage();
+  if (!Detector.webgl) {
+    Detector.addGetWebGLMessage({parent: containerEl});
     var loadingEl = document.getElementsByClassName('loading')[0];
     loadingEl.className += ' loaded';
     return false;
@@ -488,7 +488,6 @@ function onWindowResize() {
   camera.aspect = SCREEN_ASPECT;
   camera.updateProjectionMatrix();
 };
-
 
 var debouncedMuteAudio = _.debounce(function() {
   aud.setGain(0);
