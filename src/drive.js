@@ -21,6 +21,7 @@ var webglRenderer;
 var sunLight, sunLightPos;
 var cameraMode = 0, CAMERA_MODES = 3;
 var trees = [];
+var renderScenery;
 var meshCheckpoint;
 var meshArrow, meshArrowNext;
 var containerEl = $$('frame3d')[0];
@@ -46,12 +47,7 @@ var replayPlayback1, replayPlayback2;
 
 var aud;
 var checkpointBuffer;
-var sourcesTmp = [];
 
-var windowHalfX = window.innerWidth / 2;
-var windowHalfY = window.innerHeight / 2;
-
-document.addEventListener('mousemove', onDocumentMouseMove, false);
 document.addEventListener('keydown', onDocumentKeyDown, false);
 document.addEventListener('keyup', onDocumentKeyUp, false);
 
@@ -198,6 +194,21 @@ function init() {
 
   var loader = new THREE.JSONLoader();
   var texturePath = '/a/textures';
+  var loadCount = 1;
+  loader.onLoadStart = function() {
+    ++loadCount;
+  };
+  var loadComplete = loader.onLoadComplete = function() {
+    --loadCount;
+    if (loadCount == 0) {
+      var loadingEl = document.getElementsByClassName('loading')[0];
+      loadingEl.className += ' loaded';
+      requestAnimationFrame(animate);
+    }
+  };
+  var loadFunc = function(url, callback) {
+    loader.load(url, callback, texturePath);
+  };
   game = new game.Game(browserhttp);
   async.parallel({
     track: function(cb) {
@@ -259,20 +270,22 @@ function init() {
       });
     },
     geomTrunk: function(cb) {
-      loader.load('/a/meshes/tree1a_lod2_tex_000.json', function(geometry) {
+      loadFunc('/a/meshes/tree1a_lod2_tex_000.json', function(geometry) {
         cb(null, geometry);
-      }, texturePath);
+      });
     },
     geomLeaves: function(cb) {
-      loader.load('/a/meshes/tree1a_lod2_tex_001.json', function(geometry) {
+      loadFunc('/a/meshes/tree1a_lod2_tex_001.json', function(geometry) {
         cb(null, geometry);
-      }, texturePath);
+      });
     }
   }, function(err, data) {
     if (err) throw new Error(err);
     else {
+      renderScenery = new render_scenery.RenderScenery(
+          scene, data.track.scenery, loadFunc)
       drawTrack(data.track.terrain.getTile(0, 0));
-      drawTrees(data.geomTrunk, data.geomLeaves);
+      //drawTrees(data.geomTrunk, data.geomLeaves);
 
       var bodyMaterial = car.bodyGeometry.materials[0];
       bodyMaterial.envMap = textureCube;
@@ -293,9 +306,7 @@ function init() {
 
       scene.add(car.root);
 
-      var loadingEl = document.getElementsByClassName('loading')[0];
-      loadingEl.className += ' loaded';
-      requestAnimationFrame(animate);
+      loadComplete();
     }
   });
 
@@ -444,12 +455,6 @@ var drawTrack = function(terrainTile) {
   scene.add(mesh);
 };
 
-
-function onDocumentMouseMove(event) {
-  mouseX = ( event.clientX - windowHalfX ) * 0.01;
-  mouseY = ( event.clientY - windowHalfY ) * 0.01;
-};
-
 function keyWeCareAbout(event) {
   return (!event.shiftKey &&
           !event.ctrlKey &&
@@ -504,7 +509,7 @@ function animate() {
   var nowTime = Date.now();
   var delta = Math.min((nowTime - lastTime) * 0.001, 0.1);
   lastTime = nowTime;
-
+  
   var nextCp = followProgress.nextCheckpoint(0);
   var nextCpNext = followProgress.nextCheckpoint(1);
   if (nextCp) {
@@ -629,6 +634,8 @@ function animate() {
       camera.position.y = ctc[c].surfacePos.y + 0.1;
     }
   }
+
+  renderScenery.update(camera)
 
   sunLight.target.position.copy(car.root.position);
   sunLight.position.copy(car.root.position).addSelf(sunLightPos);

@@ -10,14 +10,48 @@ var MODULE = 'track';
   var pterrain = this.pterrain || require('./pterrain');
 
   var Vec3 = THREE.Vector3;
-  
-  exports.Scenery = function(config) {
+
+  exports.Scenery = function(config, terrain) {
     this.config = config;
+    this.terrain = terrain;
+    this.layers = [];
+    for (var i = 0; i < config.layers.length; ++i) {
+      this.layers[i] = new exports.Layer(config.layers[i], this);
+    }
+  };
+
+  exports.Layer = function(config, scenery) {
+    this.config = config;
+    this.scenery = scenery;
     // TODO: Purge LRU cache entries.
     this.cache = {};
   };
 
-  exports.Scenery.prototype.getZone = function(x, y) {
+  exports.Layer.prototype.getTile = function(tx, ty) {
+    var key = tx + ',' + ty;
+    if (key in this.cache) {
+      return this.cache[key];
+    } else {
+      var terrain = this.scenery.terrain;
+      var objects = [];
+      var i;
+      var randomseed = 1;
+      var random = LFIB4.LFIB4(randomseed, key);
+      for (i = 0; i < 300; ++i) {
+        var object = {};
+        object.position = new Vec3(
+            50 + random() * 150,
+            0,
+            -50 - random() * 284);
+        var contact = terrain.getContact(object.position);
+        object.position.y = contact.surfacePos.y;
+        object.rot = random() * 2 * Math.PI;
+        object.scl = random() * 3 + 3;
+        objects.push(object);
+      }
+      this.cache[key] = objects;
+      return objects;
+    }
   };
 
   exports.Track = function() {
@@ -25,14 +59,6 @@ var MODULE = 'track';
     this.checkpoints = [];
     // TODO: Convert trees into some more generic object type.
     this.trees = [];
-    var sc_config = {
-      "layers": [
-        {
-          "id": "trees",
-        }
-      ]
-    };
-    this.scenery = new exports.Scenery(sc_config);
   };
 
   exports.Track.prototype.loadWithConfig = function(config, callback) {
@@ -48,6 +74,22 @@ var MODULE = 'track';
       this.terrain = terrain;
 
       terrain.loadTile(0, 0, function() {
+        // TODO: Move this dummy config into the track config.
+        var sc_config = {
+          "layers": [
+            {
+              "id": "trees",
+              "render": {
+                "meshes": [
+                  "/a/meshes/tree1a_lod2_tex_000.json",
+                  "/a/meshes/tree1a_lod2_tex_001.json"
+                ]
+              }
+            }
+          ]
+        };
+        this.scenery = new exports.Scenery(sc_config, terrain);
+
         var i;
         var random = LFIB4.LFIB4(config.randomseed);
         for (i = 0; i < 70; ++i) {

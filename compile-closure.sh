@@ -1,9 +1,18 @@
 #!/bin/sh
 
-
 #LEVEL=SIMPLE_OPTIMIZATIONS
 LEVEL=WHITESPACE_ONLY
 
+# Stop script on any error.
+set -e
+
+# Compile CoffeeScript files.
+WORK=intermediate
+mkdir -p $WORK
+coffee -c -o $WORK \
+  src/render_scenery.coffee
+
+# Concatenate and optimize JavaScript files.
 java -jar $HOME/src/closure-compiler/compiler.jar \
   --compilation_level $LEVEL \
   --js=server/shared/LFIB4.js \
@@ -20,6 +29,6 @@ java -jar $HOME/src/closure-compiler/compiler.jar \
   --js=src/browserhttp.js \
   --js=src/audio.js \
   --js=src/car.js \
+  --js=$WORK/render_scenery.js \
   --js=src/drive.js \
   --js_output_file=server/public/js/trigger.js
-
