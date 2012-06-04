@@ -40,13 +40,13 @@ var MODULE = 'track';
       for (i = 0; i < 300; ++i) {
         var object = {};
         object.position = new Vec3(
-            50 + random() * 150,
+            100 + random() * 40,
             0,
-            -50 - random() * 284);
+            -100 - random() * 40);
         var contact = terrain.getContact(object.position);
         object.position.y = contact.surfacePos.y;
-        object.rot = random() * 2 * Math.PI;
-        object.scl = random() * 3 + 3;
+        object.rotation = random() * 2 * Math.PI;
+        object.scale = random() * 0.3 + 0.3;
         objects.push(object);
       }
       this.cache[key] = objects;
@@ -81,29 +81,15 @@ var MODULE = 'track';
               "id": "trees",
               "render": {
                 "meshes": [
-                  "/a/meshes/tree1a_lod2_tex_000.json",
-                  "/a/meshes/tree1a_lod2_tex_001.json"
+                  {
+                    "src": "/a/meshes/tree1a_lod2-scene.js"
+                  }
                 ]
               }
             }
           ]
         };
         this.scenery = new exports.Scenery(sc_config, terrain);
-
-        var i;
-        var random = LFIB4.LFIB4(config.randomseed);
-        for (i = 0; i < 70; ++i) {
-          var tree = new Vec3(
-              50 + random() * 150,
-              0,
-              -50 - random() * 284);
-          var contact = this.terrain.getContact(tree);
-          tree.y = contact.surfacePos.y;
-          tree.rot = random() * 2 * Math.PI;
-          tree.scl = random() * 3 + 3;
-          tree.radius = 1.2;
-          this.trees.push(tree);
-        }
 
         var course = config.course;
         var cpts = course.checkpoints;

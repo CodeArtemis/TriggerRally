@@ -193,12 +193,13 @@ function init() {
   });
 
   var loader = new THREE.JSONLoader();
-  var texturePath = '/a/textures';
+  var sceneLoader = new THREE.SceneLoader();
+  //var texturePath = '/a/textures';
   var loadCount = 1;
-  loader.onLoadStart = function() {
+  loader.onLoadStart = sceneLoader.onStart = function() {
     ++loadCount;
   };
-  var loadComplete = loader.onLoadComplete = function() {
+  var loadComplete = loader.onLoadComplete = sceneLoader.onLoadComplete = function() {
     --loadCount;
     if (loadCount == 0) {
       var loadingEl = document.getElementsByClassName('loading')[0];
@@ -207,7 +208,7 @@ function init() {
     }
   };
   var loadFunc = function(url, callback) {
-    loader.load(url, callback, texturePath);
+    sceneLoader.load(url, callback);
   };
   game = new game.Game(browserhttp);
   async.parallel({
@@ -267,16 +268,6 @@ function init() {
         car.aud = aud;
         car.loadWithVehicle(progress.vehicle, cb);
         progress.pubsub.subscribe('advance', advanceCheckpoint);
-      });
-    },
-    geomTrunk: function(cb) {
-      loadFunc('/a/meshes/tree1a_lod2_tex_000.json', function(geometry) {
-        cb(null, geometry);
-      });
-    },
-    geomLeaves: function(cb) {
-      loadFunc('/a/meshes/tree1a_lod2_tex_001.json', function(geometry) {
-        cb(null, geometry);
       });
     }
   }, function(err, data) {
