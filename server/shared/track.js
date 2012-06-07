@@ -15,9 +15,16 @@ var MODULE = 'track';
     this.config = config;
     this.terrain = terrain;
     this.layers = [];
+    this.layersById = {};
     for (var i = 0; i < config.layers.length; ++i) {
-      this.layers[i] = new exports.Layer(config.layers[i], this);
+      var layer = new exports.Layer(config.layers[i], this);
+      this.layers.push(layer);
+      this.layersById[layer.config.id] = layer;
     }
+  };
+
+  exports.Scenery.prototype.getLayer = function(id) {
+    return this.layersById[id];
   };
 
   exports.Layer = function(config, scenery) {
@@ -26,29 +33,77 @@ var MODULE = 'track';
     // TODO: Purge LRU cache entries.
     this.cache = {};
   };
+  
+  // TODO: Pass in a rectangle.
+  exports.Layer.prototype.getObjects = function() {
+    return this.cache['0,0'];
+  };
 
   exports.Layer.prototype.getTile = function(tx, ty) {
     var key = tx + ',' + ty;
+    console.log(key);
     if (key in this.cache) {
       return this.cache[key];
     } else {
       var terrain = this.scenery.terrain;
       var objects = [];
-      var i;
+      var i, j, k, leng;
+      var tmpVec1 = new Vec3(), tmpVec2 = new Vec3();
       var randomseed = 1;
       var random = LFIB4.LFIB4(randomseed, key);
-      for (i = 0; i < 300; ++i) {
+      var width = 40;
+      var maxObjects = 1;
+      var avoids = [];
+      var density = this.config.density;
+      if (density) {
+        maxObjects = density.base * width * width;
+        if ('avoid' in density) {
+          var layer = this.scenery.getLayer(density.avoid.layer);
+          avoids.push({
+            objects: layer.getObjects(),
+            distanceSq: density.avoid.distance * density.avoid.distance
+          });
+        }
+      }
+      for (i = 0; i < maxObjects; ++i) {
+        var drop = false;
         var object = {};
         object.position = new Vec3(
-            100 + random() * 40,
+            100 + random() * width,
             0,
-            -100 - random() * 40);
+            -100 - random() * width);
         var contact = terrain.getContact(object.position);
         object.position.y = contact.surfacePos.y;
-        object.rotation = random() * 2 * Math.PI;
         object.scale = random() * 0.3 + 0.3;
+
+/*
+        for (j = 0; j < objects.length; ++j) {
+          tmpVec1.sub(object.position, objects[j].position);
+          leng = tmpVec1.lengthSq();
+          if (leng < 25) {
+            drop = true;
+            break;
+          }
+        }
+        if (drop) continue;*/
+        for (j in avoids) {
+          var avoid = avoids[j];
+          for (j in avoid.objects) {
+            var other = avoid.objects[j];
+            tmpVec1.sub(object.position, other.position);
+            leng = tmpVec1.lengthSq();
+            if (leng < avoid.distanceSq) {
+              drop = true;
+              break;
+            }
+          }
+          if (drop) break;
+        }
+        if (drop) continue;
+        object.rotation = new Vec3(0, random() * 2 * Math.PI, 0);
         objects.push(object);
       }
+      console.log(objects.length);
       this.cache[key] = objects;
       return objects;
     }
@@ -79,12 +134,21 @@ var MODULE = 'track';
           "layers": [
             {
               "id": "trees",
+              "density": {
+                "base": 0.02
+              },
               "render": {
-                "meshes": [
-                  {
-                    "src": "/a/meshes/tree1a_lod2-scene.js"
-                  }
-                ]
+                "scene": "/a/meshes/tree1a_lod2-scene.js"
+              }
+            },
+            {
+              "id": "grass",
+              "density": {
+                "base": 2,
+                "avoid": { "layer": "trees", "distance": 2 }
+              },
+              "render": {
+                "scene": "/a/meshes/grass-triangle.js"
               }
             }
           ]

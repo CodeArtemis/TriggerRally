@@ -116,10 +116,10 @@ function init() {
   sunLight.shadowCameraBottom = -24;
 
   //sunLight.shadowCameraVisible = true;
-  
+
   //sunLight.shadowBias = -0.001;
   sunLight.shadowDarkness = 0.4;
-  
+
   sunLight.shadowMapWidth = SHADOW_MAP_WIDTH;
   sunLight.shadowMapHeight = SHADOW_MAP_HEIGHT;
 
@@ -449,6 +449,7 @@ var drawTrack = function(terrainTile) {
 function keyWeCareAbout(event) {
   return (!event.shiftKey &&
           !event.ctrlKey &&
+          !event.altKey &&
           !event.metaKey &&
           event.keyCode >= 32 && event.keyCode <= 127);
 }
