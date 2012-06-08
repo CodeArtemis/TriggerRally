@@ -70,17 +70,17 @@ var MODULE = 'track';
         var object = {};
         object.position = new Vec3(
             100 + random() * width,
-            0,
-            -100 - random() * width);
+            100 + random() * width,
+            0);
         var contact = terrain.getContact(object.position);
-        object.position.y = contact.surfacePos.y;
+        object.position.z = contact.surfacePos.z;
         object.scale = random() * 0.3 + 0.3;
 
         var gradient = density && density.gradient;
         if (gradient) {
-          if (contact.normal.y < gradient.min) continue;
-          if (contact.normal.y < gradient.full) {
-            if (contact.normal.y < random() *
+          if (contact.normal.z < gradient.min) continue;
+          if (contact.normal.z < gradient.full) {
+            if (contact.normal.z < random() *
                 (gradient.full - gradient.min) + gradient.min) continue;
           }
         }
