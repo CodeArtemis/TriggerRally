@@ -127,7 +127,9 @@ function init() {
 
   // RENDERER
   webglRenderer = new THREE.WebGLRenderer({
-    antialias: false
+    alpha: false,
+    antialias: false,
+    premultipliedAlpha: false
   });
   webglRenderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
   webglRenderer.shadowMapEnabled = true;

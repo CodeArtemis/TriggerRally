@@ -22,12 +22,14 @@ class render_scenery.RenderScenery
       for layer in @layers
         tile = layer.src.getTile(0, 0)
         unless layer.objects then return
+        renderConfig = layer.src.config.render
         for object in layer.objects
           # We merge copies of each object into a single mesh.
           mergedGeom = new THREE.Geometry
           mesh = new THREE.Mesh object.geometry
           for entity in tile
             mesh.scale.copy object.scale
+            if renderConfig.scale? then mesh.scale.multiplyScalar renderConfig.scale
             mesh.scale.multiplyScalar entity.scale
             mesh.position.copy entity.position
             mesh.rotation.add object.rotation, entity.rotation
@@ -36,8 +38,6 @@ class render_scenery.RenderScenery
           mesh.doubleSided = object.doubleSided
           mesh.castShadow = object.castShadow
           mesh.receiveShadow = object.receiveShadow
-          console.log mesh
-          console.log object
           scene.add mesh
       @lastCamPos = camera.position.clone()
     return

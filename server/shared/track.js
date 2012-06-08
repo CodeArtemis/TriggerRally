@@ -11,9 +11,9 @@ var MODULE = 'track';
 
   var Vec3 = THREE.Vector3;
 
-  exports.Scenery = function(config, terrain) {
+  exports.Scenery = function(config, track) {
     this.config = config;
-    this.terrain = terrain;
+    this.track = track;
     this.layers = [];
     this.layersById = {};
     for (var i = 0; i < config.layers.length; ++i) {
@@ -45,12 +45,12 @@ var MODULE = 'track';
     if (key in this.cache) {
       return this.cache[key];
     } else {
-      var terrain = this.scenery.terrain;
+      var terrain = this.scenery.track.terrain;
       var objects = [];
       var i, j, k, leng;
       var tmpVec1 = new Vec3(), tmpVec2 = new Vec3();
       var randomseed = 1;
-      var random = LFIB4.LFIB4(randomseed, key);
+      var random = LFIB4.LFIB4(randomseed, key, this.config.id);
       var width = 40;
       var maxObjects = 1;
       var avoids = [];
@@ -75,6 +75,15 @@ var MODULE = 'track';
         var contact = terrain.getContact(object.position);
         object.position.y = contact.surfacePos.y;
         object.scale = random() * 0.3 + 0.3;
+
+        var gradient = density && density.gradient;
+        if (gradient) {
+          if (contact.normal.y < gradient.min) continue;
+          if (contact.normal.y < gradient.full) {
+            if (contact.normal.y < random() *
+                (gradient.full - gradient.min) + gradient.min) continue;
+          }
+        }
 
 /*
         for (j = 0; j < objects.length; ++j) {
@@ -140,7 +149,7 @@ var MODULE = 'track';
               "render": {
                 "scene": "/a/meshes/tree1a_lod2-scene.js"
               }
-            },
+            },/*
             {
               "id": "grass",
               "density": {
@@ -150,10 +159,22 @@ var MODULE = 'track';
               "render": {
                 "scene": "/a/meshes/grass-triangle.js"
               }
+            },*/
+            {
+              "id": "grass2",
+              "density": {
+                "base": 6,
+                "gradient": { "min": 0.8, "full": 0.9 },
+                "avoid": { "layer": "trees", "distance": 2 }
+              },
+              "render": {
+                "scene": "/a/meshes/grass-triangle.js",
+                "scale": 0.7
+              }
             }
           ]
         };
-        this.scenery = new exports.Scenery(sc_config, terrain);
+        this.scenery = new exports.Scenery(sc_config, this);
 
         var course = config.course;
         var cpts = course.checkpoints;
