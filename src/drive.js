@@ -16,7 +16,6 @@ var sceneHUD, cameraHUD;
 var revMeter;
 
 var scene, camera;
-var debugMesh;
 var webglRenderer;
 var sunLight, sunLightPos;
 var cameraMode = 0, CAMERA_MODES = 3;
@@ -83,16 +82,10 @@ function init() {
   scene = new THREE.Scene();
 
   camera = new THREE.PerspectiveCamera(75, 1, 0.1, 100000);
-  camera.position.x = 2;
-  camera.position.y = 2;
-  camera.position.z = 2;
+  camera.position.set(2, 2, 2);
+  camera.up.set(0, 0, 1);
 
   scene.add(camera);
-
-  var debugGeometry = new THREE.SphereGeometry( 0.2, 16, 8 );
-  var debugMaterial = new THREE.MeshBasicMaterial();
-  debugMesh = new THREE.Mesh(debugGeometry, debugMaterial);
-  scene.add(debugMesh);
 
   // LIGHTS
 
@@ -101,9 +94,9 @@ function init() {
   var ambient = new THREE.AmbientLight( 0x446680 );
   scene.add(ambient);
 
-  sunLightPos = new Vec3(0, 10, -15);
+  sunLightPos = new Vec3(0, 15, 10);
   sunLight = new THREE.DirectionalLight( 0xffe0bb );
-  sunLight.intensity = 1.3;//0.1;//1.3;
+  sunLight.intensity = 1.3;
   sunLight.position.copy(sunLightPos);
 
   sunLight.castShadow = true;
@@ -175,7 +168,7 @@ function init() {
 
   //
 
-  var path = "/a/textures/Teide-1024/";
+  var path = "/a/textures/Teide-512/";
   var format = '.jpg';
   var urls = [
     path + 'posx' + format, path + 'negx' + format,
@@ -278,7 +271,6 @@ function init() {
       renderScenery = new render_scenery.RenderScenery(
           scene, data.track.scenery, loadFunc)
       drawTrack(data.track.terrain.getTile(0, 0));
-      //drawTrees(data.geomTrunk, data.geomLeaves);
 
       var bodyMaterial = car.bodyGeometry.materials[0];
       bodyMaterial.envMap = textureCube;
@@ -306,49 +298,20 @@ function init() {
   return true;
 };
 
-function drawTrees(geomTrunk, geomLeaves) {
-  var matTrunk = geomTrunk.materials[0];
-  matTrunk.ambient = matTrunk.color;
-  var matLeaves = geomLeaves.materials[0];
-  matLeaves.ambient = matLeaves.color;
-  matLeaves.depthWrite = false;
-  //matLeaves.alphaTest = true;
-  matLeaves.transparent = true;
-  var i;
-  for (i = 0; i < game.track.trees.length; ++i) {
-    var tree = game.track.trees[i];
-    var mesh = new THREE.Mesh(geomTrunk, matTrunk);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.scale.set(tree.scl, tree.scl, tree.scl);
-    mesh.position.copy(tree);
-    mesh.rotation.y = tree.rot;
-    scene.add(mesh);
-
-    mesh = new THREE.Mesh(geomLeaves, matLeaves);
-    mesh.castShadow = true;
-    //mesh.receiveShadow = true;
-    mesh.doubleSided = true;
-    mesh.scale.set(tree.scl, tree.scl, tree.scl);
-    mesh.position.copy(tree);
-    mesh.rotation.y = tree.rot;
-    scene.add(mesh);
-  }
-};
-
 function drawCube() {
-  var cubeShader = THREE.ShaderUtils.lib["cube"];
-  cubeShader.uniforms["tCube"].texture = textureCube;
+  var cubeShader = THREE.ShaderUtils.lib['cube'];
+  cubeShader.uniforms['tCube'].texture = textureCube;
   var cubeMaterial = new THREE.ShaderMaterial({  
     fragmentShader: cubeShader.fragmentShader,
     vertexShader: cubeShader.vertexShader,
     uniforms: cubeShader.uniforms
   });
   //cubeMaterial.transparent = 1; // Force draw at end.
-  var cubeMesh = new THREE.Mesh(new THREE.CubeGeometry(100000, 100000, 100000), cubeMaterial);
-  cubeMesh.geometry.faces.splice(3, 1);
+  var cubeMesh = new THREE.Mesh(
+      new THREE.CubeGeometry(100000, 100000, 100000), cubeMaterial);
+  cubeMesh.geometry.faces.splice(5, 1);
   cubeMesh.flipSided = true;
-  cubeMesh.position.set(0, -1000, 0);
+  cubeMesh.position.set(0, 0, 40000);
   scene.add(cubeMesh);
 };
 
@@ -369,6 +332,7 @@ function drawCheckpoint() {
   ringMesh.rotation.y = Math.PI * 4 / 3;
   THREE.GeometryUtils.merge(geom, ringMesh);
   meshCheckpoint = new THREE.Mesh(geom, mat);
+  meshCheckpoint.rotation.x = Math.PI / 2;
   meshCheckpoint.doubleSided = true;
   meshCheckpoint.castShadow = true;
   scene.add(meshCheckpoint);
@@ -441,8 +405,6 @@ var drawTrack = function(terrainTile) {
   
   var mesh = new THREE.Mesh(geometry, xm);
   mesh.position.set(0, 0, 0);
-  // Grrr Y up.
-  mesh.rotation.x = -Math.PI/2;
   mesh.castShadow = false;
   mesh.receiveShadow = true;
   scene.add(mesh);
@@ -547,22 +509,22 @@ function animate() {
   // TODO: Move to an observer system for car updates.
   car.update();
 
+  var cpVec, cpVecCamSpace;
   if (nextCp) {
-    var cpVec = new Vec2(car.vehic.body.pos.x - nextCp.x, car.vehic.body.pos.z - nextCp.z);
-
-    cpVec = new Vec2(car.vehic.body.pos.x - meshCheckpoint.position.x,
-                     car.vehic.body.pos.z - meshCheckpoint.position.z);
-    var cpVecCamSpace = new Vec2(
-        cpVec.x * camera.matrixWorld.elements[2] - cpVec.y * camera.matrixWorld.elements[10],
-        cpVec.x * camera.matrixWorld.elements[0] - cpVec.y * camera.matrixWorld.elements[8]);
-    meshArrow.rotation.y = Math.atan2(-cpVecCamSpace.y, cpVecCamSpace.x);
+    cpVec = new Vec2(meshCheckpoint.position.x - car.vehic.body.pos.x,
+                     meshCheckpoint.position.y - car.vehic.body.pos.y);
+    cpVecCamSpace = new Vec2(
+        cpVec.x * camera.matrixWorld.elements[1] + cpVec.y * camera.matrixWorld.elements[9],
+        cpVec.x * camera.matrixWorld.elements[0] + cpVec.y * camera.matrixWorld.elements[8]);
+    meshArrow.rotation.y = Math.atan2(cpVecCamSpace.y, cpVecCamSpace.x);
   }
   if (nextCpNext) {
-    cpVec = new Vec2(car.vehic.body.pos.x - nextCpNext.x, car.vehic.body.pos.z - nextCpNext.z);
+    cpVec = new Vec2(nextCpNext.x - car.vehic.body.pos.x,
+                     nextCpNext.y - car.vehic.body.pos.y);
     cpVecCamSpace = new Vec2(
-        cpVec.x * camera.matrixWorld.elements[2] - cpVec.y * camera.matrixWorld.elements[10],
-        cpVec.x * camera.matrixWorld.elements[0] - cpVec.y * camera.matrixWorld.elements[8]);
-    meshArrowNext.rotation.y = Math.atan2(-cpVecCamSpace.y, cpVecCamSpace.x) - meshArrow.rotation.y;
+        cpVec.x * camera.matrixWorld.elements[1] + cpVec.y * camera.matrixWorld.elements[9],
+        cpVec.x * camera.matrixWorld.elements[0] + cpVec.y * camera.matrixWorld.elements[8]);
+    meshArrowNext.rotation.y = Math.atan2(cpVecCamSpace.y, cpVecCamSpace.x) - meshArrow.rotation.y;
   }
 
   var linVel = car.vehic.body.linVel;
@@ -571,20 +533,18 @@ function animate() {
   camera.quaternion.y = PULLTOWARD(camera.quaternion.y, car.root.quaternion.w, pull);
   camera.quaternion.z = PULLTOWARD(camera.quaternion.z, car.root.quaternion.x, pull);
   camera.quaternion.w = PULLTOWARD(camera.quaternion.w, -car.root.quaternion.y, pull);
+  //camera.quaternion.x = PULLTOWARD(camera.quaternion.x, car.root.quaternion.z, pull);
+  //camera.quaternion.y = PULLTOWARD(camera.quaternion.y, car.root.quaternion.w, pull);
+  //camera.quaternion.z = PULLTOWARD(camera.quaternion.z, car.root.quaternion.x, pull);
+  //camera.quaternion.w = PULLTOWARD(camera.quaternion.w, car.root.quaternion.y, pull);
   camera.quaternion.normalize();
   switch (cameraMode) {
   case 0:
     var targetPos = car.root.position.clone();
     targetPos.addSelf(linVel.clone().multiplyScalar(.17));
-    if (1) {
-      targetPos.addSelf(car.root.matrix.getColumnX().clone().multiplyScalar(0));
-      targetPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(1.2));
-      targetPos.addSelf(car.root.matrix.getColumnZ().clone().multiplyScalar(-2.9));
-    } else {
-      targetPos.addSelf(car.root.matrix.getColumnX().clone().multiplyScalar(2.0));
-      targetPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(0.2));
-      targetPos.addSelf(car.root.matrix.getColumnZ().clone().multiplyScalar(-0.5));
-    }
+    targetPos.addSelf(car.root.matrix.getColumnX().clone().multiplyScalar(0));
+    targetPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(1.2));
+    targetPos.addSelf(car.root.matrix.getColumnZ().clone().multiplyScalar(-2.9));
     var camDelta = delta * 5;
     camera.position.x = PULLTOWARD(camera.position.x, targetPos.x, camDelta);
     camera.position.y = PULLTOWARD(camera.position.y, targetPos.y, camDelta);
@@ -595,14 +555,14 @@ function animate() {
     camera.useQuaternion = false;
     var lookPos = car.root.position.clone();
     lookPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(0.7));
-    camera.lookAt( lookPos );
+    camera.lookAt(lookPos);
     break;
   case 1:
     camera.useQuaternion = true;
     camera.updateMatrix();
-    camera.position.x = car.root.position.x + camera.matrix.elements[1] * 0.7;
+    camera.position.x = car.root.position.x + camera.matrix.elements[4] * 0.7;
     camera.position.y = car.root.position.y + camera.matrix.elements[5] * 0.7;
-    camera.position.z = car.root.position.z + camera.matrix.elements[9] * 0.7;
+    camera.position.z = car.root.position.z + camera.matrix.elements[6] * 0.7;
     camera.matrix.setPosition(camera.position);
     break;
   case 2:
@@ -621,11 +581,11 @@ function animate() {
   }
 
   var cameraClip = camera.position.clone();
-  cameraClip.y -= 0.1;
+  cameraClip.z -= 0.1;
   var ctc = game.sim.collide(cameraClip);
   for (var c = 0; c < ctc.length; ++c) {
-    if (camera.position.y < ctc[c].surfacePos.y + 0.1) {
-      camera.position.y = ctc[c].surfacePos.y + 0.1;
+    if (camera.position.z < ctc[c].surfacePos.z + 0.1) {
+      camera.position.z = ctc[c].surfacePos.z + 0.1;
     }
   }
 

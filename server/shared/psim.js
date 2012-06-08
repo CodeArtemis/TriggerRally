@@ -15,7 +15,7 @@ var MODULE = 'psim';
   var QuatFromEuler = util.QuatFromEuler;
 
   exports.Sim = function(timeStep) {
-    this.gravity = new Vec3(0, -9.81, 0);
+    this.gravity = new Vec3(0, 0, -9.81);
     //this.gravity = new Vec3(0, -1, 0);
     this.objects = [];
     this.staticObjects = [];  // Just used for clipping.

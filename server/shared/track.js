@@ -178,13 +178,15 @@ var MODULE = 'track';
 
         var course = config.course;
         var cpts = course.checkpoints;
+        // TODO: Move this change to config.
+        course.coordscale[1] *= -1;
         for (i = 0; i < cpts.length; ++i) {
           var checkpoint = new Vec3(
               cpts[i].pos[0] * course.coordscale[0],
-              0,
-              cpts[i].pos[1] * course.coordscale[1]);
+              cpts[i].pos[1] * course.coordscale[1],
+              0);
           var contact = this.terrain.getContact(checkpoint);
-          checkpoint.y = contact.surfacePos.y + 2;
+          checkpoint.z = contact.surfacePos.z + 2;
           this.checkpoints.push(checkpoint);
         }
 

@@ -15,9 +15,13 @@ class render_scenery.RenderScenery
         layer.objects = result.scene.children
         return
       , layer)
+    @tiles = {}
     return
 
   update: (camera) ->
+    tx = Math.floor(camera.position.x / 40)
+    ty = Math.floor(-camera.position.z / 40)
+    key = tx + ',' + ty
     unless @lastCamPos?
       for layer in @layers
         tile = layer.src.getTile(0, 0)

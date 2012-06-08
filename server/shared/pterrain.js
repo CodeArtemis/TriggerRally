@@ -127,8 +127,7 @@ var MODULE = 'pterrain';
   };
 
   exports.Terrain.prototype.getContact = function(pt) {
-    // TODO: Convert to fucking Z up. This is nuts.
-    return this.getContactRayZ(pt.x, -pt.z);
+    return this.getContactRayZ(pt.x, pt.y);
   }
 
   // x, y = terrain space coordinates
@@ -144,9 +143,8 @@ var MODULE = 'pterrain';
           sx - tx * this.tileSize,
           sy - ty * this.tileSize);
       if (contact) {
-        // Y UP
         contact.surfacePos.x = x;
-        contact.surfacePos.z = -y;
+        contact.surfacePos.y = y;
       }
     } else {
       // TODO: Fire off a request to load this tile.
@@ -195,10 +193,9 @@ var MODULE = 'pterrain';
       normal.y = h10 - h11;
       height = h11 + (h01-h11) * (1-fraclx) + (h10-h11) * (1-fracly);
     }
-    // Y UP CONVERSION
     return {
-      normal: new Vec3(normal.x, normal.z, -normal.y).normalize(),
-      surfacePos: new Vec3(0, height, 0)
+      normal: new Vec3(normal.x, normal.y, normal.z).normalize(),
+      surfacePos: new Vec3(0, 0, height)
     };
   }
 })(typeof exports === 'undefined' ? this[MODULE] = {} : exports);

@@ -248,7 +248,9 @@ var MODULE = 'pvehicle';
     if (!state) {
       // Work out which way vehicle is facing.
       var angleY = Math.atan2(body.oriMat.elements[8], body.oriMat.elements[0]);
-      var newOri = new Quat().setFromAxisAngle(new Vec3(0,1,0), Math.PI -angleY);
+      var ninetyDeg = new Quat(1, 0, 0, 1).normalize();
+      var newOri = new Quat().setFromAxisAngle(new Vec3(0, 1, 0), Math.PI - angleY);
+      newOri = ninetyDeg.multiplySelf(newOri);
 
       // Make sure we take the shortest path.
       var cosHalfTheta = newOri.x * body.ori.x + newOri.y * body.ori.y +
@@ -258,9 +260,11 @@ var MODULE = 'pvehicle';
         newOri.z *= -1; newOri.w *= -1;
       }
 
+      var posOffset = Vec3FromArray(this.cfg.recover.posOffset);
+      // TODO: Transfer this to config.
+      posOffset.set(0, 0, 4);
       state = this.recoverState = {
-        pos: body.pos.clone().addSelf(
-            Vec3FromArray(this.cfg.recover.posOffset)),
+        pos: body.pos.clone().addSelf(posOffset),
         ori: newOri
       };
       this.disabled = true;
@@ -306,7 +310,7 @@ var MODULE = 'pvehicle';
     this.crashLevel = PULLTOWARD(this.crashLevel, 0, delta * 5);
     this.skidLevel = 0;
 
-    if (this.body.oriMat.elements[5] <= 0.1 ||
+    if (this.body.oriMat.elements[6] <= 0.1 ||
         this.recoverTimer >= this.cfg.recover.triggerTime) {
       this.recoverTimer += delta;
       
@@ -552,7 +556,7 @@ var MODULE = 'pvehicle';
     
     // TODO: Try moving along radius instead of straight down?
     // TODO: Add virtual terrain bumps.
-    clipPos.y += wheel.ridePos - wheel.cfg.radius;
+    clipPos.z += wheel.ridePos - wheel.cfg.radius;
     // Wheel bump makes sims diverge faster, so disabling it.
     //clipPos.y += INTERP(wheel.bumpLast, wheel.bumpNext, wheel.bumpTravel);
     var contactVel = this.body.getLinearVelAtPoint(clipPos);

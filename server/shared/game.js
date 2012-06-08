@@ -33,7 +33,7 @@ var MODULE = 'game';
     var vehic = this.vehicle;
     var nextCp = this.nextCheckpoint(0);
     if (nextCp) {
-      var cpVec = new Vec2(vehic.body.pos.x - nextCp.x, vehic.body.pos.z - nextCp.z);
+      var cpVec = new Vec2(vehic.body.pos.x - nextCp.x, vehic.body.pos.y - nextCp.y);
       var cpDistSq = cpVec.lengthSq();
       var CP_TEST = 64;
       if (cpDistSq < CP_TEST) {
@@ -112,11 +112,9 @@ var MODULE = 'game';
 
     // TODO: Get this initial state from track.
     vehicle.body.pos.x = 100;
-    vehicle.body.pos.y = 10;
-    vehicle.body.pos.z = -100;
-    vehicle.body.ori = new THREE.Quaternion(0, 0.5, 0, 0.5);
-    //vehicle.body.ori = new THREE.Quaternion(0.9, 0.6, 0.7, -0.2);
-    vehicle.body.ori.normalize();
+    vehicle.body.pos.y = 100;
+    vehicle.body.pos.z = 10;
+    vehicle.body.ori = new THREE.Quaternion(1, 1, 1, 1).normalize();
 
     var progress = new exports.Progress(this.track, vehicle);
     this.progs.push(progress);
