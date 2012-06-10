@@ -32,6 +32,7 @@ var MODULE = 'track';
     this.scenery = scenery;
     // TODO: Purge LRU cache entries.
     this.cache = {};
+    this.tileSize = 10;
   };
   
   // TODO: Pass in a rectangle.
@@ -41,7 +42,6 @@ var MODULE = 'track';
 
   exports.Layer.prototype.getTile = function(tx, ty) {
     var key = tx + ',' + ty;
-    console.log(key);
     if (key in this.cache) {
       return this.cache[key];
     } else {
@@ -51,12 +51,13 @@ var MODULE = 'track';
       var tmpVec1 = new Vec3(), tmpVec2 = new Vec3();
       var randomseed = 1;
       var random = LFIB4.LFIB4(randomseed, key, this.config.id);
-      var width = 40;
+      var tileSize = this.tileSize;
+      var baseX = tx * tileSize, baseY = ty * tileSize;
       var maxObjects = 1;
       var avoids = [];
       var density = this.config.density;
       if (density) {
-        maxObjects = density.base * width * width;
+        maxObjects = density.base * tileSize * tileSize;
         if ('avoid' in density) {
           var layer = this.scenery.getLayer(density.avoid.layer);
           avoids.push({
@@ -69,15 +70,17 @@ var MODULE = 'track';
         var drop = false;
         var object = {};
         object.position = new Vec3(
-            100 + random() * width,
-            100 + random() * width,
+            baseX + random() * tileSize,
+            baseY + random() * tileSize,
             0);
         var contact = terrain.getContact(object.position);
-        object.position.z = contact.surfacePos.z;
+        if (contact) {
+          object.position.z = contact.surfacePos.z;
+        }
         object.scale = random() * 0.3 + 0.3;
 
         var gradient = density && density.gradient;
-        if (gradient) {
+        if (gradient && contact) {
           if (contact.normal.z < gradient.min) continue;
           if (contact.normal.z < gradient.full) {
             if (contact.normal.z < random() *
@@ -112,7 +115,6 @@ var MODULE = 'track';
         object.rotation = new Vec3(0, random() * 2 * Math.PI, 0);
         objects.push(object);
       }
-      console.log(objects.length);
       this.cache[key] = objects;
       return objects;
     }
@@ -144,7 +146,8 @@ var MODULE = 'track';
             {
               "id": "trees",
               "density": {
-                "base": 0.02
+                "base": 0.02,
+                "gradient": { "min": 0.98, "full": 1.0 }
               },
               "render": {
                 "scene": "/a/meshes/tree1a_lod2-scene.js"
@@ -164,7 +167,7 @@ var MODULE = 'track';
               "id": "grass2",
               "density": {
                 "base": 6,
-                "gradient": { "min": 0.8, "full": 0.9 },
+                "gradient": { "min": 0.8, "full": 0.95 },
                 "avoid": { "layer": "trees", "distance": 2 }
               },
               "render": {

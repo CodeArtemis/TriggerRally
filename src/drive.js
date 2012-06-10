@@ -100,7 +100,7 @@ function init() {
   sunLight.position.copy(sunLightPos);
 
   sunLight.castShadow = true;
-  
+
   sunLight.shadowCameraNear = -20;
   sunLight.shadowCameraFar = 60;
   sunLight.shadowCameraLeft = -24;
@@ -111,7 +111,7 @@ function init() {
   //sunLight.shadowCameraVisible = true;
 
   //sunLight.shadowBias = -0.001;
-  sunLight.shadowDarkness = 0.4;
+  sunLight.shadowDarkness = 0.5;
 
   sunLight.shadowMapWidth = SHADOW_MAP_WIDTH;
   sunLight.shadowMapHeight = SHADOW_MAP_HEIGHT;
