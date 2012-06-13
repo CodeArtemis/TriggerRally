@@ -10,6 +10,7 @@ set -e
 WORK=intermediate
 mkdir -p $WORK
 coffee -c -o $WORK \
+  src/array_geometry.coffee \
   src/render_scenery.coffee
 
 # Concatenate and optimize JavaScript files.
