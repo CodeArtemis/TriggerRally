@@ -269,7 +269,7 @@ function init() {
     if (err) throw new Error(err);
     else {
       renderScenery = new render_scenery.RenderScenery(
-          scene, data.track.scenery, loadFunc)
+          scene, data.track.scenery, loadFunc, webglRenderer.context)
       drawTrack(data.track.terrain.getTile(0, 0));
 
       var bodyMaterial = car.bodyGeometry.materials[0];

@@ -5,7 +5,7 @@
 render_scenery = exports? and @ or @render_scenery = {}
 
 class render_scenery.RenderScenery
-  constructor: (@scene, @scenery, loadFunc) ->
+  constructor: (@scene, @scenery, loadFunc, @gl) ->
     @layers = ({ src: l, tiles: {} } for l in scenery.layers)
     for layer in @layers
       do (layer) ->
@@ -35,7 +35,8 @@ class render_scenery.RenderScenery
         #mesh.position.copy entity.position
         mesh.position.sub entity.position, tile.position
         mesh.rotation.add object.rotation, entity.rotation
-        THREE.GeometryUtils.merge mergedGeom, mesh
+        mergedGeom.mergeMesh mesh
+      mergedGeom.createBuffers(@gl)
       mesh = new THREE.Mesh mergedGeom, object.material
       mesh.doubleSided = object.doubleSided
       mesh.castShadow = object.castShadow
