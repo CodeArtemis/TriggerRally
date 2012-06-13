@@ -10,9 +10,38 @@ class render_scenery.RenderScenery
     for layer in @layers
       do (layer) ->
         loadFunc layer.src.config.render.scene, (result) ->
-          layer.meshes = result.scene.children
+          layer.meshes = for mesh in result.scene.children
+            geom = new array_geometry.ArrayGeometry()
+            geom.addGeometry mesh.geometry
+            geom.material = mesh.material
+            new THREE.Mesh(geom, mesh.material)
           return
     return
+
+  createTile: (layer, tx, ty) ->
+    entities = layer.src.getTile(tx, ty)
+    renderConfig = layer.src.config.render
+    tile = new THREE.Object3D
+    tile.position.x = (tx + 0.5) * layer.src.tileSize
+    tile.position.y = (ty + 0.5) * layer.src.tileSize
+    for object in layer.meshes
+      # We merge copies of each object into a single mesh.
+      mergedGeom = new array_geometry.ArrayGeometry()
+      mesh = new THREE.Mesh object.geometry
+      for entity in entities
+        mesh.scale.copy object.scale
+        if renderConfig.scale? then mesh.scale.multiplyScalar renderConfig.scale
+        mesh.scale.multiplyScalar entity.scale
+        #mesh.position.copy entity.position
+        mesh.position.sub entity.position, tile.position
+        mesh.rotation.add object.rotation, entity.rotation
+        THREE.GeometryUtils.merge mergedGeom, mesh
+      mesh = new THREE.Mesh mergedGeom, object.material
+      mesh.doubleSided = object.doubleSided
+      mesh.castShadow = object.castShadow
+      mesh.receiveShadow = object.receiveShadow
+      tile.add mesh
+    return tile
 
   update: (camera) ->
     added = false
@@ -36,27 +65,3 @@ class render_scenery.RenderScenery
         scene.remove layer.tiles[key]
         delete layer.tiles[key]
     return
-
-  createTile: (layer, tx, ty) ->
-    entities = layer.src.getTile(tx, ty)
-    renderConfig = layer.src.config.render
-    layer.tiles[key] = tile = new THREE.Object3D
-    tile.position.x = (tx + 0.5) * layer.src.tileSize
-    tile.position.y = (ty + 0.5) * layer.src.tileSize
-    for object in layer.meshes
-      # We merge copies of each object into a single mesh.
-      mergedGeom = new THREE.Geometry
-      mesh = new THREE.Mesh object.geometry
-      for entity in entities
-        mesh.scale.copy object.scale
-        if renderConfig.scale? then mesh.scale.multiplyScalar renderConfig.scale
-        mesh.scale.multiplyScalar entity.scale
-        #mesh.position.copy entity.position
-        mesh.position.sub entity.position, tile.position
-        mesh.rotation.add object.rotation, entity.rotation
-        THREE.GeometryUtils.merge mergedGeom, mesh
-      mesh = new THREE.Mesh mergedGeom, object.material
-      mesh.doubleSided = object.doubleSided
-      mesh.castShadow = object.castShadow
-      mesh.receiveShadow = object.receiveShadow
-      tile.add mesh
