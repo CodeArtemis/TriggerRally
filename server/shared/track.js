@@ -31,7 +31,7 @@ var MODULE = 'track';
       this.layers.push(layer);
       this.layersById[layer.config.id] = layer;
     }
-    this.trackPts = new hash2d.Hash2D(10);
+    this.trackPts = new hash2d.IndirectHash2D(10);
     var radius = Math.sqrt(100 + 80);  // where probability == 1
     for (var i = 0; i < track.checkpoints.length - 1; ++i) {
       var cp = [
@@ -60,35 +60,31 @@ var MODULE = 'track';
   exports.Layer = function(config, scenery) {
     this.config = config;
     this.scenery = scenery;
-    // TODO: Purge LRU cache entries.
-    this.cache = {};
-    this.tileSize = 20;
-  };
-  
-  // TODO: Pass in a rectangle.
-  exports.Layer.prototype.getObjects = function() {
-    return this.cache['0,0'];
+    this.cache = new hash2d.Hash2D(20);
   };
 
-  exports.Layer.prototype.getTile = function(tx, ty) {
-    var key = tx + ',' + ty;
-    if (key in this.cache) {
-      return this.cache[key];
-    } else {
-      return this.cache[key] = this.createTile(tx, ty, key);
-    }
+  exports.Layer.prototype.getObjects = function(minX, minY, maxX, maxY) {
+    return this.cache.getObjects(minX, minY, maxX, maxY);
   };
-  
-  exports.Layer.prototype.createTile = function(tx, ty) {
+
+  exports.Layer.prototype.getTile = function(tX, tY) {
+    var tile = this.cache.getTile(tX, tY);
+    if (tile) return tile;
+    tile = this.createTile(tX, tY);
+    this.cache.setTile(tX, tY, tile);
+    return tile;
+  };
+
+  exports.Layer.prototype.createTile = function(tX, tY) {
     var terrain = this.scenery.track.terrain;
     var objects = [];
     var i, j, k, leng;
     var tmpVec1 = new Vec3(), tmpVec2 = new Vec2();
     var randomseed = 1;
-    var key = tx + ',' + ty;
+    var key = tX + ',' + tY;
     var random = LFIB4.LFIB4(randomseed, key, this.config.id);
-    var tileSize = this.tileSize;
-    var baseX = tx * tileSize, baseY = ty * tileSize;
+    var tileSize = this.cache.gridSize;
+    var baseX = tX * tileSize, baseY = tY * tileSize;
     var maxObjects = 1;
     var avoids = [];
     var density = this.config.density;
@@ -99,13 +95,14 @@ var MODULE = 'track';
           var avoid = density['avoidLayers'][i];
           var layer = this.scenery.getLayer(avoid.layer);
           avoids.push({
-            objects: layer.getObjects(),
+            objects: layer.getObjects(
+              baseX, baseY, baseX + tileSize, baseY + tileSize),
             distanceSq: avoid.distance * avoid.distance
           });
         }
       }
     }
-    var trackPts = this.scenery.trackPts.getPotentialObjects(
+    var trackPts = this.scenery.trackPts.getObjects(
         baseX, baseY, baseX + tileSize, baseY + tileSize);
     for (i = 0; i < maxObjects; ++i) {
       var drop = false;

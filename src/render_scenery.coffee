@@ -23,8 +23,8 @@ class render_scenery.RenderScenery
     entities = layer.src.getTile(tx, ty)
     renderConfig = layer.src.config.render
     tile = new THREE.Object3D
-    tile.position.x = (tx + 0.5) * layer.src.tileSize
-    tile.position.y = (ty + 0.5) * layer.src.tileSize
+    tile.position.x = (tx + 0.5) * layer.src.cache.gridSize
+    tile.position.y = (ty + 0.5) * layer.src.cache.gridSize
     for object in layer.meshes
       # We merge copies of each object into a single mesh.
       mergedGeom = new array_geometry.ArrayGeometry()
@@ -50,8 +50,8 @@ class render_scenery.RenderScenery
     for layer in @layers
       continue unless layer.meshes?  # Check that we have something to draw.
       visibleTiles = {}
-      txCenter = Math.floor(camera.position.x / layer.src.tileSize)
-      tyCenter = Math.floor(camera.position.y / layer.src.tileSize)
+      txCenter = Math.floor(camera.position.x / layer.src.cache.gridSize)
+      tyCenter = Math.floor(camera.position.y / layer.src.cache.gridSize)
       for ty in [tyCenter-3..tyCenter+3]
         for tx in [txCenter-3..txCenter+3]
           key = tx + ',' + ty
