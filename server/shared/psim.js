@@ -13,6 +13,9 @@ var MODULE = 'psim';
   var Quat = THREE.Quaternion;
 
   var QuatFromEuler = util.QuatFromEuler;
+  
+  var tmpVec3a = new Vec3();
+  var tmpVec3b = new Vec3();
 
   exports.Sim = function(timeStep) {
     this.gravity = new Vec3(0, 0, -9.81);
@@ -81,13 +84,11 @@ var MODULE = 'psim';
 
   exports.Sim.prototype.collide = function(pt) {
     var i, contacts = [];
-    var tmp1 = new Vec3();
-    var tmp2 = new Vec3();
     for (i = 0; i < this.staticObjects.length; ++i) {
       var contact = this.staticObjects[i].getContact(pt);
       if (contact) {
-        var contactOffset = tmp1.copy(contact.surfacePos).subSelf(pt)
-        contact.depth = contactOffset.dot(contact.normal);
+        tmpVec3a.sub(contact.surfacePos, pt)
+        contact.depth = tmpVec3a.dot(contact.normal);
         if (contact.depth > 0) {
           contacts.push(contact);
         }
@@ -96,14 +97,14 @@ var MODULE = 'psim';
     var cylVec = new Vec3(0,1,0);
     var cylList = this.getCylList(pt);
     if (cylList) cylList.forEach(function(cyl) {
-      tmp2.copy(pt).subSelf(cyl);
-      var normal = tmp2.subSelf(tmp1.copy(cylVec).multiplyScalar(tmp2.dot(cylVec)));
+      tmpVec3b.sub(pt, cyl);
+      var normal = tmpVec3b.subSelf(tmpVec3a.copy(cylVec).multiplyScalar(tmpVec3b.dot(cylVec)));
       var leng = normal.length();
       if (leng < cyl.radius) {
         var depth = cyl.radius - leng;
         var contact = {
           normal: normal.clone(),
-          surfacePos: pt.addSelf(tmp1.copy(normal).multiplyScalar(depth)),
+          surfacePos: pt.addSelf(tmpVec3a.copy(normal).multiplyScalar(depth)),
           depth: depth
         };
         contacts.push(contact);
@@ -167,8 +168,8 @@ var MODULE = 'psim';
         var dlambdac = direc.dot(cyl) - direc.dot(pt1);
         if (dlambdac > 0 && dlambdac < leng) {
           var ptOnLine = direc.clone().multiplyScalar(dlambdac).addSelf(pt1);
-          var tmpVec = ptOnLine.clone().subSelf(cyl);
-          var normal = tmpVec.subSelf(cylVec.clone().multiplyScalar(tmpVec.dot(cylVec)));
+          tmpVec3a.sub(ptOnLine, cyl);
+          var normal = tmpVec.subSelf(cylVec.clone().multiplyScalar(tmpVec3a.dot(cylVec)));
           normal.normalize();
           //var ptOnSurf = cylVec.multiplyScalar(cylVec.dot(ptOnLine)).
           //    addSelf(normal.clone().multiplyScalar(cyl.radius));
@@ -246,18 +247,23 @@ var MODULE = 'psim';
     this.accumTorque = new Vec3();
 
     this.recordState();
+
+    // Used for state recording.    
+    this.old = {
+      pos: new Vec3(),
+      ori: new Quat(),
+      linVel: new Vec3(),
+      angVel: new Vec3()
+    };
   };
   exports.RigidBody.prototype = Object.create(new exports.ReferenceFrame());
 
   exports.RigidBody.prototype.recordState = function() {
     // Copy current state so that we can refer to it later.
-    this.old = {
-      pos: this.pos.clone(),
-      // TODO: Create a THREE.Quaterion.clone() method.
-      ori: new Quat().copy(this.ori),
-      linVel: this.linVel.clone(),
-      angVel: this.angVel.clone()
-    };
+    this.old.pos.copy(this.pos);
+    this.old.ori.copy(this.ori);
+    this.old.linVel.copy(this.linVel);
+    this.old.angVel.copy(this.angVel);
   };
 
   exports.RigidBody.prototype.getState = function() {
