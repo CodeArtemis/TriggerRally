@@ -194,7 +194,7 @@ var MODULE = 'pterrain';
       height = h11 + (h01-h11) * (1-fraclx) + (h10-h11) * (1-fracly);
     }
     return {
-      normal: new Vec3(normal.x, normal.y, normal.z).normalize(),
+      normal: normal.normalize(),
       surfacePos: new Vec3(0, 0, height)
     };
   }

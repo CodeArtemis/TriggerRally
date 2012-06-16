@@ -45,6 +45,11 @@ var MODULE = 'pvehicle';
   var FRICTION_DYNAMIC_WHEEL = 0.9 * 1.2;
   var FRICTION_STATIC_WHEEL = 1.2 * 1.2;
 
+  var tmpVec3a = new Vec3();
+  var tmpVec2a = new Vec2();
+  var plusXVec3 = new Vec3(1, 0, 0);
+  var plusYVec3 = new Vec3(0, 1, 0);
+
   var RPM_TO_RPS = function (r) { return r * TWOPI / 60; };
 
   function BiasedPull(val, target, deltaUp, deltaDown) {
@@ -249,7 +254,7 @@ var MODULE = 'pvehicle';
       // Work out which way vehicle is facing.
       var angleY = Math.atan2(body.oriMat.elements[8], body.oriMat.elements[0]);
       var ninetyDeg = new Quat(1, 0, 0, 1).normalize();
-      var newOri = new Quat().setFromAxisAngle(new Vec3(0, 1, 0), Math.PI - angleY);
+      var newOri = new Quat().setFromAxisAngle(plusYVec3, Math.PI - angleY);
       newOri = ninetyDeg.multiplySelf(newOri);
 
       // Make sure we take the shortest path.
@@ -430,14 +435,14 @@ var MODULE = 'pvehicle';
         this.engineAngVelSmoothed, this.engineAngVel, delta * 20);
   };
 
+  var tmpBasis = { u: new Vec3(), v: new Vec3(), w: new Vec3() };
   var getSurfaceBasis = function(normal, right) {
     // TODO: Return a matrix type.
-    var basis = {};
-    basis.w = normal;  // Assumed to be normalized.
-    basis.v = new Vec3().cross(normal, right);
-    basis.v.normalize();
-    basis.u = new Vec3().cross(basis.v, normal);
-    basis.u.normalize();
+    tmpBasis.w.copy(normal);  // Assumed to be normalized.
+    tmpBasis.v.cross(normal, right);
+    tmpBasis.v.normalize();
+    tmpBasis.u.cross(tmpBasis.v, normal);
+    tmpBasis.u.normalize();
     return basis;
   }
 
@@ -483,11 +488,11 @@ var MODULE = 'pvehicle';
   };
 
   exports.Vehicle.prototype.contactResponse = function(contact) {
-    var surf = getSurfaceBasis(contact.normal, new Vec3(1,0,0));
+    var surf = getSurfaceBasis(contact.normal, plusXVec3);
     var contactVel = this.body.getLinearVelAtPoint(contact.surfacePos);
 
     // Local velocity in surface space.
-    var contactVelSurf = new Vec3(
+    var contactVelSurf = tmpVec3a.set(
         contactVel.dot(surf.u),
         contactVel.dot(surf.v),
         contactVel.dot(surf.w));
@@ -503,7 +508,7 @@ var MODULE = 'pvehicle';
     // Make sure the objects are pushing apart.
     if (perpForce > 0) {
       // TODO: Reexamine this friction algorithm.
-      var friction = new Vec2(-contactVelSurf.x, -contactVelSurf.y).
+      var friction = tmpVec2a.set(-contactVelSurf.x, -contactVelSurf.y).
           multiplyScalar(10000);
 
       var maxFriction = perpForce * FRICTION_DYNAMIC_CHASSIS;
@@ -567,7 +572,7 @@ var MODULE = 'pvehicle';
                                  this.getWheelRightVector(wheel));
 
       // Local velocity in surface space.
-      var contactVelSurf = new Vec3(
+      var contactVelSurf = tmpVec3a.set(
           contactVel.dot(surf.u),
           contactVel.dot(surf.v),
           contactVel.dot(surf.w));
@@ -598,7 +603,7 @@ var MODULE = 'pvehicle';
       // Make sure the objects are pushing apart.
       if (perpForce > 0) {
         // TODO: Reexamine this friction algorithm.
-        var friction = new Vec2(-contactVelSurf.x, -contactVelSurf.y).
+        var friction = tmpVec2a.set(-contactVelSurf.x, -contactVelSurf.y).
             multiplyScalar(3000);
 
         var maxFriction = perpForce * FRICTION_DYNAMIC_WHEEL;
@@ -626,18 +631,19 @@ var MODULE = 'pvehicle';
     return (wheel.cfg.turn || 0) * this.wheelTurnPos;
   }
 
+  var tmpWheelRight = new Vec3();
   exports.Vehicle.prototype.getWheelRightVector = function(wheel) {
     var turnPos = this.getWheelTurnPos(wheel);
     var cosTurn = Math.cos(turnPos);
     var sinTurn = Math.sin(turnPos);
     var left = this.body.oriMat.getColumnX().clone();
     var fwd = this.body.oriMat.getColumnZ();
-    var wheelRight = new Vec3(
+    tmpWheelRight.set(
         left.x * cosTurn - fwd.x * sinTurn,
         left.y * cosTurn - fwd.y * sinTurn,
         left.z * cosTurn - fwd.z * sinTurn
     );
-    return wheelRight;
+    return tmpWheelRight;
   };
 
   exports.Vehicle.prototype.getCrashNoiseLevel = function() {
