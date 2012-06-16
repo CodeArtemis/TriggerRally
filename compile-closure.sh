@@ -1,10 +1,10 @@
 #!/bin/sh
 
-LEVEL=SIMPLE_OPTIMIZATIONS
-#LEVEL=WHITESPACE_ONLY
-
 # Stop script on any error.
 set -e
+
+LEVEL=SIMPLE_OPTIMIZATIONS
+#LEVEL=WHITESPACE_ONLY
 
 # Compile CoffeeScript files.
 WORK=intermediate
