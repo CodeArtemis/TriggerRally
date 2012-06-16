@@ -13,8 +13,9 @@ class render_scenery.RenderScenery
           layer.meshes = for mesh in result.scene.children
             geom = new array_geometry.ArrayGeometry()
             geom.addGeometry mesh.geometry
-            geom.material = mesh.material
-            new THREE.Mesh(geom, mesh.material)
+            #geom.material = mesh.material
+            mesh.geometry = geom
+            mesh
           return
     return
 

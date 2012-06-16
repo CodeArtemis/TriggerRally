@@ -10,6 +10,7 @@ set -e
 WORK=intermediate
 mkdir -p $WORK
 coffee -c -o $WORK \
+  server/shared/hash2d.coffee \
   src/array_geometry.coffee \
   src/render_scenery.coffee
 
@@ -30,6 +31,7 @@ java -jar $HOME/src/closure-compiler/compiler.jar \
   --js=src/browserhttp.js \
   --js=src/audio.js \
   --js=src/car.js \
+  --js=$WORK/hash2d.js \
   --js=$WORK/array_geometry.js \
   --js=$WORK/render_scenery.js \
   --js=src/drive.js \
