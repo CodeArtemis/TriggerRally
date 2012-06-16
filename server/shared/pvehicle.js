@@ -443,7 +443,7 @@ var MODULE = 'pvehicle';
     tmpBasis.v.normalize();
     tmpBasis.u.cross(tmpBasis.v, normal);
     tmpBasis.u.normalize();
-    return basis;
+    return tmpBasis;
   }
 
   exports.Vehicle.prototype.clipPoint = function(clip) {

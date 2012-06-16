@@ -246,8 +246,6 @@ var MODULE = 'psim';
     // Local space torque accumulator.
     this.accumTorque = new Vec3();
 
-    this.recordState();
-
     // Used for state recording.    
     this.old = {
       pos: new Vec3(),
@@ -255,6 +253,7 @@ var MODULE = 'psim';
       linVel: new Vec3(),
       angVel: new Vec3()
     };
+    this.recordState();
   };
   exports.RigidBody.prototype = Object.create(new exports.ReferenceFrame());
 
