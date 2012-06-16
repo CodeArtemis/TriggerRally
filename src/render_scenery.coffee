@@ -6,7 +6,7 @@ render_scenery = exports? and @ or @render_scenery = {}
 
 class render_scenery.RenderScenery
   constructor: (@scene, @scenery, loadFunc, @gl) ->
-    @fadeSpeed = 0.1
+    @fadeSpeed = 2
     @layers = ({ src: l, tiles: {} } for l in scenery.layers)
     for layer in @layers
       do (layer) ->
@@ -45,7 +45,7 @@ class render_scenery.RenderScenery
       material.color = object.material.color
       material.ambient = object.material.ambient
       material.emissive = object.material.emissive
-      material.opacity = @fadeSpeed
+      material.opacity = 0
       mesh = new THREE.Mesh mergedGeom, material
       mesh.doubleSided = object.doubleSided
       mesh.castShadow = object.castShadow
@@ -53,8 +53,9 @@ class render_scenery.RenderScenery
       tile.add mesh
     return tile
 
-  update: (camera) ->
+  update: (camera, delta) ->
     added = false
+    fadeAmount = @fadeSpeed * delta
     for layer in @layers
       continue unless layer.meshes?  # Check that we have something to draw.
       visibleTiles = {}
@@ -64,18 +65,17 @@ class render_scenery.RenderScenery
         for tx in [txCenter-3..txCenter+3]
           key = tx + ',' + ty
           visibleTiles[key] = true
-          unless added
-            tile = layer.tiles[key]
-            if tile
-              opacity = tile.children[0].material.opacity
-              if opacity < 1
-                opacity = Math.min(opacity + @fadeSpeed, 1)
-                for mesh in tile.children
-                  mesh.material.opacity = opacity
-            else
-              added = true
-              tile = layer.tiles[key] = @createTile layer, tx, ty
-              scene.add tile
+          tile = layer.tiles[key]
+          if not tile and not added
+            added = true
+            tile = layer.tiles[key] = @createTile layer, tx, ty
+            scene.add tile
+          if tile
+            opacity = tile.children[0].material.opacity
+            if opacity < 1
+              opacity = Math.min(opacity + fadeAmount, 1)
+              for mesh in tile.children
+                mesh.material.opacity = opacity
       toRemove = (key for key of layer.tiles when not visibleTiles[key])
       for key in toRemove
         scene.remove layer.tiles[key]

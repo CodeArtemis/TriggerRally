@@ -50,7 +50,7 @@ var checkpointBuffer;
 document.addEventListener('keydown', onDocumentKeyDown, false);
 document.addEventListener('keyup', onDocumentKeyUp, false);
 
-var lastTime = Date.now();
+var lastTime = 0;
 
 init();
 
@@ -461,11 +461,10 @@ function muteAudioIfStopped() {
 
 //
 
-function animate() {
-  var nowTime = Date.now();
+function animate(nowTime) {
   var delta = Math.min((nowTime - lastTime) * 0.001, 0.1);
   lastTime = nowTime;
-  
+
   var nextCp = followProgress.nextCheckpoint(0);
   var nextCpNext = followProgress.nextCheckpoint(1);
   if (nextCp) {
@@ -589,7 +588,7 @@ function animate() {
     }
   }
 
-  renderScenery.update(camera)
+  renderScenery.update(camera, delta)
 
   sunLight.target.position.copy(car.root.position);
   sunLight.position.copy(car.root.position).addSelf(sunLightPos);

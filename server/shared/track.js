@@ -32,7 +32,7 @@ var MODULE = 'track';
       this.layersById[layer.config.id] = layer;
     }
     this.trackPts = new hash2d.IndirectHash2D(10);
-    var radius = Math.sqrt(100 + 80);  // where probability == 1
+    var radius = 10;
     for (var i = 0; i < track.checkpoints.length - 1; ++i) {
       var cp = [
         track.checkpoints[i - 1] || track.checkpoints[i + 0],
@@ -128,8 +128,8 @@ var MODULE = 'track';
       for (j in trackPts) {
         var tp = trackPts[j];
         tmpVec2.sub(object.position, tp);
-        leng = tmpVec2.lengthSq();
-        var probTp = (leng - 80) / 100;
+        leng = tmpVec2.length();
+        var probTp = (leng - tp.radius) / 2;
         probability *= Math.min(probTp, 1);
         if (probability <= 0) break;
       }
