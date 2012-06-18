@@ -111,10 +111,8 @@ var MODULE = 'game';
     var vehicle = new pvehicle.Vehicle(this.sim, carConfig);
 
     // TODO: Get this initial state from track.
-    vehicle.body.pos.x = 100;
-    vehicle.body.pos.y = 100;
-    vehicle.body.pos.z = 10;
-    vehicle.body.ori = new THREE.Quaternion(1, 1, 1, 1).normalize();
+    vehicle.body.pos.set(100, 100, 10);
+    vehicle.body.ori.set(1, 1, 1, 1).normalize();
 
     var progress = new exports.Progress(this.track, vehicle);
     this.progs.push(progress);

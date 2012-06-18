@@ -94,7 +94,7 @@ function init() {
   var ambient = new THREE.AmbientLight( 0x446680 );
   scene.add(ambient);
 
-  sunLightPos = new Vec3(0, 15, 10);
+  sunLightPos = new Vec3(-7, 6, 10);
   sunLight = new THREE.DirectionalLight( 0xffe0bb );
   sunLight.intensity = 1.3;
   sunLight.position.copy(sunLightPos);
@@ -168,12 +168,12 @@ function init() {
 
   //
 
-  var path = "/a/textures/Teide-512/";
+  var path = "/a/textures/miramar-512/miramar_";
   var format = '.jpg';
   var urls = [
-    path + 'posx' + format, path + 'negx' + format,
-    path + 'posy' + format, path + 'negy' + format,
-    path + 'posz' + format, path + 'negz' + format
+    path + 'rt' + format, path + 'lf' + format,
+    path + 'ft' + format, path + 'bk' + format,
+    path + 'up' + format, path + 'dn' + format
   ];
 
   textureCube = THREE.ImageUtils.loadTextureCube(urls);

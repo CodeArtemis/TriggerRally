@@ -78,6 +78,13 @@ class render_scenery.RenderScenery
                 mesh.material.opacity = opacity
       toRemove = (key for key of layer.tiles when not visibleTiles[key])
       for key in toRemove
-        scene.remove layer.tiles[key]
-        delete layer.tiles[key]
+        tile = layer.tiles[key]
+        opacity = tile.children[0].material.opacity
+        opacity -= fadeAmount
+        if opacity > 0
+          for mesh in tile.children
+            mesh.material.opacity = opacity
+        else
+          scene.remove layer.tiles[key]
+          delete layer.tiles[key]
     return

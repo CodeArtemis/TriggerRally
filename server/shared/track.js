@@ -33,12 +33,13 @@ var MODULE = 'track';
     }
     this.trackPts = new hash2d.IndirectHash2D(10);
     var radius = 10;
-    for (var i = 0; i < track.checkpoints.length - 1; ++i) {
+    var points = [ new Vec2(100, 100) ].concat(track.checkpoints);
+    for (var i = 0; i < points.length - 1; ++i) {
       var cp = [
-        track.checkpoints[i - 1] || track.checkpoints[i + 0],
-        track.checkpoints[i + 0],
-        track.checkpoints[i + 1],
-        track.checkpoints[i + 2] || track.checkpoints[i + 1]
+        points[i - 1] || points[i + 0],
+        points[i + 0],
+        points[i + 1],
+        points[i + 2] || points[i + 1]
       ];
       var dist = new Vec2().sub(cp[1], cp[2]).length();
       var step = 1 / Math.ceil(dist / 10);
