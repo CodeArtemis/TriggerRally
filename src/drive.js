@@ -177,12 +177,12 @@ function init() {
 
   //
 
-  var path = "/a/textures/Teide-1024/";
+  var path = "/a/textures/miramar-512/miramar_";
   var format = '.jpg';
   var urls = [
-    path + 'posx' + format, path + 'negx' + format,
-    path + 'posy' + format, path + 'negy' + format,
-    path + 'posz' + format, path + 'negz' + format
+    path + 'rt' + format, path + 'lf' + format,
+    path + 'ft' + format, path + 'bk' + format,
+    path + 'up' + format, path + 'dn' + format
   ];
 
   textureCube = THREE.ImageUtils.loadTextureCube(urls);
