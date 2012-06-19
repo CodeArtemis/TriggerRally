@@ -211,7 +211,7 @@ var MODULE = 'track';
             {
               "id": "trees",
               "density": {
-                "base": 0.02,
+                "base": 0.01,
                 "gradient": { "min": 0.95, "full": 1.0 }
               },
               "render": {
@@ -221,7 +221,7 @@ var MODULE = 'track';
             {
               "id": "grass2",
               "density": {
-                "base": 2,
+                "base": 1,
                 "gradient": { "min": 0.7, "full": 0.9 },
                 "avoidLayers": [
                   { "layer": "trees", "distance": 2 }
@@ -229,7 +229,7 @@ var MODULE = 'track';
               },
               "render": {
                 "scene": "/a/meshes/grass-triangle.js",
-                "scale": 0.7
+                "scale": 1
               }
             }
           ]
