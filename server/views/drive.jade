@@ -2,12 +2,13 @@
 
 .content
 
-  p Current leader: 
-    span!= partial('partial/user', {user: runs[0].user})
-    | 
-    a(href="/run/#{runs[0].pub_id}") #{runs[0].time_readable}
-    |  &mdash;
-    a(href="/run/#{runs[0].pub_id}/replay") watch replay
+  - if (runs[0])
+    p Current leader: 
+      span!= partial('partial/user', {user: runs[0].user})
+      | 
+      a(href="/run/#{runs[0].pub_id}") #{runs[0].time_readable}
+      |  &mdash;
+      a(href="/run/#{runs[0].pub_id}/replay") watch replay
 
   .frame3d
     .loading
