@@ -61,7 +61,7 @@ var MODULE = 'track';
   exports.Layer = function(config, scenery) {
     this.config = config;
     this.scenery = scenery;
-    this.cache = new hash2d.Hash2D(20);
+    this.cache = new hash2d.Hash2D(config['tileSize']);
   };
 
   exports.Layer.prototype.getObjects = function(minX, minY, maxX, maxY) {
@@ -210,6 +210,7 @@ var MODULE = 'track';
           "layers": [
             {
               "id": "trees",
+              "tileSize": 30,
               "density": {
                 "base": 0.01,
                 "gradient": { "min": 0.95, "full": 1.0 }
@@ -220,6 +221,7 @@ var MODULE = 'track';
             },
             {
               "id": "grass2",
+              "tileSize": 20,
               "density": {
                 "base": 1,
                 "gradient": { "min": 0.7, "full": 0.9 },
