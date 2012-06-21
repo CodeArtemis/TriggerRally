@@ -181,8 +181,8 @@ function init() {
   var format = '.jpg';
   var urls = [
     path + 'rt' + format, path + 'lf' + format,
-    path + 'ft' + format, path + 'bk' + format,
-    path + 'up' + format, path + 'dn' + format
+    path + 'up' + format, path + 'dn' + format,
+    path + 'bk' + format, path + 'ft' + format
   ];
 
   textureCube = THREE.ImageUtils.loadTextureCube(urls);
