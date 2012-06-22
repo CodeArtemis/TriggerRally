@@ -1,8 +1,15 @@
 #!/bin/sh
 
+set -e
 
 LEVEL=SIMPLE_OPTIMIZATIONS
 #LEVEL=WHITESPACE_ONLY
+
+# Compile CoffeeScript files.
+WORK=intermediate
+mkdir -p $WORK
+coffee -c -o $WORK \
+  src/metrics.coffee
 
 java -jar $HOME/src/closure-compiler/compiler.jar \
   --compilation_level $LEVEL \
@@ -20,6 +27,7 @@ java -jar $HOME/src/closure-compiler/compiler.jar \
   --js=src/browserhttp.js \
   --js=src/audio.js \
   --js=src/car.js \
+  --js=$WORK/metrics.js \
   --js=src/drive.js \
   --js_output_file=server/public/js/trigger.js
 
