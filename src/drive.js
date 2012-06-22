@@ -43,6 +43,7 @@ var lastRaceTime = 0;
 // 1 for hi-res input, 2 for other state.
 var carRecorder1, carRecorder2;
 var replayPlayback1, replayPlayback2;
+var metricsRecorder;
 
 var aud;
 var checkpointBuffer;
@@ -299,6 +300,11 @@ function init() {
     }
   });
 
+  metricsRecorder = new metrics.MetricsRecorder();
+  if (TRIGGER.METRICS) {
+    window.addEventListener('unload', uploadMetrics);
+  }
+
   return true;
 };
 
@@ -502,8 +508,11 @@ function muteAudioIfStopped() {
 
 function animate() {
   var nowTime = Date.now();
-  var delta = Math.min((nowTime - lastTime) * 0.001, 0.1);
+  var trueDelta = (nowTime - lastTime) * 0.001;
+  var delta = Math.min(trueDelta, 0.1);
   lastTime = nowTime;
+
+  metricsRecorder.record(trueDelta);
 
   var nextCp = followProgress.nextCheckpoint(0);
   var nextCpNext = followProgress.nextCheckpoint(1);
@@ -724,10 +733,8 @@ function uploadRun() {
 
 function showTwitterLink() {
   var exclamations = [
-    'Radial!',
     'Galvanized!',
     'Totally slipstream!',
-    'Arboreal!',
     'Spintastic!'
   ];
   var exclamation = exclamations[Math.floor(Math.random() * exclamations.length)];
@@ -735,7 +742,8 @@ function showTwitterLink() {
       'Just finished ' + TRIGGER.TRACK.NAME +
       ' with the ' + TRIGGER.CAR.NAME +
       ' in ' + runTimerEl.innerHTML +
-      '. ' + exclamation + ' @TriggerRally');
+      '. ' + exclamation + ' @TriggerRally ' +
+      window.location.href);
   twitterLinkEl.className = 'visible';
 }
 
@@ -744,20 +752,19 @@ function getTwitterLink(text) {
 }
 
 function render() {
-  webglRenderer.clear(true, true);
+  webglRenderer.clear(false, true);
   webglRenderer.render(scene, camera);
   //webglRenderer.render(sceneHUD, cameraHUD);
-};
+}
 
-/*
-function ping(params) {
+function uploadMetrics() {
+  var metricsDump = metricsRecorder.dump();
   var formData = new FormData();
-  for (var k in params) {
-    formData.append(k, params[k]);
-  }
+  formData.append('performanceData', JSON.stringify(metricsDump));
+  formData.append('track', TRIGGER.TRACK.ID);
+  formData.append('car', TRIGGER.CAR.ID);
   var request = new XMLHttpRequest();
-  var url = '/ping';
-  request.open('POST', url, true);
+  var url = '/metrics';
+  request.open('POST', url, false);
   request.send(formData);
-};
-*/
+}

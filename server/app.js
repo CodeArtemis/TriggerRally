@@ -322,7 +322,7 @@ app.get('/run/:idRun/replay', loadUrlRun, routes.runReplay);
 app.get('/x/:idTrack/:idCar/drive', loadUrlTrack, loadUrlCar, routes.drive);
 app.get('/x/:idTrack/:idCar/top', loadUrlTrack, loadUrlCar, routes.top);  // TODO: parallel load
 
-app.post('/ping', routes.ping);
+app.post('/metrics', routes.metricsSave);
 
 app.get('/auth/facebook', passport.authenticate('facebook'));
 app.get('/auth/facebook/callback', 

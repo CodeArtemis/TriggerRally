@@ -14,6 +14,7 @@ var Verify = mongoose.model('Verify');
 var Car = mongoose.model('Car');
 var Track = mongoose.model('Track');
 var Run = mongoose.model('Run');
+var MetricsRecord = mongoose.model('MetricsRecord');
 
 exports.defaultParams = function(req, res, next) {
   req.jadeParams = {
@@ -326,8 +327,47 @@ function verifyRun(run, user, track, car) {
   });
 };
 
-
-exports.ping = function(req, res) {
-  console.log('PING ' + req.connection.remoteAddress + ' ' + JSON.stringify(req.body));
-  res.send('ok');
+exports.metricsSave = function(req, res) {
+  async.parallel({
+    car: function(cb){
+      Car.findOne({ pub_id: req.body.car }, function(err, doc){
+        cb(err, doc);
+      });
+    },
+    track: function(cb){
+      Track.findOne({ pub_id: req.body.track }, function(err, doc){
+        cb(err, doc);
+      });
+    }
+  }, function(error, data) {
+    if (error) {
+      console.log('Error fetching data for metrics:');
+      console.log(error);
+      res.send(500);
+    } else {
+      if (!data.car) {
+        console.log('Error loading car for metrics');
+        res.send(500);
+      } else if (!data.track) {
+        console.log('Error loading track for metrics');
+        res.send(500);
+      } else {
+        var params = req.body;
+        params.performanceData = JSON.parse(params.performanceData);
+        params.userAgent = req.headers['user-agent'];
+        params.car = data.car;
+        params.track = data.track;
+        var metricsRecord = new MetricsRecord(params);
+        metricsRecord.save(function(error) {
+          if (error) {
+            console.log('Error saving metrics:');
+            console.log(error);
+            res.send(500);
+          } else {
+            res.send(200);
+          }
+        });
+      }
+    }
+  });
 };
