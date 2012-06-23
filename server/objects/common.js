@@ -11,10 +11,12 @@ var PUB_ID_CHARSET = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 var PUB_ID_CHARSET_LENGTH = PUB_ID_CHARSET.length;
 var PUB_ID_LENGTH = 8;
 
+/*
 console.log(
     'objects/common.js pub_id generation: ' + PUB_ID_LENGTH +
     ' digits of base ' + PUB_ID_CHARSET_LENGTH +
     ' >= 2^' + Math.floor(Math.log(Math.pow(PUB_ID_CHARSET_LENGTH, PUB_ID_LENGTH)) / Math.LN2));
+*/
 
 var pub_id_random = LFIB4([+new Date(), 47529830, 45652389]);  // no new.
 

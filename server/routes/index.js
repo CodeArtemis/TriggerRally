@@ -1,7 +1,4 @@
 // Copyright (c) 2012 jareiko. All rights reserved.
-/*
- * GET home page.
- */
 
 var objects = require('../objects');
 var mongoose = require('mongoose');
@@ -328,6 +325,8 @@ function verifyRun(run, user, track, car) {
 };
 
 exports.metricsSave = function(req, res) {
+  // Don't make the browser wait for this to finish.
+  res.send(200);
   async.parallel({
     car: function(cb){
       Car.findOne({ pub_id: req.body.car }, function(err, doc){
@@ -343,14 +342,11 @@ exports.metricsSave = function(req, res) {
     if (error) {
       console.log('Error fetching data for metrics:');
       console.log(error);
-      res.send(500);
     } else {
       if (!data.car) {
         console.log('Error loading car for metrics');
-        res.send(500);
       } else if (!data.track) {
         console.log('Error loading track for metrics');
-        res.send(500);
       } else {
         var params = req.body;
         params.performanceData = JSON.parse(params.performanceData);
@@ -362,9 +358,6 @@ exports.metricsSave = function(req, res) {
           if (error) {
             console.log('Error saving metrics:');
             console.log(error);
-            res.send(500);
-          } else {
-            res.send(200);
           }
         });
       }
