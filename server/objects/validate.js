@@ -46,8 +46,8 @@ validate.goosify = function(fn) {
 // TODO: Merge this with Mongoose's validation.
 
 exports.validation = {};
-exports.validation.User = {};
 
+exports.validation.User = {};
 exports.validation.User.profileValidator = {
   name: validate.required,
   //email: validate.email,
@@ -56,3 +56,8 @@ exports.validation.User.profileValidator = {
   website: validate.optional
 };
 
+exports.validation.Track = {};
+exports.validation.Track.validator = {
+  name: validate.required,
+  pub_id: validate.required
+};

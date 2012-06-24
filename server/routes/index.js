@@ -82,26 +82,22 @@ exports.user = function(req, res) {
 };
 
 exports.userSave = function(req, res) {
-  if (req.urlUser.isAuthenticated) {
-    var user = req.urlUser;
-    // A user is no longer a newbie after updating their profile.
-    user.newbie = false;
-    // TODO: Find a better way to set multiple attributes?
-    var attribs = [ 'name', 'realname', 'email', 'bio', 'website', 'location' ];
-    attribs.forEach(function(attrib) {
-      user[attrib] = req.body[attrib];
-    });
-    user.save(function(error) {
-      // TODO: Redirect back to wherever user clicked "log in" from.
-      if (error) {
-        console.log('Error updating user:');
-        console.log(error);
-        res.send(500);
-      } else res.redirect('/user/' + req.urlUser.pub_id);
-    });
-  } else {
-    res.send(401);
-  }
+  var user = req.urlUser;
+  // A user is no longer a newbie after updating their profile.
+  user.newbie = false;
+  // TODO: Find a better way to set multiple attributes?
+  var attribs = [ 'name', 'realname', 'email', 'bio', 'website', 'location' ];
+  attribs.forEach(function(attrib) {
+    user[attrib] = req.body[attrib];
+  });
+  user.save(function(error) {
+    // TODO: Redirect back to wherever user clicked "log in" from.
+    if (error) {
+      console.log('Error updating user:');
+      console.log(error);
+      res.send(500);
+    } else res.redirect('/user/' + req.urlUser.pub_id);
+  });
 };
 
 exports.track = function(req, res) {
@@ -115,11 +111,26 @@ exports.trackJson = function(req, res) {
     req.jadeParams.title = req.urlTrack.name;
     req.jadeParams.urlTrack = req.urlTrack;
     req.jadeParams.editing = true;
+    req.jadeParams.validate = objects.validation.Track.validator;
     res.render('trackjson', req.jadeParams);
   } else {
     res.contentType('json');
     res.send(req.urlTrack.config);
   }
+};
+
+exports.trackJsonSave = function(req, res) {
+  var track = req.urlTrack;
+  track.name = req.body.name;
+  track.pub_id = req.body.pub_id;
+  track.config = JSON.parse(req.body.config);
+  track.save(function(error) {
+    if (error) {
+      console.log('Error updating track:');
+      console.log(error);
+      res.send(500);
+    } else res.redirect('/track/' + track.pub_id + '/json/edit');
+  });
 };
 
 exports.car = function(req, res) {

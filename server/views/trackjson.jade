@@ -2,17 +2,31 @@
 
 .content
 
+  .editprofile
+    a.button(href="#", onclick="this.classList.contains('disabled') ? evt.preventDefault() : document.theform.submit()", id="submitbutton") Save changes
+
   h1= urlTrack.name
 
   .section Information
 
-  dl
-    dt Name
-    dd= urlTrack.name
+  form(name="theform", action="save", method="post")
 
-  dl
-    dt Created by
-    dd
-      !=partial('partial/user', {user:urlTrack.user})
+    p(style="color:red")
+      | Be careful, there's currently no history or undo in the database.
+      | The ID is in the URL: changing it will break existing web links.
+
+    !=partial('partial/formfield', { title:'Name', name:'name', value:urlTrack.name })
+    !=partial('partial/formfield', { title:'ID', name:'pub_id', value:urlTrack.pub_id })
+
+    dl
+      dt Created by
+      dd
+        !=partial('partial/user', {user:urlTrack.user})
+
+
+    textarea(name='config', rows=20, cols=80, autofocus)
+      =JSON.stringify(urlTrack.config, null, 2)
 
   !=partial('partial/footer')
+
+!=partial('partial/formvalidate')
