@@ -185,6 +185,9 @@ box-shadow
 #replays a.highlight {
   background: #f80;
 }
+textarea {
+  font-family: monospace;
+}
 .frame3d {
   box-shadow: 0 0 15px #000;
   position: relative;

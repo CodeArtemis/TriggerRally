@@ -112,7 +112,18 @@ Run.pre('save', function(next) {
 });
 
 
+// Metrics
+
+var MetricsRecord = new Schema({
+    performanceData   : Schema.Types.Mixed
+  , userAgent         : String
+  , car               : { type: Schema.ObjectId, ref: 'Car' }
+  , track             : { type: Schema.ObjectId, ref: 'Track' }
+}, { strict: true });
+
+
 
 mongoose.model('Track', Track);
 mongoose.model('Car', Car);
 mongoose.model('Run', Run);
+mongoose.model('MetricsRecord', MetricsRecord);

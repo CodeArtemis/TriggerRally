@@ -1,7 +1,4 @@
 // Copyright (c) 2012 jareiko. All rights reserved.
-/*
- * GET home page.
- */
 
 var objects = require('../objects');
 var mongoose = require('mongoose');
@@ -14,6 +11,7 @@ var Verify = mongoose.model('Verify');
 var Car = mongoose.model('Car');
 var Track = mongoose.model('Track');
 var Run = mongoose.model('Run');
+var MetricsRecord = mongoose.model('MetricsRecord');
 
 exports.defaultParams = function(req, res, next) {
   req.jadeParams = {
@@ -24,6 +22,7 @@ exports.defaultParams = function(req, res, next) {
     , fieldtype: 'text'
     , value: ''
     , focus: 0
+    , editing: false
   };
   next();
 };
@@ -83,44 +82,60 @@ exports.user = function(req, res) {
 };
 
 exports.userSave = function(req, res) {
-  if (req.urlUser.isAuthenticated) {
-    var user = req.urlUser;
-    // A user is no longer a newbie after updating their profile.
-    user.newbie = false;
-    // TODO: Find a better way to set multiple attributes?
-    var attribs = [ 'name', 'realname', 'email', 'bio', 'website', 'location' ];
-    attribs.forEach(function(attrib) {
-      user[attrib] = req.body[attrib];
-    });
-    user.save(function(error) {
-      // TODO: Redirect back to wherever user clicked "log in" from.
-      if (error) {
-        console.log('Error updating user:');
-        console.log(error);
-        res.send(500);
-      } else res.redirect('/user/' + req.urlUser.pub_id);
-    });
-  } else {
-    res.send(401);
-  }
+  var user = req.urlUser;
+  // A user is no longer a newbie after updating their profile.
+  user.newbie = false;
+  // TODO: Find a better way to set multiple attributes?
+  var attribs = [ 'name', 'realname', 'email', 'bio', 'website', 'location' ];
+  attribs.forEach(function(attrib) {
+    user[attrib] = req.body[attrib];
+  });
+  user.save(function(error) {
+    // TODO: Redirect back to wherever user clicked "log in" from.
+    if (error) {
+      console.log('Error updating user:');
+      console.log(error);
+      res.send(500);
+    } else res.redirect('/user/' + req.urlUser.pub_id);
+  });
 };
 
 exports.track = function(req, res) {
   req.jadeParams.title = req.urlTrack.name;
   req.jadeParams.urlTrack = req.urlTrack;
-  req.jadeParams.editing = false;
   res.render('track', req.jadeParams);
 };
 
 exports.trackJson = function(req, res) {
-  res.contentType('json');
-  res.send(req.urlTrack.config);
+  if (req.editing) {
+    req.jadeParams.title = req.urlTrack.name;
+    req.jadeParams.urlTrack = req.urlTrack;
+    req.jadeParams.editing = true;
+    req.jadeParams.validate = objects.validation.Track.validator;
+    res.render('trackjson', req.jadeParams);
+  } else {
+    res.contentType('json');
+    res.send(req.urlTrack.config);
+  }
+};
+
+exports.trackJsonSave = function(req, res) {
+  var track = req.urlTrack;
+  track.name = req.body.name;
+  track.pub_id = req.body.pub_id;
+  track.config = JSON.parse(req.body.config);
+  track.save(function(error) {
+    if (error) {
+      console.log('Error updating track:');
+      console.log(error);
+      res.send(500);
+    } else res.redirect('/track/' + track.pub_id + '/json/edit');
+  });
 };
 
 exports.car = function(req, res) {
   req.jadeParams.title = req.urlCar.name;
   req.jadeParams.urlCar = req.urlCar;
-  req.jadeParams.editing = false;
   res.render('car', req.jadeParams);
 };
 
@@ -163,7 +178,6 @@ exports.top = function(req, res) {
       req.jadeParams.urlTrack = req.urlTrack;
       req.jadeParams.urlCar = req.urlCar;
       req.jadeParams.runs = runs;
-      req.jadeParams.editing = false;
       res.render('top', req.jadeParams);
     }
   });
@@ -172,7 +186,6 @@ exports.top = function(req, res) {
 exports.run = function(req, res) {
   req.jadeParams.title = req.urlRun.name;
   req.jadeParams.urlRun = req.urlRun;
-  req.jadeParams.editing = false;
   res.render('run', req.jadeParams);
 };
 
@@ -234,7 +247,6 @@ exports.runSave = function(req, res) {
 
 exports.runReplay = function(req, res) {
   req.jadeParams.urlRun = req.urlRun;
-  req.jadeParams.editing = false;
   res.render('replay', req.jadeParams);
 };
 
@@ -326,8 +338,43 @@ function verifyRun(run, user, track, car) {
   });
 };
 
-
-exports.ping = function(req, res) {
-  console.log('PING ' + req.connection.remoteAddress + ' ' + JSON.stringify(req.body));
-  res.send('ok');
+exports.metricsSave = function(req, res) {
+  // Don't make the browser wait for this to finish.
+  res.send(200);
+  async.parallel({
+    car: function(cb){
+      Car.findOne({ pub_id: req.body.car }, function(err, doc){
+        cb(err, doc);
+      });
+    },
+    track: function(cb){
+      Track.findOne({ pub_id: req.body.track }, function(err, doc){
+        cb(err, doc);
+      });
+    }
+  }, function(error, data) {
+    if (error) {
+      console.log('Error fetching data for metrics:');
+      console.log(error);
+    } else {
+      if (!data.car) {
+        console.log('Error loading car for metrics');
+      } else if (!data.track) {
+        console.log('Error loading track for metrics');
+      } else {
+        var params = req.body;
+        params.performanceData = JSON.parse(params.performanceData);
+        params.userAgent = req.headers['user-agent'];
+        params.car = data.car;
+        params.track = data.track;
+        var metricsRecord = new MetricsRecord(params);
+        metricsRecord.save(function(error) {
+          if (error) {
+            console.log('Error saving metrics:');
+            console.log(error);
+          }
+        });
+      }
+    }
+  });
 };
