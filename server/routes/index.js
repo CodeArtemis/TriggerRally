@@ -111,8 +111,14 @@ exports.track = function(req, res) {
 };
 
 exports.trackJson = function(req, res) {
-  res.contentType('json');
-  res.send(req.urlTrack.config);
+  if (req.editing) {
+    req.jadeParams.title = req.urlTrack.name;
+    req.jadeParams.editing = true;
+    res.render('trackjson', req.jadeParams);
+  } else {
+    res.contentType('json');
+    res.send(req.urlTrack.config);
+  }
 };
 
 exports.car = function(req, res) {

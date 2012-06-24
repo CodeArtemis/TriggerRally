@@ -295,6 +295,14 @@ var loadUrlRun = function(req, res, next) {
   });
 };
 
+var editTrack = function(req, res, next) {
+  if (!req.urlTrack.isAuthenticated) next('Unauthorized');
+  else {
+    req.editing = true;
+    next();
+  }
+};
+
 var editUser = function(req, res, next) {
   if (!req.urlUser.isAuthenticated) next('Unauthorized');
   else {
@@ -313,7 +321,8 @@ app.get('/user/:idUser', loadUrlUser, routes.user);
 app.get('/user/:idUser/edit', loadUrlUser, editUser, routes.user);
 app.post('/user/:idUser/save', loadUrlUser, editUser, routes.userSave);
 app.get('/track/:idTrack', loadUrlTrack, routes.track);
-app.get('/track/:idTrack/json', loadUrlTrack, routes.trackJson);
+app.get('/track/:idTrack/json', loadUrlTrack, editTrack, routes.trackJson);
+app.post('/track/:idTrack/json/save', loadUrlTrack, editTrack, routes.trackJsonSave);
 app.get('/car/:idCar', loadUrlCar, routes.car);
 app.get('/car/:idCar/json', loadUrlCar, routes.carJson);
 app.get('/run/:idRun', loadUrlRun, routes.run);
