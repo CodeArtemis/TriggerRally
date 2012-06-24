@@ -205,38 +205,7 @@ var MODULE = 'track';
           this.checkpoints.push(checkpoint);
         }
 
-        // TODO: Move this dummy config into the track config.
-        var sc_config = {
-          "layers": [
-            {
-              "id": "trees",
-              "tileSize": 30,
-              "density": {
-                "base": 0.01,
-                "gradient": { "min": 0.95, "full": 1.0 }
-              },
-              "render": {
-                "scene": "/a/meshes/tree1a_lod2-scene.js"
-              }
-            },
-            {
-              "id": "grass2",
-              "tileSize": 20,
-              "density": {
-                "base": 1,
-                "gradient": { "min": 0.7, "full": 0.9 },
-                "avoidLayers": [
-                  { "layer": "trees", "distance": 2 }
-                ]
-              },
-              "render": {
-                "scene": "/a/meshes/grass-triangle.js",
-                "scale": 1
-              }
-            }
-          ]
-        };
-        this.scenery = new exports.Scenery(sc_config, this);
+        this.scenery = new exports.Scenery(config.scenery, this);
 
         if (callback) callback();
       }.bind(this));
