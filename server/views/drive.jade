@@ -50,7 +50,7 @@ script
       NAME: '#{urlCar.name}',
       CONFIG: !{JSON.stringify(urlCar.config)}
     },
-    METRICS: true
+    METRICS: #{'production' === process.env.NODE_ENV}
   };
 
 - if (user)
