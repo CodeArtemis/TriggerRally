@@ -22,6 +22,7 @@ exports.defaultParams = function(req, res, next) {
     , fieldtype: 'text'
     , value: ''
     , focus: 0
+    , editing: false
   };
   next();
 };
@@ -106,13 +107,13 @@ exports.userSave = function(req, res) {
 exports.track = function(req, res) {
   req.jadeParams.title = req.urlTrack.name;
   req.jadeParams.urlTrack = req.urlTrack;
-  req.jadeParams.editing = false;
   res.render('track', req.jadeParams);
 };
 
 exports.trackJson = function(req, res) {
   if (req.editing) {
     req.jadeParams.title = req.urlTrack.name;
+    req.jadeParams.urlTrack = req.urlTrack;
     req.jadeParams.editing = true;
     res.render('trackjson', req.jadeParams);
   } else {
@@ -124,7 +125,6 @@ exports.trackJson = function(req, res) {
 exports.car = function(req, res) {
   req.jadeParams.title = req.urlCar.name;
   req.jadeParams.urlCar = req.urlCar;
-  req.jadeParams.editing = false;
   res.render('car', req.jadeParams);
 };
 
@@ -167,7 +167,6 @@ exports.top = function(req, res) {
       req.jadeParams.urlTrack = req.urlTrack;
       req.jadeParams.urlCar = req.urlCar;
       req.jadeParams.runs = runs;
-      req.jadeParams.editing = false;
       res.render('top', req.jadeParams);
     }
   });
@@ -176,7 +175,6 @@ exports.top = function(req, res) {
 exports.run = function(req, res) {
   req.jadeParams.title = req.urlRun.name;
   req.jadeParams.urlRun = req.urlRun;
-  req.jadeParams.editing = false;
   res.render('run', req.jadeParams);
 };
 
@@ -238,7 +236,6 @@ exports.runSave = function(req, res) {
 
 exports.runReplay = function(req, res) {
   req.jadeParams.urlRun = req.urlRun;
-  req.jadeParams.editing = false;
   res.render('replay', req.jadeParams);
 };
 
