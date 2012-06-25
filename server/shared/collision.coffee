@@ -15,11 +15,59 @@ collision = exports? and @ or @collision = {}
 
 class collision.SphereHull
 
-  _tmpVec3a = new THREE.Vector3()
+  Vec3 = THREE.Vector3
+  _tmpVec3a = new Vec3()
 
+  # Points passed in will be modified (center will be subtracted).
   constructor: (points, radius) ->
-    @points = points or []
-    @radius = radius or 0
+    if _clone
+      @copy _clone
+    else
+      @points = points or []
+      @radius = radius or 0
+      @_centerPoints()
+
+  clone: ->
+    new SphereHull(null, null, @)
+
+  copy: (other) ->
+    @points = (pt.clone() for pt in other.points)
+    @radius = other.radius
+    @bounds =
+      center: other.bounds.center.clone()
+      min: other.bounds.min.clone()
+      max: other.bounds.max.clone()
+      radius: other.bounds.radius
+    return
+
+  translate: (offset) ->
+    for pt in @points
+      pt.addSelf offset
+    @bounds.center.addSelf offset
+    @bounds.min.addSelf offset
+    @bounds.max.addSelf offset
+    return
+
+  _centerPoints: ->
+    min = new Vec3 Infinity, Infinity, Infinity
+    max = new Vec3 -Infinity, -Infinity, -Infinity
+    radSq = 0
+    for pt in @points
+      min.x = Math.min min.x, pt.x
+      min.y = Math.min min.y, pt.y
+      min.z = Math.min min.z, pt.z
+      max.x = Math.max max.x, pt.x
+      max.y = Math.max max.y, pt.y
+      max.z = Math.max max.z, pt.z
+    center = min.clone().addSelf(max).multiplyScalar(0.5)
+    for pt in @points
+      pt.subSelf center
+      radSq = Math.max radSq, pt.lengthSq()
+    @bounds =
+      center: center
+      min: min
+      max: max
+      radius: Math.sqrt radSq
 
   collideSphereHull: (hull2) ->
     hull1 = @
@@ -40,4 +88,4 @@ class collision.SphereHull
           pos1: _tmpVec3a.clone().multiplyScalar(hull1.radius).addSelf(pt1)
           pos2: _tmpVec3a.clone().multiplyScalar(-hull2.radius).addSelf(pt2)
         contacts.push contact
-    return contacts
+    contacts

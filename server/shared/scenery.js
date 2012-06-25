@@ -2,14 +2,15 @@
  * @author jareiko / http://www.jareiko.net/
  */
 
-var MODULE = 'track';
+var MODULE = 'scenery';
 
 (function(exports) {
   var LFIB4 = this.LFIB4 || require('./LFIB4');
   var THREE = this.THREE || require('../THREE');
-  var pterrain = this.pterrain || require('./pterrain');
 
   var Vec3 = THREE.Vector3;
+  
+  var COLLISION_HASH_SIZE = 5;
   
   var catmullRom = function(pm1, p0, p1, p2, x) {
     var x2 = x * x;
@@ -68,13 +69,31 @@ var MODULE = 'track';
       this.add = new hash2d.Hash2D(config['tileSize']);
       config.density.add.forEach(function(obj) {
         var object = {
-          position: new THREE.Vector3(obj.pos[0], obj.pos[1], obj.pos[2]),
-          rotation: new THREE.Vector3(obj.rot[0], obj.rot[1], obj.rot[2]),
+          position: new Vec3(obj.pos[0], obj.pos[1], obj.pos[2]),
+          rotation: new Vec3(obj.rot[0], obj.rot[1], obj.rot[2]),
           scale: obj.scale
         };
         this.add.addObject(object.position.x, object.position.y, object);
       }, this);
     }
+    this.hull = null;
+    if (config.collision) {
+      this.hull = new collision.SphereHull(1, [ new Vec3() ]);
+    }
+  };
+
+  exports.Layer.prototype.collideSphereHull = function(hull) {
+    // TODO: This algorithm seems more efficient than IndirectHash2D. Replace it?
+    var radius = hull.bounds.radius + this.hull.bounds.radius;
+    var center = hull.bounds.center;
+    var objects = this.getObjects(
+        center.x - radius, center.x + radius,
+        center.y - radius, center.y + radius);
+    var contactArrays = [];
+    var tmpHull = this.hull.clone();
+    objects.forEach(function(object) {
+      contactArrays.push(
+    });
   };
 
   exports.Layer.prototype.getObjects = function(minX, minY, maxX, maxY) {

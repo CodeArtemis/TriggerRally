@@ -45,7 +45,7 @@ var MODULE = 'track';
           this.checkpoints.push(checkpoint);
         }
 
-        this.scenery = new exports.Scenery(config.scenery, this);
+        this.scenery = new scenery.Scenery(config.scenery, this);
 
         if (callback) callback();
       }.bind(this));

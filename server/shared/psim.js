@@ -243,7 +243,7 @@ var MODULE = 'psim';
 
     // World space force accumulator, zeroed after each integration step.
     this.accumForce = new Vec3();
-    // Local space torque accumulator.
+    // Local space torque accumulator, zeroed after each integration step.
     this.accumTorque = new Vec3();
 
     // Used for state recording.    

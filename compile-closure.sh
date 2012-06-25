@@ -10,6 +10,7 @@ LEVEL=WHITESPACE_ONLY
 WORK=intermediate
 mkdir -p $WORK
 coffee -c -o $WORK \
+  server/shared/collision.coffee \
   server/shared/hash2d.coffee \
   src/array_geometry.coffee \
   src/metrics.coffee \
@@ -25,6 +26,7 @@ java -jar $HOME/src/closure-compiler/compiler.jar \
   --js=server/shared/pterrain.js \
   --js=server/shared/psim.js \
   --js=server/shared/pvehicle.js \
+  --js=server/shared/scenery.js \
   --js=server/shared/track.js \
   --js=server/shared/game.js \
   --js=src/util.js \
@@ -32,6 +34,7 @@ java -jar $HOME/src/closure-compiler/compiler.jar \
   --js=src/browserhttp.js \
   --js=src/audio.js \
   --js=src/car.js \
+  --js=$WORK/collision.js \
   --js=$WORK/hash2d.js \
   --js=$WORK/array_geometry.js \
   --js=$WORK/render_scenery.js \
