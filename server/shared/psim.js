@@ -206,23 +206,23 @@ var MODULE = 'psim';
 
   // Coordinate space transforms.
   exports.ReferenceFrame.prototype.getLocToWorldVector = function(vec) {
-    var v = vec.clone();
+    var v = tmpVec3b.copy(vec);
     this.oriMat.multiplyVector3(v);
     return v;
   };
   exports.ReferenceFrame.prototype.getWorldToLocVector = function(vec) {
-    var v = vec.clone();
+    var v = tmpVec3b.copy(vec);
     this.oriMatInv.multiplyVector3(v);
     return v;
   };
   exports.ReferenceFrame.prototype.getLocToWorldPoint = function(pt) {
-    var v = pt.clone();
+    var v = tmpVec3b.copy(pt);
     this.oriMat.multiplyVector3(v);
     v.addSelf(this.pos);
     return v;
   };
   exports.ReferenceFrame.prototype.getWorldToLocPoint = function(pt) {
-    var v = pt.clone().subSelf(this.pos);
+    var v = tmpVec3b.sub(pt, this.pos);
     this.oriMatInv.multiplyVector3(v);
     return v;
   };
@@ -240,7 +240,7 @@ var MODULE = 'psim';
     // Linear and angular velocity.
     this.linVel = new Vec3();
     this.angVel = new Vec3();
-    
+
     // World space force accumulator, zeroed after each integration step.
     this.accumForce = new Vec3();
     // Local space torque accumulator.
@@ -351,22 +351,22 @@ var MODULE = 'psim';
   exports.RigidBody.prototype.getLinearVelAtPoint = function(pt) {
     var ptLoc = pt.clone().subSelf(this.pos);
     var angVel2 = this.getLocToWorldVector(this.angVel);
-    var cross = new Vec3().cross(angVel2, ptLoc);
-    return new Vec3().add(this.linVel, cross);
+    var cross = tmpVec3a.cross(angVel2, ptLoc);
+    return tmpVec3b.add(this.linVel, cross);
   };
 
   exports.RigidBody.prototype.tick = function(delta) {
-    var linAccel = this.accumForce.clone().divideScalar(this.mass);
+    var linAccel = tmpVec3a.copy(this.accumForce).divideScalar(this.mass);
     linAccel.addSelf(this.sim.gravity);
 
     this.linVel.addSelf(linAccel.multiplyScalar(delta));
 
-    this.pos.addSelf(this.linVel.clone().multiplyScalar(delta));
+    this.pos.addSelf(tmpVec3a.copy(this.linVel).multiplyScalar(delta));
 
-    var angAccel = new Vec3().multiply(this.accumTorque, this.angMassInv);
-    this.angVel.addSelf(angAccel.clone().multiplyScalar(delta));
+    var angAccel = tmpVec3a.multiply(this.accumTorque, this.angMassInv);
+    this.angVel.addSelf(angAccel.multiplyScalar(delta));
   
-    var angDelta = this.angVel.clone().multiplyScalar(delta);
+    var angDelta = tmpVec3a.copy(this.angVel).multiplyScalar(delta);
     var angDeltaQuat = QuatFromEuler(angDelta);
     this.ori.multiplySelf(angDeltaQuat);
   

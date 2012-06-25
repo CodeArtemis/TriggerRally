@@ -21,6 +21,15 @@ class hash2d.Hash2D
     key = tX + ',' + tY
     @tiles[key] = tile
 
+  addObject: (x, y, object) ->
+    tX = Math.floor(x / @gridSize)
+    tY = Math.floor(y / @gridSize)
+    key = tX + ',' + tY
+    # tile = @tiles[key] ?= []
+    tile = @tiles[key] or (@tiles[key] = [])
+    tile.push object
+    return
+
   getObjects: (minX, minY, maxX, maxY) ->
     tMinX = Math.floor(minX / @gridSize)
     tMaxX = Math.ceil(maxX / @gridSize)
@@ -42,6 +51,7 @@ class hash2d.IndirectHash2D extends hash2d.Hash2D
     @objects = []
     @nextId = 0
 
+  # Add an object to all tiles touched by a circle.
   addCircle: (x, y, radius, object) ->
     tCenterX = x / @gridSize
     tCenterY = y / @gridSize

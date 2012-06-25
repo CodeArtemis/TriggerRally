@@ -62,6 +62,19 @@ var MODULE = 'track';
     this.config = config;
     this.scenery = scenery;
     this.cache = new hash2d.Hash2D(config['tileSize']);
+    this.add = null;
+    this.sub = null;
+    if (config.density.add) {
+      this.add = new hash2d.Hash2D(config['tileSize']);
+      config.density.add.forEach(function(obj) {
+        var object = {
+          position: new THREE.Vector3(obj.pos[0], obj.pos[1], obj.pos[2]),
+          rotation: new THREE.Vector3(obj.rot[0], obj.rot[1], obj.rot[2]),
+          scale: obj.scale
+        };
+        this.add.addObject(object.position.x, object.position.y, object);
+      }, this);
+    }
   };
 
   exports.Layer.prototype.getObjects = function(minX, minY, maxX, maxY) {
@@ -103,9 +116,16 @@ var MODULE = 'track';
         }
       }
     }
+    if (this.add) {
+      var addObjects = this.add.getTile(tX, tY);
+      if (addObjects && addObjects.length) {
+        objects = objects.concat(addObjects);
+      }
+    }
     var trackPts = this.scenery.trackPts.getObjects(
         baseX, baseY, baseX + tileSize, baseY + tileSize);
     for (i = 0; i < maxObjects; ++i) {
+      // TODO: Remove object if in 'sub' list.
       var drop = false;
       var object = {};
       object.position = new Vec3(
@@ -140,7 +160,8 @@ var MODULE = 'track';
 
       object.scale = (random() * 0.3 + 0.3) * probability;
 
-/*
+      /*
+      // Enforce minimum distance between objects.
       for (j = 0; j < objects.length; ++j) {
         tmpVec1.sub(object.position, objects[j].position);
         leng = tmpVec1.lengthSq();
@@ -149,7 +170,8 @@ var MODULE = 'track';
           break;
         }
       }
-      if (drop) continue;*/
+      if (drop) continue;
+      */
       for (j in avoids) {
         var avoid = avoids[j];
         for (j in avoid.objects) {
