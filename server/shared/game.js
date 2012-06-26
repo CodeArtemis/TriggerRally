@@ -87,10 +87,8 @@ var MODULE = 'game';
     this.track.loadWithConfig(trackConfig, function() {
       this.sim.addStaticObject(this.track.terrain);
 
-      this.track.trees.forEach(function(tree) {
-        //this.sim.addCylinder(tree);
-      }.bind(this));
-      
+      this.track.scenery.addToSim(this.sim);
+
       if (callback) callback(null, this.track);
     }.bind(this));
   };

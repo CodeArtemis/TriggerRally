@@ -14,8 +14,6 @@ var MODULE = 'track';
   exports.Track = function() {
     this.config = {};
     this.checkpoints = [];
-    // TODO: Convert trees into some more generic object type.
-    this.trees = [];
   };
 
   exports.Track.prototype.loadWithConfig = function(config, callback) {

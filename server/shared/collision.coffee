@@ -20,33 +20,9 @@ class collision.SphereHull
 
   # Points passed in will be modified (center will be subtracted).
   constructor: (points, radius) ->
-    if _clone
-      @copy _clone
-    else
-      @points = points or []
-      @radius = radius or 0
-      @_centerPoints()
-
-  clone: ->
-    new SphereHull(null, null, @)
-
-  copy: (other) ->
-    @points = (pt.clone() for pt in other.points)
-    @radius = other.radius
-    @bounds =
-      center: other.bounds.center.clone()
-      min: other.bounds.min.clone()
-      max: other.bounds.max.clone()
-      radius: other.bounds.radius
-    return
-
-  translate: (offset) ->
-    for pt in @points
-      pt.addSelf offset
-    @bounds.center.addSelf offset
-    @bounds.min.addSelf offset
-    @bounds.max.addSelf offset
-    return
+    @points = points or []
+    @radius = radius or 0
+    @_centerPoints()
 
   _centerPoints: ->
     min = new Vec3 Infinity, Infinity, Infinity

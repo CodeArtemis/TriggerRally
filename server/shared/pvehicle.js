@@ -411,14 +411,18 @@ var MODULE = 'pvehicle';
       }
     }
 
-    // TODO: Use real clip geometry instead of just points.
-    for (c = 0; c < this.cfg.clips.length; ++c) {
-      this.clipPoint(this.cfg.clips[c]);
-    }
-    //this.clipHull();
-    for (c = 0; c < this.cfg.clipEdges.length; ++c) {
-      this.clipEdge(this.cfg.clipEdges[c]);
-    }
+    (function() {
+      // TODO: Use real clip geometry instead of just points.
+      // TODO: Pre-alloc worldPts.
+      var worldPts = [];
+      this.cfg.clips.forEach(function(clip) {
+        worldPts.push(this.body.getLocToWorldPoint(Vec3FromArray(clip.pos)).clone());
+      }, this);
+      var hull = new collision.SphereHull(worldPts, 0.1);
+      var contacts = this.sim.collideSphereHull(hull);
+      contacts.forEach(this.contactResponse, this);
+    }).call(this);
+
     var wheelTurnVelTarget =
         (controls.desiredTurnPos - this.wheelTurnPos) * 300 + wheelLateralForce * -0.005;
     wheelTurnVelTarget = CLAMP(wheelTurnVelTarget, -8, 8);
@@ -445,47 +449,6 @@ var MODULE = 'pvehicle';
     tmpBasis.u.normalize();
     return tmpBasis;
   }
-
-  exports.Vehicle.prototype.clipPoint = function(clip) {
-    var clipPos = this.body.getLocToWorldPoint(Vec3FromArray(clip.pos));
-    var contactVel = this.body.getLinearVelAtPoint(clipPos);
-    var contacts = this.sim.collide(clipPos);
-    for (var c = 0; c < contacts.length; ++c) {
-      this.contactResponse(contacts[c]);
-    }
-  };
-
-  exports.Vehicle.prototype.clipHull = function() {
-    // UNFINISHED
-    // TODO: Finish it :)
-    var convexHull = [
-      new Vec4( 1, 0, 0,  this.cfg.dimensions[0]),
-      new Vec4(-1, 0, 0, -this.cfg.dimensions[0]),
-      new Vec4( 0, 1, 0,  this.cfg.dimensions[1]),
-      new Vec4( 0,-1, 0, -this.cfg.dimensions[1]),
-      new Vec4( 0, 0, 1,  this.cfg.dimensions[2]),
-      new Vec4( 0, 0,-1, -this.cfg.dimensions[2])
-    ];
-    convexHull.forEach(function(plane) {
-      this.body.oriMat.multiplyVector4(plane);
-    });
-    var RADIUS = 5;
-    var contacts = this.sim.collideConvexHull(convexHull, this.body.pos, RADIUS);
-    for (var c = 0; c < contacts.length; ++c) {
-      this.contactResponse(contacts[c]);
-    }
-  };
-
-  exports.Vehicle.prototype.clipEdge = function(edge) {
-    var clip1 = this.cfg.clips[edge[0]];
-    var clip2 = this.cfg.clips[edge[1]];
-    var clipPos1 = this.body.getLocToWorldPoint(Vec3FromArray(clip1.pos));
-    var clipPos2 = this.body.getLocToWorldPoint(Vec3FromArray(clip2.pos));
-    var contacts = this.sim.collideLineSegment(clipPos1, clipPos2);
-    for (var c = 0; c < contacts.length; ++c) {
-      this.contactResponse(contacts[c]);
-    }
-  };
 
   exports.Vehicle.prototype.contactResponse = function(contact) {
     var surf = getSurfaceBasis(contact.normal, plusXVec3);

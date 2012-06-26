@@ -59,6 +59,14 @@ var MODULE = 'scenery';
     return this.layersById[id];
   };
 
+  exports.Scenery.prototype.addToSim = function(sim) {
+    this.layers.forEach(function(layer) {
+      if (layer.config.collision) {
+        sim.addStaticObject(layer);
+      }
+    });
+  };
+
   exports.Layer = function(config, scenery) {
     this.config = config;
     this.scenery = scenery;
@@ -79,6 +87,7 @@ var MODULE = 'scenery';
     this.hull = null;
     if (config.collision) {
       this.hull = new collision.SphereHull(1, [ new Vec3() ]);
+      this.hull.originalCenter = this.hull.center.clone();
     }
   };
 
@@ -90,10 +99,12 @@ var MODULE = 'scenery';
         center.x - radius, center.x + radius,
         center.y - radius, center.y + radius);
     var contactArrays = [];
-    var tmpHull = this.hull.clone();
+    var objHull = this.hull;
     objects.forEach(function(object) {
-      contactArrays.push(
+      objHull.center.add(objHull.originalCenter, object.position);
+      contactArrays.push(hull.collideSphereHull(objHull));
     });
+    return [].concat.apply([], contactArrays);
   };
 
   exports.Layer.prototype.getObjects = function(minX, minY, maxX, maxY) {

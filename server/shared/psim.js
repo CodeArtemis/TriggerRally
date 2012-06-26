@@ -83,72 +83,31 @@ var MODULE = 'psim';
   };
 
   exports.Sim.prototype.collide = function(pt) {
-    var i, contacts = [];
-    for (i = 0; i < this.staticObjects.length; ++i) {
-      var contact = this.staticObjects[i].getContact(pt);
-      if (contact) {
-        tmpVec3a.sub(contact.surfacePos, pt)
-        contact.depth = tmpVec3a.dot(contact.normal);
-        if (contact.depth > 0) {
-          contacts.push(contact);
+    var contacts = [];
+    this.staticObjects.forEach(function(obj) {
+      if (obj.getContact) {
+        var contact = obj.getContact(pt);
+        if (contact) {
+          tmpVec3a.sub(contact.surfacePos, pt)
+          contact.depth = tmpVec3a.dot(contact.normal);
+          if (contact.depth > 0) {
+            contacts.push(contact);
+          }
         }
-      }
-    }
-    var cylVec = new Vec3(0,1,0);
-    var cylList = this.getCylList(pt);
-    if (cylList) cylList.forEach(function(cyl) {
-      tmpVec3b.sub(pt, cyl);
-      var normal = tmpVec3b.subSelf(tmpVec3a.copy(cylVec).multiplyScalar(tmpVec3b.dot(cylVec)));
-      var leng = normal.length();
-      if (leng < cyl.radius) {
-        var depth = cyl.radius - leng;
-        var contact = {
-          normal: normal.clone(),
-          surfacePos: pt.addSelf(tmpVec3a.copy(normal).multiplyScalar(depth)),
-          depth: depth
-        };
-        contacts.push(contact);
       }
     });
     return contacts;
   };
 
-  var CYLINDER_BLOCK_INV = 0.1;
-
-  var cylListKey = function(a, b) {
-    return Math.round(a * CYLINDER_BLOCK_INV) + ',' + Math.round(b * CYLINDER_BLOCK_INV);
-  };
-
-  exports.Sim.prototype.getCylList = function(pt) {
-    return this.cylLists[cylListKey(pt.x, pt.z)];
-  };
-
-  exports.Sim.prototype.addCylinder = function(cyl) {
-    // TODO: Check that cell allocation is optimal.
-    this.cylinders.push(cyl);
-    var cx = Math.round(cyl.x * CYLINDER_BLOCK_INV);
-    var cy = Math.round(cyl.z * CYLINDER_BLOCK_INV);
-    var crad = Math.ceil(cyl.radius * CYLINDER_BLOCK_INV);
-    var x, y;
-    for (y = -crad; y <= crad; ++y) {
-      for (x = -crad; x <= crad; ++x) {
-        var key = (x + cx) + ',' + (y + cy);
-        var cylList = this.cylLists[key] || (this.cylLists[key] = []);
-        cylList.push(cyl);
-      }
-    }
-  };
-  
-  exports.Sim.prototype.collideConvexHull = function(hull, center, radius) {
-    // center and radius are used for quick discard.
-    var cylVec = new Vec3(0,1,0);
-    var radiusSquared = radius * radius;
-    this.cylinders.forEach(function (cyl) {
-      var dist = new Vec3.sub(cyl, center);
-      // TODO: Use a hash map to optimize collision tests better.
-      if (dist.lengthSq() <= radiusSquared) {
+  // Collide a dynamic hull against registered static objects.
+  exports.Sim.prototype.collideSphereHull = function(hull) {
+    var contactsArrays = [];
+    this.staticObjects.forEach(function(obj) {
+      if (obj.collideSphereHull) {
+        contactsArrays.push(obj.collideSphereHull(hull));
       }
     });
+    return [].concat.apply([], contactsArrays);
   };
 
   exports.Sim.prototype.collideLineSegment = function(pt1, pt2) {
