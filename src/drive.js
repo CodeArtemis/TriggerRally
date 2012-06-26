@@ -314,10 +314,10 @@ function drawCube() {
   });
   //cubeMaterial.transparent = 1; // Force draw at end.
   var cubeMesh = new THREE.Mesh(
-      new THREE.CubeGeometry(100000, 100000, 100000), cubeMaterial);
+      new THREE.CubeGeometry(50000, 50000, 50000), cubeMaterial);
   cubeMesh.geometry.faces.splice(5, 1);
   cubeMesh.flipSided = true;
-  cubeMesh.position.set(0, 0, 40000);
+  cubeMesh.position.set(0, 0, 20000);
   scene.add(cubeMesh);
 };
 

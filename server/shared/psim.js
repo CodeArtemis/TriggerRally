@@ -102,6 +102,14 @@ var MODULE = 'psim';
   // Collide a dynamic hull against registered static objects.
   exports.Sim.prototype.collideSphereHull = function(hull) {
     var contactsArrays = [];
+    // Collide points first.
+    var tmpVec3 = new Vec3();
+    var offset = new Vec3(0, 0, -hull.radius).addSelf(hull.bounds.center);
+    hull.points.forEach(function(point) {
+      tmpVec3.add(point, offset);
+      contactsArrays.push(this.collide(tmpVec3));
+    }, this);
+    // Then collide hulls.
     this.staticObjects.forEach(function(obj) {
       if (obj.collideSphereHull) {
         contactsArrays.push(obj.collideSphereHull(hull));
@@ -164,24 +172,28 @@ var MODULE = 'psim';
   };
 
   // Coordinate space transforms.
+  var tmpVec3c = new Vec3();
   exports.ReferenceFrame.prototype.getLocToWorldVector = function(vec) {
-    var v = tmpVec3b.copy(vec);
+    var v = tmpVec3c.copy(vec);
     this.oriMat.multiplyVector3(v);
     return v;
   };
+  var tmpVec3d = new Vec3();
   exports.ReferenceFrame.prototype.getWorldToLocVector = function(vec) {
-    var v = tmpVec3b.copy(vec);
+    var v = tmpVec3d.copy(vec);
     this.oriMatInv.multiplyVector3(v);
     return v;
   };
+  var tmpVec3e = new Vec3();
   exports.ReferenceFrame.prototype.getLocToWorldPoint = function(pt) {
-    var v = tmpVec3b.copy(pt);
+    var v = tmpVec3e.copy(pt);
     this.oriMat.multiplyVector3(v);
     v.addSelf(this.pos);
     return v;
   };
+  var tmpVec3f = new Vec3();
   exports.ReferenceFrame.prototype.getWorldToLocPoint = function(pt) {
-    var v = tmpVec3b.sub(pt, this.pos);
+    var v = tmpVec3f.sub(pt, this.pos);
     this.oriMatInv.multiplyVector3(v);
     return v;
   };
