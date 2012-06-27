@@ -120,11 +120,12 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
 
   createBuffers: (gl) ->
     # Indices.
-    @vertexIndexBuffer = gl.createBuffer()
-    gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @vertexIndexBuffer
-    gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(@vertexIndexArray), gl.STATIC_DRAW
-    @vertexIndexBuffer.itemSize = 1
-    @vertexIndexBuffer.numItems = @vertexIndexArray.length
+    if @vertexIndexArray? and @vertexIndexArray.length > 0
+      @vertexIndexBuffer = gl.createBuffer()
+      gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @vertexIndexBuffer
+      gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(@vertexIndexArray), gl.STATIC_DRAW
+      @vertexIndexBuffer.itemSize = 1
+      @vertexIndexBuffer.numItems = @vertexIndexArray.length
 
     # Positions.
     @vertexPositionBuffer = gl.createBuffer()
@@ -159,4 +160,34 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
 
     return
 
+  render: (gl) ->
+    @setupBuffers gl
+    if @vertexIndexBuffer? and @vertexIndexBuffer.length > 0
+      @drawElements gl
+    else
+      @drawArrays gl
 
+  setupBuffers: (gl) ->
+    gl.bindBuffer gl.ARRAY_BUFFER, @vertexPositionBuffer
+    gl.vertexAttribPointer program.attributes.position, 3, gl.FLOAT, false, 0, 0
+
+    if @vertexNormalArray? and @vertexNormalArray.length > 0
+      gl.bindBuffer gl.ARRAY_BUFFER, @vertexNormalBuffer
+      gl.vertexAttribPointer program.attributes.normal, 3, gl.FLOAT, false, 0, 0
+
+    if @vertexUvArray? and @vertexUvArray.length > 0
+      gl.bindBuffer gl.ARRAY_BUFFER, @vertexUvBuffer
+      gl.vertexAttribPointer program.attributes.uv, 2, gl.FLOAT, false, 0, 0
+
+    if @vertexColorArray? and @vertexColorArray.length > 0
+      gl.bindBuffer gl.ARRAY_BUFFER, @vertexColorBuffer
+      gl.vertexAttribPointer program.attributes.color, 2, gl.FLOAT, false, 0, 0
+
+  drawElements: (gl) ->
+    gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @vertexIndexBuffer
+
+    for offset in @geom.offsets
+      gl.drawElements gl.TRIANGLES, offset.count, gl.UNSIGNED_SHORT, offset.start * 2
+
+  drawArrays: (gl) ->
+    gl.drawArrays primitives, 0, vertexPositionBuffer
