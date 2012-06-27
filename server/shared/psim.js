@@ -82,7 +82,8 @@ var MODULE = 'psim';
     });
   };
 
-  exports.Sim.prototype.collide = function(pt) {
+  // Collide a point against registered static objects.
+  exports.Sim.prototype.collidePoint = function(pt) {
     var contacts = [];
     this.staticObjects.forEach(function(obj) {
       if (obj.getContact) {
@@ -99,7 +100,7 @@ var MODULE = 'psim';
     return contacts;
   };
 
-  // Collide a dynamic hull against registered static objects.
+  // Collide a hull against registered static objects.
   exports.Sim.prototype.collideSphereHull = function(hull) {
     var contactsArrays = [];
     // Collide points first.
@@ -107,7 +108,7 @@ var MODULE = 'psim';
     var offset = new Vec3(0, 0, -hull.radius).addSelf(hull.bounds.center);
     hull.points.forEach(function(point) {
       tmpVec3.add(point, offset);
-      contactsArrays.push(this.collide(tmpVec3));
+      contactsArrays.push(this.collidePoint(tmpVec3));
     }, this);
     // Then collide hulls.
     this.staticObjects.forEach(function(obj) {

@@ -590,7 +590,7 @@ function animate(nowTime) {
 
   var cameraClip = camera.position.clone();
   cameraClip.z -= 0.1;
-  var ctc = game.sim.collide(cameraClip);
+  var ctc = game.sim.collidePoint(cameraClip);
   for (var c = 0; c < ctc.length; ++c) {
     if (camera.position.z < ctc[c].surfacePos.z + 0.1) {
       camera.position.z = ctc[c].surfacePos.z + 0.1;

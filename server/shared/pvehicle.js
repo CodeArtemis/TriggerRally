@@ -452,7 +452,9 @@ var MODULE = 'pvehicle';
 
   exports.Vehicle.prototype.contactResponse = function(contact) {
     var surf = getSurfaceBasis(contact.normal, plusXVec3);
-    var contactVel = this.body.getLinearVelAtPoint(contact.surfacePos);
+    // TODO: Remove surfacePos.
+    var contactPoint = contact.pos2 || contact.surfacePos;
+    var contactVel = this.body.getLinearVelAtPoint(contactPoint);
 
     // Local velocity in surface space.
     var contactVelSurf = tmpVec3a.set(
@@ -487,7 +489,7 @@ var MODULE = 'pvehicle';
       force.addSelf(surf.u.multiplyScalar(friction.x));
       force.addSelf(surf.v.multiplyScalar(friction.y));
 
-      this.body.addForceAtPoint(force, contact.surfacePos);
+      this.body.addForceAtPoint(force, contactPoint);
       
       this.crashLevel = Math.max(this.crashLevel, perpForce);
     }
@@ -507,6 +509,7 @@ var MODULE = 'pvehicle';
     wheel.spinPos -= Math.floor(wheel.spinPos / TWOPI) * TWOPI;
 
     // Wheel bump makes sims diverge faster, so disabling it.
+    // TODO: Bring it back using a fractal.
     /*
     wheel.bumpTravel += Math.abs(wheel.spinVel) * BUMPS_PER_RADIAN * delta;
 
@@ -528,7 +531,7 @@ var MODULE = 'pvehicle';
     // Wheel bump makes sims diverge faster, so disabling it.
     //clipPos.y += INTERP(wheel.bumpLast, wheel.bumpNext, wheel.bumpTravel);
     var contactVel = this.body.getLinearVelAtPoint(clipPos);
-    var contacts = this.sim.collide(clipPos);
+    var contacts = this.sim.collidePoint(clipPos);
     for (var c = 0; c < contacts.length; ++c) {
       var contact = contacts[c];
       var surf = getSurfaceBasis(contact.normal,

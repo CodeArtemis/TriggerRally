@@ -10,6 +10,7 @@ collision = exports? and @ or @collision = {}
 #   pos1: contact point on surface of obj1
 #   pos2: contact point on surface of obj2
 #   depth: distance between pos1 and pos2
+#   surfacePos is deprecated, equivalent to pos2
 ###
 
 
@@ -43,25 +44,30 @@ class collision.SphereHull
       center: center
       min: min
       max: max
-      radius: Math.sqrt radSq
+      radius: Math.sqrt(radSq) + @radius
 
   collideSphereHull: (hull2) ->
     hull1 = @
     contacts = []
     bothRadius = hull1.radius + hull2.radius
     bothRadiusSq = bothRadius * bothRadius
+    center1 = hull1.bounds.center
+    center2 = hull2.bounds.center
+    # TODO: Add a quick center-distance check.
     # Collide sphere-sphere.
     for pt1 in hull1.points
       for pt2 in hull2.points
         _tmpVec3a.sub pt2, pt1
+        _tmpVec3a.addSelf center2
+        _tmpVec3a.subSelf center1
         distSq = _tmpVec3a.lengthSq()
         unless distSq < bothRadiusSq then continue
         dist = Math.sqrt distSq
         _tmpVec3a.multiplyScalar 1/dist
         contact =
-          normal: _tmpVec3a
+          normal: _tmpVec3a.clone()
           depth: bothRadius - dist
-          pos1: _tmpVec3a.clone().multiplyScalar(hull1.radius).addSelf(pt1)
-          pos2: _tmpVec3a.clone().multiplyScalar(-hull2.radius).addSelf(pt2)
+          pos1: _tmpVec3a.clone().multiplyScalar(hull1.radius).addSelf(pt1).addSelf(center1)
+          pos2: _tmpVec3a.clone().multiplyScalar(-hull2.radius).addSelf(pt2).addSelf(center2)
         contacts.push contact
     contacts

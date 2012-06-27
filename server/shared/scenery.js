@@ -86,8 +86,13 @@ var MODULE = 'scenery';
     }
     this.hull = null;
     if (config.collision) {
-      this.hull = new collision.SphereHull(1, [ new Vec3() ]);
-      this.hull.originalCenter = this.hull.center.clone();
+      if (config.collision.capsule) {
+        this.hull = new collision.SphereHull([
+          new Vec3(0, 0, 0),
+          new Vec3(0, 0, config.collision.capsule.height)
+        ], config.collision.capsule.radius);
+        this.hull.originalCenter = this.hull.bounds.center.clone();
+      }
     }
   };
 
@@ -96,13 +101,13 @@ var MODULE = 'scenery';
     var radius = hull.bounds.radius + this.hull.bounds.radius;
     var center = hull.bounds.center;
     var objects = this.getObjects(
-        center.x - radius, center.x + radius,
-        center.y - radius, center.y + radius);
+        center.x - radius, center.y - radius,
+        center.x + radius, center.y + radius);
     var contactArrays = [];
     var objHull = this.hull;
     objects.forEach(function(object) {
-      objHull.center.add(objHull.originalCenter, object.position);
-      contactArrays.push(hull.collideSphereHull(objHull));
+      objHull.bounds.center.add(objHull.originalCenter, object.position);
+      contactArrays.push(objHull.collideSphereHull(hull));
     });
     return [].concat.apply([], contactArrays);
   };
@@ -217,7 +222,7 @@ var MODULE = 'scenery';
       }
       if (drop) continue;
 
-      object.rotation = new Vec3(0, random() * 2 * Math.PI, 0);
+      object.rotation = new Vec3(0, 0, random() * 2 * Math.PI);
       objects.push(object);
     }
     return objects;
