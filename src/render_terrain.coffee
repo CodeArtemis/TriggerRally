@@ -16,9 +16,17 @@ class render_terrain.RenderTerrain
     return
 
   update: (camera, delta) ->
-    unless @mesh
-      @mesh
+    unless @geom
+      @geom = @_createGeom
     return
+
+  _renderObject: ->
+    class TerrainObject
+      constructor: (@renderTerrain) ->
+        return
+      immediateRenderCallback: (program, gl, frustum) ->
+        @renderTerrain.immediateRenderCallback progam, gl, frustum
+    return new TerrainObject @
 
   _createGeom: ->
     geom = new array_geometry.ArrayGeometry()
@@ -36,6 +44,6 @@ class render_terrain.RenderTerrain
     geom.createBuffers @gl
     geom
 
-  immediateRenderCallback: (program, _gl, _frustum) ->
-    @geom.render()
+  immediateRenderCallback: (program, gl, frustum) ->
+    @geom.render gl
     return
