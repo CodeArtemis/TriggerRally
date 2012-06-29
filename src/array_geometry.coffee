@@ -157,17 +157,17 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
       gl.bufferData gl.ARRAY_BUFFER, new Float32Array(@vertexColorArray), gl.STATIC_DRAW
       @vertexColorBuffer.itemSize = 4
       @vertexColorBuffer.numItems = @vertexColorArray.length
-
     return
 
-  render: (gl) ->
-    @setupBuffers gl
-    if @vertexIndexBuffer? and @vertexIndexBuffer.length > 0
+  render: (program, gl) ->
+    @setupBuffers program, gl
+    if @vertexIndexBuffer? and @vertexIndexBuffer.numItems > 0
       @drawElements gl
     else
       @drawArrays gl
+    return
 
-  setupBuffers: (gl) ->
+  setupBuffers: (program, gl) ->
     gl.bindBuffer gl.ARRAY_BUFFER, @vertexPositionBuffer
     gl.vertexAttribPointer program.attributes.position, 3, gl.FLOAT, false, 0, 0
 
@@ -182,12 +182,15 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     if @vertexColorArray? and @vertexColorArray.length > 0
       gl.bindBuffer gl.ARRAY_BUFFER, @vertexColorBuffer
       gl.vertexAttribPointer program.attributes.color, 2, gl.FLOAT, false, 0, 0
+    return
 
   drawElements: (gl) ->
     gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @vertexIndexBuffer
 
-    for offset in @geom.offsets
+    for offset in @offsets
       gl.drawElements gl.TRIANGLES, offset.count, gl.UNSIGNED_SHORT, offset.start * 2
+    return
 
   drawArrays: (gl) ->
-    gl.drawArrays primitives, 0, vertexPositionBuffer
+    gl.drawArrays gl.TRIANGLES, 0, vertexPositionBuffer.numItems / 3
+    return

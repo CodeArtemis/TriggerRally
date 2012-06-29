@@ -20,7 +20,7 @@ var webglRenderer;
 var sunLight, sunLightPos;
 var cameraMode = 0, CAMERA_MODES = 3;
 var trees = [];
-var renderTrack, renderScenery;
+var renderTerrain, renderScenery;
 var meshCheckpoint;
 var meshArrow, meshArrowNext;
 var containerEl = $$('frame3d')[0];
@@ -269,8 +269,8 @@ function init() {
   }, function(err, data) {
     if (err) throw new Error(err);
     else {
-      renderTrack = new render_track.RenderTrack(
-          scene, data.track, webglRenderer.context)
+      renderTerrain = new render_terrain.RenderTerrain(
+          scene, data.track.terrain, webglRenderer.context)
       renderScenery = new render_scenery.RenderScenery(
           scene, data.track.scenery, loadFunc, webglRenderer.context)
 
@@ -598,8 +598,8 @@ function animate(nowTime) {
     }
   }
 
-  renderTrack.update(camera, delta);
-  renderScenery.update(camera, delta);
+  renderTerrain.update(camera, delta);
+  //renderScenery.update(camera, delta);
 
   sunLight.target.position.copy(car.root.position);
   sunLight.position.copy(car.root.position).addSelf(sunLightPos);
