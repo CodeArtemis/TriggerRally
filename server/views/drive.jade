@@ -56,4 +56,6 @@ script
 - if (user)
   script TRIGGER.USER_LOGGED_IN = '#{user.pub_id}';
 
+script(id="terrainVertexShader", type="x-shader/x-vertex", src="/a/shaders/terrainVertex.glsl")
+script(id="terrainFragmentShader", type="x-shader/x-fragment", src="/a/shaders/terrainFragment.glsl")
 script(src="/js/trigger.js")

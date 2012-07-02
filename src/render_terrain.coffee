@@ -20,7 +20,13 @@ class render_terrain.RenderTerrain
     unless @geom
       @geom = @_createGeom()
       obj = @_createImmediateObject()
-      obj.material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xffffff, wireframe: false } )
+      obj.material = new THREE.ShaderMaterial
+        uniforms:
+          whatever:
+            type: 'f'
+            value: 0.0
+        vertexShader: $('terrainVertexShader').textContent
+        fragmentShader: $('terrainFragmentShader').textContent
       @scene.add obj
     return
 
@@ -52,24 +58,3 @@ class render_terrain.RenderTerrain
   _render: (program, gl, frustum) ->
     @geom.render program, gl
     return
-
-  _vertexShader: "
-    varying vec2 vUv;
-    uniform vec4 offsetRepeat;
-    #ifdef USE_SHADOWMAP
-    varying vec4 vShadowCoord[ MAX_SHADOWS ];
-    uniform mat4 shadowMatrix[ MAX_SHADOWS ];
-    #endif
-    void main() {
-    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-    vUv = uv * offsetRepeat.zw + offsetRepeat.xy;
-    gl_Position = projectionMatrix * mvPosition;
-    #ifdef USE_SHADOWMAP
-    for( int i = 0; i < MAX_SHADOWS; i ++ ) {
-    vShadowCoord[ i ] = shadowMatrix[ i ] * objectMatrix * vec4( position, 1.0 );
-    }
-    #endif
-    }
-    "
-
-  _fragmentShader: ""
