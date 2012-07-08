@@ -126,6 +126,7 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
       gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(@vertexIndexArray), gl.STATIC_DRAW
       @vertexIndexBuffer.itemSize = 1
       @vertexIndexBuffer.numItems = @vertexIndexArray.length
+      # delete @vertexIndexArray
 
     # Positions.
     @vertexPositionBuffer = gl.createBuffer()

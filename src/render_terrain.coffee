@@ -12,22 +12,74 @@ class render_terrain.RenderTerrain
 
   update: (camera, delta) ->
     if !@hmapTex? and @terrain.source?
-      @hmapTex = new THREE.Texture(
+      ###
+      @hmapTex = new THREE.DataTexture(
           @terrain.source.hmap,
+          @terrain.source.cx, @terrain.source.cy,
+          THREE.RGBAFormat, THREE.UnsignedByteType,
           null,
           THREE.RepeatWrapping, THREE.RepeatWrapping
       )
-    unless @geom
-      @geom = @_createGeom()
-      obj = @_createImmediateObject()
-      obj.material = new THREE.ShaderMaterial
-        uniforms:
-          whatever:
-            type: 'f'
-            value: 0.0
-        vertexShader: $('terrainVertexShader').textContent
-        fragmentShader: $('terrainFragmentShader').textContent
-      @scene.add obj
+      ###
+      ###
+      @hmapTex = new THREE.DataTexture(
+          @terrain.source.hmap,
+          @terrain.source.cx, @terrain.source.cy,
+          THREE.LuminanceFormat, THREE.FloatType,
+          null,
+          THREE.RepeatWrapping, THREE.RepeatWrapping
+      )
+      ###
+      ###
+      @hmapTex = new THREE.Texture(
+          @terrain.source.hmap,
+          null,
+          THREE.RepeatWrapping, THREE.RepeatWrapping,
+          undefined, undefined,
+          THREE.RGBAFormat, THREE.UnsignedByteType,
+      )
+      ###
+      #@hmapTex.generateMipmaps = false
+      unless @geom
+        @geom = @_createGeom()
+        obj = @_createImmediateObject()
+        obj.material = new THREE.ShaderMaterial
+          uniforms:
+            clr:
+              type: 'v4'
+              value: new THREE.Vector4(1, 0, 1, 1)
+            tHeightMap:
+              type: 't'
+              value: 0
+              texture: @hmapTex
+          vertexShader:
+            """
+            varying vec2 vUv;
+            uniform sampler2D tHeightMap;
+            varying vec3 worldPosition;
+
+            void main() {
+              worldPosition = position * 3.0;
+              vUv = position.xy * (vec2(1.0, 1.0) / 128.0) + vec2(0.0, 0.0);
+              vUv += uv * 0.0;
+              worldPosition.z += texture2D( tHeightMap, vUv ).r * 25.5;
+              vec4 mvPosition = modelViewMatrix * vec4( worldPosition, 1.0 );
+              gl_Position = projectionMatrix * mvPosition;
+            }
+            """
+          fragmentShader:
+            """
+            varying vec2 vUv;
+            uniform vec4 clr;
+            varying vec3 worldPosition;
+            uniform sampler2D tHeightMap;
+
+            void main() {
+              //gl_FragColor = clr;
+              gl_FragColor = vec4(texture2D( tHeightMap, vUv ).xy, 0.5, 1.0);
+            }
+            """
+        @scene.add obj
     return
 
   _createImmediateObject: ->
@@ -40,16 +92,18 @@ class render_terrain.RenderTerrain
 
   _createGeom: ->
     geom = new array_geometry.ArrayGeometry()
-    SIZE = 8
+    SIZE = 128
     posn = geom.vertexPositionArray
+    uv = geom.vertexUvArray
     for y in [0..SIZE]
       for x in [0..SIZE]
         posn.push x, y, 0
+        uv.push x / SIZE, y / SIZE
     idx = geom.vertexIndexArray
     for y in [0...SIZE]
       for x in [0...SIZE]
         start = y * (SIZE + 1) + x
-        idx.push start + 0, start + SIZE + 1, start + 1
+        idx.push start + 0, start + 1, start + SIZE + 1
         idx.push start + 1, start + SIZE + 2, start + SIZE + 1
     geom.updateOffsets()
     geom.createBuffers @gl
