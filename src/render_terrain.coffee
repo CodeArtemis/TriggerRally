@@ -17,6 +17,7 @@ class render_terrain.RenderTerrain
       @_setup()
     unless @geom? then return
     offsets = @material.uniforms['offsets'].value
+    morphFactors = @material.uniforms['morphFactors'].value
     scale = 3
     for layer in [0...@numLayers]
       offsets[layer] ?= new THREE.Vector2()
@@ -57,6 +58,9 @@ class render_terrain.RenderTerrain
         offsets:
           type: 'v2v'
           value: []
+        morphFactors:
+          type: 'v4v'
+          value: []
 
       attributes:
         morph:
@@ -67,6 +71,7 @@ class render_terrain.RenderTerrain
         """
         uniform sampler2D tHeightMap;
         uniform vec2 offsets[NUM_LAYERS];
+        uniform vec4 morphFactors[NUM_LAYERS];
 
         attribute vec4 morph;
 
@@ -131,7 +136,7 @@ class render_terrain.RenderTerrain
     uv = geom.vertexUvArray
     morph = geom.addCustomAttrib 'morph'
       size: 4
-    RING_WIDTH = 3
+    RING_WIDTH = 1
     layerScales = [
       1.0 / 128.0,
       2.0 / 128.0,
