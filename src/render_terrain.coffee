@@ -33,6 +33,10 @@ class render_terrain.RenderTerrain
       ###
       @hmapTex.generateMipmaps = false
       @hmapTex.needsUpdate = true
+      
+      diffuseTex = THREE.ImageUtils.loadTexture("/a/textures/mayang-earth.jpg")
+      diffuseTex.wrapS = THREE.RepeatWrapping
+      diffuseTex.wrapT = THREE.RepeatWrapping
       unless @geom
         @geom = @_createGeom()
         obj = @_createImmediateObject()
@@ -45,36 +49,52 @@ class render_terrain.RenderTerrain
               type: 't'
               value: 0
               texture: @hmapTex
+            tDiffuse:
+              type: 't'
+              value: 1
+              texture: diffuseTex
+
           vertexShader:
             """
-            varying vec2 vUv;
             uniform sampler2D tHeightMap;
+            varying vec2 vUv;
             varying vec4 eyePosition;
             varying vec3 worldPosition;
+            varying vec3 col;
 
             void main() {
               worldPosition = position * 128.0 * 3.0;
-              vUv = (position.xy + vec2(0.5, 0.5) / 128.0) * (128.0 / 129.0);
-              vUv += uv * 0.0;
-              worldPosition.z += texture2D(tHeightMap, vUv).r;
+              vUv = (position.xy + vec2(0.5) / 128.0) * (128.0 / 129.0);
+              //vUv += uv * 0.0;
+              worldPosition.z = texture2D(tHeightMap, vUv).r;
               eyePosition = modelViewMatrix * vec4(worldPosition, 1.0);
               gl_Position = projectionMatrix * eyePosition;
+              col = vec3(uv.xy, 0.5);
             }
             """
           fragmentShader:
             """
+            //uniform sampler2D tHeightMap;
+            uniform sampler2D tDiffuse;
             varying vec2 vUv;
             uniform vec4 clr;
             varying vec4 eyePosition;
             varying vec3 worldPosition;
+            varying vec3 col;
 
             void main() {
-              //gl_FragColor = clr;
               float height = worldPosition.z;
-              //float depth = -eyePosition.z;
-              //vec2 gradient = vec2(dFdx(height), dFdy(height)) * 150.0 / depth;
-              //gl_FragColor = vec4(sin(height * 10.0) * 0.5 + 0.5, 0.0, 0.0, 1.0);
-              gl_FragColor = vec4(sin(worldPosition.xzy * 10.0) * 0.7 + 0.5, 1.0);
+              vec3 diffSample = texture2D(tDiffuse, worldPosition.xy / 4.0).rgb;
+              gl_FragColor = vec4(diffSample, 1.0);
+              gl_FragColor.rg = mix(gl_FragColor.rg, col.rg, 0.8);
+
+              //float heightSample = texture2D(tHeightMap, vUv).r;
+              //gl_FragColor.g = fract(heightSample);
+
+              float depth = -eyePosition.z / eyePosition.w;
+              vec3 fogCol = vec3(0.8, 0.8, 0.8);
+              float clarity = 250.0 / (depth + 250.0);
+              gl_FragColor.rgb = mix(fogCol, gl_FragColor.rgb, clarity);
             }
             """
         @scene.add obj
@@ -90,13 +110,13 @@ class render_terrain.RenderTerrain
 
   _createGeom: ->
     geom = new array_geometry.ArrayGeometry()
-    SIZE = 512
+    SIZE = 128
     posn = geom.vertexPositionArray
     uv = geom.vertexUvArray
     for y in [0..SIZE]
       for x in [0..SIZE]
         posn.push x / SIZE, y / SIZE, 0
-        uv.push x / SIZE, y / SIZE
+        uv.push Math.random(), Math.random()
     idx = geom.vertexIndexArray
     for y in [0...SIZE]
       for x in [0...SIZE]
