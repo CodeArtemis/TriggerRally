@@ -9,13 +9,21 @@ class render_terrain.RenderTerrain
     # We currently grab the terrain source directly. This is not very kosher.
     @geom = null
     #console.assert @gl.getExtension('OES_standard_derivatives')
+    @numLayers = 4
     return
 
   update: (camera, delta) ->
     if not @hmapTex? and @terrain.source?
       @_setup()
     unless @geom? then return
-    @material.uniforms['offset'].value.copy camera.position
+    offsets = @material.uniforms['offsets'].value
+    scale = 3
+    for layer in [0...@numLayers]
+      offsets[layer] ?= new THREE.Vector2()
+      offset = offsets[layer]
+      offset.x = Math.round(camera.position.x / scale) * scale
+      offset.y = Math.round(camera.position.y / scale) * scale
+      scale *= 2
     return
 
   _setup: ->
@@ -46,14 +54,15 @@ class render_terrain.RenderTerrain
           type: 't'
           value: 1
           texture: diffuseTex
-        offset:
-          type: 'v2'
-          value: new THREE.Vector2(100, 100)
+        offsets:
+          type: 'v2v'
+          value: []
 
       vertexShader:
+        "const int NUM_LAYERS = " + @numLayers + ";\n" +
         """
         uniform sampler2D tHeightMap;
-        uniform vec2 offset;
+        uniform vec2 offsets[NUM_LAYERS];
 
         varying vec2 vUv;
         varying vec4 eyePosition;
@@ -61,7 +70,9 @@ class render_terrain.RenderTerrain
         varying vec3 col;
 
         void main() {
-          worldPosition = floor(position * 128.0 * 3.0 + vec3(offset, 0.0));
+          int layer = int(position.z);
+          vec2 offset = offsets[layer];
+          worldPosition = position * 128.0 * 3.0 + vec3(offset, 0.0);
           vUv = (worldPosition.xy / 128.0 / 3.0 + vec2(0.5) / 128.0) * (128.0 / 129.0);
           //vUv += uv * 0.0;
           worldPosition.z = texture2D(tHeightMap, vUv).r;
@@ -112,10 +123,49 @@ class render_terrain.RenderTerrain
     # TODO: Draw innermost grid.
     posn = geom.vertexPositionArray
     uv = geom.vertexUvArray
-    #RING_WIDTH = 15
-    #for i in RING_WIDTH+1...RING_WIDTH*-2-1]
-    #  for j in RING_WIDTH+1...RING_WIDTH*2+1]
-    #    posn.push j, i
+    idx = geom.vertexIndexArray
+    RING_WIDTH = 7
+    segments = [
+      [  1,  0,  0,  1 ],
+      [  0,  1, -1,  0 ],
+      [ -1,  0,  0, -1 ],
+      [  0, -1,  1,  0 ]
+    ]
+    scale = 1.0 / 128.0
+    layerScales = [
+      2.0 / 128.0,
+      4.0 / 128.0,
+      8.0 / 128.0
+    ]
+    GRID_SIZE = RING_WIDTH * 4 + 2
+    for i in [0..GRID_SIZE]
+      modeli = i - GRID_SIZE / 2
+      for j in [0..GRID_SIZE]
+        modelj = j - GRID_SIZE / 2
+        posn.push modelj * scale, modeli * scale, 0
+        uv.push 0, 0
+        if i > 0 and j > 0
+          start = (i-1) * (GRID_SIZE + 1) + (j-1)
+          idx.push start + 0, start + 1, start + GRID_SIZE + 1
+          idx.push start + 1, start + GRID_SIZE + 2, start + GRID_SIZE + 1
+    for scale, layer in layerScales
+      for segment in segments
+        idxStart = posn.length / 3
+        for i in [0..RING_WIDTH*3 + 2]
+          modeli = -i + RING_WIDTH + 1
+          for j in [0..RING_WIDTH]
+            modelj = j + RING_WIDTH + 1
+            segi = segment[0] * modeli + segment[1] * modelj
+            segj = segment[2] * modeli + segment[3] * modelj
+            posn.push segj * scale, segi * scale, layer + 1
+            uv.push 0, 0
+            if i > 0 and j > 0
+              start = idxStart + (i-1) * (RING_WIDTH + 1) + (j-1)
+              idx.push start + 1, start + 0, start + RING_WIDTH + 1
+              idx.push start + 1, start + RING_WIDTH + 1, start + RING_WIDTH + 2
+    geom.updateOffsets()
+    geom.createBuffers @gl
+    return geom
     SIZE = 256
     for y in [0..SIZE]
       fy = (y / SIZE - 0.5) * 2.0
@@ -126,15 +176,11 @@ class render_terrain.RenderTerrain
         posn.push fx, fy, 0
         uv.push 6.0, Math.random()
         #uv.push Math.random(), Math.random()
-    idx = geom.vertexIndexArray
     for y in [0...SIZE]
       for x in [0...SIZE]
         start = y * (SIZE + 1) + x
         idx.push start + 0, start + 1, start + SIZE + 1
         idx.push start + 1, start + SIZE + 2, start + SIZE + 1
-    geom.updateOffsets()
-    geom.createBuffers @gl
-    return geom
 
   _render: (program, gl, frustum) ->
     @geom.render program, gl

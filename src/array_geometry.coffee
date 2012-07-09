@@ -28,6 +28,7 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     PRIMITIVE_SIZE = 3
     MAX_INDEX = 65535
     indices = @vertexIndexArray
+    console.log 'ArrayGeometry with ' + indices.length/3 + ' triangles.'
     while elem < @vertexIndexArray.length
       maxIndexFound = Math.max maxIndexFound, indices[elem + 0]
       maxIndexFound = Math.max maxIndexFound, indices[elem + 1]
