@@ -52,7 +52,7 @@ class render_terrain.RenderTerrain
 
             void main() {
               worldPosition = position * 3.0;
-              vUv = position.xy * (vec2(1.0, 1.0) / 129.0) + vec2(0.0, 0.0);
+              vUv = (position.xy + vec2(0.5, 0.5)) * (1.0 / 129.0) + vec2(0.0, 0.0);
               vUv += uv * 0.0;
               worldPosition.z += texture2D( tHeightMap, vUv ).r;
               vec4 mvPosition = modelViewMatrix * vec4( worldPosition, 1.0 );
