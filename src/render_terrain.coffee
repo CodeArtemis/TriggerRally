@@ -19,7 +19,7 @@ class render_terrain.RenderTerrain
           THREE.LuminanceFormat, THREE.FloatType,
           null,
           THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping,
-          THREE.NearestFilter, THREE.NearestFilter
+          THREE.LinearFilter, THREE.LinearFilter
       )
       ###
       @hmapTex = new THREE.Texture(
