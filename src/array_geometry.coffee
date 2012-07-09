@@ -13,6 +13,12 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     @vertexUvArray = []  # Supports only one channel of UVs.
     @vertexColorArray = []
     # TODO: Use generic vertex attributes.
+    @customAttribs = {}
+
+  addCustomAttrib: (name, attrib) ->
+    attrib.size ?= 4
+    @customAttribs[name] = attrib
+    return attrib.array ?= []
 
   updateOffsets: ->
     # Chop up index array to fit UNSIGNED_SHORT limit.
@@ -158,14 +164,13 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
       @vertexIndexBuffer.numItems = @vertexIndexArray.length
       # delete @vertexIndexArray
 
-    # Positions.
     @vertexPositionBuffer = gl.createBuffer()
     gl.bindBuffer gl.ARRAY_BUFFER, @vertexPositionBuffer
     gl.bufferData gl.ARRAY_BUFFER, new Float32Array(@vertexPositionArray), gl.STATIC_DRAW
+    # Are these itemSize, numItems values really necessary?
     @vertexPositionBuffer.itemSize = 3
     @vertexPositionBuffer.numItems = @vertexPositionArray.length
 
-    # Normals.
     if @vertexNormalArray? and @vertexNormalArray.length > 0
       @vertexNormalBuffer = gl.createBuffer()
       gl.bindBuffer gl.ARRAY_BUFFER, @vertexNormalBuffer
@@ -173,7 +178,6 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
       @vertexNormalBuffer.itemSize = 3
       @vertexNormalBuffer.numItems = @vertexNormalArray.length
 
-    # UVs.
     if @vertexUvArray? and @vertexUvArray.length > 0
       @vertexUvBuffer = gl.createBuffer()
       gl.bindBuffer gl.ARRAY_BUFFER, @vertexUvBuffer
@@ -181,13 +185,19 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
       @vertexUvBuffer.itemSize = 2
       @vertexUvBuffer.numItems = @vertexUvArray.length
 
-    # Colors.
     if @vertexColorArray? and @vertexColorArray.length > 0
       @vertexColorBuffer = gl.createBuffer()
       gl.bindBuffer gl.ARRAY_BUFFER, @vertexColorBuffer
       gl.bufferData gl.ARRAY_BUFFER, new Float32Array(@vertexColorArray), gl.STATIC_DRAW
       @vertexColorBuffer.itemSize = 4
       @vertexColorBuffer.numItems = @vertexColorArray.length
+
+    for name, attrib of @customAttribs
+      attrib.buffer = gl.createBuffer()
+      gl.bindBuffer gl.ARRAY_BUFFER, attrib.buffer
+      gl.bufferData gl.ARRAY_BUFFER, new Float32Array(attrib.array), gl.STATIC_DRAW
+      attrib.buffer.itemSize = attrib.size
+      attrib.buffer.numItems = attrib.array.length
     return
 
   render: (program, gl) ->
@@ -218,4 +228,8 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     if @vertexColorArray? and @vertexColorArray.length > 0
       gl.bindBuffer gl.ARRAY_BUFFER, @vertexColorBuffer
       gl.vertexAttribPointer program.attributes.color, 4, gl.FLOAT, false, 0, offset * 4 * 4
+
+    for name, attrib of @customAttribs
+      gl.bindBuffer gl.ARRAY_BUFFER, attrib.buffer
+      gl.vertexAttribPointer program.attributes[name], attrib.size, gl.FLOAT, false, 0, offset * 4 * attrib.size
     return

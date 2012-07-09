@@ -58,27 +58,33 @@ class render_terrain.RenderTerrain
           type: 'v2v'
           value: []
 
+      attributes:
+        morph:
+          type: 'v4'
+
       vertexShader:
         "const int NUM_LAYERS = " + @numLayers + ";\n" +
         """
         uniform sampler2D tHeightMap;
         uniform vec2 offsets[NUM_LAYERS];
 
+        attribute vec4 morph;
+
         varying vec2 vUv;
         varying vec4 eyePosition;
         varying vec3 worldPosition;
-        varying vec3 col;
+        varying vec4 col;
 
         void main() {
           int layer = int(position.z);
           vec2 offset = offsets[layer];
           worldPosition = position * 128.0 * 3.0 + vec3(offset, 0.0);
           vUv = (worldPosition.xy / 128.0 / 3.0 + vec2(0.5) / 128.0) * (128.0 / 129.0);
-          //vUv += uv * 0.0;
+          vUv += uv * 0.0;
           worldPosition.z = texture2D(tHeightMap, vUv).r;
           eyePosition = modelViewMatrix * vec4(worldPosition, 1.0);
           gl_Position = projectionMatrix * eyePosition;
-          col = vec3(uv.xy, 0.5);
+          col = morph;
         }
         """
       fragmentShader:
@@ -89,13 +95,13 @@ class render_terrain.RenderTerrain
         varying vec2 vUv;
         varying vec4 eyePosition;
         varying vec3 worldPosition;
-        varying vec3 col;
+        varying vec4 col;
 
         void main() {
           float height = worldPosition.z;
           vec3 diffSample = texture2D(tDiffuse, worldPosition.xy / 4.0).rgb;
           gl_FragColor = vec4(diffSample, 1.0);
-          gl_FragColor.rg = mix(gl_FragColor.rg, col.rg, 0.2);
+          gl_FragColor = mix(gl_FragColor, col, 0.2);
 
           //float heightSample = texture2D(tHeightMap, vUv).r;
           //gl_FragColor.g = fract(heightSample);
@@ -121,9 +127,11 @@ class render_terrain.RenderTerrain
   _createGeom: ->
     geom = new array_geometry.ArrayGeometry()
     # TODO: Draw innermost grid.
+    idx = geom.vertexIndexArray
     posn = geom.vertexPositionArray
     uv = geom.vertexUvArray
-    idx = geom.vertexIndexArray
+    morph = geom.addCustomAttrib 'morph'
+      size: 4
     RING_WIDTH = 7
     segments = [
       [  1,  0,  0,  1 ],
@@ -144,6 +152,7 @@ class render_terrain.RenderTerrain
         modelj = j - GRID_SIZE / 2
         posn.push modelj * scale, modeli * scale, 0
         uv.push 0, 0
+        morph.push Math.random(), Math.random(), Math.random(), Math.random()
         if i > 0 and j > 0
           start = (i-1) * (GRID_SIZE + 1) + (j-1)
           idx.push start + 0, start + 1, start + GRID_SIZE + 1
@@ -159,6 +168,7 @@ class render_terrain.RenderTerrain
             segj = segment[2] * modeli + segment[3] * modelj
             posn.push segj * scale, segi * scale, layer + 1
             uv.push 0, 0
+            morph.push Math.random(), Math.random(), Math.random(), Math.random()
             if i > 0 and j > 0
               start = idxStart + (i-1) * (RING_WIDTH + 1) + (j-1)
               idx.push start + 1, start + 0, start + RING_WIDTH + 1
@@ -166,21 +176,6 @@ class render_terrain.RenderTerrain
     geom.updateOffsets()
     geom.createBuffers @gl
     return geom
-    SIZE = 256
-    for y in [0..SIZE]
-      fy = (y / SIZE - 0.5) * 2.0
-      fy *= Math.abs(fy)
-      for x in [0..SIZE]
-        fx = (x / SIZE - 0.5) * 2.0
-        fx *= Math.abs(fx)
-        posn.push fx, fy, 0
-        uv.push 6.0, Math.random()
-        #uv.push Math.random(), Math.random()
-    for y in [0...SIZE]
-      for x in [0...SIZE]
-        start = y * (SIZE + 1) + x
-        idx.push start + 0, start + 1, start + SIZE + 1
-        idx.push start + 1, start + SIZE + 2, start + SIZE + 1
 
   _render: (program, gl, frustum) ->
     @geom.render program, gl
