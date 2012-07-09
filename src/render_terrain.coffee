@@ -126,13 +126,12 @@ class render_terrain.RenderTerrain
 
   _createGeom: ->
     geom = new array_geometry.ArrayGeometry()
-    # TODO: Draw innermost grid.
     idx = geom.vertexIndexArray
     posn = geom.vertexPositionArray
     uv = geom.vertexUvArray
     morph = geom.addCustomAttrib 'morph'
       size: 4
-    RING_WIDTH = 7
+    RING_WIDTH = 3
     layerScales = [
       1.0 / 128.0,
       2.0 / 128.0,
@@ -141,28 +140,34 @@ class render_terrain.RenderTerrain
     ]
     ringSegments = [
       [  1,  0,  0,  1 ],
-      [  0,  1, -1,  0 ],
+      [  0, -1,  1,  0 ],
       [ -1,  0,  0, -1 ],
-      [  0, -1,  1,  0 ]
+      [  0,  1, -1,  0 ]
     ]
     for scale, layer in layerScales
+      nextLayer = Math.min layer + 1, @numLayers - 1
       for segment, segNumber in ringSegments
         rowStart = []
         segStart = if layer > 0 then RING_WIDTH + 1 else 0
         segWidth = if layer > 0 then RING_WIDTH else RING_WIDTH * 2 + 1
         segLength = if layer > 0 then RING_WIDTH * 3 + 2 else RING_WIDTH * 2 + 1
         for i in [0..segLength]
-          modeli = -i + segStart
           rowStart.push posn.length / 3
+          modeli = segStart - i
+          # Draw main part of ring.
+          # TODO: Merge vertices between segments.
+          # TODO: Add a range of smaller morph values for smoother morphing.
           for j in [0..segWidth]
-            modelj = j + segStart
+            modelj = segStart + j
             segi = segment[0] * modeli + segment[1] * modelj
             segj = segment[2] * modeli + segment[3] * modelj
             posn.push segj * scale, segi * scale, layer
             uv.push 0, 0
             m = [ 0, 0, 0, 0 ]
-            if i % 2 == 1 and j == segWidth
+            if j == segWidth and i % 2 == 1
               m[segNumber] = 1
+            else if i == segLength and j % 2 == 1
+              m[(segNumber + 1) % 4] = 1
             morph.push m[0], m[1], m[2], m[3]
             if i > 0 and j > 0
               start0 = rowStart[i-1] + (j-1)
@@ -170,11 +175,11 @@ class render_terrain.RenderTerrain
               idx.push start0 + 1, start0 + 0, start1 + 0
               idx.push start0 + 1, start1 + 0, start1 + 1
           if i % 2 == 0
-            # Edge of outer morph ring.
+            # Draw long edge of outer morph ring.
             modelj = RING_WIDTH * 2 + 2
             segi = segment[0] * modeli + segment[1] * modelj
             segj = segment[2] * modeli + segment[3] * modelj
-            posn.push segj * scale, segi * scale, layer
+            posn.push segj * scale, segi * scale, nextLayer
             uv.push 0, 0
             morph.push 0, 0, 0, 0
             if i > 0
@@ -184,6 +189,32 @@ class render_terrain.RenderTerrain
               idx.push start0 + 0, start1 + 0, start0 + 1
               idx.push start0 + 1, start1 + 0, start2 + 1
               idx.push start2 + 1, start1 + 0, start2 + 0
+        rowStart.push posn.length / 3
+        # Draw short edge of outer morph ring.
+        modeli = segStart - segLength - 1
+        for j in [0..segWidth+1]
+          if j % 2 == 0
+            modelj = segStart + j
+            segi = segment[0] * modeli + segment[1] * modelj
+            segj = segment[2] * modeli + segment[3] * modelj
+            posn.push segj * scale, segi * scale, nextLayer
+            uv.push 0, 0
+            morph.push 0, 0, 0, 0
+            if j > 0 and j < segWidth  # WHY NEEDED?
+              start0 = rowStart[segLength]     + j-2
+              start1 = rowStart[segLength + 1] + j/2-1
+              idx.push start0 + 0, start1 + 0, start0 + 1
+              idx.push start0 + 1, start1 + 0, start1 + 1
+              idx.push start0 + 1, start1 + 1, start0 + 2
+        # Draw corner of outer morph ring.
+        j = segWidth + 1
+        start0 = rowStart[segLength - 1] + j-2
+        start1 = rowStart[segLength]     + j-2
+        start2 = rowStart[segLength + 1] + j/2-1
+        idx.push start1 + 0, start2 + 0, start1 + 1
+        idx.push start1 + 1, start2 + 0, start2 + 1
+        idx.push start1 + 1, start2 + 1, start0 + 2
+        idx.push start1 + 1, start0 + 2, start0 + 1
 
     geom.updateOffsets()
     geom.createBuffers @gl
