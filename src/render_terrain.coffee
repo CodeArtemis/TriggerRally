@@ -12,34 +12,26 @@ class render_terrain.RenderTerrain
 
   update: (camera, delta) ->
     if !@hmapTex? and @terrain.source?
-      ###
+      tile = @terrain.getTile 0, 0
       @hmapTex = new THREE.DataTexture(
-          @terrain.source.hmap,
-          @terrain.source.cx, @terrain.source.cy,
-          THREE.RGBAFormat, THREE.UnsignedByteType,
-          null,
-          THREE.RepeatWrapping, THREE.RepeatWrapping
-      )
-      ###
-      ###
-      @hmapTex = new THREE.DataTexture(
-          @terrain.source.hmap,
-          @terrain.source.cx, @terrain.source.cy,
+          tile.heightMap,
+          tile.size + 1, tile.size + 1,
           THREE.LuminanceFormat, THREE.FloatType,
           null,
-          THREE.RepeatWrapping, THREE.RepeatWrapping
+          THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping,
+          THREE.LinearFilter, THREE.LinearFilter
       )
-      ###
       ###
       @hmapTex = new THREE.Texture(
           @terrain.source.hmap,
           null,
           THREE.RepeatWrapping, THREE.RepeatWrapping,
           undefined, undefined,
-          THREE.RGBAFormat, THREE.UnsignedByteType,
+          THREE.LuminanceFormat, THREE.FloatType,
       )
       ###
-      #@hmapTex.generateMipmaps = false
+      @hmapTex.generateMipmaps = false
+      @hmapTex.needsUpdate = true
       unless @geom
         @geom = @_createGeom()
         obj = @_createImmediateObject()
@@ -76,7 +68,7 @@ class render_terrain.RenderTerrain
 
             void main() {
               //gl_FragColor = clr;
-              gl_FragColor = vec4(texture2D( tHeightMap, vUv ).xy, 0.5, 1.0);
+              gl_FragColor = vec4(texture2D( tHeightMap, vUv ).rgb, 1.0);
             }
             """
         @scene.add obj
