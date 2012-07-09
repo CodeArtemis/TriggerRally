@@ -101,7 +101,7 @@ class render_terrain.RenderTerrain
           float height = worldPosition.z;
           vec3 diffSample = texture2D(tDiffuse, worldPosition.xy / 4.0).rgb;
           gl_FragColor = vec4(diffSample, 1.0);
-          gl_FragColor = mix(gl_FragColor, col, 0.2);
+          gl_FragColor = mix(gl_FragColor, col, 0.5);
 
           //float heightSample = texture2D(tHeightMap, vUv).r;
           //gl_FragColor.g = fract(heightSample);
@@ -133,46 +133,58 @@ class render_terrain.RenderTerrain
     morph = geom.addCustomAttrib 'morph'
       size: 4
     RING_WIDTH = 7
-    segments = [
+    layerScales = [
+      1.0 / 128.0,
+      2.0 / 128.0,
+      4.0 / 128.0,
+      8.0 / 128.0
+    ]
+    ringSegments = [
       [  1,  0,  0,  1 ],
       [  0,  1, -1,  0 ],
       [ -1,  0,  0, -1 ],
       [  0, -1,  1,  0 ]
     ]
-    scale = 1.0 / 128.0
-    layerScales = [
-      2.0 / 128.0,
-      4.0 / 128.0,
-      8.0 / 128.0
-    ]
-    GRID_SIZE = RING_WIDTH * 4 + 2
-    for i in [0..GRID_SIZE]
-      modeli = i - GRID_SIZE / 2
-      for j in [0..GRID_SIZE]
-        modelj = j - GRID_SIZE / 2
-        posn.push modelj * scale, modeli * scale, 0
-        uv.push 0, 0
-        morph.push Math.random(), Math.random(), Math.random(), Math.random()
-        if i > 0 and j > 0
-          start = (i-1) * (GRID_SIZE + 1) + (j-1)
-          idx.push start + 0, start + 1, start + GRID_SIZE + 1
-          idx.push start + 1, start + GRID_SIZE + 2, start + GRID_SIZE + 1
     for scale, layer in layerScales
-      for segment in segments
-        idxStart = posn.length / 3
-        for i in [0..RING_WIDTH*3 + 2]
-          modeli = -i + RING_WIDTH + 1
-          for j in [0..RING_WIDTH]
-            modelj = j + RING_WIDTH + 1
+      for segment, segNumber in ringSegments
+        rowStart = []
+        segStart = if layer > 0 then RING_WIDTH + 1 else 0
+        segWidth = if layer > 0 then RING_WIDTH else RING_WIDTH * 2 + 1
+        segLength = if layer > 0 then RING_WIDTH * 3 + 2 else RING_WIDTH * 2 + 1
+        for i in [0..segLength]
+          modeli = -i + segStart
+          rowStart.push posn.length / 3
+          for j in [0..segWidth]
+            modelj = j + segStart
             segi = segment[0] * modeli + segment[1] * modelj
             segj = segment[2] * modeli + segment[3] * modelj
-            posn.push segj * scale, segi * scale, layer + 1
+            posn.push segj * scale, segi * scale, layer
             uv.push 0, 0
-            morph.push Math.random(), Math.random(), Math.random(), Math.random()
+            m = [ 0, 0, 0, 0 ]
+            if i % 2 == 1 and j == segWidth
+              m[segNumber] = 1
+            morph.push m[0], m[1], m[2], m[3]
             if i > 0 and j > 0
-              start = idxStart + (i-1) * (RING_WIDTH + 1) + (j-1)
-              idx.push start + 1, start + 0, start + RING_WIDTH + 1
-              idx.push start + 1, start + RING_WIDTH + 1, start + RING_WIDTH + 2
+              start0 = rowStart[i-1] + (j-1)
+              start1 = rowStart[i]   + (j-1)
+              idx.push start0 + 1, start0 + 0, start1 + 0
+              idx.push start0 + 1, start1 + 0, start1 + 1
+          if i % 2 == 0
+            # Edge of outer morph ring.
+            modelj = RING_WIDTH * 2 + 2
+            segi = segment[0] * modeli + segment[1] * modelj
+            segj = segment[2] * modeli + segment[3] * modelj
+            posn.push segj * scale, segi * scale, layer
+            uv.push 0, 0
+            morph.push 0, 0, 0, 0
+            if i > 0
+              start0 = rowStart[i-2] + segWidth
+              start1 = rowStart[i-1] + segWidth
+              start2 = rowStart[i]   + segWidth
+              idx.push start0 + 0, start1 + 0, start0 + 1
+              idx.push start0 + 1, start1 + 0, start2 + 1
+              idx.push start2 + 1, start1 + 0, start2 + 0
+
     geom.updateOffsets()
     geom.createBuffers @gl
     return geom
