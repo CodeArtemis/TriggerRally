@@ -12,16 +12,49 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     @vertexNormalArray = []
     @vertexUvArray = []  # Supports only one channel of UVs.
     @vertexColorArray = []
-    @offsets = []
+    # TODO: Use generic vertex attributes.
 
   updateOffsets: ->
-    if @vertexPositionArray.length > 65535
-      console.log 'WARNING: ArrayGeometry too big!'
-      console.log @
-    @offsets[0] =
+    # Chop up index array to fit UNSIGNED_SHORT limit.
+    # Destructively modifies @vertexIndexArray.
+    # TODO: Add OES_element_index_uint support.
+    @offsets = []
+    offset =
+      count: 0
       start: 0
-      count: @vertexIndexArray.length
-      offset: 0
+      index: 0
+    elem = 0
+    maxIndexFound = 0
+    PRIMITIVE_SIZE = 3
+    MAX_INDEX = 65535
+    indices = @vertexIndexArray
+    while elem < @vertexIndexArray.length
+      maxIndexFound = Math.max maxIndexFound, indices[elem + 0]
+      maxIndexFound = Math.max maxIndexFound, indices[elem + 1]
+      maxIndexFound = Math.max maxIndexFound, indices[elem + 2]
+      if maxIndexFound > offset.index + MAX_INDEX
+        # Save this offset and start a new one.
+        offset.maxIndexFound = maxIndexFound
+        @offsets.push offset
+        minIndex =                    indices[elem + 0]
+        minIndex = Math.min minIndex, indices[elem + 1]
+        minIndex = Math.min minIndex, indices[elem + 2]
+        offset =
+          count: 0
+          start: elem
+          index: minIndex
+      indices[elem + 0] -= offset.index
+      indices[elem + 1] -= offset.index
+      indices[elem + 2] -= offset.index
+      elem += PRIMITIVE_SIZE
+      offset.count += PRIMITIVE_SIZE
+    # Save final offset.
+    offset.maxIndexFound = maxIndexFound
+    if offset.count > 0 then @offsets.push offset
+    console.log 'Offsets:'
+    for o in @offsets
+      console.log o
+    return
 
   addGeometry: (geom) ->
     pts = [ 'a', 'b', 'c', 'd' ]
@@ -161,37 +194,31 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     return
 
   render: (program, gl) ->
-    @setupBuffers program, gl
     if @vertexIndexBuffer? and @vertexIndexBuffer.numItems > 0
-      @drawElements gl
+      gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @vertexIndexBuffer
+      ELEMENT_TYPE = gl.UNSIGNED_SHORT
+      ELEMENT_SIZE = 2
+      for offset in @offsets
+        @setupBuffers program, gl, offset.index
+        gl.drawElements gl.TRIANGLES, offset.count, ELEMENT_TYPE, offset.start * ELEMENT_SIZE
     else
-      @drawArrays gl
+      @setupBuffers program, gl, 0
+      gl.drawArrays gl.TRIANGLES, 0, vertexPositionBuffer.numItems / 3
     return
 
-  setupBuffers: (program, gl) ->
+  setupBuffers: (program, gl, offset) ->
     gl.bindBuffer gl.ARRAY_BUFFER, @vertexPositionBuffer
-    gl.vertexAttribPointer program.attributes.position, 3, gl.FLOAT, false, 0, 0
+    gl.vertexAttribPointer program.attributes.position, 3, gl.FLOAT, false, 0, offset * 4 * 3
 
     if @vertexNormalArray? and @vertexNormalArray.length > 0
       gl.bindBuffer gl.ARRAY_BUFFER, @vertexNormalBuffer
-      gl.vertexAttribPointer program.attributes.normal, 3, gl.FLOAT, false, 0, 0
+      gl.vertexAttribPointer program.attributes.normal, 3, gl.FLOAT, false, 0, offset * 4 * 3
 
     if @vertexUvArray? and @vertexUvArray.length > 0
       gl.bindBuffer gl.ARRAY_BUFFER, @vertexUvBuffer
-      gl.vertexAttribPointer program.attributes.uv, 2, gl.FLOAT, false, 0, 0
+      gl.vertexAttribPointer program.attributes.uv, 2, gl.FLOAT, false, 0, offset * 4 * 2
 
     if @vertexColorArray? and @vertexColorArray.length > 0
       gl.bindBuffer gl.ARRAY_BUFFER, @vertexColorBuffer
-      gl.vertexAttribPointer program.attributes.color, 2, gl.FLOAT, false, 0, 0
-    return
-
-  drawElements: (gl) ->
-    gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @vertexIndexBuffer
-
-    for offset in @offsets
-      gl.drawElements gl.TRIANGLES, offset.count, gl.UNSIGNED_SHORT, offset.start * 2
-    return
-
-  drawArrays: (gl) ->
-    gl.drawArrays gl.TRIANGLES, 0, vertexPositionBuffer.numItems / 3
+      gl.vertexAttribPointer program.attributes.color, 4, gl.FLOAT, false, 0, offset * 4 * 4
     return

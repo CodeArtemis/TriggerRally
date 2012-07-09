@@ -8,6 +8,7 @@ class render_terrain.RenderTerrain
   constructor: (@scene, @terrain, @gl) ->
     # We currently grab the terrain source directly. This is not very kosher.
     @geom = null
+    console.assert @gl.getExtension('OES_standard_derivatives')
     return
 
   update: (camera, delta) ->
@@ -48,27 +49,33 @@ class render_terrain.RenderTerrain
             """
             varying vec2 vUv;
             uniform sampler2D tHeightMap;
+            varying vec4 eyePosition;
             varying vec3 worldPosition;
 
             void main() {
-              worldPosition = position * 3.0;
-              vUv = (position.xy + vec2(0.5, 0.5)) * (1.0 / 129.0) + vec2(0.0, 0.0);
+              worldPosition = position * 128.0 * 3.0;
+              vUv = (position.xy + vec2(0.5, 0.5) / 128.0) * (128.0 / 129.0);
               vUv += uv * 0.0;
-              worldPosition.z += texture2D( tHeightMap, vUv ).r;
-              vec4 mvPosition = modelViewMatrix * vec4( worldPosition, 1.0 );
-              gl_Position = projectionMatrix * mvPosition;
+              worldPosition.z += texture2D(tHeightMap, vUv).r;
+              eyePosition = modelViewMatrix * vec4(worldPosition, 1.0);
+              gl_Position = projectionMatrix * eyePosition;
             }
             """
           fragmentShader:
             """
+            #extension GL_OES_standard_derivatives : enable
+
             varying vec2 vUv;
             uniform vec4 clr;
+            varying vec4 eyePosition;
             varying vec3 worldPosition;
-            uniform sampler2D tHeightMap;
 
             void main() {
               //gl_FragColor = clr;
-              gl_FragColor = vec4(texture2D( tHeightMap, vUv ).rg * 0.1, 0.5, 1.0);
+              float height = worldPosition.z;
+              //float depth = -eyePosition.z;
+              //vec2 gradient = vec2(dFdx(height), dFdy(height)) * 150.0 / depth;
+              gl_FragColor = vec4(sin(height * 10.0) * 0.5 + 0.5, 0.0, 0.0, 1.0);
             }
             """
         @scene.add obj
@@ -84,12 +91,12 @@ class render_terrain.RenderTerrain
 
   _createGeom: ->
     geom = new array_geometry.ArrayGeometry()
-    SIZE = 128
+    SIZE = 512
     posn = geom.vertexPositionArray
     uv = geom.vertexUvArray
     for y in [0..SIZE]
       for x in [0..SIZE]
-        posn.push x, y, 0
+        posn.push x / SIZE, y / SIZE, 0
         uv.push x / SIZE, y / SIZE
     idx = geom.vertexIndexArray
     for y in [0...SIZE]
