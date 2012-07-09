@@ -91,7 +91,7 @@ class render_terrain.RenderTerrain
 
   _createGeom: ->
     geom = new array_geometry.ArrayGeometry()
-    SIZE = 512
+    SIZE = 1024
     posn = geom.vertexPositionArray
     uv = geom.vertexUvArray
     for y in [0..SIZE]
