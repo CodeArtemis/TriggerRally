@@ -112,10 +112,10 @@ class render_terrain.RenderTerrain
     # TODO: Draw innermost grid.
     posn = geom.vertexPositionArray
     uv = geom.vertexUvArray
-    RING_WIDTH = 15
-    for i in RING_WIDTH+1...RING_WIDTH*-2-1]
-      for j in RING_WIDTH+1...RING_WIDTH*2+1]
-        posn.push j, i
+    #RING_WIDTH = 15
+    #for i in RING_WIDTH+1...RING_WIDTH*-2-1]
+    #  for j in RING_WIDTH+1...RING_WIDTH*2+1]
+    #    posn.push j, i
     SIZE = 256
     for y in [0..SIZE]
       fy = (y / SIZE - 0.5) * 2.0
