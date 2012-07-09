@@ -34,7 +34,6 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
       maxIndexFound = Math.max maxIndexFound, indices[elem + 2]
       if maxIndexFound > offset.index + MAX_INDEX
         # Save this offset and start a new one.
-        offset.maxIndexFound = maxIndexFound
         @offsets.push offset
         minIndex =                    indices[elem + 0]
         minIndex = Math.min minIndex, indices[elem + 1]
@@ -51,9 +50,6 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     # Save final offset.
     offset.maxIndexFound = maxIndexFound
     if offset.count > 0 then @offsets.push offset
-    console.log 'Offsets:'
-    for o in @offsets
-      console.log o
     return
 
   addGeometry: (geom) ->
