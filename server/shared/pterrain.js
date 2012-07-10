@@ -91,7 +91,7 @@ var MODULE = 'pterrain';
 
   // cx, cy = width and height of heightmap
   exports.Terrain = function(source) {
-    this.tileSize = 128;
+    this.tileSize = 512;  // Hack alert.
     this.scaleHz = 1;
     this.scaleVt = 1;
     this.tileTotalSize = this.tileSize * this.scaleHz;

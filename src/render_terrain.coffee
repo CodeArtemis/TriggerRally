@@ -9,21 +9,26 @@ class render_terrain.RenderTerrain
     # We currently grab the terrain source directly. This is not very kosher.
     @geom = null
     #console.assert @gl.getExtension('OES_standard_derivatives')
-    @numLayers = 4
+    @numLayers = 3
+    @totalTime = 0
     return
 
   update: (camera, delta) ->
+    @totalTime += @delta
     if not @hmapTex? and @terrain.source?
       @_setup()
     unless @geom? then return
     offsets = @material.uniforms['offsets'].value
+    scales = @material.uniforms['scales'].value
     morphFactors = @material.uniforms['morphFactors'].value
     scale = 3
     for layer in [0...@numLayers]
-      offsets[layer] ?= new THREE.Vector2()
-      offset = offsets[layer]
+      offset = offsets[layer] ?= new THREE.Vector2()
       offset.x = Math.round(camera.position.x / scale) * scale
       offset.y = Math.round(camera.position.y / scale) * scale
+      scales[layer] = scale
+      morphFactor = morphFactors[layer] ?= new THREE.Vector4()
+      morphFactor.x = Math.max 0, (offset.x - camera.position.x) * 2.0
       scale *= 2
     return
 
@@ -58,6 +63,9 @@ class render_terrain.RenderTerrain
         offsets:
           type: 'v2v'
           value: []
+        scales:
+          type: 'fv1'
+          value: []
         morphFactors:
           type: 'v4v'
           value: []
@@ -71,6 +79,7 @@ class render_terrain.RenderTerrain
         """
         uniform sampler2D tHeightMap;
         uniform vec2 offsets[NUM_LAYERS];
+        uniform float scales[NUM_LAYERS];
         uniform vec4 morphFactors[NUM_LAYERS];
 
         attribute vec4 morph;
@@ -79,14 +88,30 @@ class render_terrain.RenderTerrain
         varying vec4 eyePosition;
         varying vec3 worldPosition;
         varying vec4 col;
+        
+        const mat4 MORPH_DIR = mat4(
+          -1.0,  1.0, 0.0, 0.0,
+           1.0,  1.0, 0.0, 0.0,
+           1.0, -1.0, 0.0, 0.0,
+          -1.0, -1.0, 0.0, 0.0
+        );
 
         void main() {
           int layer = int(position.z);
           vec2 offset = offsets[layer];
+          float scale = scales[layer];
+          vec4 morphFactor = morphFactors[layer];
+
           worldPosition = position * 128.0 * 3.0 + vec3(offset, 0.0);
+          vec3 morphPosition = worldPosition + (MORPH_DIR * morph).xyz;
           vUv = (worldPosition.xy / 128.0 / 3.0 + vec2(0.5) / 128.0) * (128.0 / 129.0);
           vUv += uv * 0.0;
+          vec2 morphUv = (morphPosition.xy / 128.0 / 3.0 + vec2(0.5) / 128.0) * (128.0 / 129.0);
           worldPosition.z = texture2D(tHeightMap, vUv).r;
+          morphPosition.z = texture2D(tHeightMap, morphUv).r;
+
+          worldPosition = mix(worldPosition, morphPosition, morphFactor.x);
+
           eyePosition = modelViewMatrix * vec4(worldPosition, 1.0);
           gl_Position = projectionMatrix * eyePosition;
           col = morph;
@@ -136,12 +161,12 @@ class render_terrain.RenderTerrain
     uv = geom.vertexUvArray
     morph = geom.addCustomAttrib 'morph'
       size: 4
-    RING_WIDTH = 1
+    RING_WIDTH = 15
     layerScales = [
       1.0 / 128.0,
       2.0 / 128.0,
       4.0 / 128.0,
-      8.0 / 128.0
+      #8.0 / 128.0
     ]
     ringSegments = [
       [  1,  0,  0,  1 ],
@@ -177,8 +202,12 @@ class render_terrain.RenderTerrain
             if i > 0 and j > 0
               start0 = rowStart[i-1] + (j-1)
               start1 = rowStart[i]   + (j-1)
-              idx.push start0 + 1, start0 + 0, start1 + 0
-              idx.push start0 + 1, start1 + 0, start1 + 1
+              if i % 2 == 0
+                idx.push start0 + 1, start0 + 0, start1 + 0
+                idx.push start0 + 1, start1 + 0, start1 + 1
+              else
+                idx.push start0 + 0, start1 + 0, start1 + 1
+                idx.push start0 + 0, start1 + 1, start0 + 1
           if i % 2 == 0
             # Draw long edge of outer morph ring.
             modelj = RING_WIDTH * 2 + 2
