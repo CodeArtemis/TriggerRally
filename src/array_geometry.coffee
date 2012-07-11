@@ -11,8 +11,6 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     @vertexPositionArray = []
     @vertexNormalArray = []
     @vertexUvArray = []  # Supports only one channel of UVs.
-    @vertexColorArray = []
-    # TODO: Use generic vertex attributes.
     @customAttribs = {}
 
   addCustomAttrib: (name, attrib) ->
@@ -34,7 +32,6 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     PRIMITIVE_SIZE = 3
     MAX_INDEX = 65535
     indices = @vertexIndexArray
-    console.log 'ArrayGeometry with ' + indices.length/3 + ' triangles.'
     while elem < @vertexIndexArray.length
       maxIndexFound = Math.max maxIndexFound, indices[elem + 0]
       maxIndexFound = Math.max maxIndexFound, indices[elem + 1]
@@ -57,6 +54,8 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     # Save final offset.
     offset.maxIndexFound = maxIndexFound
     if offset.count > 0 then @offsets.push offset
+    if @offsets.length > 1
+      console.log 'ArrayGeometry with ' + indices.length/3 + ' triangles split into ' + @offsets.length + ' DrawElements calls.'
     return
 
   addGeometry: (geom) ->
@@ -77,9 +76,6 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
         @vertexNormalArray[face[pts[pt]] * 3 + 0] = norm.x
         @vertexNormalArray[face[pts[pt]] * 3 + 1] = norm.y
         @vertexNormalArray[face[pts[pt]] * 3 + 2] = norm.z
-
-      # Not sure if colors works this way.
-      #@vertexColorArray[f[pts[i]] * 3] = n for n, i in f.colors
 
       # We support only one channel of UVs.
       uvs = geom.faceVertexUvs[0][faceIndex]
@@ -116,7 +112,6 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
         @vertexNormalArray.push tmpVec3.x, tmpVec3.y, tmpVec3.z
       i += 3
     @vertexUvArray = @vertexUvArray.concat geom2.vertexUvArray
-    @vertexColorArray = @vertexColorArray.concat geom2.vertexColorArray
 
     # Copy indices.
     for idx in geom2.vertexIndexArray
@@ -185,13 +180,6 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
       @vertexUvBuffer.itemSize = 2
       @vertexUvBuffer.numItems = @vertexUvArray.length
 
-    if @vertexColorArray? and @vertexColorArray.length > 0
-      @vertexColorBuffer = gl.createBuffer()
-      gl.bindBuffer gl.ARRAY_BUFFER, @vertexColorBuffer
-      gl.bufferData gl.ARRAY_BUFFER, new Float32Array(@vertexColorArray), gl.STATIC_DRAW
-      @vertexColorBuffer.itemSize = 4
-      @vertexColorBuffer.numItems = @vertexColorArray.length
-
     for name, attrib of @customAttribs
       attrib.buffer = gl.createBuffer()
       gl.bindBuffer gl.ARRAY_BUFFER, attrib.buffer
@@ -207,7 +195,7 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
       ELEMENT_SIZE = 2
       for offset in @offsets
         @setupBuffers program, gl, offset.index
-        gl.drawElements gl.TRIANGLES, offset.count, ELEMENT_TYPE, offset.start * ELEMENT_SIZE
+        gl.drawElements gl.LINES, offset.count, ELEMENT_TYPE, offset.start * ELEMENT_SIZE
     else
       @setupBuffers program, gl, 0
       gl.drawArrays gl.TRIANGLES, 0, vertexPositionBuffer.numItems / 3
@@ -224,10 +212,6 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     if @vertexUvArray? and @vertexUvArray.length > 0
       gl.bindBuffer gl.ARRAY_BUFFER, @vertexUvBuffer
       gl.vertexAttribPointer program.attributes.uv, 2, gl.FLOAT, false, 0, offset * 4 * 2
-
-    if @vertexColorArray? and @vertexColorArray.length > 0
-      gl.bindBuffer gl.ARRAY_BUFFER, @vertexColorBuffer
-      gl.vertexAttribPointer program.attributes.color, 4, gl.FLOAT, false, 0, offset * 4 * 4
 
     for name, attrib of @customAttribs
       gl.bindBuffer gl.ARRAY_BUFFER, attrib.buffer

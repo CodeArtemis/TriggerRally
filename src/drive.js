@@ -553,7 +553,7 @@ function animate(nowTime) {
     targetPos.addSelf(linVel.clone().multiplyScalar(.17));
     targetPos.addSelf(car.root.matrix.getColumnX().clone().multiplyScalar(0));
     targetPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(21.2));
-    targetPos.addSelf(car.root.matrix.getColumnZ().clone().multiplyScalar(-22.9));
+    targetPos.addSelf(car.root.matrix.getColumnZ().clone().multiplyScalar(-12.9));
     var camDelta = delta * 5;
     camera.position.x = PULLTOWARD(camera.position.x, targetPos.x, camDelta);
     camera.position.y = PULLTOWARD(camera.position.y, targetPos.y, camDelta);
