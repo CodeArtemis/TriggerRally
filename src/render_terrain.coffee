@@ -210,7 +210,7 @@ class render_terrain.RenderTerrain
             if i > 0 and j > 0
               start0 = rowStart[i-1] + (j-1)
               start1 = rowStart[i]   + (j-1)
-              if segNumber % 2 == 0 #i % 2 == 0
+              if (i + segNumber) % 2 == 0
                 idx.push start0 + 1, start0 + 0, start1 + 0 for copy in [0..WIREFRAME]
                 idx.push start0 + 1, start1 + 0, start1 + 1 for copy in [0..WIREFRAME]
               else
