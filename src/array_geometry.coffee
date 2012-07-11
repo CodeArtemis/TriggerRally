@@ -26,34 +26,46 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     offset =
       count: 0
       start: 0
-      index: 0
     elem = 0
-    maxIndexFound = 0
     PRIMITIVE_SIZE = 3
     MAX_INDEX = 65535
+    minIndexFound = Infinity
+    maxIndexFound = 0
     indices = @vertexIndexArray
-    while elem < @vertexIndexArray.length
-      maxIndexFound = Math.max maxIndexFound, indices[elem + 0]
-      maxIndexFound = Math.max maxIndexFound, indices[elem + 1]
-      maxIndexFound = Math.max maxIndexFound, indices[elem + 2]
-      if maxIndexFound > offset.index + MAX_INDEX
-        # Save this offset and start a new one.
+    maxElem = indices.length - PRIMITIVE_SIZE + 1
+    while elem < maxElem
+      primMinIndex = Infinity
+      primMaxIndex = 0
+      primMinIndex = Math.min primMinIndex, indices[elem + 0]
+      primMinIndex = Math.min primMinIndex, indices[elem + 1]
+      primMinIndex = Math.min primMinIndex, indices[elem + 2]
+      primMaxIndex = Math.max primMaxIndex, indices[elem + 0]
+      primMaxIndex = Math.max primMaxIndex, indices[elem + 1]
+      primMaxIndex = Math.max primMaxIndex, indices[elem + 2]
+      newMinIndexFound = Math.min minIndexFound, primMinIndex
+      newMaxIndexFound = Math.max maxIndexFound, primMaxIndex
+      if newMaxIndexFound - newMinIndexFound > MAX_INDEX
+        # New primitive doesn't fit. Save this offset and start a new one.
+        offset.index = minIndexFound
+        for i in [offset.start...elem]
+          indices[i] -= offset.index
         @offsets.push offset
-        minIndex =                    indices[elem + 0]
-        minIndex = Math.min minIndex, indices[elem + 1]
-        minIndex = Math.min minIndex, indices[elem + 2]
         offset =
           count: 0
           start: elem
-          index: minIndex
-      indices[elem + 0] -= offset.index
-      indices[elem + 1] -= offset.index
-      indices[elem + 2] -= offset.index
+        minIndexFound = primMinIndex
+        maxIndexFound = primMaxIndex
+      else
+        minIndexFound = newMinIndexFound
+        maxIndexFound = newMaxIndexFound
       elem += PRIMITIVE_SIZE
       offset.count += PRIMITIVE_SIZE
     # Save final offset.
-    offset.maxIndexFound = maxIndexFound
-    if offset.count > 0 then @offsets.push offset
+    if offset.count > 0
+      offset.index = minIndexFound
+      for i in [offset.start...elem]
+        indices[i] -= offset.index
+      @offsets.push offset
     if @offsets.length > 1
       console.log 'ArrayGeometry with ' + indices.length/3 + ' triangles split into ' + @offsets.length + ' DrawElements calls.'
     return
