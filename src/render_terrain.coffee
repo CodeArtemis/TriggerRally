@@ -88,13 +88,14 @@ class render_terrain.RenderTerrain
         uniform float scales[NUM_LAYERS];
         uniform vec4 morphFactors[NUM_LAYERS];
 
-        attribute vec4 morph;
+        //attribute vec4 morph;
 
         varying vec2 vUv;  // TODO: Remove this.
         varying vec4 eyePosition;
         varying vec3 worldPosition;
         varying vec4 col;
         
+        /*
         const mat4 MORPH_CODING_MATRIX = mat4(
            1.0, 0.0, 0.0, 0.0,
            0.0, 1.0, 0.0, 0.0,
@@ -105,6 +106,8 @@ class render_terrain.RenderTerrain
         const mat2 MORPH_Y = mat2(1.0, 0.0, 0.0, 1.0);
         const mat2 MORPH_Z = mat2(0.0, 1.0, -1.0, 0.0);
         const mat2 MORPH_W = mat2(-1.0, 0.0, 0.0, -1.0);
+        */
+
         const float SIZE = 512.0;
         const float SCALE = 0.75;
 
@@ -112,11 +115,13 @@ class render_terrain.RenderTerrain
           return (coord / SIZE / SCALE + vec2(0.5) / SIZE) * (SIZE / (SIZE+1.0));
         }
         
+        /*
         vec2 decodeMorph(float morph) {
           const vec4 MORPH_CODING = vec4(1.0, 2.0, 3.0, 4.0);
           vec4 morphDecoded = max(vec4(1.0) - abs(vec4(morph) - MORPH_CODING), 0.0);
           return (MORPH_CODING_MATRIX * morphDecoded).xy;
         }
+        */
 
         void main() {
           int layer = int(position.z);
@@ -129,8 +134,7 @@ class render_terrain.RenderTerrain
           vUv += uv * 0.0;
           worldPosition.z = texture2D(tHeightMap, vUv).r;
 
-          vec3 morphDirection = vec3(0.0);
-
+          /*
           if (morph.x > 0.0) {
             vec3 morphDirection = vec3(MORPH_X * decodeMorph(morph.x), 0.0) * layerScale;
             vec3 morphPosition = worldPosition + morphDirection;
@@ -138,6 +142,7 @@ class render_terrain.RenderTerrain
             morphDirection.z = texture2D(tHeightMap, morphUv).r - worldPosition.z;
             worldPosition += morphDirection * morphFactor.x;
           }
+          */
 
           eyePosition = modelViewMatrix * vec4(worldPosition, 1.0);
           gl_Position = projectionMatrix * eyePosition;
@@ -192,8 +197,8 @@ class render_terrain.RenderTerrain
     idx = geom.vertexIndexArray
     posn = geom.vertexPositionArray
     uv = geom.vertexUvArray
-    morph = geom.addCustomAttrib 'morph'
-      size: 4
+    #morph = geom.addCustomAttrib 'morph'
+    #  size: 4
     WIREFRAME = 0
     RING_WIDTH = 31
     TERRAIN_SIZE = 512
@@ -224,7 +229,7 @@ class render_terrain.RenderTerrain
             posn.push segj * scale, segi * scale, layer
             uv.push 0, 0
             m = [ 0, 0, 0, 0 ]
-            morph.push m[0], m[1], m[2], m[3]
+            #morph.push m[0], m[1], m[2], m[3]
             if i > 0 and j > 0
               start0 = rowStart[i-1] + (j-1)
               start1 = rowStart[i]   + (j-1)
@@ -241,7 +246,7 @@ class render_terrain.RenderTerrain
             segj = segment[2] * modeli + segment[3] * modelj
             posn.push segj * scale, segi * scale, nextLayer
             uv.push 0, 0
-            morph.push 0, 0, 0, 0
+            #morph.push 0, 0, 0, 0
             if i > 0
               start0 = rowStart[i-2] + segWidth
               start1 = rowStart[i-1] + segWidth
@@ -260,7 +265,7 @@ class render_terrain.RenderTerrain
             segj = segment[2] * modeli + segment[3] * modelj
             posn.push segj * scale, segi * scale, nextLayer
             uv.push 0, 0
-            morph.push 0, 0, 0, 0
+            #morph.push 0, 0, 0, 0
             if j > 0 and j < segWidth  # WHY NEEDED?
               start0 = rowStart[segLength]     + j-2
               start1 = rowStart[segLength + 1] + j/2-1
