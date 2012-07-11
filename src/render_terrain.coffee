@@ -31,7 +31,7 @@ class render_terrain.RenderTerrain
       #offset.y += (camera.position.y - offset.y) * factor
       scales[layer] = scale
       morphFactor = morphFactors[layer] ?= new THREE.Vector4()
-      morphFactor.x = Math.max 0, (offset.x - camera.position.x) * 2.0
+      morphFactor.x = Math.max 0, (offset.x - camera.position.x) / scale
       scale *= 2
     return
 
@@ -88,41 +88,61 @@ class render_terrain.RenderTerrain
         uniform float scales[NUM_LAYERS];
         uniform vec4 morphFactors[NUM_LAYERS];
 
-        //attribute vec4 morph;
+        attribute vec4 morph;
 
         varying vec2 vUv;  // TODO: Remove this.
         varying vec4 eyePosition;
         varying vec3 worldPosition;
         varying vec4 col;
         
-        const mat4 MORPH_DIR = mat4(
-          -1.0,  1.0, 0.0, 0.0,
-           1.0,  1.0, 0.0, 0.0,
-           1.0, -1.0, 0.0, 0.0,
-          -1.0, -1.0, 0.0, 0.0
+        const mat4 MORPH_CODING_MATRIX = mat4(
+           1.0, 0.0, 0.0, 0.0,
+           0.0, 1.0, 0.0, 0.0,
+           1.0, 1.0, 0.0, 0.0,
+           -1.0, 1.0, 0.0, 0.0
         );
+        const mat2 MORPH_X = mat2(0.0, -1.0, 1.0, 0.0);
+        const mat2 MORPH_Y = mat2(1.0, 0.0, 0.0, 1.0);
+        const mat2 MORPH_Z = mat2(0.0, 1.0, -1.0, 0.0);
+        const mat2 MORPH_W = mat2(-1.0, 0.0, 0.0, -1.0);
         const float SIZE = 512.0;
         const float SCALE = 0.75;
 
+        vec2 worldToTerrainSpace(vec2 coord) {
+          return (coord / SIZE / SCALE + vec2(0.5) / SIZE) * (SIZE / (SIZE+1.0));
+        }
+        
+        vec2 decodeMorph(float morph) {
+          const vec4 MORPH_CODING = vec4(1.0, 2.0, 3.0, 4.0);
+          vec4 morphDecoded = max(vec4(1.0) - abs(vec4(morph) - MORPH_CODING), 0.0);
+          return (MORPH_CODING_MATRIX * morphDecoded).xy;
+        }
+
         void main() {
           int layer = int(position.z);
-          vec2 offset = offsets[layer];
-          float scale = scales[layer];
+          vec2 layerOffset = offsets[layer];
+          float layerScale = scales[layer];
           vec4 morphFactor = morphFactors[layer];
 
-          worldPosition = position * SIZE * SCALE + vec3(offset, 0.0);
-          vUv = (worldPosition.xy / SIZE / SCALE + vec2(0.5) / SIZE) * (SIZE / (SIZE+1.0));
+          worldPosition = position * SIZE * SCALE + vec3(layerOffset, 0.0);
+          vUv = worldToTerrainSpace(worldPosition.xy);
           vUv += uv * 0.0;
           worldPosition.z = texture2D(tHeightMap, vUv).r;
 
-          //vec3 morphPosition = worldPosition + (MORPH_DIR * morph).xyz;
-          //vec2 morphUv = (morphPosition.xy / SIZE / SCALE + vec2(0.5) / SIZE) * (SIZE / (SIZE+1));
-          //morphPosition.z = texture2D(tHeightMap, morphUv).r;
-          //worldPosition = mix(worldPosition, morphPosition, morphFactor.x);
+          vec3 morphDirection = vec3(0.0);
+
+          if (morph.x > 0.0) {
+            vec3 morphDirection = vec3(MORPH_X * decodeMorph(morph.x), 0.0) * layerScale;
+            vec3 morphPosition = worldPosition + morphDirection;
+            vec2 morphUv = worldToTerrainSpace(morphPosition.xy);
+            morphDirection.z = texture2D(tHeightMap, morphUv).r - worldPosition.z;
+            worldPosition += morphDirection * morphFactor.x;
+          }
 
           eyePosition = modelViewMatrix * vec4(worldPosition, 1.0);
           gl_Position = projectionMatrix * eyePosition;
           col = vec4(1,0,0,1);
+          //col.rgb = morphDecoded;
         }
         """
       fragmentShader:
@@ -143,6 +163,8 @@ class render_terrain.RenderTerrain
           vec3 normal = vec3(normSample.x, normSample.y, 1.0 - dot(normSample, normSample));
           gl_FragColor = vec4(diffSample, 1.0);
           gl_FragColor = mix(gl_FragColor, normal.xyzz * 0.5 + 0.5, 0.4);
+          gl_FragColor = mix(gl_FragColor, vec4(1.0), 1.0);
+          gl_FragColor = mix(gl_FragColor, col, 0.7);
 
           //float heightSample = texture2D(tHeightMap, vUv).r;
           //gl_FragColor.g = fract(heightSample);
@@ -170,10 +192,10 @@ class render_terrain.RenderTerrain
     idx = geom.vertexIndexArray
     posn = geom.vertexPositionArray
     uv = geom.vertexUvArray
-    #morph = geom.addCustomAttrib 'morph'
-    #  size: 4
+    morph = geom.addCustomAttrib 'morph'
+      size: 4
     WIREFRAME = 1
-    RING_WIDTH = 15
+    RING_WIDTH = 3
     TERRAIN_SIZE = 512
     ringSegments = [
       [  1,  0,  0,  1 ],
@@ -202,15 +224,24 @@ class render_terrain.RenderTerrain
             posn.push segj * scale, segi * scale, layer
             uv.push 0, 0
             m = [ 0, 0, 0, 0 ]
-            if j == segWidth and i % 2 == 1
-              m[segNumber] = 1
-            else if i == segLength and j % 2 == 1
-              m[(segNumber + 1) % 4] = 1
-            #morph.push m[0], m[1], m[2], m[3]
+            if j >= segWidth - 1
+              if j == segWidth
+                if i % 2 == 0
+                  m[segNumber] = 1
+              else
+                if i % 2 == 0
+                  m[segNumber] = 2
+                else
+                  m[segNumber] = 2
+            if j == segWidth - 1
+              m[segNumber] += 2
+            #else if i == segLength and j % 2 == 0
+            #  m[(segNumber + 1) % 4] = 1
+            morph.push m[0], m[1], m[2], m[3]
             if i > 0 and j > 0
               start0 = rowStart[i-1] + (j-1)
               start1 = rowStart[i]   + (j-1)
-              if (i + segNumber) % 2 == 0
+              if (i + j) % 2 == 1
                 idx.push start0 + 1, start0 + 0, start1 + 0 for copy in [0..WIREFRAME]
                 idx.push start0 + 1, start1 + 0, start1 + 1 for copy in [0..WIREFRAME]
               else
@@ -223,7 +254,7 @@ class render_terrain.RenderTerrain
             segj = segment[2] * modeli + segment[3] * modelj
             posn.push segj * scale, segi * scale, nextLayer
             uv.push 0, 0
-            #morph.push 0, 0, 0, 0
+            morph.push 0, 0, 0, 0
             if i > 0
               start0 = rowStart[i-2] + segWidth
               start1 = rowStart[i-1] + segWidth
@@ -242,7 +273,7 @@ class render_terrain.RenderTerrain
             segj = segment[2] * modeli + segment[3] * modelj
             posn.push segj * scale, segi * scale, nextLayer
             uv.push 0, 0
-            #morph.push 0, 0, 0, 0
+            morph.push 0, 0, 0, 0
             if j > 0 and j < segWidth  # WHY NEEDED?
               start0 = rowStart[segLength]     + j-2
               start1 = rowStart[segLength + 1] + j/2-1

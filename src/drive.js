@@ -418,15 +418,19 @@ var drawTrack = function(terrainTile) {
 };
 
 function keyWeCareAbout(event) {
-  return (!event.shiftKey &&
-          !event.ctrlKey &&
-          !event.altKey &&
-          !event.metaKey &&
-          event.keyCode >= 32 && event.keyCode <= 127);
+  return (event.keyCode >= 32 && event.keyCode <= 127);
+}
+
+function isModifierKey(event) {
+  return event.shiftKey ||
+         event.ctrlKey ||
+         event.altKey ||
+         event.metaKey;
 }
 
 function onDocumentKeyDown(event) {
-  if (keyWeCareAbout(event)) {
+  if (!isModifierKey(event) &&
+      keyWeCareAbout(event)) {
     if (false && !(event.keyCode in keyDown)) {
       console.log('KeyDown: ' + event.keyCode);
     }
@@ -443,7 +447,7 @@ function onDocumentKeyDown(event) {
 function onDocumentKeyUp(event) {
   if (keyWeCareAbout(event)) {
     keyDown[event.keyCode] = false;
-    event.preventDefault();
+    if (!isModifierKey(event)) event.preventDefault();
     return false;
   }
 };
