@@ -163,8 +163,8 @@ class render_terrain.RenderTerrain
           vec3 normal = vec3(normSample.x, normSample.y, 1.0 - dot(normSample, normSample));
           gl_FragColor = vec4(diffSample, 1.0);
           gl_FragColor = mix(gl_FragColor, normal.xyzz * 0.5 + 0.5, 0.4);
-          gl_FragColor = mix(gl_FragColor, vec4(1.0), 1.0);
-          gl_FragColor = mix(gl_FragColor, col, 0.7);
+          gl_FragColor = mix(gl_FragColor, vec4(1.0), 0.0);
+          gl_FragColor = mix(gl_FragColor, col, 0.0);
 
           //float heightSample = texture2D(tHeightMap, vUv).r;
           //gl_FragColor.g = fract(heightSample);
@@ -194,8 +194,8 @@ class render_terrain.RenderTerrain
     uv = geom.vertexUvArray
     morph = geom.addCustomAttrib 'morph'
       size: 4
-    WIREFRAME = 1
-    RING_WIDTH = 3
+    WIREFRAME = 0
+    RING_WIDTH = 31
     TERRAIN_SIZE = 512
     ringSegments = [
       [  1,  0,  0,  1 ],
@@ -224,19 +224,6 @@ class render_terrain.RenderTerrain
             posn.push segj * scale, segi * scale, layer
             uv.push 0, 0
             m = [ 0, 0, 0, 0 ]
-            if j >= segWidth - 1
-              if j == segWidth
-                if i % 2 == 0
-                  m[segNumber] = 1
-              else
-                if i % 2 == 0
-                  m[segNumber] = 2
-                else
-                  m[segNumber] = 2
-            if j == segWidth - 1
-              m[segNumber] += 2
-            #else if i == segLength and j % 2 == 0
-            #  m[(segNumber + 1) % 4] = 1
             morph.push m[0], m[1], m[2], m[3]
             if i > 0 and j > 0
               start0 = rowStart[i-1] + (j-1)

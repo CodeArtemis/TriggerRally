@@ -195,7 +195,7 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
       ELEMENT_SIZE = 2
       for offset in @offsets
         @setupBuffers program, gl, offset.index
-        gl.drawElements gl.LINES, offset.count, ELEMENT_TYPE, offset.start * ELEMENT_SIZE
+        gl.drawElements gl.TRIANGLES, offset.count, ELEMENT_TYPE, offset.start * ELEMENT_SIZE
     else
       @setupBuffers program, gl, 0
       gl.drawArrays gl.TRIANGLES, 0, vertexPositionBuffer.numItems / 3
