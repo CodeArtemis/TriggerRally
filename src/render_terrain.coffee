@@ -52,34 +52,36 @@ class render_terrain.RenderTerrain
 
     @geom = @_createGeom()
     obj = @_createImmediateObject()
+    uniforms = THREE.UniformsUtils.merge [
+      THREE.UniformsLib["lights"]
+    ]
+
     @material = new THREE.ShaderMaterial
       #lights: true
 
-      uniforms:
-        THREE.UniformsUtils.merge [
-          #THREE.UniformsLib[ "lights" ],
-            tHeightMap:
-              type: 't'
-              value: 0
-              texture: hmapTex
-            tDiffuse:
-              type: 't'
-              value: 1
-              texture: diffuseTex
-            tNormal:
-              type: 't'
-              value: 2
-              texture: @_createNormalMap tile
-            offsets:
-              type: 'v2v'
-              value: []
-            scales:
-              type: 'fv1'
-              value: []
-            morphFactors:
-              type: 'v4v'
-              value: []
-        ]
+      uniforms: _.extend( uniforms,
+        tHeightMap:
+          type: 't'
+          value: 0
+          texture: hmapTex
+        tDiffuse:
+          type: 't'
+          value: 1
+          texture: diffuseTex
+        tNormal:
+          type: 't'
+          value: 2
+          texture: @_createNormalMap tile
+        offsets:
+          type: 'v2v'
+          value: []
+        scales:
+          type: 'fv1'
+          value: []
+        morphFactors:
+          type: 'v4v'
+          value: []
+      )
 
       attributes:
         morph:
