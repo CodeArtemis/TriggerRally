@@ -14,6 +14,7 @@ var MODULE = 'game';
   var pubsub = this.pubsub || require('./pubsub');
 
   var Vec2 = THREE.Vector2;
+  var Vec3 = THREE.Vector3;
 
   // Track state of a vehicle within game/race.
   exports.Progress = function(track, vehicle) {
@@ -108,9 +109,18 @@ var MODULE = 'game';
   exports.Game.prototype.addCarConfig = function(carConfig, callback) {
     var vehicle = new pvehicle.Vehicle(this.sim, carConfig);
 
-    // TODO: Get this initial state from track.
     vehicle.body.pos.set(100, 100, 10);
     vehicle.body.ori.set(1, 1, 1, 1).normalize();
+    if (this.track) {
+      vehicle.body.pos.set(
+          this.track.config.course.startposition.pos[0],
+          this.track.config.course.startposition.pos[1],
+          this.track.config.course.startposition.pos[2]);
+      var tmpQuat = new THREE.Quaternion().setFromAxisAngle(
+          new Vec3(0,0,1),
+          this.track.config.course.startposition.oridegrees * Math.PI / 180);
+      vehicle.body.ori = tmpQuat.multiplySelf(vehicle.body.ori);
+    }
 
     var progress = new exports.Progress(this.track, vehicle);
     this.progs.push(progress);

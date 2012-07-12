@@ -90,7 +90,7 @@ function init() {
 
   // LIGHTS
 
-  scene.fog = new THREE.FogExp2(0xdddddd, 0.001);
+  scene.fog = new THREE.FogExp2(0xdddddd, 0.003);
 
   var ambient = new THREE.AmbientLight( 0x446680 );
   scene.add(ambient);
@@ -273,7 +273,7 @@ function init() {
       renderTerrain = new render_terrain.RenderTerrain(
           scene, data.track.terrain, webglRenderer.context)
       renderScenery = new render_scenery.RenderScenery(
-          scene, data.track.scenery, loadFunc, webglRenderer.context)
+          scene, data.track.scenery, loadFunc, webglRenderer)
 
       var bodyMaterial = car.bodyGeometry.materials[0];
       bodyMaterial.envMap = textureCube;
@@ -455,7 +455,7 @@ function animate(nowTime) {
         countdownEl.className += ' fadeout';
         checkpointsEl.innerHTML = followProgress.nextCpIndex + ' / ' + game.track.checkpoints.length;
       }
-      runTimerEl.innerHTML = formatRunTime(raceTime);
+      //runTimerEl.innerHTML = formatRunTime(raceTime);
     } else {
       var num = Math.ceil(-raceTime);
       var lastNum = Math.ceil(-lastRaceTime);
@@ -514,8 +514,8 @@ function animate(nowTime) {
     var targetPos = car.root.position.clone();
     targetPos.addSelf(linVel.clone().multiplyScalar(.17));
     targetPos.addSelf(car.root.matrix.getColumnX().clone().multiplyScalar(0));
-    targetPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(1.2));
-    targetPos.addSelf(car.root.matrix.getColumnZ().clone().multiplyScalar(-2.9));
+    targetPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(11.2));
+    targetPos.addSelf(car.root.matrix.getColumnZ().clone().multiplyScalar(-22.9));
     var camDelta = delta * 5;
     camera.position.x = PULLTOWARD(camera.position.x, targetPos.x, camDelta);
     camera.position.y = PULLTOWARD(camera.position.y, targetPos.y, camDelta);
@@ -561,7 +561,7 @@ function animate(nowTime) {
   }
 
   renderTerrain.update(camera, delta);
-  //renderScenery.update(camera, delta);
+  renderScenery.update(camera, delta);
 
   sunLight.target.position.copy(car.root.position);
   sunLight.position.copy(car.root.position).addSelf(sunLightPos);

@@ -88,8 +88,8 @@ var MODULE = 'scenery';
     if (config.collision) {
       if (config.collision.capsule) {
         this.hull = new collision.SphereHull([
-          new Vec3(0, 0, 0),
-          new Vec3(0, 0, config.collision.capsule.height)
+          new Vec3(0, 0, 1.0),
+          new Vec3(0, 0, config.collision.capsule.height - 0.5)
         ], config.collision.capsule.radius);
         this.hull.originalCenter = this.hull.bounds.center.clone();
       }

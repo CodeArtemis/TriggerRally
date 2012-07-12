@@ -106,8 +106,6 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
       for uv, pt in uvs
         @vertexUvArray[face[pts[pt]] * 2 + 0] = uv.u
         @vertexUvArray[face[pts[pt]] * 2 + 1] = uv.v
-
-    @updateOffsets()
     return
 
   mergeMesh: (mesh) ->
@@ -140,8 +138,6 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     # Copy indices.
     for idx in geom2.vertexIndexArray
       @vertexIndexArray.push idx + vertexOffset
-
-    @updateOffsets()
     return
 
   computeBoundingSphere: -> @computeBounds()

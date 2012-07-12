@@ -21,7 +21,7 @@ class render_terrain.RenderTerrain
     offsets = @material.uniforms['offsets'].value
     scales = @material.uniforms['scales'].value
     morphFactors = @material.uniforms['morphFactors'].value
-    scale = 0.75 * 2
+    scale = @terrain.scaleHz * 2
     for layer in [0...@numLayers]
       offset = offsets[layer] ?= new THREE.Vector2()
       offset.x = (Math.floor(camera.position.x / scale) + 0.5) * scale
@@ -54,10 +54,12 @@ class render_terrain.RenderTerrain
     obj = @_createImmediateObject()
     @material = new THREE.ShaderMaterial
       lights: true
+      fog: true
 
       uniforms: _.extend( THREE.UniformsUtils.merge( [
           THREE.UniformsLib['lights'],
           THREE.UniformsLib['shadowmap'],
+          THREE.UniformsLib['fog'],
         ]),
         tHeightMap:
           type: 't'
@@ -80,6 +82,9 @@ class render_terrain.RenderTerrain
         morphFactors:
           type: 'v4v'
           value: []
+        terrainScaleHz:
+          type: 'f'
+          value: @terrain.scaleHz
       )
 
       attributes:
@@ -94,6 +99,7 @@ class render_terrain.RenderTerrain
         uniform vec2 offsets[NUM_LAYERS];
         uniform float scales[NUM_LAYERS];
         uniform vec4 morphFactors[NUM_LAYERS];
+        uniform float terrainScaleHz;
 
         //attribute vec4 morph;
 
@@ -116,10 +122,9 @@ class render_terrain.RenderTerrain
         */
 
         const float SIZE = 512.0;
-        const float SCALE = 0.75;
 
         vec2 worldToTerrainSpace(vec2 coord) {
-          return (coord / SIZE / SCALE + vec2(0.5) / SIZE) * (SIZE / (SIZE+1.0));
+          return (coord / SIZE / terrainScaleHz + vec2(0.5) / SIZE) * (SIZE / (SIZE+1.0));
         }
         
         /*
@@ -136,7 +141,7 @@ class render_terrain.RenderTerrain
           float layerScale = scales[layer];
           vec4 morphFactor = morphFactors[layer];
 
-          worldPosition = position * SIZE * SCALE + vec3(layerOffset, 0.0);
+          worldPosition = position * SIZE * terrainScaleHz + vec3(layerOffset, 0.0);
           vUv = worldToTerrainSpace(worldPosition.xy);
           vUv += uv * 0.0;
           worldPosition.z = texture2D(tHeightMap, vUv).r;
@@ -164,16 +169,11 @@ class render_terrain.RenderTerrain
         }
         """
       fragmentShader:
-        #THREE.ShaderChunk.lights_phong_pars_fragment +
-        THREE.ShaderChunk.shadowmap_pars_fragment +
+        THREE.ShaderChunk.fog_pars_fragment + '\n' +
+        THREE.ShaderChunk.lights_phong_pars_fragment + '\n' +
+        THREE.ShaderChunk.shadowmap_pars_fragment + '\n' +
         """
         
-        uniform vec3 ambientLightColor;
-        #if MAX_DIR_LIGHTS > 0
-          uniform vec3 directionalLightColor[ MAX_DIR_LIGHTS ];
-          uniform vec3 directionalLightDirection[ MAX_DIR_LIGHTS ];
-        #endif
-
         //uniform sampler2D tHeightMap;
         uniform sampler2D tDiffuse;
         uniform sampler2D tNormal;
@@ -191,6 +191,23 @@ class render_terrain.RenderTerrain
           vec3 normal = vec3(normSample.x, normSample.y, 1.0 - dot(normSample, normSample));
           vec3 tangentU = vec3(1.0 - normal.x * normal.x, 0.0, -normal.x);
           vec3 tangentV = vec3(0.0, 1.0 - normal.y * normal.y, -normal.y);
+          float depth = length(eyePosition.xyz);
+
+          gl_FragColor = vec4(diffSample, 1.0);
+
+          float noiseSample = texture2D(tDiffuse, worldPosition.xy / 128.0).g;
+          float veggieFactor = smoothstep(60.0, 80.0, depth + noiseSample * 70.0) * 0.6;
+          vec3 veggieColor1 = vec3(0.1, 0.2, 0.05);
+          vec3 veggieColor2 = vec3(0.03, 0.1, 0.0);
+          vec3 eyeVec = normalize(cameraPosition - worldPosition);
+          float veggieMix = dot(eyeVec, normal);
+          //veggieMix *= veggieMix;
+          vec3 veggieColor = mix(veggieColor1, veggieColor2, veggieMix);
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, veggieColor, veggieFactor);
+          gl_FragColor.rgb = mix(vec3(0.4), gl_FragColor.rgb, smoothstep(0.77, 0.78, normal.z));
+
+          //gl_FragColor.rgb = mix(gl_FragColor.rgb, tangentV, 1.0);
+          gl_FragColor = mix(gl_FragColor, col, 0.0);
 
           float epsilon = 0.5 / 512.0;
           vec3 normalDetail = normalize(vec3(
@@ -201,10 +218,6 @@ class render_terrain.RenderTerrain
                    normalDetail.y * tangentV +
                    normalDetail.z * normal;
 
-          gl_FragColor = vec4(diffSample, 1.0);
-
-          //gl_FragColor.rgb = mix(gl_FragColor.rgb, tangentV, 1.0);
-          gl_FragColor = mix(gl_FragColor, col, 0.0);
 
           """ +
           #THREE.ShaderChunk.shadowmap_fragment +
@@ -261,10 +274,12 @@ class render_terrain.RenderTerrain
           vec3 totalIllum = ambientLightColor + directIllum * shadowColor;
           gl_FragColor.rgb *= totalIllum;
 
-          float depth = -eyePosition.z / eyePosition.w;
-          vec3 fogCol = vec3(0.5, 0.5, 0.5);
-          float clarity = 100.0 / (depth + 100.0);
-          gl_FragColor.rgb = mix(fogCol, gl_FragColor.rgb, clarity);
+          //vec3 fogCol = vec3(0.8, 0.85, 0.9);
+          //float clarity = 160.0 / (depth + 160.0);
+          const float LOG2 = 1.442695;
+          float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );
+          fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor, fogFactor);
         }
         """
     obj.material = @material

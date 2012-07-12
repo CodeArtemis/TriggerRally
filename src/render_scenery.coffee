@@ -5,7 +5,7 @@
 render_scenery = exports? and @ or @render_scenery = {}
 
 class render_scenery.RenderScenery
-  constructor: (@scene, @scenery, loadFunc, @gl) ->
+  constructor: (@scene, @scenery, loadFunc, @renderer) ->
     @fadeSpeed = 2
     @layers = ({ src: l, tiles: {} } for l in scenery.layers)
     for layer in @layers
@@ -38,7 +38,8 @@ class render_scenery.RenderScenery
         mesh.position.sub entity.position, tile.position
         mesh.rotation.add object.rotation, entity.rotation
         mergedGeom.mergeMesh mesh
-      mergedGeom.createBuffers(@gl)
+      mergedGeom.updateOffsets()
+      mergedGeom.createBuffers(@renderer.context)
       # Clone the material so that we can independently adjust opacity.
       material = new THREE.MeshLambertMaterial(object.material)
       # Color doesn't get copied correctly.
@@ -86,5 +87,7 @@ class render_scenery.RenderScenery
             mesh.material.opacity = opacity
         else
           scene.remove layer.tiles[key]
+          for mesh in layer.tiles[key]
+            @renderer.deallocateObject mesh
           delete layer.tiles[key]
     return
