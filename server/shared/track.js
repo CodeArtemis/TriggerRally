@@ -28,7 +28,7 @@ var MODULE = 'track';
       terrain.scaleVt = config.terrain.verticalscale;
       this.terrain = terrain;
 
-      terrain.getHeightMap(function() {
+      terrain.loadTile(0, 0, function() {
         var course = config.course;
         var cpts = course.checkpoints;
         // TODO: Move this change to config.
