@@ -46,20 +46,18 @@ class render_terrain.RenderTerrain
         THREE.LinearFilter, THREE.LinearFilter)
     hmapTex.needsUpdate = true
 
-    diffuseTex = THREE.ImageUtils.loadTexture("/a/textures/mayang-earth.jpg")
+    diffuseTex = THREE.ImageUtils.loadTexture('/a/textures/mayang-earth.jpg')
     diffuseTex.wrapS = THREE.RepeatWrapping
     diffuseTex.wrapT = THREE.RepeatWrapping
 
     @geom = @_createGeom()
     obj = @_createImmediateObject()
-    uniforms = THREE.UniformsUtils.merge [
-      THREE.UniformsLib["lights"]
-    ]
-
     @material = new THREE.ShaderMaterial
-      #lights: true
+      lights: true
 
-      uniforms: _.extend( uniforms,
+      uniforms: _.extend( THREE.UniformsUtils.merge( [
+          THREE.UniformsLib['lights']
+        ]),
         tHeightMap:
           type: 't'
           value: 0
@@ -181,11 +179,9 @@ class render_terrain.RenderTerrain
           vec2 normSample = texture2D(tNormal, vUv).ra;
           vec3 normal = vec3(normSample.x, normSample.y, 1.0 - dot(normSample, normSample));
           gl_FragColor = vec4(diffSample, 1.0);
-          gl_FragColor = mix(gl_FragColor, normal.xyzz * 0.5 + 0.5, 0.8);
           gl_FragColor = mix(gl_FragColor, vec4(1.0), 0.0);
           gl_FragColor = mix(gl_FragColor, col, 0.0);
           
-          /*
           vec3 illum = ambientLightColor;
           #if MAX_DIR_LIGHTS > 0
           for (int i = 0; i < MAX_DIR_LIGHTS; ++i) {
@@ -195,7 +191,6 @@ class render_terrain.RenderTerrain
           }
           #endif
           gl_FragColor.rgb *= illum;
-          */
 
           //float heightSample = texture2D(tHeightMap, vUv).r;
           //gl_FragColor.g = fract(heightSample);
@@ -220,7 +215,7 @@ class render_terrain.RenderTerrain
 
   _createGeom: ->
     geom = new array_geometry.ArrayGeometry()
-    geom.wireframe = true
+    geom.wireframe = false
     idx = geom.vertexIndexArray
     posn = geom.vertexPositionArray
     uv = geom.vertexUvArray
