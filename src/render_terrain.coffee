@@ -46,7 +46,7 @@ class render_terrain.RenderTerrain
         THREE.LinearFilter, THREE.LinearFilter)
     hmapTex.needsUpdate = true
 
-    diffuseTex = THREE.ImageUtils.loadTexture('/a/textures/mayang-earth.jpg')
+    diffuseTex = THREE.ImageUtils.loadTexture('/a/textures/mayang-earth2.jpg')
     diffuseTex.wrapS = THREE.RepeatWrapping
     diffuseTex.wrapT = THREE.RepeatWrapping
 
@@ -56,7 +56,8 @@ class render_terrain.RenderTerrain
       lights: true
 
       uniforms: _.extend( THREE.UniformsUtils.merge( [
-          THREE.UniformsLib['lights']
+          THREE.UniformsLib['lights'],
+          THREE.UniformsLib['shadowmap'],
         ]),
         tHeightMap:
           type: 't'
@@ -86,7 +87,8 @@ class render_terrain.RenderTerrain
           type: 'v4'
 
       vertexShader:
-        "const int NUM_LAYERS = " + @numLayers + ";\n" +
+        THREE.ShaderChunk.shadowmap_pars_vertex +
+        "\nconst int NUM_LAYERS = " + @numLayers + ";\n" +
         """
         uniform sampler2D tHeightMap;
         uniform vec2 offsets[NUM_LAYERS];
@@ -153,11 +155,19 @@ class render_terrain.RenderTerrain
           gl_Position = projectionMatrix * eyePosition;
           col = vec4(1,0,0,1);
           //col.rgb = morphDecoded;
+          
+          #ifdef USE_SHADOWMAP
+          for( int i = 0; i < MAX_SHADOWS; i ++ ) {
+            vShadowCoord[ i ] = shadowMatrix[ i ] * objectMatrix * vec4( worldPosition, 1.0 );
+          }
+          #endif
         }
         """
       fragmentShader:
         #THREE.ShaderChunk.lights_phong_pars_fragment +
+        THREE.ShaderChunk.shadowmap_pars_fragment +
         """
+        
         uniform vec3 ambientLightColor;
         #if MAX_DIR_LIGHTS > 0
           uniform vec3 directionalLightColor[ MAX_DIR_LIGHTS ];
@@ -175,25 +185,81 @@ class render_terrain.RenderTerrain
 
         void main() {
           float height = worldPosition.z;
-          vec3 diffSample = texture2D(tDiffuse, worldPosition.xy / 4.0).rgb;
+          vec2 diffUv = worldPosition.xy / 4.0;
+          vec3 diffSample = texture2D(tDiffuse, diffUv).rgb;
           vec2 normSample = texture2D(tNormal, vUv).ra;
           vec3 normal = vec3(normSample.x, normSample.y, 1.0 - dot(normSample, normSample));
+          vec3 tangentU = vec3(1.0 - normal.x * normal.x, 0.0, -normal.x);
+          vec3 tangentV = vec3(0.0, 1.0 - normal.y * normal.y, -normal.y);
+
+          float epsilon = 0.5 / 512.0;
+          vec3 normalDetail = normalize(vec3(
+            diffSample.g - texture2D(tDiffuse, diffUv + vec2(epsilon, 0.0)).g,
+            diffSample.g - texture2D(tDiffuse, diffUv + vec2(0.0, epsilon)).g,
+            0.25));
+          normal = normalDetail.x * tangentU +
+                   normalDetail.y * tangentV +
+                   normalDetail.z * normal;
+
           gl_FragColor = vec4(diffSample, 1.0);
-          gl_FragColor = mix(gl_FragColor, vec4(1.0), 0.0);
+
+          //gl_FragColor.rgb = mix(gl_FragColor.rgb, tangentV, 1.0);
           gl_FragColor = mix(gl_FragColor, col, 0.0);
+
+          """ +
+          #THREE.ShaderChunk.shadowmap_fragment +
+          """
           
-          vec3 illum = ambientLightColor;
+          float fDepth;
+          vec3 shadowColor = vec3( 1.0 );
+          for( int i = 0; i < MAX_SHADOWS; i ++ ) {
+            vec3 shadowCoord = vShadowCoord[ i ].xyz / vShadowCoord[ i ].w;
+            bvec4 inFrustumVec = bvec4 ( shadowCoord.x >= 0.0, shadowCoord.x <= 1.0, shadowCoord.y >= 0.0, shadowCoord.y <= 1.0 );
+            bool inFrustum = all( inFrustumVec );
+            bvec2 frustumTestVec = bvec2( inFrustum, shadowCoord.z <= 1.0 );
+            bool frustumTest = all( frustumTestVec );
+            if ( frustumTest ) {
+              shadowCoord.z += shadowBias[ i ];
+              float shadow = 0.0;
+              const float shadowDelta = 1.0 / 9.0;
+              float xPixelOffset = 1.0 / shadowMapSize[ i ].x;
+              float yPixelOffset = 1.0 / shadowMapSize[ i ].y;
+              float dx0 = -1.25 * xPixelOffset;
+              float dy0 = -1.25 * yPixelOffset;
+              float dx1 = 1.25 * xPixelOffset;
+              float dy1 = 1.25 * yPixelOffset;
+              fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( dx0, dy0 ) ) );
+              if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
+              fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( 0.0, dy0 ) ) );
+              if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
+              fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( dx1, dy0 ) ) );
+              if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
+              fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( dx0, 0.0 ) ) );
+              if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
+              fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy ) );
+              if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
+              fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( dx0, dy1 ) ) );
+              if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
+              fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( 0.0, dy1 ) ) );
+              if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
+              fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( dx1, dy1 ) ) );
+              if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
+              //shadowColor = shadowColor * vec3( ( 1.0 - shadowDarkness[ i ] * shadow ) );
+              shadowColor = shadowColor * vec3( ( 1.0 - shadow ) );
+            }
+          }
+          //gl_FragColor.xyz = gl_FragColor.xyz * shadowColor;
+
+          vec3 directIllum = vec3(0.0);
           #if MAX_DIR_LIGHTS > 0
           for (int i = 0; i < MAX_DIR_LIGHTS; ++i) {
             vec4 lDirection = viewMatrix * vec4(directionalLightDirection[i], 0.0);
             vec3 dirVector = normalize(lDirection.xyz);
-            illum += dot(normal, directionalLightDirection[i]) * directionalLightColor[i];
+            directIllum += max(dot(normal, directionalLightDirection[i]), 0.0) * directionalLightColor[i];
           }
           #endif
-          gl_FragColor.rgb *= illum;
-
-          //float heightSample = texture2D(tHeightMap, vUv).r;
-          //gl_FragColor.g = fract(heightSample);
+          vec3 totalIllum = ambientLightColor + directIllum * shadowColor;
+          gl_FragColor.rgb *= totalIllum;
 
           float depth = -eyePosition.z / eyePosition.w;
           vec3 fogCol = vec3(0.5, 0.5, 0.5);
@@ -206,12 +272,13 @@ class render_terrain.RenderTerrain
     return
 
   _createImmediateObject: ->
-    class ImmediateObject extends THREE.Object3D
+    class TerrainImmediateObject extends THREE.Object3D
       constructor: (@renderTerrain) ->
         super()
+        @receiveShadow = true
       immediateRenderCallback: (program, gl, frustum) ->
         @renderTerrain._render program, gl, frustum
-    return new ImmediateObject @
+    return new TerrainImmediateObject @
 
   _createGeom: ->
     geom = new array_geometry.ArrayGeometry()

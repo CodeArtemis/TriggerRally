@@ -375,49 +375,6 @@ function drawArrow() {
   meshArrow.add(meshArrowNext);
 };
 
-var drawTrack = function(terrainTile) {
-  var terrain = terrainTile.terrain;
-  var geometry = new THREE.PlaneGeometry(
-      1, 1,
-      terrainTile.size, terrainTile.size);
-  var x, y, i = 0;
-  for (y = 0; y <= terrainTile.size; ++y) {
-    for (x = 0; x <= terrainTile.size; ++x) {
-      geometry.vertices[i].x = x * terrain.scaleHz;
-      geometry.vertices[i].y = y * terrain.scaleHz;
-      geometry.vertices[i].z = terrainTile.heightMap[i];
-      ++i;
-    }
-  }
-  for (i = 0; i < geometry.faces.length; ++i) {
-    x = geometry.faces[i].a;
-    geometry.faces[i].a = geometry.faces[i].c;
-    geometry.faces[i].c = x;
-    x = geometry.faceVertexUvs[0][i][0];
-    geometry.faceVertexUvs[0][i][0] = geometry.faceVertexUvs[0][i][2];
-    geometry.faceVertexUvs[0][i][2] = x;
-  }
-  geometry.computeCentroids();
-  geometry.computeFaceNormals();
-  geometry.computeVertexNormals();
-
-  var tarmac_d = THREE.ImageUtils.loadTexture("/a/textures/mayang-earth.jpg");
-  tarmac_d.wrapS = tarmac_d.wrapT = THREE.RepeatWrapping;
-  tarmac_d.repeat.set(100, 100);
-
-  var xm = new THREE.MeshLambertMaterial({
-    map: tarmac_d,
-    wrapAround: false
-  });
-  xm.ambient = xm.color;
-  
-  var mesh = new THREE.Mesh(geometry, xm);
-  mesh.position.set(0, 0, 0);
-  mesh.castShadow = false;
-  mesh.receiveShadow = true;
-  scene.add(mesh);
-};
-
 function keyWeCareAbout(event) {
   return (event.keyCode >= 32 && event.keyCode <= 127);
 }
@@ -557,8 +514,8 @@ function animate(nowTime) {
     var targetPos = car.root.position.clone();
     targetPos.addSelf(linVel.clone().multiplyScalar(.17));
     targetPos.addSelf(car.root.matrix.getColumnX().clone().multiplyScalar(0));
-    targetPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(61.2));
-    targetPos.addSelf(car.root.matrix.getColumnZ().clone().multiplyScalar(-32.9));
+    targetPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(1.2));
+    targetPos.addSelf(car.root.matrix.getColumnZ().clone().multiplyScalar(-2.9));
     var camDelta = delta * 5;
     camera.position.x = PULLTOWARD(camera.position.x, targetPos.x, camDelta);
     camera.position.y = PULLTOWARD(camera.position.y, targetPos.y, camDelta);
