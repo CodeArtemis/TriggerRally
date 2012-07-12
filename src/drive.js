@@ -130,6 +130,7 @@ function init() {
   webglRenderer.shadowMapSoft = true;
   webglRenderer.shadowMapCullFrontFaces = false;
   webglRenderer.autoClear = false;
+
   onWindowResize();
 
   containerEl.appendChild(webglRenderer.domElement);

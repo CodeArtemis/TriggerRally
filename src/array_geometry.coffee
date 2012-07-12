@@ -12,16 +12,28 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
     @vertexNormalArray = []
     @vertexUvArray = []  # Supports only one channel of UVs.
     @customAttribs = {}
+    @wireframe = false
 
   addCustomAttrib: (name, attrib) ->
     attrib.size ?= 4
     @customAttribs[name] = attrib
     return attrib.array ?= []
 
+  doubleTriangles: () ->
+    indices = @vertexIndexArray
+    newIndices = []
+    i = 0
+    while i < indices.length - 2
+      newIndices.push indices[i+0], indices[i+1], indices[i+1]
+      newIndices.push indices[i+2], indices[i+2], indices[i+0]
+      i += 3
+    @vertexIndexArray = newIndices
+    return
+
   updateOffsets: ->
-    # Chop up index array to fit UNSIGNED_SHORT limit.
-    # Destructively modifies @vertexIndexArray.
+    # Destrutively chop up index array to fit UNSIGNED_SHORT limit.
     # TODO: Add OES_element_index_uint support.
+    if @wireframe then @doubleTriangles()
     @offsets = []
     offset =
       count: 0
@@ -205,9 +217,10 @@ class array_geometry.ArrayGeometry extends THREE.BufferGeometry
       gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @vertexIndexBuffer
       ELEMENT_TYPE = gl.UNSIGNED_SHORT
       ELEMENT_SIZE = 2
+      PRIMITIVE = if @wireframe then gl.LINES else gl.TRIANGLES
       for offset in @offsets
         @setupBuffers program, gl, offset.index
-        gl.drawElements gl.TRIANGLES, offset.count, ELEMENT_TYPE, offset.start * ELEMENT_SIZE
+        gl.drawElements PRIMITIVE, offset.count, ELEMENT_TYPE, offset.start * ELEMENT_SIZE
     else
       @setupBuffers program, gl, 0
       gl.drawArrays gl.TRIANGLES, 0, vertexPositionBuffer.numItems / 3

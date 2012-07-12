@@ -53,28 +53,33 @@ class render_terrain.RenderTerrain
     @geom = @_createGeom()
     obj = @_createImmediateObject()
     @material = new THREE.ShaderMaterial
+      #lights: true
+
       uniforms:
-        tHeightMap:
-          type: 't'
-          value: 0
-          texture: hmapTex
-        tDiffuse:
-          type: 't'
-          value: 1
-          texture: diffuseTex
-        tNormal:
-          type: 't'
-          value: 2
-          texture: @_createNormalMap tile
-        offsets:
-          type: 'v2v'
-          value: []
-        scales:
-          type: 'fv1'
-          value: []
-        morphFactors:
-          type: 'v4v'
-          value: []
+        THREE.UniformsUtils.merge [
+          #THREE.UniformsLib[ "lights" ],
+            tHeightMap:
+              type: 't'
+              value: 0
+              texture: hmapTex
+            tDiffuse:
+              type: 't'
+              value: 1
+              texture: diffuseTex
+            tNormal:
+              type: 't'
+              value: 2
+              texture: @_createNormalMap tile
+            offsets:
+              type: 'v2v'
+              value: []
+            scales:
+              type: 'fv1'
+              value: []
+            morphFactors:
+              type: 'v4v'
+              value: []
+        ]
 
       attributes:
         morph:
@@ -151,7 +156,14 @@ class render_terrain.RenderTerrain
         }
         """
       fragmentShader:
+        #THREE.ShaderChunk.lights_phong_pars_fragment +
         """
+        uniform vec3 ambientLightColor;
+        #if MAX_DIR_LIGHTS > 0
+          uniform vec3 directionalLightColor[ MAX_DIR_LIGHTS ];
+          uniform vec3 directionalLightDirection[ MAX_DIR_LIGHTS ];
+        #endif
+
         //uniform sampler2D tHeightMap;
         uniform sampler2D tDiffuse;
         uniform sampler2D tNormal;
@@ -167,9 +179,21 @@ class render_terrain.RenderTerrain
           vec2 normSample = texture2D(tNormal, vUv).ra;
           vec3 normal = vec3(normSample.x, normSample.y, 1.0 - dot(normSample, normSample));
           gl_FragColor = vec4(diffSample, 1.0);
-          gl_FragColor = mix(gl_FragColor, normal.xyzz * 0.5 + 0.5, 0.4);
+          gl_FragColor = mix(gl_FragColor, normal.xyzz * 0.5 + 0.5, 0.8);
           gl_FragColor = mix(gl_FragColor, vec4(1.0), 0.0);
           gl_FragColor = mix(gl_FragColor, col, 0.0);
+          
+          /*
+          vec3 illum = ambientLightColor;
+          #if MAX_DIR_LIGHTS > 0
+          for (int i = 0; i < MAX_DIR_LIGHTS; ++i) {
+            vec4 lDirection = viewMatrix * vec4(directionalLightDirection[i], 0.0);
+            vec3 dirVector = normalize(lDirection.xyz);
+            illum += dot(normal, directionalLightDirection[i]) * directionalLightColor[i];
+          }
+          #endif
+          gl_FragColor.rgb *= illum;
+          */
 
           //float heightSample = texture2D(tHeightMap, vUv).r;
           //gl_FragColor.g = fract(heightSample);
@@ -194,12 +218,12 @@ class render_terrain.RenderTerrain
 
   _createGeom: ->
     geom = new array_geometry.ArrayGeometry()
+    geom.wireframe = true
     idx = geom.vertexIndexArray
     posn = geom.vertexPositionArray
     uv = geom.vertexUvArray
     #morph = geom.addCustomAttrib 'morph'
     #  size: 4
-    WIREFRAME = 0
     RING_WIDTH = 31
     TERRAIN_SIZE = 512
     ringSegments = [
@@ -234,11 +258,11 @@ class render_terrain.RenderTerrain
               start0 = rowStart[i-1] + (j-1)
               start1 = rowStart[i]   + (j-1)
               if (i + j) % 2 == 1
-                idx.push start0 + 1, start0 + 0, start1 + 0 for copy in [0..WIREFRAME]
-                idx.push start0 + 1, start1 + 0, start1 + 1 for copy in [0..WIREFRAME]
+                idx.push start0 + 1, start0 + 0, start1 + 0
+                idx.push start0 + 1, start1 + 0, start1 + 1
               else
-                idx.push start0 + 0, start1 + 0, start1 + 1 for copy in [0..WIREFRAME]
-                idx.push start0 + 0, start1 + 1, start0 + 1 for copy in [0..WIREFRAME]
+                idx.push start0 + 0, start1 + 0, start1 + 1
+                idx.push start0 + 0, start1 + 1, start0 + 1
           if i % 2 == 0
             # Draw long edge of outer morph ring.
             modelj = RING_WIDTH * 2 + 2
@@ -251,9 +275,9 @@ class render_terrain.RenderTerrain
               start0 = rowStart[i-2] + segWidth
               start1 = rowStart[i-1] + segWidth
               start2 = rowStart[i]   + segWidth
-              idx.push start0 + 0, start1 + 0, start0 + 1 for copy in [0..WIREFRAME]
-              idx.push start0 + 1, start1 + 0, start2 + 1 for copy in [0..WIREFRAME]
-              idx.push start2 + 1, start1 + 0, start2 + 0 for copy in [0..WIREFRAME]
+              idx.push start0 + 0, start1 + 0, start0 + 1
+              idx.push start0 + 1, start1 + 0, start2 + 1
+              idx.push start2 + 1, start1 + 0, start2 + 0
         rowStart.push posn.length / 3
         #continue
         # Draw short edge of outer morph ring.
@@ -269,18 +293,18 @@ class render_terrain.RenderTerrain
             if j > 0 and j < segWidth  # WHY NEEDED?
               start0 = rowStart[segLength]     + j-2
               start1 = rowStart[segLength + 1] + j/2-1
-              idx.push start0 + 0, start1 + 0, start0 + 1 for copy in [0..WIREFRAME]
-              idx.push start0 + 1, start1 + 0, start1 + 1 for copy in [0..WIREFRAME]
-              idx.push start0 + 1, start1 + 1, start0 + 2 for copy in [0..WIREFRAME]
+              idx.push start0 + 0, start1 + 0, start0 + 1
+              idx.push start0 + 1, start1 + 0, start1 + 1
+              idx.push start0 + 1, start1 + 1, start0 + 2
         # Draw corner of outer morph ring.
         j = segWidth + 1
         start0 = rowStart[segLength - 1] + j-2
         start1 = rowStart[segLength]     + j-2
         start2 = rowStart[segLength + 1] + j/2-1
-        idx.push start1 + 0, start2 + 0, start1 + 1 for copy in [0..WIREFRAME]
-        idx.push start1 + 1, start2 + 0, start2 + 1 for copy in [0..WIREFRAME]
-        idx.push start1 + 1, start2 + 1, start0 + 2 for copy in [0..WIREFRAME]
-        idx.push start1 + 1, start0 + 2, start0 + 1 for copy in [0..WIREFRAME]
+        idx.push start1 + 0, start2 + 0, start1 + 1
+        idx.push start1 + 1, start2 + 0, start2 + 1
+        idx.push start1 + 1, start2 + 1, start0 + 2
+        idx.push start1 + 1, start0 + 2, start0 + 1
       scale *= 2
 
     geom.updateOffsets()
