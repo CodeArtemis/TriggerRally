@@ -36,10 +36,9 @@ class render_terrain.RenderTerrain
     return
 
   _setup: ->
-    tile = @terrain.getTile 0, 0
     hmapTex = new THREE.DataTexture(
-        tile.heightMap,
-        tile.size + 1, tile.size + 1,
+        @terrain.source.heightMap,
+        @terrain.source.size + 1, @terrain.source.size + 1,
         THREE.LuminanceFormat, THREE.FloatType,
         null,
         THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping,
@@ -72,7 +71,7 @@ class render_terrain.RenderTerrain
         tNormal:
           type: 't'
           value: 2
-          texture: @_createNormalMap tile
+          texture: @_createNormalMap @terrain
         offsets:
           type: 'v2v'
           value: []
@@ -394,19 +393,19 @@ class render_terrain.RenderTerrain
     @geom.render program, gl
     return
 
-  _createNormalMap: (tile) ->
+  _createNormalMap: (terrain) ->
     # Normal map has only 2 channels, X and Y.
-    normArray = new Float32Array(tile.size * tile.size * 2)
+    normArray = new Float32Array(terrain.source.size * terrain.source.size * 2)
     tmpVec3 = new THREE.Vector3()
-    hmap = tile.heightMap
-    tileSize = tile.size
+    hmap = terrain.source.heightMap
+    tileSize = terrain.source.size
     tileSizeP1 = tileSize + 1
-    for y in [0...tile.size]
-      for x in [0...tile.size]
+    for y in [0...tileSize]
+      for x in [0...tileSize]
         tmpVec3.set(
           hmap[y * tileSizeP1 + x] + hmap[(y+1) * tileSizeP1 + x] - hmap[y * tileSizeP1 + x+1] - hmap[(y+1) * tileSizeP1 + x+1],
           hmap[y * tileSizeP1 + x] + hmap[y * tileSizeP1 + x+1] - hmap[(y+1) * tileSizeP1 + x] - hmap[(y+1) * tileSizeP1 + x+1],
-          tile.terrain.scaleHz * 2)
+          terrain.scaleHz * 2)
         tmpVec3.normalize()
         normArray[(y * tileSize + x) * 2 + 0] = tmpVec3.x
         normArray[(y * tileSize + x) * 2 + 1] = tmpVec3.y

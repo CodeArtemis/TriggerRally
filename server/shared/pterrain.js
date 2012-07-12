@@ -56,7 +56,21 @@ var MODULE = 'pterrain';
     }
     var ctx = canvas.getContext('2d');
     ctx.drawImage(image, 0, 0);
-    this.hmap = ctx.getImageData(0, 0, cx, cy).data;
+    var data = ctx.getImageData(0, 0, cx, cy).data;
+    var heightMap = new Float32Array(cx * cy);
+
+    for (y = 0; y < cy; ++y) {
+      var wrapy = y % cy;
+      if (wrapy < 0) wrapy += cy;
+      for (x = 0; x < cx; ++x) {
+        var wrapx = x % cx;
+        if (wrapx < 0) wrapx += cx;
+        heightMap[x + y * cx] = data[(x + y * cx) * 4] * scaleVt;
+      }
+    }
+
+    this.heightMap = heightMap;
+
     for (var i in this.onload) {
       this.onload[i]();
     }
@@ -65,110 +79,34 @@ var MODULE = 'pterrain';
     }
   };
 
-  exports.ImageSource.prototype.loadTile = function(x, y, cx, cy, scaleVt, callback) {
-    if (!this.hmap) {
+  exports.ImageSource.prototype.getHeightMap = function(callback) {
+    if (!this.source.heightMap) {
       // Enqueue ourselves to be called later.
-      this.onload.push(this.loadTile.bind(this, x, y, cx, cy, scaleVt, callback));
+      this.onload.push(this.getHeightMap.bind(this, callback));
       return;
     }
-    var srcx = this.cx;
-    var srcy = this.cy;
-    var data = this.hmap;
-    var buffer = new Float32Array(cx * cy);
-    var ix, iy, i = 0;
-    for (iy = y; iy < y + cy; ++iy) {
-      var wrapy = iy % srcy;
-      if (wrapy < 0) wrapy += srcy;
-      var wrapy_srcx = wrapy * srcx;
-      for (ix = x; ix < x + cx; ++ix) {
-        var wrapx = ix % srcx;
-        if (wrapx < 0) wrapx += srcx;
-        buffer[++i] = data[(wrapx + wrapy_srcx) * 4] * scaleVt;
-      }
-    }
-    callback(buffer);
+    callback(this.source.heightMap);
   };
 
   // cx, cy = width and height of heightmap
   exports.Terrain = function(source) {
-    this.tileSize = 512;  // Hack alert.
     this.scaleHz = 1;
     this.scaleVt = 1;
-    this.tileTotalSize = this.tileSize * this.scaleHz;
-    this.tiles = {};
     this.source = source;
-  };
-
-  // Get tile iff loaded.
-  // tx, ty = tile coordinate indices
-  exports.Terrain.prototype.getTile = function(tx, ty) {
-    var key = tx + ',' + ty;
-    return this.tiles[key];
-  };
-
-  // tx, ty = tile coordinate indices
-  exports.Terrain.prototype.loadTile = function(tx, ty, callback) {
-    var key = tx + ',' + ty;
-    if (key in this.tiles) {
-      callback(this.tiles[key]);
-    } else {
-      var size = this.tileSize;
-      var sizeP1 = size + 1;
-      this.source.loadTile(
-          tx * size, ty * size, sizeP1, sizeP1, this.scaleVt,
-          function(heightMap) {
-        var tile = new exports.TerrainTile(this, tx, ty, heightMap);
-        this.tiles[key] = tile;
-        if (callback) {
-          callback(tile);
-        }
-      }.bind(this));
-    }
   };
 
   exports.Terrain.prototype.getContact = function(pt) {
     return this.getContactRayZ(pt.x, pt.y);
   }
 
-  // x, y = terrain space coordinates
   exports.Terrain.prototype.getContactRayZ = function(x, y) {
-    var contact = null;
-    var sx = x / this.scaleHz;
-    var sy = y / this.scaleHz;
-    var tx = Math.floor(sx / this.tileSize);
-    var ty = Math.floor(sy / this.tileSize);
-    var tile = this.getTile(tx, ty);
-    if (tile) {
-      contact = tile.getContactRayZ(
-          sx - tx * this.tileSize,
-          sy - ty * this.tileSize);
-      if (contact) {
-        contact.surfacePos.x = x;
-        contact.surfacePos.y = y;
-      }
-    } else {
-      // TODO: Fire off a request to load this tile.
-    }
-    return contact;
-  };
+    var floorx = Math.floor(x);
+    var floory = Math.floor(y);
+    var fraclx = x - floorx;
+    var fracly = y - floory;
+    var size = this.source.size;
+    var heightMap = this.source.heightMap;
 
-  // tx, ty = tile coordinate indices
-  exports.TerrainTile = function(terrain, tx, ty, heightMap) {
-    var that = this;
-    this.terrain = terrain;
-    this.size = terrain.tileSize;
-    var sizeP1 = this.size + 1;
-    this.heightMap = heightMap;
-  };
-
-  // lx, ly = local tile space coordinates
-  exports.TerrainTile.prototype.getContactRayZ = function(lx, ly) {
-    var floorlx = Math.floor(lx);
-    var floorly = Math.floor(ly);
-    var fraclx = lx - floorlx;
-    var fracly = ly - floorly;
-    var sizeP1 = this.size + 1;
-    
     /*   y
          ^
         h01 - h11
@@ -176,22 +114,22 @@ var MODULE = 'pterrain';
          |   \ |
         h00 - h10 -> x
     */
-    var h00 = this.heightMap[(floorlx + 0) + (floorly + 0) * sizeP1];
-    var h10 = this.heightMap[(floorlx + 1) + (floorly + 0) * sizeP1];
-    var h01 = this.heightMap[(floorlx + 0) + (floorly + 1) * sizeP1];
-    var h11 = this.heightMap[(floorlx + 1) + (floorly + 1) * sizeP1];
+    var h00 = heightMap[(floorx + 0) + (floory + 0) * size];
+    var h10 = heightMap[(floorx + 1) % size + ((floory + 0) % size) * size];
+    var h01 = heightMap[(floorx + 0) + (floory + 1) * size];
+    var h11 = heightMap[(floorx + 1) % size + ((floory + 1) % size) * size];
 
     var normal = new Vec3();
     var height;
-    normal.z = this.terrain.scaleHz;
-    if (fraclx + fracly < 1) {
+    normal.z = this.scaleHz;
+    if (fracx + fracy < 1) {
       normal.x = h00 - h10;
       normal.y = h00 - h01;
       height = h00 + (h10-h00) * fraclx + (h01-h00) * fracly;
     } else {
       normal.x = h01 - h11;
       normal.y = h10 - h11;
-      height = h11 + (h01-h11) * (1-fraclx) + (h10-h11) * (1-fracly);
+      height = h11 + (h01-h11) * (1-fracx) + (h10-h11) * (1-fracy);
     }
     return {
       normal: normal.normalize(),
