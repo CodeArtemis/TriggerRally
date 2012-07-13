@@ -21,7 +21,7 @@ class render_terrain.RenderTerrain
     offsets = @material.uniforms['offsets'].value
     scales = @material.uniforms['scales'].value
     morphFactors = @material.uniforms['morphFactors'].value
-    scale = @terrain.scaleHz * 2
+    scale = @terrain.scaleHz * 2 * 8 / 256
     for layer in [0...@numLayers]
       offset = offsets[layer] ?= new THREE.Vector2()
       offset.x = (Math.floor(camera.position.x / scale) + 0.5) * scale
@@ -37,15 +37,7 @@ class render_terrain.RenderTerrain
 
   _setup: ->
     tile = @terrain.getTile 0, 0
-    hmapTex = new THREE.DataTexture(
-        tile.heightMap,
-        tile.size + 1, tile.size + 1,
-        THREE.LuminanceFormat, THREE.FloatType,
-        null,
-        THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping,
-        THREE.LinearFilter, THREE.LinearFilter)
-    hmapTex.needsUpdate = true
-
+    maps = @_createMaps tile
     diffuseTex = THREE.ImageUtils.loadTexture('/a/textures/mayang-earth2.jpg')
     diffuseTex.wrapS = THREE.RepeatWrapping
     diffuseTex.wrapT = THREE.RepeatWrapping
@@ -64,7 +56,7 @@ class render_terrain.RenderTerrain
         tHeightMap:
           type: 't'
           value: 0
-          texture: hmapTex
+          texture: maps.height
         tDiffuse:
           type: 't'
           value: 1
@@ -72,7 +64,7 @@ class render_terrain.RenderTerrain
         tNormal:
           type: 't'
           value: 2
-          texture: @_createNormalMap tile
+          texture: maps.normal
         offsets:
           type: 'v2v'
           value: []
@@ -85,6 +77,9 @@ class render_terrain.RenderTerrain
         terrainScaleHz:
           type: 'f'
           value: @terrain.scaleHz
+        terrainSize:
+          type: 'f'
+          value: @terrain.tileSize
       )
 
       attributes:
@@ -96,10 +91,12 @@ class render_terrain.RenderTerrain
         "\nconst int NUM_LAYERS = " + @numLayers + ";\n" +
         """
         uniform sampler2D tHeightMap;
+        uniform sampler2D tNormal;
         uniform vec2 offsets[NUM_LAYERS];
         uniform float scales[NUM_LAYERS];
         uniform vec4 morphFactors[NUM_LAYERS];
         uniform float terrainScaleHz;
+        uniform float terrainSize;
 
         //attribute vec4 morph;
 
@@ -121,12 +118,10 @@ class render_terrain.RenderTerrain
         const mat2 MORPH_W = mat2(-1.0, 0.0, 0.0, -1.0);
         */
 
-        const float SIZE = 512.0;
-
         vec2 worldToTerrainSpace(vec2 coord) {
-          return (coord / SIZE / terrainScaleHz + vec2(0.5) / SIZE) * (SIZE / (SIZE+1.0));
+          return (coord / terrainScaleHz + vec2(0.5)) / terrainSize;
         }
-        
+
         /*
         vec2 decodeMorph(float morph) {
           const vec4 MORPH_CODING = vec4(1.0, 2.0, 3.0, 4.0);
@@ -141,10 +136,38 @@ class render_terrain.RenderTerrain
           float layerScale = scales[layer];
           vec4 morphFactor = morphFactors[layer];
 
-          worldPosition = position * SIZE * terrainScaleHz + vec3(layerOffset, 0.0);
+          worldPosition = position * terrainSize * terrainScaleHz + vec3(layerOffset, 0.0);
           vUv = worldToTerrainSpace(worldPosition.xy);
-          vUv += uv * 0.0;
-          worldPosition.z = texture2D(tHeightMap, vUv).r;
+          float texel = 1.0 / terrainSize;
+          float halfTexel = texel * 0.5;
+          vec2 uv00 = (floor(vUv * terrainSize + 0.5) - 0.5) / terrainSize;
+          vec2 uv01 = uv00 + vec2(0.0, texel);
+          vec2 uv10 = uv00 + vec2(texel, 0.0);
+          vec2 uv11 = uv00 + vec2(texel, texel);
+          vec2 frac = (vUv - uv00) * terrainSize;
+          vec2 normal00 = texture2D(tNormal, uv00 - halfTexel).ra;
+          vec2 normal01 = texture2D(tNormal, uv01 - halfTexel).ra;
+          vec2 normal10 = texture2D(tNormal, uv10 - halfTexel).ra;
+          vec2 normal11 = texture2D(tNormal, uv11 - halfTexel).ra;
+          float height00 = texture2D(tHeightMap, uv00).r
+              - dot(vec2(frac.x, frac.y), normal00) * terrainScaleHz;
+          float height01 = texture2D(tHeightMap, uv01).r
+              - dot(vec2(frac.x, frac.y-1.0), normal01) * terrainScaleHz;
+          float height10 = texture2D(tHeightMap, uv10).r
+              - dot(vec2(frac.x-1.0, frac.y), normal10) * terrainScaleHz;
+          float height11 = texture2D(tHeightMap, uv11).r
+              - dot(vec2(frac.x-1.0, frac.y-1.0), normal11) * terrainScaleHz;
+          frac = smoothstep(0.0, 1.0, frac);
+          float height = mix(
+            mix(height00, height01, frac.y),
+            mix(height10, height11, frac.y),
+            frac.x);
+          //height = height11 - dot(frac, normal11) * terrainScaleHz;
+          //height = texture2D(tHeightMap, vUv).r;
+          //height = height00;
+          worldPosition.z = height;
+          //vec2 normSample = texture2D(tNormal, vUv).ra;
+          //worldPosition.z = normSample.r * 10.0;
 
           /*
           if (morph.x > 0.0) {
@@ -177,6 +200,8 @@ class render_terrain.RenderTerrain
         //uniform sampler2D tHeightMap;
         uniform sampler2D tDiffuse;
         uniform sampler2D tNormal;
+        uniform float terrainSize;
+        const float normalSize = 512.0;
 
         varying vec2 vUv;
         varying vec4 eyePosition;
@@ -187,7 +212,7 @@ class render_terrain.RenderTerrain
           float height = worldPosition.z;
           vec2 diffUv = worldPosition.xy / 4.0;
           vec3 diffSample = texture2D(tDiffuse, diffUv).rgb;
-          vec2 normSample = texture2D(tNormal, vUv).ra;
+          vec2 normSample = texture2D(tNormal, vUv - vec2(0.5) / terrainSize).ra;
           vec3 normal = vec3(normSample.x, normSample.y, 1.0 - dot(normSample, normSample));
           vec3 tangentU = vec3(1.0 - normal.x * normal.x, 0.0, -normal.x);
           vec3 tangentV = vec3(0.0, 1.0 - normal.y * normal.y, -normal.y);
@@ -209,7 +234,7 @@ class render_terrain.RenderTerrain
           //gl_FragColor.rgb = mix(gl_FragColor.rgb, tangentV, 1.0);
           gl_FragColor = mix(gl_FragColor, col, 0.0);
 
-          float epsilon = 0.5 / 512.0;
+          float epsilon = 0.5 / normalSize;
           vec3 normalDetail = normalize(vec3(
             diffSample.g - texture2D(tDiffuse, diffUv + vec2(epsilon, 0.0)).g,
             diffSample.g - texture2D(tDiffuse, diffUv + vec2(0.0, epsilon)).g,
@@ -300,18 +325,16 @@ class render_terrain.RenderTerrain
     geom.wireframe = false
     idx = geom.vertexIndexArray
     posn = geom.vertexPositionArray
-    uv = geom.vertexUvArray
     #morph = geom.addCustomAttrib 'morph'
     #  size: 4
     RING_WIDTH = 31
-    TERRAIN_SIZE = 512
     ringSegments = [
       [  1,  0,  0,  1 ],
       [  0, -1,  1,  0 ],
       [ -1,  0,  0, -1 ],
       [  0,  1, -1,  0 ]
     ]
-    scale = 1 / TERRAIN_SIZE
+    scale = 1 / 256
     for layer in [0...@numLayers]
       nextLayer = Math.min layer + 1, @numLayers - 1
       for segment, segNumber in ringSegments
@@ -330,7 +353,6 @@ class render_terrain.RenderTerrain
             segi = segment[0] * modeli + segment[1] * modelj
             segj = segment[2] * modeli + segment[3] * modelj
             posn.push segj * scale, segi * scale, layer
-            uv.push 0, 0
             m = [ 0, 0, 0, 0 ]
             #morph.push m[0], m[1], m[2], m[3]
             if i > 0 and j > 0
@@ -348,7 +370,6 @@ class render_terrain.RenderTerrain
             segi = segment[0] * modeli + segment[1] * modelj
             segj = segment[2] * modeli + segment[3] * modelj
             posn.push segj * scale, segi * scale, nextLayer
-            uv.push 0, 0
             #morph.push 0, 0, 0, 0
             if i > 0
               start0 = rowStart[i-2] + segWidth
@@ -367,7 +388,6 @@ class render_terrain.RenderTerrain
             segi = segment[0] * modeli + segment[1] * modelj
             segj = segment[2] * modeli + segment[3] * modelj
             posn.push segj * scale, segi * scale, nextLayer
-            uv.push 0, 0
             #morph.push 0, 0, 0, 0
             if j > 0 and j < segWidth  # WHY NEEDED?
               start0 = rowStart[segLength]     + j-2
@@ -394,27 +414,39 @@ class render_terrain.RenderTerrain
     @geom.render program, gl
     return
 
-  _createNormalMap: (tile) ->
+  _createMaps: (tile) ->
+    # We strip off the final row and column to make a POT map.
+    heightArray = new Float32Array(tile.size * tile.size)
     # Normal map has only 2 channels, X and Y.
     normArray = new Float32Array(tile.size * tile.size * 2)
     tmpVec3 = new THREE.Vector3()
     hmap = tile.heightMap
+    nmap = tile.normalMap
     tileSize = tile.size
     tileSizeP1 = tileSize + 1
     for y in [0...tile.size]
       for x in [0...tile.size]
-        tmpVec3.set(
-          hmap[y * tileSizeP1 + x] + hmap[(y+1) * tileSizeP1 + x] - hmap[y * tileSizeP1 + x+1] - hmap[(y+1) * tileSizeP1 + x+1],
-          hmap[y * tileSizeP1 + x] + hmap[y * tileSizeP1 + x+1] - hmap[(y+1) * tileSizeP1 + x] - hmap[(y+1) * tileSizeP1 + x+1],
-          tile.terrain.scaleHz * 2)
-        tmpVec3.normalize()
-        normArray[(y * tileSize + x) * 2 + 0] = tmpVec3.x
-        normArray[(y * tileSize + x) * 2 + 1] = tmpVec3.y
+        heightArray[y * tileSize + x] = hmap[y * tileSizeP1 + x]
+        normArray[(y * tileSize + x) * 2 + 0] = nmap[(y * tileSize + x) * 3 + 0]
+        normArray[(y * tileSize + x) * 2 + 1] = nmap[(y * tileSize + x) * 3 + 1]
+
+    heightTex = new THREE.DataTexture(
+        heightArray,
+        tile.size, tile.size,
+        THREE.LuminanceFormat, THREE.FloatType,
+        null,
+        THREE.RepeatWrapping, THREE.RepeatWrapping,
+        THREE.LinearFilter, THREE.LinearFilter)
+    heightTex.generateMipmaps = false
+    heightTex.needsUpdate = true
+
     normalTex = new THREE.DataTexture(
         normArray,
         tileSize, tileSize,
         THREE.LuminanceAlphaFormat, THREE.FloatType,
         null,
-        THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping)
+        THREE.RepeatWrapping, THREE.RepeatWrapping)
     normalTex.needsUpdate = true
-    return normalTex
+
+    height: heightTex
+    normal: normalTex

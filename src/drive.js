@@ -561,7 +561,7 @@ function animate(nowTime) {
   }
 
   renderTerrain.update(camera, delta);
-  renderScenery.update(camera, delta);
+  //renderScenery.update(camera, delta);
 
   sunLight.target.position.copy(car.root.position);
   sunLight.position.copy(car.root.position).addSelf(sunLightPos);

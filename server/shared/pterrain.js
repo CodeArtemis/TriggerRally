@@ -78,12 +78,10 @@ var MODULE = 'pterrain';
     var ix, iy, i = 0;
     for (iy = y; iy < y + cy; ++iy) {
       var wrapy = iy % srcy;
-      if (wrapy < 0) wrapy += srcy;
       var wrapy_srcx = wrapy * srcx;
       for (ix = x; ix < x + cx; ++ix) {
         var wrapx = ix % srcx;
-        if (wrapx < 0) wrapx += srcx;
-        buffer[++i] = data[(wrapx + wrapy_srcx) * 4] * scaleVt;
+        buffer[i++] = data[(wrapx + wrapy_srcx) * 4] * scaleVt;
       }
     }
     callback(buffer);
@@ -91,7 +89,7 @@ var MODULE = 'pterrain';
 
   // cx, cy = width and height of heightmap
   exports.Terrain = function(source) {
-    this.tileSize = 512;  // Hack alert.
+    this.tileSize = 8;  // Hack alert.
     this.scaleHz = 1;
     this.scaleVt = 1;
     this.tileTotalSize = this.tileSize * this.scaleHz;
@@ -137,7 +135,8 @@ var MODULE = 'pterrain';
     var sy = y / this.scaleHz;
     var tx = Math.floor(sx / this.tileSize);
     var ty = Math.floor(sy / this.tileSize);
-    var tile = this.getTile(tx, ty);
+    // HACK to repeat a single tile infinitely.
+    var tile = this.getTile(0, 0); //this.getTile(tx, ty);
     if (tile) {
       contact = tile.getContactRayZ(
           sx - tx * this.tileSize,
@@ -157,8 +156,27 @@ var MODULE = 'pterrain';
     var that = this;
     this.terrain = terrain;
     this.size = terrain.tileSize;
-    var sizeP1 = this.size + 1;
     this.heightMap = heightMap;
+    var tileSize = this.size;
+    var tileSizeP1 = tileSize + 1;
+
+    var normalMap = new Float32Array(tileSize * tileSize * 3);
+    var tmpVec3 = new THREE.Vector3();
+    for (var y = 0; y < tileSize; ++y) {
+      for (var x = 0; x < tileSize; ++x) {
+        tmpVec3.set(
+          heightMap[y * tileSizeP1 + x] + heightMap[(y+1) * tileSizeP1 + x]
+               - heightMap[y * tileSizeP1 + x+1] - heightMap[(y+1) * tileSizeP1 + x+1],
+          heightMap[y * tileSizeP1 + x] + heightMap[y * tileSizeP1 + x+1]
+               - heightMap[(y+1) * tileSizeP1 + x] - heightMap[(y+1) * tileSizeP1 + x+1],
+          terrain.scaleHz * 2);
+        tmpVec3.normalize();
+        normalMap[(y * tileSize + x) * 3 + 0] = tmpVec3.x;
+        normalMap[(y * tileSize + x) * 3 + 1] = tmpVec3.y;
+        normalMap[(y * tileSize + x) * 3 + 2] = tmpVec3.z;
+      }
+    }
+    this.normalMap = normalMap;
   };
 
   // lx, ly = local tile space coordinates
@@ -176,6 +194,7 @@ var MODULE = 'pterrain';
          |   \ |
         h00 - h10 -> x
     */
+    //var n00 = this.normalMap[
     var h00 = this.heightMap[(floorlx + 0) + (floorly + 0) * sizeP1];
     var h10 = this.heightMap[(floorlx + 1) + (floorly + 0) * sizeP1];
     var h01 = this.heightMap[(floorlx + 0) + (floorly + 1) * sizeP1];
