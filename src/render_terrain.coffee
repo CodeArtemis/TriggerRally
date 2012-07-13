@@ -130,6 +130,33 @@ class render_terrain.RenderTerrain
         }
         */
 
+        float catmullRom(float pm1, float p0, float p1, float p2, float x) {
+          float x2 = x * x;
+          return 0.5 * (
+            pm1 * x * ((2.0 - x) * x - 1.0) +
+            p0 * (x2 * (3.0 * x - 5.0) + 2.0) +
+            p1 * x * ((4.0 - 3.0 * x) * x + 1.0) +
+            p2 * (x - 1.0) * x2);
+        }
+        
+        float textureCubicU(sampler2D samp, vec2 uv00, float texel, float offsetV, float frac) {
+          return catmullRom(
+              texture2D(samp, uv00 + vec2(-texel, offsetV)).r,
+              texture2D(samp, uv00 + vec2(0.0, offsetV)).r,
+              texture2D(samp, uv00 + vec2(texel, offsetV)).r,
+              texture2D(samp, uv00 + vec2(texel * 2.0, offsetV)).r,
+              frac);
+        }
+
+        float textureBicubic(sampler2D samp, vec2 uv00, float texel, vec2 frac) {
+          return catmullRom(
+              textureCubicU(samp, uv00, texel, -texel, frac.x),
+              textureCubicU(samp, uv00, texel, 0.0, frac.x),
+              textureCubicU(samp, uv00, texel, texel, frac.x),
+              textureCubicU(samp, uv00, texel, texel * 2.0, frac.x),
+              frac.y);
+        }
+
         void main() {
           int layer = int(position.z);
           vec2 layerOffset = offsets[layer];
@@ -139,29 +166,9 @@ class render_terrain.RenderTerrain
           worldPosition = position * terrainSize * terrainScaleHz + vec3(layerOffset, 0.0);
           vUv = worldToTerrainSpace(worldPosition.xy);
           float texel = 1.0 / terrainSize;
-          float halfTexel = texel * 0.5;
           vec2 uv00 = (floor(vUv * terrainSize + 0.5) - 0.5) / terrainSize;
-          vec2 uv01 = uv00 + vec2(0.0, texel);
-          vec2 uv10 = uv00 + vec2(texel, 0.0);
-          vec2 uv11 = uv00 + vec2(texel, texel);
           vec2 frac = (vUv - uv00) * terrainSize;
-          vec2 normal00 = texture2D(tNormal, uv00 - halfTexel).ra;
-          vec2 normal01 = texture2D(tNormal, uv01 - halfTexel).ra;
-          vec2 normal10 = texture2D(tNormal, uv10 - halfTexel).ra;
-          vec2 normal11 = texture2D(tNormal, uv11 - halfTexel).ra;
-          float height00 = texture2D(tHeightMap, uv00).r
-              - dot(vec2(frac.x, frac.y), normal00) * terrainScaleHz;
-          float height01 = texture2D(tHeightMap, uv01).r
-              - dot(vec2(frac.x, frac.y-1.0), normal01) * terrainScaleHz;
-          float height10 = texture2D(tHeightMap, uv10).r
-              - dot(vec2(frac.x-1.0, frac.y), normal10) * terrainScaleHz;
-          float height11 = texture2D(tHeightMap, uv11).r
-              - dot(vec2(frac.x-1.0, frac.y-1.0), normal11) * terrainScaleHz;
-          frac = smoothstep(0.0, 1.0, frac);
-          float height = mix(
-            mix(height00, height01, frac.y),
-            mix(height10, height11, frac.y),
-            frac.x);
+          float height = textureBicubic(tHeightMap, uv00, texel, frac);
           //height = height11 - dot(frac, normal11) * terrainScaleHz;
           //height = texture2D(tHeightMap, vUv).r;
           //height = height00;
@@ -212,7 +219,7 @@ class render_terrain.RenderTerrain
           float height = worldPosition.z;
           vec2 diffUv = worldPosition.xy / 4.0;
           vec3 diffSample = texture2D(tDiffuse, diffUv).rgb;
-          vec2 normSample = texture2D(tNormal, vUv - vec2(0.5) / terrainSize).ra;
+          vec2 normSample = texture2D(tNormal, vUv).ra;
           vec3 normal = vec3(normSample.x, normSample.y, 1.0 - dot(normSample, normSample));
           vec3 tangentU = vec3(1.0 - normal.x * normal.x, 0.0, -normal.x);
           vec3 tangentV = vec3(0.0, 1.0 - normal.y * normal.y, -normal.y);

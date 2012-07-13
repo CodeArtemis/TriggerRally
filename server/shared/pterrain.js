@@ -16,6 +16,26 @@ var MODULE = 'pterrain';
     var Canvas = require('canvas');
   }
 
+  var catmullRom = function(pm1, p0, p1, p2, x) {
+    var x2 = x * x;
+    return 0.5 * (
+      pm1 * x * ((2 - x) * x - 1) +
+      p0 * (x2 * (3 * x - 5) + 2) +
+      p1 * x * ((4 - 3 * x) * x + 1) +
+      p2 * (x - 1) * x2
+    );
+  };
+
+  var catmullRomDeriv = function(pm1, p0, p1, p2, x) {
+    var x2 = x * x;
+    return 0.5 * (
+      pm1 * (4 * x - 3 * x2 - 1) +
+      p0 * (9 * x2 - 10 * x) +
+      p1 * (8 * x - 9 * x2 + 1) +
+      p2 * (3 * x2 - 2 * x)
+    );
+  };
+
   // TODO: Implement float buffer source.
   exports.ImageSource = function() {
     this.hmap = null;
@@ -185,8 +205,11 @@ var MODULE = 'pterrain';
     var floorly = Math.floor(ly);
     var fraclx = lx - floorlx;
     var fracly = ly - floorly;
+    var size = this.size;
     var sizeP1 = this.size + 1;
-    
+
+    function wrap(x, lim) { return x - Math.floor(x / lim) * lim; }
+
     /*   y
          ^
         h01 - h11
@@ -195,23 +218,36 @@ var MODULE = 'pterrain';
         h00 - h10 -> x
     */
     //var n00 = this.normalMap[
-    var h00 = this.heightMap[(floorlx + 0) + (floorly + 0) * sizeP1];
-    var h10 = this.heightMap[(floorlx + 1) + (floorly + 0) * sizeP1];
-    var h01 = this.heightMap[(floorlx + 0) + (floorly + 1) * sizeP1];
-    var h11 = this.heightMap[(floorlx + 1) + (floorly + 1) * sizeP1];
-
-    var normal = new Vec3();
-    var height;
-    normal.z = this.terrain.scaleHz;
-    if (fraclx + fracly < 1) {
-      normal.x = h00 - h10;
-      normal.y = h00 - h01;
-      height = h00 + (h10-h00) * fraclx + (h01-h00) * fracly;
-    } else {
-      normal.x = h01 - h11;
-      normal.y = h10 - h11;
-      height = h11 + (h01-h11) * (1-fraclx) + (h10-h11) * (1-fracly);
+    var h = [], i = 0, x, y;
+    for (y = -1; y <= 2; ++y) {
+      for (x = -1; x <= 2; ++x) {
+        h[i++] = this.heightMap[wrap(floorlx + x, size) + wrap(floorly + y, size) * sizeP1];
+      }
     }
+    var height = catmullRom(
+        catmullRom(h[ 0], h[ 1], h[ 2], h[ 3], fraclx),
+        catmullRom(h[ 4], h[ 5], h[ 6], h[ 7], fraclx),
+        catmullRom(h[ 8], h[ 9], h[10], h[11], fraclx),
+        catmullRom(h[12], h[13], h[14], h[15], fraclx),
+        fracly);
+
+    var derivX = catmullRomDeriv(
+        catmullRom(h[ 0], h[ 4], h[ 8], h[12], fracly),
+        catmullRom(h[ 1], h[ 5], h[ 9], h[13], fracly),
+        catmullRom(h[ 2], h[ 6], h[10], h[14], fracly),
+        catmullRom(h[ 3], h[ 7], h[11], h[15], fracly),
+        fraclx);
+    var derivY = catmullRomDeriv(
+        catmullRom(h[ 0], h[ 1], h[ 2], h[ 3], fraclx),
+        catmullRom(h[ 4], h[ 5], h[ 6], h[ 7], fraclx),
+        catmullRom(h[ 8], h[ 9], h[10], h[11], fraclx),
+        catmullRom(h[12], h[13], h[14], h[15], fraclx),
+        fracly);
+
+    var normal = new Vec3(
+        -derivX,
+        -derivY,
+        this.terrain.scaleHz);
     return {
       normal: normal.normalize(),
       surfacePos: new Vec3(0, 0, height)
