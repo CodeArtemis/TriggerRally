@@ -36,6 +36,8 @@ var MODULE = 'pterrain';
     );
   };
 
+  function wrap(x, lim) { return x - Math.floor(x / lim) * lim; }
+
   // TODO: Implement float buffer source.
   exports.ImageSource = function() {
     this.hmap = null;
@@ -109,7 +111,7 @@ var MODULE = 'pterrain';
 
   // cx, cy = width and height of heightmap
   exports.Terrain = function(source) {
-    this.tileSize = 8;  // Hack alert.
+    this.tileSize = 256;  // Hack alert.
     this.scaleHz = 1;
     this.scaleVt = 1;
     this.tileTotalSize = this.tileSize * this.scaleHz;
@@ -184,13 +186,25 @@ var MODULE = 'pterrain';
     var tmpVec3 = new THREE.Vector3();
     for (var y = 0; y < tileSize; ++y) {
       for (var x = 0; x < tileSize; ++x) {
-        tmpVec3.set(
-          heightMap[y * tileSizeP1 + x] + heightMap[(y+1) * tileSizeP1 + x]
-               - heightMap[y * tileSizeP1 + x+1] - heightMap[(y+1) * tileSizeP1 + x+1],
-          heightMap[y * tileSizeP1 + x] + heightMap[y * tileSizeP1 + x+1]
-               - heightMap[(y+1) * tileSizeP1 + x] - heightMap[(y+1) * tileSizeP1 + x+1],
-          terrain.scaleHz * 2);
-        tmpVec3.normalize();
+        var h = [], i = 0, x2, y2;
+        for (y2 = -1; y2 <= 2; ++y2) {
+          for (x2 = -1; x2 <= 2; ++x2) {
+            h[i++] = heightMap[wrap(x + x2, tileSize) + wrap(y + y2, tileSize) * tileSizeP1];
+          }
+        }
+        var derivX = catmullRomDeriv(
+            catmullRom(h[ 0], h[ 4], h[ 8], h[12], 0.5),
+            catmullRom(h[ 1], h[ 5], h[ 9], h[13], 0.5),
+            catmullRom(h[ 2], h[ 6], h[10], h[14], 0.5),
+            catmullRom(h[ 3], h[ 7], h[11], h[15], 0.5),
+            0.5);
+        var derivY = catmullRomDeriv(
+            catmullRom(h[ 0], h[ 1], h[ 2], h[ 3], 0.5),
+            catmullRom(h[ 4], h[ 5], h[ 6], h[ 7], 0.5),
+            catmullRom(h[ 8], h[ 9], h[10], h[11], 0.5),
+            catmullRom(h[12], h[13], h[14], h[15], 0.5),
+            0.5);
+        tmpVec3.set(-derivX, -derivY, terrain.scaleHz).normalize();
         normalMap[(y * tileSize + x) * 3 + 0] = tmpVec3.x;
         normalMap[(y * tileSize + x) * 3 + 1] = tmpVec3.y;
         normalMap[(y * tileSize + x) * 3 + 2] = tmpVec3.z;
@@ -208,16 +222,7 @@ var MODULE = 'pterrain';
     var size = this.size;
     var sizeP1 = this.size + 1;
 
-    function wrap(x, lim) { return x - Math.floor(x / lim) * lim; }
-
-    /*   y
-         ^
-        h01 - h11
-         | \   |
-         |   \ |
-        h00 - h10 -> x
-    */
-    //var n00 = this.normalMap[
+    // This assumes that the tile repeats in all directions.
     var h = [], i = 0, x, y;
     for (y = -1; y <= 2; ++y) {
       for (x = -1; x <= 2; ++x) {
@@ -231,6 +236,7 @@ var MODULE = 'pterrain';
         catmullRom(h[12], h[13], h[14], h[15], fraclx),
         fracly);
 
+    // TODO: Optimize this!
     var derivX = catmullRomDeriv(
         catmullRom(h[ 0], h[ 4], h[ 8], h[12], fracly),
         catmullRom(h[ 1], h[ 5], h[ 9], h[13], fracly),

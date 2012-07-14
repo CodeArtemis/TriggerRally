@@ -9,7 +9,7 @@ class render_terrain.RenderTerrain
     # We currently grab the terrain source directly. This is not very kosher.
     @geom = null
     #console.assert @gl.getExtension('OES_standard_derivatives')
-    @numLayers = 5
+    @numLayers = 7
     @totalTime = 0
     return
 
@@ -21,11 +21,11 @@ class render_terrain.RenderTerrain
     offsets = @material.uniforms['offsets'].value
     scales = @material.uniforms['scales'].value
     morphFactors = @material.uniforms['morphFactors'].value
-    scale = @terrain.scaleHz * 2 * 8 / 256
+    scale = @terrain.scaleHz / 64
     for layer in [0...@numLayers]
       offset = offsets[layer] ?= new THREE.Vector2()
-      offset.x = (Math.floor(camera.position.x / scale) + 0.5) * scale
-      offset.y = (Math.floor(camera.position.y / scale) + 0.5) * scale
+      offset.x = (Math.floor(camera.position.x / scale / 2) + 0.5) * scale * 2
+      offset.y = (Math.floor(camera.position.y / scale / 2) + 0.5) * scale * 2
       #factor = Math.pow(Math.sin(@totalTime * 10) * 0.5 + 0.5, 4.0)
       #offset.x += (camera.position.x - offset.x) * factor
       #offset.y += (camera.position.y - offset.y) * factor
@@ -92,6 +92,7 @@ class render_terrain.RenderTerrain
         """
         uniform sampler2D tHeightMap;
         uniform sampler2D tNormal;
+        uniform sampler2D tDiffuse;
         uniform vec2 offsets[NUM_LAYERS];
         uniform float scales[NUM_LAYERS];
         uniform vec4 morphFactors[NUM_LAYERS];
@@ -163,7 +164,7 @@ class render_terrain.RenderTerrain
           float layerScale = scales[layer];
           vec4 morphFactor = morphFactors[layer];
 
-          worldPosition = position * terrainSize * terrainScaleHz + vec3(layerOffset, 0.0);
+          worldPosition = position * layerScale + vec3(layerOffset, 0.0);
           vUv = worldToTerrainSpace(worldPosition.xy);
           float texel = 1.0 / terrainSize;
           vec2 uv00 = (floor(vUv * terrainSize + 0.5) - 0.5) / terrainSize;
@@ -175,6 +176,11 @@ class render_terrain.RenderTerrain
           worldPosition.z = height;
           //vec2 normSample = texture2D(tNormal, vUv).ra;
           //worldPosition.z = normSample.r * 10.0;
+
+          //float detailHeightAmount = smoothstep(0.7, 0.8, normal.z);
+          vec2 detailHeightUv = worldPosition.xy / 256.0;
+          float detailHeightSample = texture2D(tDiffuse, detailHeightUv).g;
+          worldPosition.z += ((detailHeightSample - 0.5) * 8.0);// * detailHeightAmount;
 
           /*
           if (morph.x > 0.0) {
@@ -208,7 +214,7 @@ class render_terrain.RenderTerrain
         uniform sampler2D tDiffuse;
         uniform sampler2D tNormal;
         uniform float terrainSize;
-        const float normalSize = 512.0;
+        const float diffuseSize = 512.0;
 
         varying vec2 vUv;
         varying vec4 eyePosition;
@@ -219,11 +225,28 @@ class render_terrain.RenderTerrain
           float height = worldPosition.z;
           vec2 diffUv = worldPosition.xy / 4.0;
           vec3 diffSample = texture2D(tDiffuse, diffUv).rgb;
-          vec2 normSample = texture2D(tNormal, vUv).ra;
+          //vec3 diffSample = vec3(0.8,0.2,0.2);
+          vec3 rockDiffSample = texture2D(tDiffuse, diffUv / 16.0).rgb;
+          //vec3 rockDiffSample = vec3(0.2,0.2,0.8);
+          vec2 normSample = texture2D(tNormal, vUv - 0.5 / terrainSize).ra;
           vec3 normal = vec3(normSample.x, normSample.y, 1.0 - dot(normSample, normSample));
           vec3 tangentU = vec3(1.0 - normal.x * normal.x, 0.0, -normal.x);
           vec3 tangentV = vec3(0.0, 1.0 - normal.y * normal.y, -normal.y);
           float depth = length(eyePosition.xyz);
+
+          vec2 detailHeightUv = worldPosition.xy / 256.0;
+          float detailHeightSample = texture2D(tDiffuse, detailHeightUv).g;
+
+          float detailHeightAmount = 1.0;//smoothstep(-0.8, -0.7, -normal.z);
+          float epsilon = 1.0 / diffuseSize;
+          vec3 normalDetail = normalize(vec3(
+              detailHeightAmount * (detailHeightSample - vec2(
+                  texture2D(tDiffuse, detailHeightUv + vec2(epsilon, 0.0)).g,
+                  texture2D(tDiffuse, detailHeightUv + vec2(0.0, epsilon)).g)),
+              1.0 / 16.0));
+          normal = normalDetail.x * tangentU +
+                   normalDetail.y * tangentV +
+                   normalDetail.z * normal;
 
           gl_FragColor = vec4(diffSample, 1.0);
 
@@ -236,19 +259,11 @@ class render_terrain.RenderTerrain
           //veggieMix *= veggieMix;
           vec3 veggieColor = mix(veggieColor1, veggieColor2, veggieMix);
           gl_FragColor.rgb = mix(gl_FragColor.rgb, veggieColor, veggieFactor);
-          gl_FragColor.rgb = mix(vec3(0.4), gl_FragColor.rgb, smoothstep(0.77, 0.78, normal.z));
+          float rockMix = smoothstep(1.27, 1.28, normal.z + noiseSample);
+          gl_FragColor.rgb = mix(rockDiffSample, gl_FragColor.rgb, rockMix);
 
           //gl_FragColor.rgb = mix(gl_FragColor.rgb, tangentV, 1.0);
           gl_FragColor = mix(gl_FragColor, col, 0.0);
-
-          float epsilon = 0.5 / normalSize;
-          vec3 normalDetail = normalize(vec3(
-            diffSample.g - texture2D(tDiffuse, diffUv + vec2(epsilon, 0.0)).g,
-            diffSample.g - texture2D(tDiffuse, diffUv + vec2(0.0, epsilon)).g,
-            0.25));
-          normal = normalDetail.x * tangentU +
-                   normalDetail.y * tangentV +
-                   normalDetail.z * normal;
 
 
           """ +
@@ -341,7 +356,7 @@ class render_terrain.RenderTerrain
       [ -1,  0,  0, -1 ],
       [  0,  1, -1,  0 ]
     ]
-    scale = 1 / 256
+    scale = 1
     for layer in [0...@numLayers]
       nextLayer = Math.min layer + 1, @numLayers - 1
       for segment, segNumber in ringSegments
@@ -359,7 +374,7 @@ class render_terrain.RenderTerrain
             modelj = segStart + j
             segi = segment[0] * modeli + segment[1] * modelj
             segj = segment[2] * modeli + segment[3] * modelj
-            posn.push segj * scale, segi * scale, layer
+            posn.push segj, segi, layer
             m = [ 0, 0, 0, 0 ]
             #morph.push m[0], m[1], m[2], m[3]
             if i > 0 and j > 0
@@ -376,7 +391,7 @@ class render_terrain.RenderTerrain
             modelj = RING_WIDTH * 2 + 2
             segi = segment[0] * modeli + segment[1] * modelj
             segj = segment[2] * modeli + segment[3] * modelj
-            posn.push segj * scale, segi * scale, nextLayer
+            posn.push segj / 2, segi / 2, nextLayer
             #morph.push 0, 0, 0, 0
             if i > 0
               start0 = rowStart[i-2] + segWidth
@@ -394,7 +409,7 @@ class render_terrain.RenderTerrain
             modelj = segStart + j
             segi = segment[0] * modeli + segment[1] * modelj
             segj = segment[2] * modeli + segment[3] * modelj
-            posn.push segj * scale, segi * scale, nextLayer
+            posn.push segj / 2, segi / 2, nextLayer
             #morph.push 0, 0, 0, 0
             if j > 0 and j < segWidth  # WHY NEEDED?
               start0 = rowStart[segLength]     + j-2

@@ -90,7 +90,7 @@ function init() {
 
   // LIGHTS
 
-  scene.fog = new THREE.FogExp2(0xdddddd, 0.003);
+  scene.fog = new THREE.FogExp2(0xdddddd, 0.001);
 
   var ambient = new THREE.AmbientLight( 0x446680 );
   scene.add(ambient);
@@ -514,8 +514,8 @@ function animate(nowTime) {
     var targetPos = car.root.position.clone();
     targetPos.addSelf(linVel.clone().multiplyScalar(.17));
     targetPos.addSelf(car.root.matrix.getColumnX().clone().multiplyScalar(0));
-    targetPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(11.2));
-    targetPos.addSelf(car.root.matrix.getColumnZ().clone().multiplyScalar(-22.9));
+    targetPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(2.2));
+    targetPos.addSelf(car.root.matrix.getColumnZ().clone().multiplyScalar(-4.9));
     var camDelta = delta * 5;
     camera.position.x = PULLTOWARD(camera.position.x, targetPos.x, camDelta);
     camera.position.y = PULLTOWARD(camera.position.y, targetPos.y, camDelta);
@@ -561,7 +561,12 @@ function animate(nowTime) {
   }
 
   renderTerrain.update(camera, delta);
-  //renderScenery.update(camera, delta);
+  renderScenery.update(camera, delta);
+
+  /*sunLightPos.set(
+    Math.sin(nowTime * 0.001) * 10,
+    Math.sin(nowTime * 0.00131) * 10,
+    10);*/
 
   sunLight.target.position.copy(car.root.position);
   sunLight.position.copy(car.root.position).addSelf(sunLightPos);
