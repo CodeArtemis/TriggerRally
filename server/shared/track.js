@@ -21,14 +21,21 @@ var MODULE = 'track';
     this.setup();
 
     if (config.terrain) {
-      var source = new pterrain.ImageSource(config.terrain.heightmap);
-      source.load(config.terrain.heightmap);
+      var source = new pterrain.ImageSource(config.terrain.horizontalscale,
+                                            config.terrain.verticalscale);
       var terrain = new pterrain.Terrain(source);
-      terrain.scaleHz = config.terrain.horizontalscale;
-      terrain.scaleVt = config.terrain.verticalscale;
       this.terrain = terrain;
 
-      terrain.loadTile(0, 0, function() {
+      var heightUrl, detailUrl;
+      if (config.terrain.height) {
+        heightUrl = config.terrain.height.url;
+        detailUrl = config.terrain.detail && config.terrain.detail.url;
+      } else {
+        // Fallback for older configs.
+        heightUrl = config.terrain.heightmap;
+      }
+
+      source.load(heightUrl, detailUrl, function() {
         var course = config.course;
         var cpts = course.checkpoints;
         // TODO: Move this change to config.

@@ -21,14 +21,12 @@ class render_terrain.RenderTerrain
     offsets = @material.uniforms['offsets'].value
     scales = @material.uniforms['scales'].value
     morphFactors = @material.uniforms['morphFactors'].value
-    scale = @terrain.scaleHz / 64 * 4
+    scale = @terrain.source.scaleHz / 64 * 4
     for layer in [0...@numLayers]
       offset = offsets[layer] ?= new THREE.Vector2()
-      offset.x = (Math.floor(camera.position.x / scale / 2) + 0.5) * scale * 2
-      offset.y = (Math.floor(camera.position.y / scale / 2) + 0.5) * scale * 2
-      #factor = Math.pow(Math.sin(@totalTime * 10) * 0.5 + 0.5, 4.0)
-      #offset.x += (camera.position.x - offset.x) * factor
-      #offset.y += (camera.position.y - offset.y) * factor
+      doubleScale = scale * 2
+      offset.x = (Math.floor(camera.position.x / doubleScale) + 0.5) * doubleScale
+      offset.y = (Math.floor(camera.position.y / doubleScale) + 0.5) * doubleScale
       scales[layer] = scale
       morphFactor = morphFactors[layer] ?= new THREE.Vector4()
       morphFactor.x = Math.max 0, (offset.x - camera.position.x) / scale
@@ -36,8 +34,7 @@ class render_terrain.RenderTerrain
     return
 
   _setup: ->
-    tile = @terrain.getTile 0, 0
-    maps = @_createMaps tile
+    maps = @_createMaps @terrain
     diffuseTex = THREE.ImageUtils.loadTexture('/a/textures/mayang-earth2.jpg')
     diffuseTex.wrapS = THREE.RepeatWrapping
     diffuseTex.wrapT = THREE.RepeatWrapping
@@ -76,10 +73,10 @@ class render_terrain.RenderTerrain
           value: []
         terrainScaleHz:
           type: 'f'
-          value: @terrain.scaleHz
+          value: @terrain.source.scaleHz
         terrainSize:
           type: 'f'
-          value: @terrain.tileSize
+          value: @terrain.source.cx  # TODO: Support non-square terrains.
       )
 
       attributes:
@@ -104,7 +101,6 @@ class render_terrain.RenderTerrain
         varying vec2 vUv;  // TODO: Remove this.
         varying vec4 eyePosition;
         varying vec3 worldPosition;
-        varying vec4 col;
         
         /*
         const mat4 MORPH_CODING_MATRIX = mat4(
@@ -172,30 +168,15 @@ class render_terrain.RenderTerrain
           float height = textureBicubic(tHeightMap, uv00, texel, frac);
           //height = height11 - dot(frac, normal11) * terrainScaleHz;
           //height = texture2D(tHeightMap, vUv).r;
-          //height = height00;
           worldPosition.z = height;
-          //vec2 normSample = texture2D(tNormal, vUv).ra;
-          //worldPosition.z = normSample.r * 10.0;
 
           float detailHeightAmount = 1.0;//smoothstep(0.7, 0.8, normal.z);
           vec2 detailHeightUv = worldPosition.xy / 512.0;
           float detailHeightSample = texture2D(tDiffuse, detailHeightUv).g;
           worldPosition.z += ((detailHeightSample - 0.5) * 8.0) * detailHeightAmount;
 
-          /*
-          if (morph.x > 0.0) {
-            vec3 morphDirection = vec3(MORPH_X * decodeMorph(morph.x), 0.0) * layerScale;
-            vec3 morphPosition = worldPosition + morphDirection;
-            vec2 morphUv = worldToTerrainSpace(morphPosition.xy);
-            morphDirection.z = texture2D(tHeightMap, morphUv).r - worldPosition.z;
-            worldPosition += morphDirection * morphFactor.x;
-          }
-          */
-
           eyePosition = modelViewMatrix * vec4(worldPosition, 1.0);
           gl_Position = projectionMatrix * eyePosition;
-          col = vec4(1,0,0,1);
-          //col.rgb = morphDecoded;
           
           #ifdef USE_SHADOWMAP
           for( int i = 0; i < MAX_SHADOWS; i ++ ) {
@@ -219,7 +200,6 @@ class render_terrain.RenderTerrain
         varying vec2 vUv;
         varying vec4 eyePosition;
         varying vec3 worldPosition;
-        varying vec4 col;
 
         void main() {
           float height = worldPosition.z;
@@ -261,9 +241,6 @@ class render_terrain.RenderTerrain
           gl_FragColor.rgb = mix(gl_FragColor.rgb, veggieColor, veggieFactor);
           float rockMix = smoothstep(1.27, 1.28, normal.z + noiseSample);
           gl_FragColor.rgb = mix(rockDiffSample, gl_FragColor.rgb, rockMix);
-
-          //gl_FragColor.rgb = mix(gl_FragColor.rgb, tangentV, 1.0);
-          gl_FragColor = mix(gl_FragColor, col, 0.0);
 
 
           """ +
@@ -436,25 +413,23 @@ class render_terrain.RenderTerrain
     @geom.render program, gl
     return
 
-  _createMaps: (tile) ->
-    # We strip off the final row and column to make a POT map.
-    heightArray = new Float32Array(tile.size * tile.size)
+  _createMaps: (terrain) ->
+    source = terrain.source
+    cx = source.cx
+    cy = source.cy
     # Normal map has only 2 channels, X and Y.
-    normArray = new Float32Array(tile.size * tile.size * 2)
+    normArray = new Float32Array(cx * cy * 2)
     tmpVec3 = new THREE.Vector3()
-    hmap = tile.heightMap
-    nmap = tile.normalMap
-    tileSize = tile.size
-    tileSizeP1 = tileSize + 1
-    for y in [0...tile.size]
-      for x in [0...tile.size]
-        heightArray[y * tileSize + x] = hmap[y * tileSizeP1 + x]
-        normArray[(y * tileSize + x) * 2 + 0] = nmap[(y * tileSize + x) * 3 + 0]
-        normArray[(y * tileSize + x) * 2 + 1] = nmap[(y * tileSize + x) * 3 + 1]
+    hmap = source.heightMap
+    nmap = source.normalMap
+    for y in [0...cy]
+      for x in [0...cx]
+        normArray[(y * cx + x) * 2 + 0] = nmap[(y * cx + x) * 3 + 0]
+        normArray[(y * cx + x) * 2 + 1] = nmap[(y * cx + x) * 3 + 1]
 
     heightTex = new THREE.DataTexture(
-        heightArray,
-        tile.size, tile.size,
+        hmap,
+        cx, cy,
         THREE.LuminanceFormat, THREE.FloatType,
         null,
         THREE.RepeatWrapping, THREE.RepeatWrapping,
@@ -464,10 +439,11 @@ class render_terrain.RenderTerrain
 
     normalTex = new THREE.DataTexture(
         normArray,
-        tileSize, tileSize,
+        cx, cy,
         THREE.LuminanceAlphaFormat, THREE.FloatType,
         null,
         THREE.RepeatWrapping, THREE.RepeatWrapping)
+    normalTex.generateMipmaps = true
     normalTex.needsUpdate = true
 
     height: heightTex
