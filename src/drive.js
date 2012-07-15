@@ -90,7 +90,7 @@ function init() {
 
   // LIGHTS
 
-  scene.fog = new THREE.FogExp2(0xdddddd, 0.001);
+  scene.fog = new THREE.FogExp2(0xdddddd, 0.0001);
 
   var ambient = new THREE.AmbientLight( 0x446680 );
   scene.add(ambient);
@@ -307,12 +307,43 @@ function init() {
 };
 
 function drawCube() {
-  var cubeShader = THREE.ShaderUtils.lib['cube'];
-  cubeShader.uniforms['tCube'].texture = textureCube;
-  var cubeMaterial = new THREE.ShaderMaterial({  
-    fragmentShader: cubeShader.fragmentShader,
-    vertexShader: cubeShader.vertexShader,
-    uniforms: cubeShader.uniforms
+  var cubeMaterial = new THREE.ShaderMaterial({
+    fog: true,
+    uniforms:
+      _.extend(
+        THREE.UniformsUtils.merge([
+          THREE.UniformsLib['fog']
+        ]),
+        {
+          tFlip: {
+            type: 'f',
+            value: -1
+          },
+          tCube: {
+            type: 't',
+            value: 0,
+            texture: textureCube
+          }
+        }),
+    vertexShader: [
+      "varying vec3 vViewPosition;",
+      "void main() {",
+      "  vec4 mPosition = objectMatrix * vec4( position, 1.0 );",
+      "  vViewPosition = cameraPosition - mPosition.xyz;",
+      "  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+      "}"
+     ].join('\n'),
+    fragmentShader: [
+      THREE.ShaderChunk.fog_pars_fragment,
+      "uniform samplerCube tCube;",
+      "uniform float tFlip;",
+      "varying vec3 vViewPosition;",
+      "void main() {",
+      "  vec3 wPos = normalize(cameraPosition - vViewPosition);",
+      "  gl_FragColor = textureCube( tCube, vec3( tFlip * wPos.x, wPos.yz ) );",
+      "  gl_FragColor.rgb = mix(fogColor, gl_FragColor.rgb, smoothstep(0.05, 0.3, wPos.z));",
+      "}"
+    ].join('\n')
   });
   //cubeMaterial.transparent = 1; // Force draw at end.
   var cubeMesh = new THREE.Mesh(

@@ -9,7 +9,7 @@ class render_terrain.RenderTerrain
     # We currently grab the terrain source directly. This is not very kosher.
     @geom = null
     #console.assert @gl.getExtension('OES_standard_derivatives')
-    @numLayers = 7
+    @numLayers = 9
     @totalTime = 0
     return
 
@@ -21,7 +21,7 @@ class render_terrain.RenderTerrain
     offsets = @material.uniforms['offsets'].value
     scales = @material.uniforms['scales'].value
     morphFactors = @material.uniforms['morphFactors'].value
-    scale = @terrain.scaleHz / 64
+    scale = @terrain.scaleHz / 64 * 4
     for layer in [0...@numLayers]
       offset = offsets[layer] ?= new THREE.Vector2()
       offset.x = (Math.floor(camera.position.x / scale / 2) + 0.5) * scale * 2
@@ -177,10 +177,10 @@ class render_terrain.RenderTerrain
           //vec2 normSample = texture2D(tNormal, vUv).ra;
           //worldPosition.z = normSample.r * 10.0;
 
-          //float detailHeightAmount = smoothstep(0.7, 0.8, normal.z);
-          vec2 detailHeightUv = worldPosition.xy / 256.0;
+          float detailHeightAmount = 1.0;//smoothstep(0.7, 0.8, normal.z);
+          vec2 detailHeightUv = worldPosition.xy / 512.0;
           float detailHeightSample = texture2D(tDiffuse, detailHeightUv).g;
-          worldPosition.z += ((detailHeightSample - 0.5) * 8.0);// * detailHeightAmount;
+          worldPosition.z += ((detailHeightSample - 0.5) * 8.0) * detailHeightAmount;
 
           /*
           if (morph.x > 0.0) {
@@ -234,7 +234,7 @@ class render_terrain.RenderTerrain
           vec3 tangentV = vec3(0.0, 1.0 - normal.y * normal.y, -normal.y);
           float depth = length(eyePosition.xyz);
 
-          vec2 detailHeightUv = worldPosition.xy / 256.0;
+          vec2 detailHeightUv = worldPosition.xy / 512.0;
           float detailHeightSample = texture2D(tDiffuse, detailHeightUv).g;
 
           float detailHeightAmount = 1.0;//smoothstep(-0.8, -0.7, -normal.z);
