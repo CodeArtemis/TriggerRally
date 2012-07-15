@@ -136,6 +136,8 @@ var MODULE = 'pterrain';
     this.tileTotalSize = this.tileSize * this.scaleHz;
     this.tiles = {};
     this.source = source;
+    // We actually just use a single tile for now.
+    this.theTile = new exports.TerrainTile(this, tx, ty);
   };
 
   // Get tile iff loaded.
