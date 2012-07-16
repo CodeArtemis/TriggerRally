@@ -21,21 +21,26 @@ var MODULE = 'track';
     this.setup();
 
     if (config.terrain) {
-      var source = new pterrain.ImageSource(config.terrain.horizontalscale,
-                                            config.terrain.verticalscale);
+      var terrainConfig = config.terrain;
+      if (!config.terrain) {
+        // Fallback for older configs.
+        terrainConfig = {
+          height: {
+            url: config.terrain.heightmap,
+            scale: [
+              config.terrain.horizontalscale,
+              config.terrain.horizontalscale,
+              config.terrain.verticalscale
+            ]
+          }
+        };
+      }
+
+      var source = new pterrain.ImageSource();
       var terrain = new pterrain.Terrain(source);
       this.terrain = terrain;
 
-      var heightUrl, detailUrl;
-      if (config.terrain.height) {
-        heightUrl = config.terrain.height.url;
-        detailUrl = config.terrain.detail && config.terrain.detail.url;
-      } else {
-        // Fallback for older configs.
-        heightUrl = config.terrain.heightmap;
-      }
-
-      source.load(heightUrl, detailUrl, function() {
+      source.load(terrainConfig, function() {
         var course = config.course;
         var cpts = course.checkpoints;
         // TODO: Move this change to config.

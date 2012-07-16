@@ -39,20 +39,18 @@ var MODULE = 'pterrain';
   function wrap(x, lim) { return x - Math.floor(x / lim) * lim; }
 
   // TODO: Implement float buffer source.
-  exports.ImageSource = function(scaleHz, scaleVt) {
+  exports.ImageSource = function() {
     this.maps = {};
-    this.onload = [];
-    this.scaleHz = scaleHz;
-    this.scaleVt = scaleVt;
   };
 
-  exports.ImageSource.prototype.load = function(heightUrl, detailUrl, callback) {
+  exports.ImageSource.prototype.load = function(config, callback) {
+    this.config = config;
     var load;
     if (inNode) {
       // TODO: Move this into a separate module that never gets delivered
       // to browser clients.
       // We know that the URL refers to a local file, so just read it.
-      load = function(url, type, cb) {
+      load = function(url, map, cb) {
         if (!url) { cb(); return; }
         var path = __dirname + '/../public' + url;
         require('fs').readFile(path, function(err, data) {
@@ -60,28 +58,32 @@ var MODULE = 'pterrain';
           else {
             var img = new Canvas.Image();
             img.src = data;
-            this.loadWithImage(img, type, cb);
+            this.loadMapImage(img, map, cb);
           }
         }.bind(this));
       }
     } else {
-      load = function(url, type, cb) {
+      load = function(url, map, cb) {
         if (!url) { cb(); return; }
         var image = new Image();
-        image.onload = this.loadWithImage.bind(this, image, type, cb);
+        image.onload = this.loadMapImage.bind(this, image, map, cb);
         image.src = url;
       }
     }
-    async.parallel([
-        load.bind(this, heightUrl, 'height'),
-        load.bind(this, detailUrl, 'detail')
-      ],
+    var requests = [];
+    for (var k in config) {
+      var map = this.maps[k] = {
+        scale: new Vec3(config[k].scale[0], config[k].scale[1], config[k].scale[2])
+      };
+      requests.push(load.bind(this, config[k].url, map));
+    }
+    async.parallel(requests,
       function(err, results) {
-        this.generateHeightMap();
-        for (var i in this.onload) {
-          this.onload[i]();
+        this.generateHeightMap(this.maps.height);
+        this.generateNormalMap(this.maps.height);
+        if (this.maps.detail) {
+          this.generateHeightMap(this.maps.detail);
         }
-        this.onload = null;
         callback(this);
       }.bind(this)
     );
@@ -103,44 +105,32 @@ var MODULE = 'pterrain';
     return ctx.getImageData(0, 0, cx, cy);
   }
 
-  exports.ImageSource.prototype.loadWithImage = function(image, type, callback) {
-    this.maps[type] = getImageData(image);
-    //this.cx = imageData.width;
-    //this.cy = imageData.height;
-    //this.hmap = imageData.data;
-    callback && callback();
+  exports.ImageSource.prototype.loadMapImage = function(image, map, callback) {
+    var imageData = getImageData(image);
+    map.cx = imageData.width;
+    map.cy = imageData.height;
+    map.data = imageData.data;
+    callback();
   };
 
-  exports.ImageSource.prototype.callbackOnLoad = function(callback) {
-    if (this.onload) {
-      this.onload.push(callback);
-    } else {
-      callback();
-    }
-  };
-
-  exports.ImageSource.prototype.generateHeightMap = function() {
-    var cx = this.maps['height'].width;
-    var cy = this.maps['height'].height;
-    var data = this.maps['height'].data;
+  exports.ImageSource.prototype.generateHeightMap = function(map) {
+    var cx = map.cx, cy = map.cy;
+    var data = map.data;
     var buffer = new Float32Array(cx * cy);
-    var scaleVt = this.scaleVt;
     var pixels = cx * cy;
     for (i = 0; i < pixels; ++i) {
-      buffer[i] = data[i * 4] * scaleVt;
+      buffer[i] = data[i * 4];
     }
-    this.heightMap = buffer;
-    this.cx = cx;
-    this.cy = cy;
-    
-    this.generateNormalMap();
+    map.displacement = buffer;
+    // We don't need the original data anymore.
+    map.data = null;
   };
 
-  exports.ImageSource.prototype.generateNormalMap = function() {
-    var cx = this.cx, cy = this.cy;
+  exports.ImageSource.prototype.generateNormalMap = function(map) {
+    var cx = map.cx, cy = map.cy;
     var normalMap = new Float32Array(cx * cy * 3);
     var tmpVec3 = new THREE.Vector3();
-    var hmap = this.heightMap;
+    var hmap = map.displacement;
     for (var y = 0; y < cy; ++y) {
       for (var x = 0; x < cx; ++x) {
         var h = [], i = 0, x2, y2;
@@ -162,13 +152,13 @@ var MODULE = 'pterrain';
             catmullRom(h[ 8], h[ 9], h[10], h[11], 0.5),
             catmullRom(h[12], h[13], h[14], h[15], 0.5),
             0.5);
-        tmpVec3.set(-derivX, -derivY, this.scaleHz).normalize();
+        tmpVec3.set(-derivX, -derivY, 1).normalize();
         normalMap[(y * cx + x) * 3 + 0] = tmpVec3.x;
         normalMap[(y * cx + x) * 3 + 1] = tmpVec3.y;
         normalMap[(y * cx + x) * 3 + 2] = tmpVec3.z;
       }
     }
-    this.normalMap = normalMap;
+    map.normal = normalMap;
   };
 
   // cx, cy = width and height of heightmap
@@ -185,16 +175,17 @@ var MODULE = 'pterrain';
   // x, y = terrain space coordinates
   exports.Terrain.prototype.getContactRayZ = function(x, y) {
     var contact = null;
-    var sx = x / this.source.scaleHz;
-    var sy = y / this.source.scaleHz;
-    var tx = Math.floor(sx / this.source.cx);
-    var ty = Math.floor(sy / this.source.cy);
+    var mapHeight = this.source.maps.height;
+    var sx = x / mapHeight.scale.x;
+    var sy = y / mapHeight.scale.y;
+    var tx = Math.floor(sx / mapHeight.cx);
+    var ty = Math.floor(sy / mapHeight.cy);
     // HACK to repeat a single tile infinitely.
     var tile = this.theTile; //this.getTile(tx, ty);
     if (tile) {
       contact = tile.getContactRayZ(
-          sx - tx * this.source.cx,
-          sy - ty * this.source.cy);
+          sx - tx * mapHeight.cx,
+          sy - ty * mapHeight.cy);
       if (contact) {
         contact.surfacePos.x = x;
         contact.surfacePos.y = y;
@@ -215,8 +206,10 @@ var MODULE = 'pterrain';
     var floorly = Math.floor(ly);
     var fraclx = lx - floorlx;
     var fracly = ly - floorly;
-    var cx = this.terrain.source.cx, cy = this.terrain.source.cy;
-    var hmap = this.terrain.source.heightMap;
+    var mapHeight = this.terrain.source.maps.height;
+    var cx = mapHeight.cx, cy = mapHeight.cy;
+    var hmap = mapHeight.displacement;
+    var mapDetail = this.terrain.source.maps.detail;
 
     // This assumes that the tile repeats in all directions.
     var h = [], i = 0, x, y;
@@ -230,7 +223,7 @@ var MODULE = 'pterrain';
         catmullRom(h[ 4], h[ 5], h[ 6], h[ 7], fraclx),
         catmullRom(h[ 8], h[ 9], h[10], h[11], fraclx),
         catmullRom(h[12], h[13], h[14], h[15], fraclx),
-        fracly);
+        fracly) * mapHeight.scale.z;
 
     // TODO: Optimize this!
     var derivX = catmullRomDeriv(
@@ -249,7 +242,12 @@ var MODULE = 'pterrain';
     var normal = new Vec3(
         -derivX,
         -derivY,
-        this.terrain.source.scaleHz);
+        1).divideSelf(mapHeight.scale);
+
+    if (mapDetail) {
+      var dmap = mapDetail.displacement;
+    }
+
     return {
       normal: normal.normalize(),
       surfacePos: new Vec3(0, 0, height)
