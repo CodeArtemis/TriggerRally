@@ -198,7 +198,7 @@ class render_terrain.RenderTerrain
           float depth = length(eyePosition.xyz);
 
           vec2 detailHeightUv = worldToMapSpace(worldPosition.xy, tDetailSize, tDetailScale.xy);
-          float detailHeightSample = texture2D(tDiffuse, detailHeightUv).g;
+          float detailHeightSample = texture2D(tDetail, detailHeightUv).r;
 
           float detailHeightAmount = 1.0;//smoothstep(-0.8, -0.7, -normal.z);
           vec2 epsilon = 1.0 / tDetailSize;
@@ -214,7 +214,7 @@ class render_terrain.RenderTerrain
           gl_FragColor = vec4(diffSample, 1.0);
 
           float noiseSample = texture2D(tDiffuse, worldPosition.xy / 128.0).g;
-          float veggieFactor = smoothstep(60.0, 80.0, depth + noiseSample * 70.0) * 1.0;
+          float veggieFactor = smoothstep(60.0, 80.0, depth + noiseSample * 70.0) * 0.7;
           vec3 veggieColor1 = vec3(0.16, 0.19, 0.12);
           vec3 veggieColor2 = vec3(0.06, 0.09, 0.04);
           vec3 eyeVec = normalize(cameraPosition - worldPosition);

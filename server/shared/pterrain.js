@@ -6,8 +6,10 @@ var MODULE = 'pterrain';
 
 (function(exports) {
   var THREE = this.THREE || require('../THREE');
+  var util = this.util || require('./util');
 
   var Vec3 = THREE.Vector3;
+  var INTERP = util.INTERP;
 
   var inNode = false;
   if (typeof Image === 'undefined') {
@@ -175,21 +177,10 @@ var MODULE = 'pterrain';
   // x, y = terrain space coordinates
   exports.Terrain.prototype.getContactRayZ = function(x, y) {
     var contact = null;
-    var mapHeight = this.source.maps.height;
-    var sx = x / mapHeight.scale.x;
-    var sy = y / mapHeight.scale.y;
-    var tx = Math.floor(sx / mapHeight.cx);
-    var ty = Math.floor(sy / mapHeight.cy);
-    // HACK to repeat a single tile infinitely.
+    // We just repeat a single tile infinitely.
     var tile = this.theTile; //this.getTile(tx, ty);
     if (tile) {
-      contact = tile.getContactRayZ(
-          sx - tx * mapHeight.cx,
-          sy - ty * mapHeight.cy);
-      if (contact) {
-        contact.surfacePos.x = x;
-        contact.surfacePos.y = y;
-      }
+      contact = tile.getContactRayZ(x, y);
     } else {
       // TODO: Fire off a request to load this tile.
     }
@@ -201,56 +192,82 @@ var MODULE = 'pterrain';
   };
 
   // lx, ly = local tile space coordinates
-  exports.TerrainTile.prototype.getContactRayZ = function(lx, ly) {
-    var floorlx = Math.floor(lx);
-    var floorly = Math.floor(ly);
-    var fraclx = lx - floorlx;
-    var fracly = ly - floorly;
+  exports.TerrainTile.prototype.getContactRayZ = function(x, y) {
     var mapHeight = this.terrain.source.maps.height;
+    var heightx = x / mapHeight.scale.x;
+    var heighty = y / mapHeight.scale.y;
+    var floorx = Math.floor(heightx);
+    var floory = Math.floor(heighty);
+    var fracx = heightx - floorx;
+    var fracy = heighty - floory;
     var cx = mapHeight.cx, cy = mapHeight.cy;
     var hmap = mapHeight.displacement;
     var mapDetail = this.terrain.source.maps.detail;
 
     // This assumes that the tile repeats in all directions.
-    var h = [], i = 0, x, y;
-    for (y = -1; y <= 2; ++y) {
-      for (x = -1; x <= 2; ++x) {
-        h[i++] = hmap[wrap(floorlx + x, cx) + wrap(floorly + y, cy) * cx];
+    var h = [], i = 0, sx, sy;
+    for (sy = -1; sy <= 2; ++sy) {
+      for (sx = -1; sx <= 2; ++sx) {
+        h[i++] = hmap[wrap(floorx + sx, cx) + wrap(floory + sy, cy) * cx];
       }
     }
     var height = catmullRom(
-        catmullRom(h[ 0], h[ 1], h[ 2], h[ 3], fraclx),
-        catmullRom(h[ 4], h[ 5], h[ 6], h[ 7], fraclx),
-        catmullRom(h[ 8], h[ 9], h[10], h[11], fraclx),
-        catmullRom(h[12], h[13], h[14], h[15], fraclx),
-        fracly) * mapHeight.scale.z;
+        catmullRom(h[ 0], h[ 1], h[ 2], h[ 3], fracx),
+        catmullRom(h[ 4], h[ 5], h[ 6], h[ 7], fracx),
+        catmullRom(h[ 8], h[ 9], h[10], h[11], fracx),
+        catmullRom(h[12], h[13], h[14], h[15], fracx),
+        fracy) * mapHeight.scale.z;
 
     // TODO: Optimize this!
     var derivX = catmullRomDeriv(
-        catmullRom(h[ 0], h[ 4], h[ 8], h[12], fracly),
-        catmullRom(h[ 1], h[ 5], h[ 9], h[13], fracly),
-        catmullRom(h[ 2], h[ 6], h[10], h[14], fracly),
-        catmullRom(h[ 3], h[ 7], h[11], h[15], fracly),
-        fraclx);
+        catmullRom(h[ 0], h[ 4], h[ 8], h[12], fracy),
+        catmullRom(h[ 1], h[ 5], h[ 9], h[13], fracy),
+        catmullRom(h[ 2], h[ 6], h[10], h[14], fracy),
+        catmullRom(h[ 3], h[ 7], h[11], h[15], fracy),
+        fracx);
     var derivY = catmullRomDeriv(
-        catmullRom(h[ 0], h[ 1], h[ 2], h[ 3], fraclx),
-        catmullRom(h[ 4], h[ 5], h[ 6], h[ 7], fraclx),
-        catmullRom(h[ 8], h[ 9], h[10], h[11], fraclx),
-        catmullRom(h[12], h[13], h[14], h[15], fraclx),
-        fracly);
+        catmullRom(h[ 0], h[ 1], h[ 2], h[ 3], fracx),
+        catmullRom(h[ 4], h[ 5], h[ 6], h[ 7], fracx),
+        catmullRom(h[ 8], h[ 9], h[10], h[11], fracx),
+        catmullRom(h[12], h[13], h[14], h[15], fracx),
+        fracy);
 
     var normal = new Vec3(
         -derivX,
         -derivY,
-        1).divideSelf(mapHeight.scale);
+        1).divideSelf(mapHeight.scale).normalize();
 
     if (mapDetail) {
       var dmap = mapDetail.displacement;
+      cx = mapDetail.cx;
+      cy = mapDetail.cy;
+      var detailx = x / mapDetail.scale.x;
+      var detaily = y / mapDetail.scale.y;
+      floorx = Math.floor(detailx);
+      floory = Math.floor(detaily);
+      fracx = detailx - floorx;
+      fracy = detaily - floory;
+      h[0] = dmap[wrap(floorx + 0, cx) + wrap(floory + 0, cy) * cx];
+      h[1] = dmap[wrap(floorx + 1, cx) + wrap(floory + 0, cy) * cx];
+      h[2] = dmap[wrap(floorx + 0, cx) + wrap(floory + 1, cy) * cx];
+      h[3] = dmap[wrap(floorx + 1, cx) + wrap(floory + 1, cy) * cx];
+      height += INTERP(
+          INTERP(h[0], h[1], fracx),
+          INTERP(h[2], h[3], fracx),
+          fracy) * mapDetail.scale.z;
+      var detailNormal = new Vec3(
+          h[0] + h[2] - h[1] - h[3],
+          h[0] + h[1] - h[2] - h[3],
+          2).divideSelf(mapDetail.scale).normalize();
+      normal.set(
+          detailNormal.z * normal.x + detailNormal.x * (1 - normal.x * normal.x),
+          detailNormal.z * normal.y + detailNormal.y * (1 - normal.y * normal.y),
+          detailNormal.z * normal.z);
     }
 
     return {
-      normal: normal.normalize(),
-      surfacePos: new Vec3(0, 0, height)
+      normal: normal,
+      surfacePos: new Vec3(x, y, height)
     };
   }
 })(typeof exports === 'undefined' ? this[MODULE] = {} : exports);
