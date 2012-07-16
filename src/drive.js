@@ -82,7 +82,7 @@ function init() {
 
   scene = new THREE.Scene();
 
-  camera = new THREE.PerspectiveCamera(75, 1, 0.1, 100000);
+  camera = new THREE.PerspectiveCamera(75, 1, 0.1, 10000000);
   camera.position.set(2, 2, 2);
   camera.up.set(0, 0, 1);
 
@@ -347,7 +347,7 @@ function drawCube() {
   });
   //cubeMaterial.transparent = 1; // Force draw at end.
   var cubeMesh = new THREE.Mesh(
-      new THREE.CubeGeometry(50000, 50000, 50000), cubeMaterial);
+      new THREE.CubeGeometry(5000000, 5000000, 5000000), cubeMaterial);
   cubeMesh.geometry.faces.splice(5, 1);
   cubeMesh.flipSided = true;
   cubeMesh.position.set(0, 0, 20000);
