@@ -1,0 +1,18 @@
+!=partial('partial/header', { login: 1 })
+
+.content
+
+  h1= urlTrack.name
+
+  .section Information
+
+  dl
+    dt Name
+    dd= urlTrack.name
+
+  dl
+    dt Created by
+    dd
+      !=partial('partial/user', {user:urlTrack.user})
+
+  !=partial('partial/footer')
