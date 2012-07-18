@@ -1,11 +1,10 @@
-!=partial('partial/header', { login: 1 })
 
-.content
-
+#sidebar
   h1= urlTrack.name
 
   .section Information
 
+  p TRACK EDIT
   dl
     dt Name
     dd= urlTrack.name
@@ -15,4 +14,4 @@
     dd
       !=partial('partial/user', {user:urlTrack.user})
 
-  !=partial('partial/footer')
+#view3d

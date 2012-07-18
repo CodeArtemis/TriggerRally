@@ -106,6 +106,13 @@ exports.track = function(req, res) {
   res.render('track', req.jadeParams);
 };
 
+exports.trackEdit = function(req, res) {
+  req.jadeParams.title = 'Editing ' + req.urlTrack.name;
+  req.jadeParams.urlTrack = req.urlTrack;
+  req.jadeParams.layout = 'layout2';
+  res.render('trackedit', req.jadeParams);
+};
+
 exports.trackJson = function(req, res) {
   if (req.editing) {
     req.jadeParams.title = req.urlTrack.name;

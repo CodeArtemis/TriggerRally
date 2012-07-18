@@ -321,6 +321,7 @@ app.get('/user/:idUser', loadUrlUser, routes.user);
 app.get('/user/:idUser/edit', loadUrlUser, editUser, routes.user);
 app.post('/user/:idUser/save', loadUrlUser, editUser, routes.userSave);
 app.get('/track/:idTrack', loadUrlTrack, routes.track);
+app.get('/track/:idTrack/edit', loadUrlTrack, editTrack, routes.trackEdit);
 app.get('/track/:idTrack/json', loadUrlTrack, routes.trackJson);
 app.get('/track/:idTrack/json/edit', loadUrlTrack, editTrack, routes.trackJson);
 app.post('/track/:idTrack/json/save', loadUrlTrack, editTrack, routes.trackJsonSave);
