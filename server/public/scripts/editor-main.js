@@ -9,7 +9,7 @@ require(
   [
     'cs!editor'
   ],
-  function(editor) {
+  function editorMain(editor) {
     editor.run();
   }
 );

@@ -1,17 +1,26 @@
 
-#sidebar
-  h1= urlTrack.name
-
-  .section Information
-
-  p TRACK EDIT
-  dl
-    dt Name
-    dd= urlTrack.name
-
-  dl
-    dt Created by
-    dd
-      !=partial('partial/user', {user:urlTrack.user})
-
 #view3d
+
+#editor-toolbox(title="Track editor")
+  div
+    h3 General
+    div
+      p= urlTrack.name
+
+      .section Information
+
+      p TRACK EDIT
+      dl
+        dt Name
+        dd= urlTrack.name
+
+      dl
+        dt Created by
+        dd
+          !=partial('partial/user', {user:urlTrack.user})
+
+    h3 Other
+    div
+      p Hello!
+
+script(data-main="/scripts/editor-main", src="/js/require.js")

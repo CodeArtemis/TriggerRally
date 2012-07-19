@@ -6,3 +6,6 @@ body {
   font-family: "Ubuntu", sans-serif;
   text-shadow: 0 1px 0 #fff;
 }
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}
