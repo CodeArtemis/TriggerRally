@@ -11,7 +11,7 @@ define [
     toolbox.dialog
       closeOnEscape: false
       dialogClass: 'no-close'
-      #minWidth: 300
+      minWidth: 350
       #minHeight: 400
       position: 'left'
       resizable: false

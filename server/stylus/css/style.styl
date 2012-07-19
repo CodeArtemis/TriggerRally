@@ -1,13 +1,5 @@
 
-@import mixins
-
-body
-  background #dec
-  color #000
-  padding 0
-  margin 0
-  font-family "Ubuntu", sans-serif
-  text-shadow 0 1px 0 #fff
+@import common
 
 .content
   background #fff
@@ -37,12 +29,6 @@ body
   float right
   //  line-height 22px
   margin-top 10px
-
-.user img
-  width 20px
-  height 20px
-  margin-right 5px
-  vertical-align -20%
 
 .editprofile
   float right
@@ -106,30 +92,6 @@ td
 //.footer
 //  opacity 0.3
 
-a
-a:visited
-  color #462
-  text-decoration none
-
-a:hover
-  color #000
-  text-shadow 0 0 4px #6f1
-
-a:active
-  color #684
-
-a.disabled
-a.disabled:hover
-a.disabled:active
-a.disabled:visited
-  color #777
-  text-shadow inherit
-  cursor default
-
-.frame3d a
-  color #03f
-  text-decoration underline
-
 .logo
   width 64px
   height 64px
@@ -143,10 +105,6 @@ h1, h2
 
 .version
   opacity 0.3
-
-.frame3d:-webkit-full-screen
-  width 100%
-  height 100%
 
 .button
   display inline-block
@@ -181,9 +139,6 @@ CARDSCALE = 5
   display inline-block
   width CARDSCALE * 85.6px
   height CARDSCALE * 53.98px
-
-.hidden
-  display none
 
 .footer img.logo
   float left
