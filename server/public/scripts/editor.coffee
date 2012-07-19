@@ -19,4 +19,8 @@ define [
     toolbox.children().accordion
       collapsible: true
       clearStyle: true
+    
+    $('.toolbar').buttonset()
+    
+    $('.tool-slider').slider()
     return

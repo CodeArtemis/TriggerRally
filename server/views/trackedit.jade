@@ -23,7 +23,23 @@
 
     h3 Elevation
     div
-      p Hello!
+      .toolbar#elevation-tools
+        input(type="radio", id="tool1", name="tool")
+        label(for="tool1") Tool 1
+        input(type="radio", id="tool2", name="tool")
+        label(for="tool2") Tool 2
+        input(type="radio", id="tool3", name="tool")
+        label(for="tool3") Tool 3
+
+      .field
+        span Radius
+        .tool-slider#radius-slider
+        .end
+
+      .field
+        span Falloff
+        .tool-slider#falloff-slider
+        .end
 
     h3 Surface
     div
