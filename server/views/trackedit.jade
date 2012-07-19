@@ -5,21 +5,35 @@
   div
     h3 General
     div
-      p= urlTrack.name
-
-      .section Information
-
-      p TRACK EDIT
-      dl
-        dt Name
-        dd= urlTrack.name
-
-      dl
-        dt Created by
-        dd
+      .field
+        span Owner
+        span
           !=partial('partial/user', {user:urlTrack.user})
+        .end
 
-    h3 Other
+      .field
+        span Name
+        input(value='#{urlTrack.name}')
+        .end
+
+      .field
+        span ID
+        input(value='#{urlTrack.pub_id}')
+        .end
+
+    h3 Elevation
+    div
+      p Hello!
+
+    h3 Surface
+    div
+      p Hello!
+
+    h3 Course
+    div
+      p Hello!
+
+    h3 Scenery
     div
       p Hello!
 
