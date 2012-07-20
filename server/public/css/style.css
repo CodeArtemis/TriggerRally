@@ -6,6 +6,50 @@ body {
   font-family: "Ubuntu", sans-serif;
   text-shadow: 0 1px 0 #fff;
 }
+h1,
+h2 {
+  font-family: 'Ubuntu', sans-serif;
+  font-style: italic;
+  font-weight: bold;
+  margin: 0;
+}
+.user img {
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+  vertical-align: -20%;
+}
+a,
+a:visited {
+  color: #462;
+  text-decoration: none;
+}
+a:hover {
+  color: #000;
+  text-shadow: 0 0 4px #6f1;
+}
+a:active {
+  color: #684;
+}
+a.disabled,
+a.disabled:hover,
+a.disabled:active,
+a.disabled:visited {
+  color: #777;
+  text-shadow: inherit;
+  cursor: default;
+}
+.frame3d a {
+  color: #03f;
+  text-decoration: underline;
+}
+.frame3d:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+}
+.hidden {
+  display: none;
+}
 .content {
   background: #fff;
   margin: 0 auto;
@@ -31,12 +75,6 @@ body {
 .userinfo {
   float: right;
   margin-top: 10px;
-}
-.user img {
-  width: 20px;
-  height: 20px;
-  margin-right: 5px;
-  vertical-align: -20%;
 }
 .editprofile {
   float: right;
@@ -92,30 +130,6 @@ table tr:nth-child(odd) {
 td {
   padding: 0 20px;
 }
-a,
-a:visited {
-  color: #462;
-  text-decoration: none;
-}
-a:hover {
-  color: #000;
-  text-shadow: 0 0 4px #6f1;
-}
-a:active {
-  color: #684;
-}
-a.disabled,
-a.disabled:hover,
-a.disabled:active,
-a.disabled:visited {
-  color: #777;
-  text-shadow: inherit;
-  cursor: default;
-}
-.frame3d a {
-  color: #03f;
-  text-decoration: underline;
-}
 .logo {
   width: 64px;
   height: 64px;
@@ -130,10 +144,6 @@ h2 {
 }
 .version {
   opacity: 0.3;
-}
-.frame3d:-webkit-full-screen {
-  width: 100%;
-  height: 100%;
 }
 .button {
   display: inline-block;
@@ -167,9 +177,6 @@ box-shadow
   display: inline-block;
   width: 428px;
   height: 269.9px;
-}
-.hidden {
-  display: none;
 }
 .footer img.logo {
   float: left;
