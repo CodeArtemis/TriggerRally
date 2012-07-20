@@ -109,7 +109,7 @@ exports.track = function(req, res) {
 exports.trackEdit = function(req, res) {
   req.jadeParams.title = 'Editing ' + req.urlTrack.name;
   req.jadeParams.urlTrack = req.urlTrack;
-  req.jadeParams.layout = 'layout2';
+  req.jadeParams.layout = 'layout-editor';
   res.render('trackedit', req.jadeParams);
 };
 
