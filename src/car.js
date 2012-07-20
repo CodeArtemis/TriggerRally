@@ -94,7 +94,7 @@ var Car = function() {
         var linVel = this.vehic.body.linVel;
         var windRate = linVel.length() / this.config.sounds.windSpeed;
         this.sourceWind.gain.value = Math.min(1.4, windRate) * 1.4;
-        this.sourceWind.playbackRate = windRate + 0.5;
+        this.sourceWind.playbackRate.value = windRate + 0.5;
       }
       if (this.sourceSkid) {
         this.sourceSkid.gain.value = Math.log(1 + this.vehic.skidLevel * 0.05);
