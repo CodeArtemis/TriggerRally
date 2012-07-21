@@ -3,12 +3,15 @@
  */
 
 define([
-  'LFIB4',
+  'util/LFIB4',
+  'cs!util/collision',
+  'cs!util/hash2d',
   'THREE'
 ],
-function(LFIB4, THREE) {
+function(LFIB4, collision, hash2d, THREE) {
   var exports = {};
 
+  var Vec2 = THREE.Vector2;
   var Vec3 = THREE.Vector3;
 
   var COLLISION_HASH_SIZE = 5;

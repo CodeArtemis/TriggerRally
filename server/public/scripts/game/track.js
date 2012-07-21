@@ -5,9 +5,10 @@
 define([
   'util/LFIB4',
   'THREE',
+  'game/scenery',
   'game/terrain'
 ],
-function(LFIB4, THREE, pterrain) {
+function(LFIB4, THREE, gameScenery, gameTerrain) {
   var exports = {};
   var Vec3 = THREE.Vector3;
 
@@ -35,8 +36,8 @@ function(LFIB4, THREE, pterrain) {
         };
       }
 
-      var source = new pterrain.ImageSource();
-      var terrain = new pterrain.Terrain(source);
+      var source = new gameTerrain.ImageSource();
+      var terrain = new gameTerrain.Terrain(source);
       this.terrain = terrain;
 
       source.load(terrainConfig, function() {
@@ -54,7 +55,7 @@ function(LFIB4, THREE, pterrain) {
           this.checkpoints.push(checkpoint);
         }
 
-        this.scenery = new scenery.Scenery(config.scenery, this);
+        this.scenery = new gameScenery.Scenery(config.scenery, this);
 
         if (callback) callback();
       }.bind(this));

@@ -4,8 +4,11 @@
 
 define [
   'THREE'
-], (THREE) ->
-  class TriggerView
+  'cs!client/terrain'
+], (THREE, clientTerrain) ->
+  Vec3 = THREE.Vector3
+
+  TriggerClient: class TriggerClient
     constructor: (@containerEl) ->
       # TODO: Add Detector support.
       @renderer = @createRenderer()
@@ -13,12 +16,12 @@ define [
 
       @scene = new THREE.Scene()
       @camera = new THREE.PerspectiveCamera 75, 1, 0.1, 10000000
-      @camera.position.set 0, 0, 100
       @camera.up.set 0, 0, 1
-      @camera.rotation.x = 1.2
       @scene.add @camera
-      @scene.fog = new THREE.FogExp2 0xdddddd, 0.0001
+      @scene.fog = new THREE.FogExp2 0xdddddd, 0.00005
 
+      @scene.add new THREE.AmbientLight 0x446680
+      @scene.add @sunLight()
       @scene.add @cubeMesh()
 
       @objects = []
@@ -38,15 +41,43 @@ define [
       @renderer.setSize @width, @height
       @camera.aspect = if @height > 0 then @width / @height else 1
       # Use horizontal fov instead of vertical.
-      @camera.fov = 1.33 * 100 / @camera.aspect
+      #@camera.fov = 1.33 * 100 / @camera.aspect
       @camera.updateProjectionMatrix()
       @render()
       return
 
     render: ->
+      delta = 0
+      @objects.forEach (object) =>
+        object.update @camera, delta
       @renderer.clear false, true
       @renderer.render @scene, @camera
       return
+
+    sunLight: ->
+      @sunLightPos = new Vec3(-6, -7, 10)
+      sunLight = new THREE.DirectionalLight( 0xffe0bb )
+      sunLight.intensity = 1.3
+      sunLight.position.copy(@sunLightPos)
+
+      sunLight.castShadow = true
+
+      sunLight.shadowCameraNear = -20
+      sunLight.shadowCameraFar = 60
+      sunLight.shadowCameraLeft = -24
+      sunLight.shadowCameraRight = 24
+      sunLight.shadowCameraTop = 24
+      sunLight.shadowCameraBottom = -24
+
+      #sunLight.shadowCameraVisible = true
+
+      #sunLight.shadowBias = -0.001
+      sunLight.shadowDarkness = 0.5
+
+      sunLight.shadowMapWidth = 1024
+      sunLight.shadowMapHeight = 1024
+
+      sunLight
 
     cubeMesh: ->
       path = "/a/textures/miramar-512/miramar_"
@@ -102,4 +133,4 @@ define [
       cubeMesh
 
     setTrack: (track) ->
-      @objects.push new render_terrain.RenderTerrain(@scene, track.terrain, @renderer.context)
+      @objects.push new clientTerrain.RenderTerrain(@scene, track.terrain, @renderer.context)
