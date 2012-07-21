@@ -1,9 +1,8 @@
 
-#view3d
-
-#editor-toolbox(title="Track editor")
-  div
-    h3 General
+#editor-toolbox
+  h2 Track Editor
+  fieldset
+    legend General
     div
       .field
         span Owner
@@ -21,15 +20,39 @@
         input(value='#{urlTrack.pub_id}')
         .end
 
-    h3 Elevation
+  fieldset
+    legend Tools
+
+    mixin tool(id, label)
+      input(id=id, type="radio", name="tool")
+      label(for=id)= label
+
+    fieldset
+      legend Elevation
+      mixin tool("tool-elev-raise", "Raise")
+      mixin tool("tool-elev-lower", "Lower")
+      mixin tool("tool-elev-smooth", "Smooth")
+
+    fieldset
+      legend Surface
+      mixin tool("tool-surf-paint", "Paint")
+
+    fieldset
+      legend Course
+      mixin tool("tool-cour-edit", "Edit")
+
+    fieldset
+      legend Scenery
+      mixin tool("tool-scen-add", "Add")
+      mixin tool("tool-scen-remove", "Remove")
+
+  fieldset
+    legend Tool options
     div
-      .toolbar#elevation-tools
-        input(type="radio", id="tool1", name="tool")
-        label(for="tool1") Raise
-        input(type="radio", id="tool2", name="tool")
-        label(for="tool2") Lower
-        input(type="radio", id="tool3", name="tool")
-        label(for="tool3") Smooth
+      .field
+        span Strength
+        input(type="range")
+        .end
 
       .field
         span Radius
@@ -38,19 +61,19 @@
 
       .field
         span Falloff
-        .tool-slider#falloff-slider
+        input(type="range")
         .end
 
-    h3 Surface
-    div
-      p Hello!
+#view3d
 
-    h3 Course
-    div
-      p Hello!
-
-    h3 Scenery
-    div
-      p Hello!
+script
+  var TRIGGER = {
+    TRACK: {
+      ID: '#{urlTrack.pub_id}',
+      NAME: '#{urlTrack.name}',
+      CONFIG: !{JSON.stringify(urlTrack.config)}
+    },
+    METRICS: #{'production' === process.env.NODE_ENV}
+  };
 
 script(data-main="/scripts/editor-main", src="/js/require.js")

@@ -1,26 +1,39 @@
-
+###
+# Copyright (C) 2012 jareiko / http://www.jareiko.net/
+###
 
 define [
-], () ->
+  'zepto',
+  'cs!trigger-view',
+  'game/track'
+], ($, TriggerView, gameTrack) ->
   run: ->
 
-    # cs! shadows the global $, so this is a hack to grab it back.
-    $ = new Function('return $;')()
-
+    container = $(window)
     toolbox = $('#editor-toolbox')
-    toolbox.dialog
-      closeOnEscape: false
-      dialogClass: 'no-close'
-      minWidth: 350
-      #minHeight: 400
-      position: 'left'
-      resizable: false
+    view3d = $('#view3d')
 
-    toolbox.children().accordion
-      collapsible: true
-      clearStyle: true
-    
-    $('.toolbar').buttonset()
-    
-    $('.tool-slider').slider()
+    tv = new TriggerView view3d[0]
+
+    track = new gameTrack.Track()
+    track.loadWithConfig TRIGGER.TRACK.CONFIG, ->
+      tv.setTrack track
+
+    layout = ->
+      [toolbox, view3d].forEach (panel) ->
+        panel.css 'position', 'absolute'
+        panel.height container.height()
+      TOOLBOX_WIDTH = 300
+      toolbox.width TOOLBOX_WIDTH
+      view3d.width container.width() - TOOLBOX_WIDTH
+      view3d.css 'left', TOOLBOX_WIDTH
+      tv.setSize view3d.width(), view3d.height()
+      return
+
+    layout()
+    container.on 'resize', ->
+      layout()
+
+    toolbox.show()
+
     return
