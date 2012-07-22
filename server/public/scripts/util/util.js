@@ -13,6 +13,8 @@ function(THREE) {
 
   exports.TWOPI = Math.PI * 2;
 
+  // TODO: Fix function caps. They vary for legacy reasons (C++ port).
+
   // Exponential decay towards target.
   exports.PULLTOWARD = function(val, target, delta) {
     return target + (val - target) / (1.0 + delta);
@@ -46,6 +48,7 @@ function(THREE) {
   };
 
   exports.KEYCODE = {
+    SHIFT: 16,
     SPACE: 32,
     LEFT: 37,
     UP: 38,
@@ -77,6 +80,16 @@ function(THREE) {
   };
 
   exports.arraySlice = Function.prototype.call.bind(Array.prototype.slice);
+
+  exports.catmullRom = function(pm1, p0, p1, p2, x) {
+    var x2 = x * x;
+    return 0.5 * (
+      pm1 * x * ((2 - x) * x - 1) +
+      p0 * (x2 * (3 * x - 5) + 2) +
+      p1 * x * ((4 - 3 * x) * x + 1) +
+      p2 * (x - 1) * x2
+    );
+  };
 
   return exports;
 });

@@ -4,9 +4,26 @@
 
 define [
   'THREE'
+  'cs!client/misc'
   'cs!client/terrain'
-], (THREE, clientTerrain) ->
+], (THREE, clientMisc, clientTerrain) ->
   Vec3 = THREE.Vector3
+
+  class RenderCheckpoints
+    constructor: (@scene, checkpoints) ->
+      @ang = 0
+      @meshes = for cp in checkpoints
+        mesh = clientMisc.checkpointMesh()
+        mesh.position.copy cp
+        @scene.add mesh
+        mesh
+
+    update: (camera, delta) ->
+      if false
+        @ang += delta * 3
+        for mesh in @meshes
+          mesh.rotation.y = @ang
+      return
 
   TriggerClient: class TriggerClient
     constructor: (@containerEl) ->
@@ -40,16 +57,16 @@ define [
     setSize: (@width, @height) ->
       @renderer.setSize @width, @height
       @camera.aspect = if @height > 0 then @width / @height else 1
-      # Use horizontal fov instead of vertical.
-      #@camera.fov = 1.33 * 100 / @camera.aspect
       @camera.updateProjectionMatrix()
       @render()
       return
 
-    render: ->
-      delta = 0
+    update: (delta) ->
       @objects.forEach (object) =>
         object.update @camera, delta
+
+    render: ->
+      delta = 0
       @renderer.clear false, true
       @renderer.render @scene, @camera
       return
@@ -132,5 +149,6 @@ define [
       cubeMesh.position.set(0, 0, 20000)
       cubeMesh
 
-    setTrack: (track) ->
+    setTrack: (@track) ->
       @objects.push new clientTerrain.RenderTerrain(@scene, track.terrain, @renderer.context)
+      @objects.push new RenderCheckpoints(@scene, track.checkpoints)

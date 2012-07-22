@@ -1,6 +1,7 @@
 // Copyright (C) 2012 jareiko / http://www.jareiko.net/
 
 requirejs.config({
+  baseUrl: '/scripts',
   shim: {
     /*'backbone': {
       //These script dependencies should be loaded before loading
@@ -36,7 +37,7 @@ require(
     }
   },
   [
-    'cs!editor'
+    'cs!editor/editor'
   ],
   function editorMain(editor) {
     editor.run();

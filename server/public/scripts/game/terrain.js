@@ -118,16 +118,23 @@ function(THREE, async, util) {
   };
 
   exports.ImageSource.prototype.generateHeightMap = function(map) {
-    var cx = map.cx, cy = map.cy;
+    map.buffer = new Float32Array(map.cx * map.cy);
+    this.regenHeightMap(map, 0, 0, map.cx, map.cy);
+    // Discard the original data.
+    //map.data = null;
+  };
+
+  exports.ImageSource.prototype.regenHeightMap = function(map, x, y, cx, cy) {
     var data = map.data;
-    var buffer = new Float32Array(cx * cy);
-    var pixels = cx * cy;
-    for (i = 0; i < pixels; ++i) {
-      buffer[i] = data[i * 4];
+    var buffer = map.displacement;
+    var stride = map.cx;
+    var ix, iy, i;
+    for (iy = y + cy - 1; iy >= y; --iy) {
+      for (ix = x + cx - 1; ix >= x; --ix) {
+        i = iy * stride + ix;
+        buffer[i] = data[i * 4];
+      }
     }
-    map.displacement = buffer;
-    // We don't need the original data anymore.
-    map.data = null;
   };
 
   exports.ImageSource.prototype.generateNormalMap = function(map) {
@@ -205,6 +212,14 @@ function(THREE, async, util) {
     var cx = mapHeight.cx, cy = mapHeight.cy;
     var hmap = mapHeight.displacement;
     var mapDetail = this.terrain.source.maps.detail;
+
+    if (!hmap) {
+      // No data yet.
+      return {
+        normal: new Vec3(0, 0, 1),
+        surfacePos: new Vec3(x, y, 0)
+      }
+    }
 
     // This assumes that the tile repeats in all directions.
     var h = [], i = 0, sx, sy;

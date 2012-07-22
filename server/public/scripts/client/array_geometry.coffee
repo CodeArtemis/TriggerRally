@@ -40,7 +40,7 @@ define [
         count: 0
         start: 0
       elem = 0
-      PRIMITIVE_SIZE = 3
+      PRIMITIVE_SIZE = if @wireframe then 2 else 3
       MAX_INDEX = 65535
       minIndexFound = Infinity
       maxIndexFound = 0
@@ -49,12 +49,9 @@ define [
       while elem < maxElem
         primMinIndex = Infinity
         primMaxIndex = 0
-        primMinIndex = Math.min primMinIndex, indices[elem + 0]
-        primMinIndex = Math.min primMinIndex, indices[elem + 1]
-        primMinIndex = Math.min primMinIndex, indices[elem + 2]
-        primMaxIndex = Math.max primMaxIndex, indices[elem + 0]
-        primMaxIndex = Math.max primMaxIndex, indices[elem + 1]
-        primMaxIndex = Math.max primMaxIndex, indices[elem + 2]
+        for i in [0...PRIMITIVE_SIZE]
+          primMinIndex = Math.min primMinIndex, indices[elem + i]
+          primMaxIndex = Math.max primMaxIndex, indices[elem + i]
         newMinIndexFound = Math.min minIndexFound, primMinIndex
         newMaxIndexFound = Math.max maxIndexFound, primMaxIndex
         if newMaxIndexFound - newMinIndexFound > MAX_INDEX

@@ -6,25 +6,17 @@ define([
   'util/LFIB4',
   'cs!util/collision',
   'cs!util/hash2d',
+  'util/util',
   'THREE'
 ],
-function(LFIB4, collision, hash2d, THREE) {
+function(LFIB4, collision, hash2d, util, THREE) {
   var exports = {};
 
   var Vec2 = THREE.Vector2;
   var Vec3 = THREE.Vector3;
+  var catmullRom = util.catmullRom;
 
   var COLLISION_HASH_SIZE = 5;
-
-  var catmullRom = function(pm1, p0, p1, p2, x) {
-    var x2 = x * x;
-    return 0.5 * (
-      pm1 * x * ((2 - x) * x - 1) +
-      p0 * (x2 * (3 * x - 5) + 2) +
-      p1 * x * ((4 - 3 * x) * x + 1) +
-      p2 * (x - 1) * x2
-    );
-  };
 
   exports.Scenery = function(config, track) {
     this.config = config;
