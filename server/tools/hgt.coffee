@@ -50,7 +50,7 @@ tgaHeader = (width, height) ->
   outData = []
   outData.push 0      # identsize
   outData.push 0      # colourmaptype
-  outData.push 3      # imagetype : 2=RGB, 3=grey
+  outData.push 2      # imagetype : 2=RGB, 3=grey
   outData.push 0, 0   # colourmapstart
   outData.push 0, 0   # colourmaplength
   outData.push 0      # colourmapbits
@@ -58,7 +58,7 @@ tgaHeader = (width, height) ->
   outData.push 0, 0   # ystart
   outData.push width & 0x00FF, (width & 0xFF00) / 256    # width
   outData.push height & 0x00FF, (height & 0xFF00) / 256  # height
-  outData.push 8      # bits per pixel
+  outData.push 24     # bits per pixel
   outData.push 0      # descriptor
   outData
 
@@ -107,15 +107,12 @@ for latSecs in [latFromSecs...latToSecs]
 
 outData = tgaHeader widthSecs, heightSecs
 
-console.log min, max
-vscale = 255 / (max - min)
-
-console.log 'Vertical meters per unit = ' + 1/vscale
-
 i = -1
 leng = outDataFloat.length
 while ++i < leng
-  val = vscale * (outDataFloat[i] - min)
+  val = outDataFloat[i]
+  outData.push 0
+  outData.push Math.floor val / 256
   outData.push Math.floor val
 
 fs.writeFileSync outFile, new Buffer(outData)

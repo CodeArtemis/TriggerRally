@@ -84,7 +84,14 @@ function(THREE, async, util) {
     async.parallel(requests,
       function(err, results) {
         this.generateHeightMap(this.maps.height);
-        this.generateNormalMap(this.maps.height);
+        if (!this.maps.surface) {
+          this.maps.surface = {
+            scale: this.maps.height.scale,
+            cx: this.maps.height.cx,
+            cy: this.maps.height.cy
+          };
+        }
+        this.generateSurfaceNormalMap();
         if (this.maps.detail) {
           this.generateHeightMap(this.maps.detail);
         }
@@ -105,6 +112,8 @@ function(THREE, async, util) {
       canvas.height = cy;
     }
     var ctx = canvas.getContext('2d');
+    ctx.translate(0, cy);
+    ctx.scale(1, -1);
     ctx.drawImage(image, 0, 0);
     return ctx.getImageData(0, 0, cx, cy);
   }
@@ -118,7 +127,7 @@ function(THREE, async, util) {
   };
 
   exports.ImageSource.prototype.generateHeightMap = function(map) {
-    map.buffer = new Float32Array(map.cx * map.cy);
+    map.displacement = new Float32Array(map.cx * map.cy);
     this.regenHeightMap(map, 0, 0, map.cx, map.cy);
     // Discard the original data.
     //map.data = null;
@@ -126,28 +135,32 @@ function(THREE, async, util) {
 
   exports.ImageSource.prototype.regenHeightMap = function(map, x, y, cx, cy) {
     var data = map.data;
-    var buffer = map.displacement;
+    var disp = map.displacement || (map.displacement = new Float32Array(map.cx * map.cy));
     var stride = map.cx;
     var ix, iy, i;
     for (iy = y + cy - 1; iy >= y; --iy) {
       for (ix = x + cx - 1; ix >= x; --ix) {
         i = iy * stride + ix;
-        buffer[i] = data[i * 4];
+        disp[i] = data[i * 4] + data[i * 4 + 1] * 256;
       }
     }
   };
 
-  exports.ImageSource.prototype.generateNormalMap = function(map) {
-    var cx = map.cx, cy = map.cy;
-    var normalMap = new Float32Array(cx * cy * 3);
-    var tmpVec3 = new THREE.Vector3();
-    var hmap = map.displacement;
-    for (var y = 0; y < cy; ++y) {
-      for (var x = 0; x < cx; ++x) {
-        var h = [], i = 0, x2, y2;
+  exports.ImageSource.prototype.generateSurfaceNormalMap = function() {
+    var mapSrc = this.maps.height;
+    var mapDst = this.maps.surface;
+    // TODO: Implement different-sized map conversion.
+    var cx = mapDst.cx, cy = mapDst.cy;
+    var origData = mapDst.data;
+    var packed = mapDst.packed || (mapDst.packed = new Uint8ClampedArray(cx * cy * 4));
+    var disp = mapSrc.displacement;
+    var x, y, h, i, x2, y2, i;
+    for (y = 0; y < cy; ++y) {
+      for (x = 0; x < cx; ++x) {
+        h = [], i = 0;
         for (y2 = -1; y2 <= 2; ++y2) {
           for (x2 = -1; x2 <= 2; ++x2) {
-            h[i++] = hmap[wrap(x + x2, cx) + wrap(y + y2, cy) * cx];
+            h[i++] = disp[wrap(x + x2, cx) + wrap(y + y2, cy) * cx];
           }
         }
         // TODO: Optimize these constant x catmullRom calls.
@@ -163,13 +176,13 @@ function(THREE, async, util) {
             catmullRom(h[ 8], h[ 9], h[10], h[11], 0.5),
             catmullRom(h[12], h[13], h[14], h[15], 0.5),
             0.5);
-        tmpVec3.set(-derivX, -derivY, 1).normalize();
-        normalMap[(y * cx + x) * 3 + 0] = tmpVec3.x;
-        normalMap[(y * cx + x) * 3 + 1] = tmpVec3.y;
-        normalMap[(y * cx + x) * 3 + 2] = tmpVec3.z;
+        i = (y * cx + x) * 4;
+        packed[i + 0] = 127.5 + derivX * 127.5 / 10;
+        packed[i + 1] = 127.5 + derivY * 127.5 / 10;
+        //packed[i + 2] = origData[i + 2];
+        //packed[i + 3] = origData[i + 3];
       }
     }
-    map.normal = normalMap;
   };
 
   // cx, cy = width and height of heightmap
@@ -203,12 +216,12 @@ function(THREE, async, util) {
   // lx, ly = local tile space coordinates
   exports.TerrainTile.prototype.getContactRayZ = function(x, y) {
     var mapHeight = this.terrain.source.maps.height;
-    var heightx = x / mapHeight.scale.x;
-    var heighty = y / mapHeight.scale.y;
-    var floorx = Math.floor(heightx);
-    var floory = Math.floor(heighty);
-    var fracx = heightx - floorx;
-    var fracy = heighty - floory;
+    var tX = x / mapHeight.scale.x;
+    var tY = y / mapHeight.scale.y;
+    var floorx = Math.floor(tX);
+    var floory = Math.floor(tY);
+    var fracx = tX - floorx;
+    var fracy = tY - floory;
     var cx = mapHeight.cx, cy = mapHeight.cy;
     var hmap = mapHeight.displacement;
     var mapDetail = this.terrain.source.maps.detail;

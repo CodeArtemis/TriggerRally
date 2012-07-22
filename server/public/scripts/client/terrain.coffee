@@ -62,10 +62,16 @@ define [
           tHeightScale:
             type: 'v3'
             value: @terrain.source.maps.height.scale
-          tNormal:
+          tSurface:
             type: 't'
             value: 1
-            texture: maps.normal
+            texture: maps.surface
+          tSurfaceSize:
+            type: 'v2'
+            value: new Vec2 @terrain.source.maps.surface.cx, @terrain.source.maps.surface.cy
+          tSurfaceScale:
+            type: 'v3'
+            value: @terrain.source.maps.surface.scale
           tDetail:
             type: 't'
             value: 2
@@ -95,7 +101,6 @@ define [
           uniform sampler2D tHeight;
           uniform vec2 tHeightSize;
           uniform vec3 tHeightScale;
-          //uniform sampler2D tNormal;
           uniform sampler2D tDetail;
           uniform vec2 tDetailSize;
           uniform vec3 tDetailScale;
@@ -171,10 +176,9 @@ define [
           THREE.ShaderChunk.shadowmap_pars_fragment + '\n' +
           """
 
-          //uniform sampler2D tHeight;
-          uniform vec2 tHeightSize;
-          uniform vec3 tHeightScale;
-          uniform sampler2D tNormal;
+          uniform sampler2D tSurface;
+          uniform vec2 tSurfaceSize;
+          uniform vec3 tSurfaceScale;
           uniform sampler2D tDetail;
           uniform vec2 tDetailSize;
           uniform vec3 tDetailScale;
@@ -194,10 +198,10 @@ define [
             //vec3 diffSample = vec3(0.8,0.2,0.2);
             vec3 rockDiffSample = texture2D(tDiffuse, diffUv / 16.0).rgb;
             //vec3 rockDiffSample = vec3(0.2,0.2,0.8);
-            vec2 heightUv = worldToMapSpace(worldPosition.xy, tHeightSize, tHeightScale.xy);
-            vec2 normSample = texture2D(tNormal, heightUv - 0.5 / tHeightSize).ra;
-            vec3 normal = vec3(normSample.x, normSample.y, 1.0 - dot(normSample, normSample));
-            normal = normalize(normal / tHeightScale);
+            vec2 surfaceUv = worldToMapSpace(worldPosition.xy, tSurfaceSize, tSurfaceScale.xy);
+            vec4 surfaceSample = texture2D(tSurface, surfaceUv - 0.5 / tSurfaceSize);
+            vec3 normal = vec3(0.5 - surfaceSample.x, 0.5 - surfaceSample.y, 1.0 / 20.0);
+            normal = normalize(normal / tSurfaceScale);
             vec3 tangentU = vec3(1.0 - normal.x * normal.x, 0.0, -normal.x);
             vec3 tangentV = vec3(0.0, 1.0 - normal.y * normal.y, -normal.y);
             float depth = length(eyePosition.xyz);
@@ -218,15 +222,17 @@ define [
 
             gl_FragColor = vec4(diffSample, 1.0);
 
-            float noiseSample = texture2D(tDiffuse, worldPosition.xy / 128.0).g;
-            float veggieFactor = smoothstep(60.0, 80.0, depth + noiseSample * 70.0) * 0.7;
-            vec3 veggieColor1 = vec3(0.16, 0.19, 0.12);
-            vec3 veggieColor2 = vec3(0.06, 0.09, 0.04);
+            float noiseSample = texture2D(tDiffuse, worldPosition.xy / 512.0).g;
+            float veggieFactor = smoothstep(60.0, 80.0, depth + noiseSample * 70.0) * 0.9;
+            vec3 veggieColor1 = vec3(0.21, 0.23, 0.09);
+            vec3 veggieColor2 = vec3(0.03, 0.06, 0.01);
             vec3 eyeVec = normalize(cameraPosition - worldPosition);
             float veggieMix = pow(abs(dot(eyeVec, normal)), 0.4);
             vec3 veggieColor = mix(veggieColor1, veggieColor2, veggieMix);
             gl_FragColor.rgb = mix(gl_FragColor.rgb, veggieColor, veggieFactor);
-            float rockMix = smoothstep(1.27, 1.28, normal.z + noiseSample);
+            //float rockMix = smoothstep(0.75, 0.95, normal.z + (noiseSample - 0.5) * 0.6 - height * 0.0001);
+            float rockMix = surfaceSample.b;
+            //float rockMix = smoothstep(0.81, 0.82, normal.z);
             gl_FragColor.rgb = mix(rockDiffSample, gl_FragColor.rgb, rockMix);
 
             """ +
@@ -284,11 +290,15 @@ define [
             vec3 totalIllum = ambientLightColor + directIllum * shadowColor;
             gl_FragColor.rgb *= totalIllum;
 
+            // For debugging.
+            //gl_FragColor.rgb = mix(gl_FragColor.rgb, normal * 0.5 + 0.5, 1.0);
+            //gl_FragColor.rgb = mix(gl_FragColor.rgb, (surfaceSample.rgb - 0.5) * 5.0 + 0.5, 1.0);
+
             //vec3 fogCol = vec3(0.8, 0.85, 0.9);
             //float clarity = 160.0 / (depth + 160.0);
             const float LOG2 = 1.442695;
             float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );
-            fogFactor = 1.0 - clamp( fogFactor, 0.0, 1.0 );
+            fogFactor = clamp( 1.0 - fogFactor, 0.0, 0.9 );
             gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor, fogFactor);
           }
           """
@@ -394,22 +404,12 @@ define [
       return
 
     _createMaps: (terrain) ->
-      source = terrain.source
-      cx = source.maps.height.cx
-      cy = source.maps.height.cy
-      # Normal map has only 2 channels, X and Y.
-      normArray = new Float32Array(cx * cy * 2)
-      tmpVec3 = new THREE.Vector3()
-      nmap = source.maps.height.normal
-      for y in [0...cy]
-        for x in [0...cx]
-          normArray[(y * cx + x) * 2 + 0] = nmap[(y * cx + x) * 3 + 0]
-          normArray[(y * cx + x) * 2 + 1] = nmap[(y * cx + x) * 3 + 1]
+      maps = terrain.source.maps
 
       heightTex = new THREE.DataTexture(
-          source.maps.height.displacement,
-          source.maps.height.cx,
-          source.maps.height.cy,
+          maps.height.displacement,
+          maps.height.cx,
+          maps.height.cy,
           THREE.LuminanceFormat, THREE.FloatType,
           null,
           THREE.RepeatWrapping, THREE.RepeatWrapping,
@@ -417,19 +417,20 @@ define [
       heightTex.generateMipmaps = false
       heightTex.needsUpdate = true
 
-      normalTex = new THREE.DataTexture(
-          normArray,
-          cx, cy,
-          THREE.LuminanceAlphaFormat, THREE.FloatType,
+      surfaceTex = new THREE.DataTexture(
+          maps.surface.packed,
+          maps.surface.cx,
+          maps.surface.cy,
+          THREE.RGBAFormat, THREE.UnsignedByteType,
           null,
           THREE.RepeatWrapping, THREE.RepeatWrapping)
-      normalTex.generateMipmaps = true
-      normalTex.needsUpdate = true
+      surfaceTex.generateMipmaps = true
+      surfaceTex.needsUpdate = true
 
       detailTex = new THREE.DataTexture(
-          source.maps.detail.displacement,
-          source.maps.detail.cx,
-          source.maps.detail.cy,
+          maps.detail.displacement,
+          maps.detail.cx,
+          maps.detail.cy,
           THREE.LuminanceFormat, THREE.FloatType,
           null,
           THREE.RepeatWrapping, THREE.RepeatWrapping,
@@ -438,5 +439,5 @@ define [
       detailTex.needsUpdate = true
 
       height: heightTex
-      normal: normalTex
+      surface: surfaceTex
       detail: detailTex

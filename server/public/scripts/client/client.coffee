@@ -14,7 +14,7 @@ define [
       @ang = 0
       @meshes = for cp in checkpoints
         mesh = clientMisc.checkpointMesh()
-        mesh.position.copy cp
+        mesh.position.addSelf cp
         @scene.add mesh
         mesh
 
