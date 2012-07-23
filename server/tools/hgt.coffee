@@ -72,10 +72,7 @@ longToSecs = Math.floor longTo * 3600
 heightSecs = latToSecs - latFromSecs
 widthSecs = longToSecs - longFromSecs
 
-min = Infinity
-max = -Infinity
-
-outDataFloat = []
+outData = tgaHeader widthSecs, heightSecs
 
 BORDER = 0.1
 
@@ -101,18 +98,8 @@ for latSecs in [latFromSecs...latToSecs]
 
     if weight > 0 then val /= weight
 
-    min = Math.min min, val
-    max = Math.max max, val
-    outDataFloat.push val
-
-outData = tgaHeader widthSecs, heightSecs
-
-i = -1
-leng = outDataFloat.length
-while ++i < leng
-  val = outDataFloat[i]
-  outData.push 0
-  outData.push Math.floor val / 256
-  outData.push Math.floor val
+    outData.push 0
+    outData.push Math.floor val / 256
+    outData.push Math.floor val
 
 fs.writeFileSync outFile, new Buffer(outData)

@@ -62,11 +62,7 @@ function(THREE) {
   })();
 
   exports.CallbackQueue = function(callback) {
-    this.callbacks = [];
-
-    if (callback) {
-      this.callbacks.push(callback);
-    }
+    this.callbacks = callback && [callback] || [];
   };
 
   exports.CallbackQueue.prototype.add = function(callback) {
@@ -77,6 +73,7 @@ function(THREE) {
     for (var i = 0; i < this.callbacks.length; ++i) {
       this.callbacks[i].apply(undefined, arguments);
     }
+    this.callbacks = [];
   };
 
   exports.arraySlice = Function.prototype.call.bind(Array.prototype.slice);
@@ -88,6 +85,16 @@ function(THREE) {
       p0 * (x2 * (3 * x - 5) + 2) +
       p1 * x * ((4 - 3 * x) * x + 1) +
       p2 * (x - 1) * x2
+    );
+  };
+
+  exports.catmullRomDeriv = function(pm1, p0, p1, p2, x) {
+    var x2 = x * x;
+    return 0.5 * (
+      pm1 * (4 * x - 3 * x2 - 1) +
+      p0 * (9 * x2 - 10 * x) +
+      p1 * (8 * x - 9 * x2 + 1) +
+      p2 * (3 * x2 - 2 * x)
     );
   };
 

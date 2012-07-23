@@ -12,6 +12,8 @@ function(THREE, async, util) {
 
   var Vec3 = THREE.Vector3;
   var INTERP = util.INTERP;
+  var catmullRom = util.catmullRom;
+  var catmullRomDeriv = util.catmullRomDeriv;
 
   var inNode = false;
   if (typeof Image === 'undefined') {
@@ -20,29 +22,8 @@ function(THREE, async, util) {
     var Canvas = require('canvas');
   }
 
-  var catmullRom = function(pm1, p0, p1, p2, x) {
-    var x2 = x * x;
-    return 0.5 * (
-      pm1 * x * ((2 - x) * x - 1) +
-      p0 * (x2 * (3 * x - 5) + 2) +
-      p1 * x * ((4 - 3 * x) * x + 1) +
-      p2 * (x - 1) * x2
-    );
-  };
-
-  var catmullRomDeriv = function(pm1, p0, p1, p2, x) {
-    var x2 = x * x;
-    return 0.5 * (
-      pm1 * (4 * x - 3 * x2 - 1) +
-      p0 * (9 * x2 - 10 * x) +
-      p1 * (8 * x - 9 * x2 + 1) +
-      p2 * (3 * x2 - 2 * x)
-    );
-  };
-
   function wrap(x, lim) { return x - Math.floor(x / lim) * lim; }
 
-  // TODO: Implement float buffer source.
   exports.ImageSource = function() {
     this.maps = {};
   };
