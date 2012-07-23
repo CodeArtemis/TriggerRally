@@ -20,13 +20,27 @@ define([
 ], function(async) {
   var quiver = {};
 
+  var getUniqueId = (function() {
+    var nextId = 0;
+    return function() {
+      return ++nextId;
+    };
+  })();
+
+  quiver.Lock = function(concurrency) {
+    concurrency = concurrency || 1;
+    this.queue = new async.queue(function(task, callback) {
+      task(callback);
+    }, concurrency);
+  };
+
+  quiver.Lock.prototype.acquire = function(callback) {
+    this.queue.push(callback);
+  };
+
   quiver.connect = function() {
-    var prevNodes = arguments[0];
-    var prevOp = null;
-    var i, next;
-    if (!(prevNodes instanceof Array)) {
-      prevNodes = [prevNodes];
-    }
+    var prevNodes, prevOp;
+    var i, arg, anonNodes;
 
     function connectOperation(op) {
       if (prevOp) {
@@ -34,45 +48,50 @@ define([
         // Create an anonymous intermediate node.
         prevNodes = [new quiver.Node()];
       }
-      op.addInNodes.apply(op, prevNodes);
+      if (prevNodes) {
+        op.addInNodes.apply(op, prevNodes);
+      }
+      prevOp = op;
     }
 
     function connectNodes(nodes) {
-      assert(prevOp, 'Nodes must be separated by op functions.');
-      prevOp.addOutNodes.apply(op, nodes);
-      prevOp = null;
+      if (prevOp) {
+        prevOp.addOutNodes.apply(op, nodes);
+        prevOp = null;
+      }
       prevNodes = nodes;
     }
 
-    for (i = 1; i < arguments.length; ++i) {
-      next = arguments[i];
-      if (next instanceof Function) {
-        if (op) {
-          op.addOutNodes.apply(op, nodes);
-          // Create an anonymous intermediate node.
-          nodes = [new Node()];
-        }
-        op = new Operation(next);
-        op.addInNodes.apply(op, nodes);
-      } else if (next instanceof Node) {
-        connectNodes([next]);
-      } else if (next instanceof Array) {
-        connectNodes(next);
-      } else if (next instanceof Object) {
-        connectNodes([new Node(next)]);
+    for (i = 0; i < arguments.length; ++i) {
+      arg = arguments[i];
+      if (arg instanceof quiver.Operation) {
+        connectOperation(arg);
+      } else if (arg instanceof Function) {
+        connectOperation(new quiver.Operation(arg));
+      } else if (arg instanceof quiver.Node) {
+        connectNodes([arg]);
+      } else if (arg instanceof Array) {
+        connectNodes(arg);
+      } else if (arg instanceof Object) {
+        connectNodes([new Node(arg)]);
+      } else if (typeof arg === 'number') {
+        anonNodes = [];
+        while (arg--) anonNodes.push(new quiver.Node());
+        connectNodes(anonNodes);
       } else {
-        throw new Error('Unrecognized argument: ' + next);
+        // Ignore unrecognized arguments.
+        // Should this throw an error?
       }
     }
-    assert(!op, 'Last argument must be a node.');
   };
 
   quiver.Operation = function(func) {
+    this.id = getUniqueId();
     this.inNodes = [];
     this.outNodes = [];
     this.func = func;
     this.dirty = false;
-    this.locked = false;
+    this.lock = new quiver.Lock();
     // Cached values for passing to func.
     this.ins = [];
     this.outs = [];
@@ -90,37 +109,34 @@ define([
     node._addInOp(this);
   };
 
-  quiver.Operation.prototype.markDirty = function() {
+  quiver.Operation.prototype.markDirty = function(visited) {
+    visited = visited || {};
     if (!this.dirty) {
       this.dirty = true;
-      // Depending on the func, not all output nodes might actually be dirty.
       for (var i = 0, l = this.outNodes.length; i < l; ++i) {
         this.outNodes[i].markDirty();
       }
-      return true;
     }
-    return false;
   };
 
   quiver.Operation.prototype.processIfDirty = function(callback) {
-    if (this.locked) {
-      callback('Operation is locked.');
-      return;
-    }
-    this.locked = true;
-    if (this.dirty) {
-      this.locked = true;
-      async.forEach(this.inNodes, function(inNode, callback) {
-        f
-      }, function(err) {
-        this.func(this.ins, this.outs, callback);
-        this.dirty = false;
-        this.locked = false;
-      });
-    }
+    this.lock.acquire(function(release) {
+      if (this.dirty) {
+        async.forEach(this.inNodes, function(inNode, cb) {
+          inNode.get(cb);
+        }, function(err) {
+          this.func(this.ins, this.outs, callback);
+          this.dirty = false;
+          release();
+        });
+      } else {
+        release();
+      }
+    });
   };
 
   quiver.Node = function(opt_object) {
+    this.id = getUniqueId();
     this.object = opt_object || {};
     this.inOps = [];
     this.outOps = [];
@@ -141,10 +157,11 @@ define([
   };
 
   quiver.Node.prototype.get = function(callback) {
-    for (var i = 0; l = this.inOps.length; i < l; ++i) {
-      this.inOps[i].processIfDirty();
+    async.forEach(this.inOps, function(inOp, cb) {
+      inOp.processIfDirty(cb);
+    }, function(err) {
+      callback(err, this.object);
     });
-    return this.object;
   };
 
 
@@ -262,11 +279,13 @@ define([
   /*
   Stuff to document and test:
 
-  3-arg connect (arg[2] is array)
-  5-arg connect (arg[2] is array)
+  3-arg connect
+  2-arg connect (op, [node, node])
+  5-arg connect
   4-arg connect
   Creating two nodes with the same object
   Setup without connect?
+  Async ops and locking
   */
 
   return quiver;
