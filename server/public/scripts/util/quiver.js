@@ -79,53 +79,6 @@ define([
     return this.queue.length > 0;
   };
 
-  quiver.connect = function() {
-    var prevNodes, prevOp;
-    var i, arg, anonNodes;
-
-    function connectNodes(nodes) {
-      if (prevOp) {
-        prevOp.addOutNodes.apply(op, nodes);
-        prevOp = null;
-      }
-      prevNodes = nodes;
-    }
-
-    function connectOperation(op) {
-      if (prevOp) {
-        connectNodes(prevNodes)
-        // Create an anonymous intermediate node.
-        prevNodes = [new quiver.Node()];
-      }
-      if (prevNodes) {
-        op.addInNodes.apply(op, prevNodes);
-      }
-      prevOp = op;
-    }
-
-    for (i = 0; i < arguments.length; ++i) {
-      arg = arguments[i];
-      if (arg instanceof quiver.Operation) {
-        connectOperation(arg);
-      } else if (arg instanceof Function) {
-        connectOperation(new quiver.Operation(arg));
-      } else if (arg instanceof quiver.Node) {
-        connectNodes([arg]);
-      } else if (arg instanceof Array) {
-        connectNodes(arg);
-      } else if (arg instanceof Object) {
-        connectNodes([new Node(arg)]);
-      } else if (typeof arg === 'number') {
-        anonNodes = [];
-        while (arg--) anonNodes.push(new quiver.Node());
-        connectNodes(anonNodes);
-      } else {
-        // Ignore unrecognized arguments.
-        // Should this throw an error?
-      }
-    }
-  };
-
   quiver.Node = function(opt_payload) {
     this.payload = opt_payload || {};
     this.dirty = false;
@@ -135,11 +88,11 @@ define([
     this.id = _getUniqueId();
   };
 
-  quiver.Node.prototype.addInputs = function() {
+  quiver.Node.prototype.pushInputs = function() {
     this.inputs.push.apply(this.inputs, arguments);
   };
 
-  quiver.Node.prototype.addOutputs = function() {
+  quiver.Node.prototype.pushOutputs = function() {
     this.outputs.push.apply(this.outputs, arguments);
   };
 
@@ -213,6 +166,45 @@ define([
         callback(null, releaseAll, inputPayloads);
       }
     });
+  };
+
+  quiver.connect = function() {
+    var prevNodes = [];
+
+    var coerceToNode = function(value) {
+      if (value instanceof quiver.Node) {
+        return value;
+      } else {
+        return new quiver.Node(value);
+      }
+    };
+
+    var coerceToNodeArray = function(arr) {
+      if (value instanceof Array) {
+        var result = [];
+        for (var i = 0, l = value.length; i < l; ++i) {
+          result.push(coerceToNode(value[i]));
+        }
+        return result;
+      } else {
+        return [coerceToNode(value)];
+      }
+    };
+
+    var connectNodes = function(nodes) {
+      prevNodes.forEach(function(prevNode) {
+        prevNode.pushOutputs.apply(prevNode, nodes);
+      });
+      nodes.forEach(function(node) {
+        node.pushInputs.apply(node, prevNodes);
+      });
+      prevNodes = nodes;
+    };
+
+    for (var i = 0, l = arguments.length; i < l; ++i) {
+      var arg = arguments[i];
+      connectNodes(coerceToNodeArray(arg));
+    }
   };
 
 
