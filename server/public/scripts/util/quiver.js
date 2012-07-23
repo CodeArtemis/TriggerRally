@@ -1,24 +1,14 @@
 // Copyright (C) 2012 jareiko / http://www.jareiko.net/
 
-/*
+// Node/CommonJS compatibility.
+if (typeof define === 'undefined') {
+  define = function(fn) {
+    fn(require, exports, module);
+  };
+}
 
-[
-  {
-    name: "height-source"
-    type: "imagedata"
-  }
-  {
-    name: "tHeight"
-    type: ""
-  }
-]
-
-*/
-
-define([
-  'async'
-], function(async) {
-  var quiver = {};
+define(function(require, exports, module) {
+  var async = require('async');
 
   var _getUniqueId = (function() {
     var nextId = 0;
@@ -43,24 +33,24 @@ define([
 
   /*
   async's queue introduces latency with nextTick.
-  quiver.Lock = function() {
+  exports.Lock = function() {
     this.queue = new async.queue(function(task, callback) {
       task(null, callback);
     }, 1);
   };
 
-  quiver.Lock.prototype.acquire = function(callback) {
+  exports.Lock.prototype.acquire = function(callback) {
     this.queue.push(callback);
   };
   */
 
-  quiver.Lock = function() {
+  exports.Lock = function() {
     // The first callback in the queue is always the one currently holding the lock.
     this.queue = [];
   };
 
   // callback(release)
-  quiver.Lock.prototype.acquire = function(callback) {
+  exports.Lock.prototype.acquire = function(callback) {
     var q = this.queue;
     function release() {
       q.shift();
@@ -75,28 +65,28 @@ define([
     }
   };
 
-  quiver.Lock.prototype.isLocked = function() {
+  exports.Lock.prototype.isLocked = function() {
     return this.queue.length > 0;
   };
 
-  quiver.Node = function(opt_payload) {
+  exports.Node = function(opt_payload) {
     this.payload = opt_payload || {};
     this.dirty = false;
     this.inputs = [];
     this.outputs = [];
-    this.lock = new quiver.Lock();
+    this.lock = new exports.Lock();
     this.id = _getUniqueId();
   };
 
-  quiver.Node.prototype.pushInputs = function() {
+  exports.Node.prototype.pushInputs = function() {
     this.inputs.push.apply(this.inputs, arguments);
   };
 
-  quiver.Node.prototype.pushOutputs = function() {
+  exports.Node.prototype.pushOutputs = function() {
     this.outputs.push.apply(this.outputs, arguments);
   };
 
-  quiver.Node.prototype.markDirty = function(visited) {
+  exports.Node.prototype.markDirty = function(visited) {
     visited = visited || {};
     if (visited[this.id]) {
       throw new Error('Circular dependency detected.');
@@ -108,7 +98,7 @@ define([
   };
 
   // callback(err, release, payload)
-  quiver.Node.prototype.acquire = function(callback) {
+  exports.Node.prototype.acquire = function(callback) {
     this.lock.acquire(function(release) {
       if (this.dirty || this.payload instanceof function) {
         // We need to acquire our inputs first.
@@ -146,7 +136,7 @@ define([
   };
 
   // callback(err, release, inputPayloads)
-  quiver.Node.prototype._acquireInputs = function(callback) {
+  exports.Node.prototype._acquireInputs = function(callback) {
     var tasks = [], releaseCallbacks = [];
     var releaseAll = _callAll.bind(null, releaseCallbacks);
     for (var i = 0; l = this.inputs.length; i < l; ++i) {
@@ -168,14 +158,14 @@ define([
     });
   };
 
-  quiver.connect = function() {
+  exports.connect = function() {
     var prevNodes = [];
 
     var coerceToNode = function(value) {
-      if (value instanceof quiver.Node) {
+      if (value instanceof exports.Node) {
         return value;
       } else {
-        return new quiver.Node(value);
+        return new exports.Node(value);
       }
     };
 
@@ -207,118 +197,6 @@ define([
     }
   };
 
-
-
-
-
-
-
-
-
-  var inNode = (typeof Image === 'undefined');
-  if (inNode) {
-    // Running in Node.js.
-    var Canvas = require('canvas');
-  }
-
-  function assert(val, msg) {
-    if (!val) throw new Error(msg || 'Assert failed.');
-  }
-
-  function channels(buffer) {
-    return buffer.data.length / buffer.width / buffer.height;
-  }
-
-  function ensureDims(buffer, width, height, channels, type) {
-    if (!buffer.data ||
-        buffer.width != width ||
-        buffer.height != height) {
-      buffer.width = width;
-      buffer.height = height;
-      buffer.data = new type(width * height * channels);
-    }
-  }
-
-  function buffer2DFromImage(params) {
-    params = params || {};
-    return function(ins, outs) {
-      assert(ins.length === 1, 'Wrong number of inputs.');
-      assert(outs.length === 1, 'Wrong number of outputs.');
-      var image = ins[0];
-      var cx = image.width;
-      var cy = image.height;
-      var canvas;
-      if (inNode) {
-        canvas = new Canvas(cx, cy);
-      } else {
-        canvas = document.createElement('canvas');
-        canvas.width = cx;
-        canvas.height = cy;
-      }
-      var ctx = canvas.getContext('2d');
-      if (params.flip) {
-        ctx.translate(0, cy);
-        ctx.scale(1, -1);
-      }
-      ctx.drawImage(image, 0, 0);
-      var data = ctx.getImageData(0, 0, cx, cy);
-      outs[0].width = data.width;
-      outs[0].height = data.height;
-      // TODO: Add dirty rectangle support.
-      // This swap-buffer approach may be better anyway.
-      outs[0].data = data.data;
-    };
-  }
-
-  function unpack16bit() {
-    return function(ins, outs, callback, dirty) {
-      assert(ins.length === 1, 'Wrong number of inputs.');
-      assert(outs.length === 1, 'Wrong number of outputs.');
-      var src = ins[0], dst = outs[0];
-      assert(src.width  === dst.width );
-      assert(src.height === dst.height);
-      var srcData = src.data, dstData = dst.data;
-      var srcChannels = channels(src);
-      assert(srcChannels >= 2);
-      ensureDims(dst, src.width, src.height, 1, Uint16Array);
-      var minX = 0, minY = 0, maxX = src.width, maxY = src.height;
-      if (dirty) {
-        minX = dirty.x;
-        minY = dirty.y;
-        maxX = minX + dirty.width;
-        maxY = minY + dirty.height;
-      }
-      var sX, sY, srcPtr, dstPtr;
-      for (sY = minY; sY < maxY; ++sY) {
-        srcPtr = (sY * src.width) * srcChannels;
-        dstPtr = (sY * dst.width);
-        for (sX = minX; sX < maxX; ++sX) {
-          dst[dstPtr] = src[srcPtr] + src[srcPtr + 1] * 256;
-          srcPtr += srcChannels;
-          dstPtr += 1;
-        }
-      }
-      callback();
-    }
-  }
-
-  src = new quiver.Node(img);
-  var hmap = {};  // Shared object.
-  hm1 = new quiver.Node(hmap);
-  hm2 = new quiver.Node(hmap);
-  surf = new quiver.Node();
-  quiver.connect(src, buffer2DFromImage({flip:true}), unpack16bit(), hm1);
-  quiver.connect(hm1, drawTrack(), [hm2, surf]);
-  quiver.connect(hm2, derivatives(), surf);
-  // or without connect:
-  step = new quiver.Operation(buffer2DFromImage({flip:true}));
-  step.addInNodes(src);
-  step.addOutNodes(hm)
-
-  hm.get(function(err, tHeight) {
-    if (err) throw new Error(err);
-  });
-
   /*
   Stuff to document and test:
 
@@ -331,5 +209,5 @@ define([
   Async ops and locking
   */
 
-  return quiver;
+  return exports;
 });
