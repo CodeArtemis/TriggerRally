@@ -157,100 +157,60 @@ define([
   // callback(err, release, payload)
   quiver.Node.prototype.acquire = function(callback) {
     this.lock.acquire(function(release) {
-      var tasks = [], releaseCallbacks = [];
-      function fullRelease() {
-        _callAll(releaseCallbacks);
-        release();
-      }
-      function ready(inputPayloads, cb) {
-        if (this.payload instanceof Function) {
-          var outputPayloads = _pluck(this.outputs, 'payload');
-          this.payload(inputPayloads, outputPayloads, function(err) {
-            if (err) {
-              fullRelease();
-              cb(err);
-            } else {
-              cb(null, fullRelease, true);
-            }
-          });
-        } else {
-          cb(null, fullRelease, this.payload);
-        }
-      }
       if (this.dirty || this.payload instanceof function) {
         // We need to acquire our inputs first.
-        for (var i = 0; l = this.inputs.length; i < l; ++i) {
-          var input = this.inputs[i];
-          task.push(function(cb) {
-            input.acquire(function(err, release, payload) {
-              releaseCallbacks.push(release);
-              cb(err, payload);
-            });
-          });
-        });
-        async.parallel(tasks, function(err, inputPayloads) {
+        this._acquireInputs(function(err, releaseInputs, inputPayloads) {
+          var releaseAll = function() {
+            releaseInputs();
+            release();
+          }
           if (err) {
-            _callAll(releaseCallbacks);
+            releaseAll();
             callback(err);
           } else {
-            ready(inputPayloads, function(err, release, cb) {
-              ;
-            });
+            if (this.payload instanceof Function) {
+              var outputPayloads = _pluck(this.outputs, 'payload');
+              this.payload(inputPayloads, outputPayloads, function(err) {
+                if (err) {
+                  releaseAll();
+                  callback(err);
+                } else {
+                  this.dirty = false;
+                  callback(null, releaseAll, true);
+                }
+              });
+            } else {
+              this.dirty = false;
+              callback(null, releaseAll, this.payload);
+            }
           }
         });
       } else {
         // This is a clean non-function Node, so we don't need to acquire inputs.
-        callback(null, release, this.payload);
+        callback(null, releaseAll, this.payload);
       }
     });
   };
 
-  quiver.Operation = function(func) {
-    this.id = getUniqueId();
-    this.inputs = [];
-    this.outputs = [];
-    this.func = func;
-    this.dirty = false;
-    this.lock = new quiver.Lock();
-    // Cached values for passing to func.
-    this.ins = [];
-    this.outs = [];
-  };
-
-  quiver.Operation.prototype.addInNode = function(node) {
-    this.inputs.push(node);
-    this.ins.push(node.object);
-    node._addOutOp(this);
-  };
-
-  quiver.Operation.prototype.addOutNode = function(node) {
-    this.outputs.push(node);
-    this.outs.push(node.object);
-    node._addInOp(this);
-  };
-
-  quiver.Operation.prototype.markDirty = function(visited) {
-    visited = visited || {};
-    if (!this.dirty) {
-      this.dirty = true;
-      for (var i = 0, l = this.outputs.length; i < l; ++i) {
-        this.outputs[i].markDirty();
-      }
-    }
-  };
-
-  quiver.Operation.prototype.processIfDirty = function(callback) {
-    this.lock.acquire(function(release) {
-      if (this.dirty) {
-        async.forEach(this.inputs, function(inNode, cb) {
-          inNode.get(cb);
-        }, function(err) {
-          this.func(this.ins, this.outs, callback);
-          this.dirty = false;
-          release();
+  // callback(err, release, inputPayloads)
+  quiver.Node.prototype._acquireInputs = function(callback) {
+    var tasks = [], releaseCallbacks = [];
+    var releaseAll = _callAll.bind(null, releaseCallbacks);
+    for (var i = 0; l = this.inputs.length; i < l; ++i) {
+      var input = this.inputs[i];
+      task.push(function(cb) {
+        input.acquire(function(err, release, payload) {
+          releaseCallbacks.push(release);
+          cb(err, payload);
         });
+      });
+    });
+    async.parallel(tasks, function(err, inputPayloads) {
+      if (err) {
+        releaseAll();
+        callback(err);
       } else {
-        release();
+        callback(null, releaseAll, inputPayloads);
       }
     });
   };
