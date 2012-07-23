@@ -20,27 +20,76 @@ define([
 ], function(async) {
   var quiver = {};
 
-  var getUniqueId = (function() {
+  var _getUniqueId = (function() {
     var nextId = 0;
     return function() {
       return ++nextId;
     };
   })();
 
-  quiver.Lock = function(concurrency) {
-    concurrency = concurrency || 1;
+  var _pluck = function(arr, property) {
+    var result = [], i, l;
+    for (i = 0, l = arr.length; i < l; ++i) {
+      result.push(arr[i][property]);
+    }
+    return result;
+  }
+
+  var _callAll = function(arr) {
+    for (var i = 0, l = arr.length; i < l; ++i) {
+      arr[i]();
+    }
+  }
+
+  /*
+  async's queue introduces latency with nextTick.
+  quiver.Lock = function() {
     this.queue = new async.queue(function(task, callback) {
-      task(callback);
-    }, concurrency);
+      task(null, callback);
+    }, 1);
   };
 
   quiver.Lock.prototype.acquire = function(callback) {
     this.queue.push(callback);
   };
+  */
+
+  quiver.Lock = function() {
+    // The first callback in the queue is always the one currently holding the lock.
+    this.queue = [];
+  };
+
+  // callback(release)
+  quiver.Lock.prototype.acquire = function(callback) {
+    var q = this.queue;
+    function release() {
+      q.shift();
+      if (q.length > 0) {
+        // Call the next waiting callback.
+        q[0](release);
+      }
+    }
+    q.push(callback);
+    if (q.length === 1) {
+      callback(release);
+    }
+  };
+
+  quiver.Lock.prototype.isLocked = function() {
+    return this.queue.length > 0;
+  };
 
   quiver.connect = function() {
     var prevNodes, prevOp;
     var i, arg, anonNodes;
+
+    function connectNodes(nodes) {
+      if (prevOp) {
+        prevOp.addOutNodes.apply(op, nodes);
+        prevOp = null;
+      }
+      prevNodes = nodes;
+    }
 
     function connectOperation(op) {
       if (prevOp) {
@@ -52,14 +101,6 @@ define([
         op.addInNodes.apply(op, prevNodes);
       }
       prevOp = op;
-    }
-
-    function connectNodes(nodes) {
-      if (prevOp) {
-        prevOp.addOutNodes.apply(op, nodes);
-        prevOp = null;
-      }
-      prevNodes = nodes;
     }
 
     for (i = 0; i < arguments.length; ++i) {
@@ -85,10 +126,89 @@ define([
     }
   };
 
+  quiver.Node = function(opt_payload) {
+    this.payload = opt_payload || {};
+    this.dirty = false;
+    this.inputs = [];
+    this.outputs = [];
+    this.lock = new quiver.Lock();
+    this.id = _getUniqueId();
+  };
+
+  quiver.Node.prototype.addInputs = function() {
+    this.inputs.push.apply(this.inputs, arguments);
+  };
+
+  quiver.Node.prototype.addOutputs = function() {
+    this.outputs.push.apply(this.outputs, arguments);
+  };
+
+  quiver.Node.prototype.markDirty = function(visited) {
+    visited = visited || {};
+    if (visited[this.id]) {
+      throw new Error('Circular dependency detected.');
+    }
+    visited[this.id] = true;
+    for (var i = 0; l = this.outputs.length; i < l; ++i) {
+      this.outputs[i].markDirty(visited);
+    });
+  };
+
+  // callback(err, release, payload)
+  quiver.Node.prototype.acquire = function(callback) {
+    this.lock.acquire(function(release) {
+      var tasks = [], releaseCallbacks = [];
+      function fullRelease() {
+        _callAll(releaseCallbacks);
+        release();
+      }
+      function ready(inputPayloads, cb) {
+        if (this.payload instanceof Function) {
+          var outputPayloads = _pluck(this.outputs, 'payload');
+          this.payload(inputPayloads, outputPayloads, function(err) {
+            if (err) {
+              fullRelease();
+              cb(err);
+            } else {
+              cb(null, fullRelease, true);
+            }
+          });
+        } else {
+          cb(null, fullRelease, this.payload);
+        }
+      }
+      if (this.dirty || this.payload instanceof function) {
+        // We need to acquire our inputs first.
+        for (var i = 0; l = this.inputs.length; i < l; ++i) {
+          var input = this.inputs[i];
+          task.push(function(cb) {
+            input.acquire(function(err, release, payload) {
+              releaseCallbacks.push(release);
+              cb(err, payload);
+            });
+          });
+        });
+        async.parallel(tasks, function(err, inputPayloads) {
+          if (err) {
+            _callAll(releaseCallbacks);
+            callback(err);
+          } else {
+            ready(inputPayloads, function(err, release, cb) {
+              ;
+            });
+          }
+        });
+      } else {
+        // This is a clean non-function Node, so we don't need to acquire inputs.
+        callback(null, release, this.payload);
+      }
+    });
+  };
+
   quiver.Operation = function(func) {
     this.id = getUniqueId();
-    this.inNodes = [];
-    this.outNodes = [];
+    this.inputs = [];
+    this.outputs = [];
     this.func = func;
     this.dirty = false;
     this.lock = new quiver.Lock();
@@ -98,13 +218,13 @@ define([
   };
 
   quiver.Operation.prototype.addInNode = function(node) {
-    this.inNodes.push(node);
+    this.inputs.push(node);
     this.ins.push(node.object);
     node._addOutOp(this);
   };
 
   quiver.Operation.prototype.addOutNode = function(node) {
-    this.outNodes.push(node);
+    this.outputs.push(node);
     this.outs.push(node.object);
     node._addInOp(this);
   };
@@ -113,8 +233,8 @@ define([
     visited = visited || {};
     if (!this.dirty) {
       this.dirty = true;
-      for (var i = 0, l = this.outNodes.length; i < l; ++i) {
-        this.outNodes[i].markDirty();
+      for (var i = 0, l = this.outputs.length; i < l; ++i) {
+        this.outputs[i].markDirty();
       }
     }
   };
@@ -122,7 +242,7 @@ define([
   quiver.Operation.prototype.processIfDirty = function(callback) {
     this.lock.acquire(function(release) {
       if (this.dirty) {
-        async.forEach(this.inNodes, function(inNode, cb) {
+        async.forEach(this.inputs, function(inNode, cb) {
           inNode.get(cb);
         }, function(err) {
           this.func(this.ins, this.outs, callback);
@@ -132,35 +252,6 @@ define([
       } else {
         release();
       }
-    });
-  };
-
-  quiver.Node = function(opt_object) {
-    this.id = getUniqueId();
-    this.object = opt_object || {};
-    this.inOps = [];
-    this.outOps = [];
-  };
-
-  quiver.Node.prototype._addInOp = function(op) {
-    this.inOps.push(op);
-  };
-
-  quiver.Node.prototype._addOutOp = function(op) {
-    this.outOps.push(op);
-  };
-
-  quiver.Node.prototype.markDirty = function() {
-    for (var i = 0; l = this.outOps.length; i < l; ++i) {
-      this.outOps[i].markDirty();
-    });
-  };
-
-  quiver.Node.prototype.get = function(callback) {
-    async.forEach(this.inOps, function(inOp, cb) {
-      inOp.processIfDirty(cb);
-    }, function(err) {
-      callback(err, this.object);
     });
   };
 
