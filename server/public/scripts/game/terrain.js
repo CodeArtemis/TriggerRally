@@ -5,9 +5,11 @@
 define([
   'THREE',
   'async',
+  'util/image',
+  'util/quiver',
   'util/util'
 ],
-function(THREE, async, util) {
+function(THREE, async, uImg, utilQuiver, util) {
   var exports = {};
 
   var Vec3 = THREE.Vector3;
@@ -30,143 +32,60 @@ function(THREE, async, util) {
 
   exports.ImageSource.prototype.load = function(config, callback) {
     this.config = config;
-    var load;
-    if (inNode) {
-      // TODO: Move this into a separate module that never gets delivered
-      // to browser clients.
-      // We know that the URL refers to a local file, so just read it.
-      load = function(url, map, cb) {
-        if (!url) { cb(); return; }
-        var path = __dirname + '/../public' + url;
-        require('fs').readFile(path, function(err, data) {
-          if (err) throw new Error(err);
-          else {
-            var img = new Canvas.Image();
-            img.src = data;
-            this.loadMapImage(img, map, cb);
-          }
-        }.bind(this));
-      }
-    } else {
-      load = function(url, map, cb) {
-        if (!url) { cb(); return; }
-        var image = new Image();
-        image.onload = this.loadMapImage.bind(this, image, map, cb);
-        image.src = url;
-      }
-    }
-    var requests = [];
+
     for (var k in config) {
       var map = this.maps[k] = {
-        scale: new Vec3(config[k].scale[0], config[k].scale[1], config[k].scale[2])
+        scale: new Vec3(config[k].scale[0],
+                        config[k].scale[1],
+                        config[k].scale[2])
       };
-      requests.push(load.bind(this, config[k].url, map));
     }
-    async.parallel(requests,
-      function(err, results) {
-        this.generateHeightMap(this.maps.height);
-        if (!this.maps.surface) {
-          this.maps.surface = {
-            scale: this.maps.height.scale,
-            cx: this.maps.height.cx,
-            cy: this.maps.height.cy
-          };
-        }
-        this.generateSurfaceNormalMap();
-        if (this.maps.detail) {
-          this.generateHeightMap(this.maps.detail);
-        }
-        callback(this);
-      }.bind(this)
-    );
-  };
-
-  function getImageData(image) {
-    var cx = image.width;
-    var cy = image.height;
-    var canvas;
-    if (inNode) {
-      canvas = new Canvas(cx, cy);
-    } else {
-      canvas = document.createElement('canvas');
-      canvas.width = cx;
-      canvas.height = cy;
+    if (!this.maps.surface) {
+      this.maps.surface = {
+        scale: this.maps.height.scale,
+      };
     }
-    var ctx = canvas.getContext('2d');
-    ctx.translate(0, cy);
-    ctx.scale(1, -1);
-    ctx.drawImage(image, 0, 0);
-    return ctx.getImageData(0, 0, cx, cy);
-  }
+    // Create seed buffers. The pipeline will preserve their data types.
+    this.maps.height.displacement = uImg.createImageBuffer(
+        null, 1, 1, 1, Float32Array);  // TODO: Make this Uint16?
+    this.maps.surface.packed = uImg.createImageBuffer(
+        null, 1, 1, 4, Uint8ClampedArray);
+    this.maps.detail.displacement = uImg.createImageBuffer(
+        null, 1, 1, 1, Float32Array);  // TODO: Make this Uint8?
 
-  exports.ImageSource.prototype.loadMapImage = function(image, map, callback) {
-    var imageData = getImageData(image);
-    map.cx = imageData.width;
-    map.cy = imageData.height;
-    map.data = imageData.data;
-    callback();
-  };
+    // Note to self: elevation data in 8-bit PNG seems to compress 20% better
+    // if you split the channels into separate greyscale PNG images.
+    // (on Engelberg 1024x1024 dataset).
 
-  exports.ImageSource.prototype.generateHeightMap = function(map) {
-    map.displacement = new Float32Array(map.cx * map.cy);
-    this.regenHeightMap(map, 0, 0, map.cx, map.cy);
-    // Discard the original data.
-    //map.data = null;
-  };
+    // TODO: More uniform handling of data types. Scale
+    // everything to a 0-1 range?
 
-  exports.ImageSource.prototype.regenHeightMap = function(map, x, y, cx, cy) {
-    var data = map.data;
-    var disp = map.displacement || (map.displacement = new Float32Array(map.cx * map.cy));
-    var stride = map.cx;
-    var ix, iy, i;
-    for (iy = y + cy - 1; iy >= y; --iy) {
-      for (ix = x + cx - 1; ix >= x; --ix) {
-        i = iy * stride + ix;
-        disp[i] = data[i * 4] + data[i * 4 + 1] * 256;
-      }
+    // Set up processing pipelines.
+    // TODO: discard intermediate buffers.
+    quiver.connect(config.height.url,
+                   uImg.imageFromUrl(),
+                   {},
+                   uImg.getImageData({flip: true}),
+                   {},
+                   uImg.unpack16bit(),
+                   maps.height.displacement);
+
+    // We scale the derivatives to fit a Uint8 buffer.
+    quiver.connect(maps.height.displacement,
+                   uImg.derivatives(127.5 / 10, 127.5),
+                   maps.surface.packed);
+
+    if (config.detail) {
+      quiver.connect(config.detail.url,
+                     uImg.imageFromUrl(),
+                     {},
+                     uImg.getImageData({flip: true}),
+                     maps.detail.data = {},
+                     uImg.changeType(Float32Array),  // very wasteful
+                     maps.detail.displacement);
     }
   };
 
-  exports.ImageSource.prototype.generateSurfaceNormalMap = function() {
-    var mapSrc = this.maps.height;
-    var mapDst = this.maps.surface;
-    // TODO: Implement different-sized map conversion.
-    var cx = mapDst.cx, cy = mapDst.cy;
-    var origData = mapDst.data;
-    var packed = mapDst.packed || (mapDst.packed = new Uint8ClampedArray(cx * cy * 4));
-    var disp = mapSrc.displacement;
-    var x, y, h, i, x2, y2, i;
-    for (y = 0; y < cy; ++y) {
-      for (x = 0; x < cx; ++x) {
-        h = [], i = 0;
-        for (y2 = -1; y2 <= 2; ++y2) {
-          for (x2 = -1; x2 <= 2; ++x2) {
-            h[i++] = disp[wrap(x + x2, cx) + wrap(y + y2, cy) * cx];
-          }
-        }
-        // TODO: Optimize these constant x catmullRom calls.
-        var derivX = catmullRomDeriv(
-            catmullRom(h[ 0], h[ 4], h[ 8], h[12], 0.5),
-            catmullRom(h[ 1], h[ 5], h[ 9], h[13], 0.5),
-            catmullRom(h[ 2], h[ 6], h[10], h[14], 0.5),
-            catmullRom(h[ 3], h[ 7], h[11], h[15], 0.5),
-            0.5);
-        var derivY = catmullRomDeriv(
-            catmullRom(h[ 0], h[ 1], h[ 2], h[ 3], 0.5),
-            catmullRom(h[ 4], h[ 5], h[ 6], h[ 7], 0.5),
-            catmullRom(h[ 8], h[ 9], h[10], h[11], 0.5),
-            catmullRom(h[12], h[13], h[14], h[15], 0.5),
-            0.5);
-        i = (y * cx + x) * 4;
-        packed[i + 0] = 127.5 + derivX * 127.5 / 10;
-        packed[i + 1] = 127.5 + derivY * 127.5 / 10;
-        //packed[i + 2] = origData[i + 2];
-        //packed[i + 3] = origData[i + 3];
-      }
-    }
-  };
-
-  // cx, cy = width and height of heightmap
   exports.Terrain = function(source) {
     this.source = source;
     // We don't really support tiles yet, just repeat a single tile.
@@ -203,7 +122,7 @@ function(THREE, async, util) {
     var floory = Math.floor(tY);
     var fracx = tX - floorx;
     var fracy = tY - floory;
-    var cx = mapHeight.cx, cy = mapHeight.cy;
+    var cx = mapHeight.width, cy = mapHeight.height;
     var hmap = mapHeight.displacement;
     var mapDetail = this.terrain.source.maps.detail;
 
@@ -250,8 +169,8 @@ function(THREE, async, util) {
 
     if (mapDetail) {
       var dmap = mapDetail.displacement;
-      cx = mapDetail.cx;
-      cy = mapDetail.cy;
+      cx = mapDetail.width;
+      cy = mapDetail.height;
       var detailx = x / mapDetail.scale.x;
       var detaily = y / mapDetail.scale.y;
       floorx = Math.floor(detailx);

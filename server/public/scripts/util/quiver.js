@@ -71,11 +71,13 @@ define(function(require, exports, module) {
 
   exports.Node = function(opt_payload) {
     this.payload = opt_payload || {};
-    this.dirty = false;
+    this.dirty = true;
     this.inputs = [];
     this.outputs = [];
     this.lock = new exports.Lock();
     this.id = _getUniqueId();
+
+    this.payload._quiverNode = this;
   };
 
   exports.Node.prototype.pushInputs = function() {
@@ -87,13 +89,17 @@ define(function(require, exports, module) {
   };
 
   exports.Node.prototype.markDirty = function(visited) {
-    visited = visited || {};
-    if (visited[this.id]) {
-      throw new Error('Circular dependency detected.');
-    }
-    visited[this.id] = true;
-    for (var i = 0; l = this.outputs.length; i < l; ++i) {
-      this.outputs[i].markDirty(visited);
+    this.lock.acquire(function(release) {
+      visited = visited || {};
+      if (visited[this.id]) {
+        release();
+        throw new Error('Circular dependency detected.');
+      }
+      visited[this.id] = true;
+      for (var i = 0; l = this.outputs.length; i < l; ++i) {
+        this.outputs[i].markDirty(visited);
+      }
+      release();
     });
   };
 
@@ -164,6 +170,8 @@ define(function(require, exports, module) {
     var coerceToNode = function(value) {
       if (value instanceof exports.Node) {
         return value;
+      } else if (value._quiverNode) {
+        return value._quiverNode;
       } else {
         return new exports.Node(value);
       }
@@ -207,6 +215,7 @@ define(function(require, exports, module) {
   Creating two nodes with the same object
   Setup without connect?
   Async ops and locking
+  Nested pipelines
   */
 
   return exports;
