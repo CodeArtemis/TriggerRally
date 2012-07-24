@@ -86,8 +86,8 @@ function(THREE, async, uImg, quiver, util) {
                      uImg.imageFromUrl(),
                      {},
                      uImg.getImageData({flip: true}),
-                     maps.detail.data = {},
-                     uImg.changeType(Float32Array),  // very wasteful
+                     {},
+                     uImg.copyChannel(0, 0),
                      maps.detail.displacement);
 
       maps.detail.displacement._quiverNode.acquire(caller)
@@ -178,9 +178,9 @@ function(THREE, async, uImg, quiver, util) {
         1).divideSelf(mapHeight.scale).normalize();
 
     if (mapDetail) {
-      var dmap = mapDetail.displacement;
-      cx = mapDetail.width;
-      cy = mapDetail.height;
+      var dmap = mapDetail.displacement.data;
+      cx = mapDetail.displacement.width;
+      cy = mapDetail.displacement.height;
       var detailx = x / mapDetail.scale.x;
       var detaily = y / mapDetail.scale.y;
       floorx = Math.floor(detailx);

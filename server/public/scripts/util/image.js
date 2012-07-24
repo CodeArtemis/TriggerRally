@@ -51,6 +51,10 @@ define(function(require, exports, module) {
     }
   };
 
+  var _wrap = function(x, lim) {
+    return x - Math.floor(x / lim) * lim;
+  };
+
   // TODO: Move to quiver? Unused?
   var _oneToOne = exports.oneToOne = function(fn) {
     return function(inputs, outputs, callback) {
@@ -137,6 +141,32 @@ define(function(require, exports, module) {
     };
   };
 
+  exports.copyChannel = function(srcChannel, dstChannel) {
+    srcChannel = srcChannel || 0;
+    dstChannel = dstChannel || 0;
+    return function(ins, outs, callback) {
+      _assert(ins.length === 1 && ins.length === 1);
+      var src = ins[0], dst = outs[0];
+      var srcChannels = _channels(src);
+      _assert(srcChannels > srcChannel);
+      _ensureDims(dst, src.width, src.height, dstChannel + 1, Uint8Array);
+      var srcData = src.data, dstData = dst.data;
+      var dstChannels = _channels(dst);
+      var minX = 0, minY = 0, maxX = src.width, maxY = src.height;
+      var sX, sY, srcPtr, dstPtr;
+      for (sY = minY; sY < maxY; ++sY) {
+        srcPtr = (sY * src.width) * srcChannels + srcChannel;
+        dstPtr = (sY * dst.width) * dstChannels + dstChannel;
+        for (sX = minX; sX < maxX; ++sX) {
+          dstData[dstPtr] = srcData[srcPtr];
+          srcPtr += srcChannels;
+          dstPtr += dstChannels;
+        }
+      }
+      callback();
+    }
+  };
+
   exports.unpack16bit = function(dstChannel) {
     dstChannel = dstChannel || 0;
     return function(ins, outs, callback, dirty) {
@@ -174,7 +204,7 @@ define(function(require, exports, module) {
       var src = ins[0], dst = outs[0];
       // TODO: Implement different-sized map conversion.
       _ensureDims(dst, src.width, src.height, 1, Float32Array);
-      var cx = src.cx, cy = src.cy;
+      var cx = src.width, cy = src.height;
       var srcData = src.data, dstData = dst.data;
       var dstChannels = _channels(dst);
       var x, y, h, i, x2, y2, i, derivX, derivY;
@@ -183,7 +213,7 @@ define(function(require, exports, module) {
           h = [], i = 0;
           for (y2 = -1; y2 <= 2; ++y2) {
             for (x2 = -1; x2 <= 2; ++x2) {
-              h[i++] = srcData[wrap(x + x2, cx) + wrap(y + y2, cy) * cx];
+              h[i++] = srcData[_wrap(x + x2, cx) + _wrap(y + y2, cy) * cx];
             }
           }
           // TODO: Optimize these constant x catmullRom calls.

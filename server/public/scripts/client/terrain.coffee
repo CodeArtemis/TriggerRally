@@ -319,22 +319,45 @@ define [
         when Float32Array then THREE.FloatType
         else throw 'Unknown type'
 
+      createTexture = (buffer) ->
+        new THREE.DataTexture(
+            buffer.data,
+            buffer.width,
+            buffer.height,
+            threeFmt(uImg.channels buffer),
+            threeType(buffer.data),
+            null,
+            THREE.RepeatWrapping, THREE.RepeatWrapping,
+            THREE.LinearFilter, THREE.LinearFilter)
+
       @terrain.source.maps.height.displacement._quiverNode.acquire (err, release, buffer) =>
         if err then throw err
-        tex = new THREE.DataTexture(
-          buffer.data,
-          buffer.width,
-          buffer.height,
-          threeFmt(uImg.channels buffer),
-          threeType(buffer.data),
-          null,
-          THREE.RepeatWrapping, THREE.RepeatWrapping,
-          THREE.LinearFilter, THREE.LinearFilter)
+        tex = createTexture buffer
         tex.generateMipmaps = false
         tex.needsUpdate = true
         @material.uniforms.tHeight.texture = tex
         @material.uniforms.tHeightSize.value.set buffer.width, buffer.height
         @material.uniforms.tHeightScale.value.copy @terrain.source.maps.height.scale
+        release()
+
+      @terrain.source.maps.surface.packed._quiverNode.acquire (err, release, buffer) =>
+        if err then throw err
+        tex = createTexture buffer
+        tex.generateMipmaps = true
+        tex.needsUpdate = true
+        @material.uniforms.tSurface.texture = tex
+        @material.uniforms.tSurfaceSize.value.set buffer.width, buffer.height
+        @material.uniforms.tSurfaceScale.value.copy @terrain.source.maps.surface.scale
+        release()
+
+      @terrain.source.maps.detail.displacement._quiverNode.acquire (err, release, buffer) =>
+        if err then throw err
+        tex = createTexture buffer
+        tex.generateMipmaps = true
+        tex.needsUpdate = true
+        @material.uniforms.tDetail.texture = tex
+        @material.uniforms.tDetailSize.value.set buffer.width, buffer.height
+        @material.uniforms.tDetailScale.value.copy @terrain.source.maps.detail.scale
         release()
       return
 
