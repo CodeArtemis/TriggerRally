@@ -96,17 +96,17 @@ define(function(require, exports, module) {
         throw new Error('Circular dependency detected.');
       }
       visited[this.id] = true;
-      for (var i = 0; l = this.outputs.length; i < l; ++i) {
+      for (var i = 0, l = this.outputs.length; i < l; ++i) {
         this.outputs[i].markDirty(visited);
       }
       release();
-    });
+    }.bind(this));
   };
 
   // callback(err, release, payload)
   exports.Node.prototype.acquire = function(callback) {
     this.lock.acquire(function(release) {
-      if (this.dirty || this.payload instanceof function) {
+      if (this.dirty || this.payload instanceof Function) {
         // We need to acquire our inputs first.
         this._acquireInputs(function(err, releaseInputs, inputPayloads) {
           var releaseAll = function() {
@@ -127,33 +127,33 @@ define(function(require, exports, module) {
                   this.dirty = false;
                   callback(null, releaseAll, true);
                 }
-              });
+              }.bind(this));
             } else {
               this.dirty = false;
               callback(null, releaseAll, this.payload);
             }
           }
-        });
+        }.bind(this));
       } else {
         // This is a clean non-function Node, so we don't need to acquire inputs.
-        callback(null, releaseAll, this.payload);
+        callback(null, release, this.payload);
       }
-    });
+    }.bind(this));
   };
 
   // callback(err, release, inputPayloads)
   exports.Node.prototype._acquireInputs = function(callback) {
     var tasks = [], releaseCallbacks = [];
     var releaseAll = _callAll.bind(null, releaseCallbacks);
-    for (var i = 0; l = this.inputs.length; i < l; ++i) {
+    for (var i = 0, l = this.inputs.length; i < l; ++i) {
       var input = this.inputs[i];
-      task.push(function(cb) {
+      tasks.push(function(cb) {
         input.acquire(function(err, release, payload) {
           releaseCallbacks.push(release);
           cb(err, payload);
         });
       });
-    });
+    }
     async.parallel(tasks, function(err, inputPayloads) {
       if (err) {
         releaseAll();
@@ -177,7 +177,7 @@ define(function(require, exports, module) {
       }
     };
 
-    var coerceToNodeArray = function(arr) {
+    var coerceToNodeArray = function(value) {
       if (value instanceof Array) {
         var result = [];
         for (var i = 0, l = value.length; i < l; ++i) {
@@ -217,6 +217,4 @@ define(function(require, exports, module) {
   Async ops and locking
   Nested pipelines
   */
-
-  return exports;
 });

@@ -26,6 +26,10 @@ requirejs.config({
   }
 });
 
+// Dummy modules.
+define('canvas', function() {});
+define('fs', function() {});
+
 require(
   {
     paths: {

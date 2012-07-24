@@ -23,7 +23,8 @@ define(function(require, exports, module) {
     if (!val) throw new Error(msg || 'Assert failed.');
   };
 
-  var _channels = function(buffer) {
+  var _channels =
+  exports.channels = function(buffer) {
     return buffer.data.length / buffer.width / buffer.height;
   };
 
@@ -41,9 +42,22 @@ define(function(require, exports, module) {
         buffer.width != width ||
         buffer.height != height ||
         _channels(buffer) < minChannels) {
-      var type = buffer.data && buffer.data.constructor || defaultType;
+      var type = defaultType, channels = minChannels;
+      if (buffer.data) {
+        type = buffer.data.constructor;
+        channels = Math.max(channels, _channels(buffer));
+      }
       _createBuffer(buffer, width, height, channels, type);
     }
+  };
+
+  // TODO: Move to quiver? Unused?
+  var _oneToOne = exports.oneToOne = function(fn) {
+    return function(inputs, outputs, callback) {
+      _assert(inputs.length === 1, 'Wrong number of inputs.');
+      _assert(outputs.length === 1, 'Wrong number of outputs.');
+      fn(inputs[0], outputs[0], callback);
+    };
   };
 
   var _loadImageNode = function(url, callback) {
@@ -64,33 +78,24 @@ define(function(require, exports, module) {
     image.src = url;
   };
 
-  exports.imageFromUrl = exports.oneToOne(
-    function(url, imgObject, callback) {
+  exports.imageFromUrl = function() {
+    return _oneToOne(function(url, imgObject, callback) {
       var load = inNode ? _loadImageNode : _loadImageBrowser;
       load(url, function(err, image) {
         if (err) callback(err);
         else {
-          // TODO: Clean out the object first?
-          imgObject.__proto__ = image;
+          imgObject.img = image;
           callback();
         }
       });
     });
-
-  // TODO: Move to quiver? Unused?
-  exports.oneToOne = function(fn) {
-    return function(inputs, outputs, callback) {
-      _assert(inputs.length === 1, 'Wrong number of inputs.');
-      _assert(outputs.length === 1, 'Wrong number of outputs.');
-      fn(inputs[0], outputs[0], callback);
-    };
   };
 
   exports.getImageData = function(params) {
     params = params || {};
     return function(ins, outs, callback) {
-      _assert(inputs.length === 1 && outputs.length === 1);
-      var image = ins[0];
+      _assert(ins.length === 1 && ins.length === 1);
+      var image = ins[0].img;
       var cx = image.width;
       var cy = image.height;
       var canvas;
@@ -120,20 +125,22 @@ define(function(require, exports, module) {
   // type: a JS array type, eg Float32Array.
   exports.changeType = function(type) {
     return function(ins, outs, callback) {
-      _assert(inputs.length === 1 && outputs.length === 1);
-      var channels = _channels(ins[0]);
-      _createBuffer(outs[0], width, height, channels, type);
-      var srcData = ins[0].data, dstData = outs[0].data;
+      _assert(ins.length === 1 && ins.length === 1);
+      var src = ins[0], dst = outs[0];
+      var channels = _channels(src);
+      _createBuffer(outs[0], src.width, src.height, channels, type);
+      var srcData = src.data, dstData = dst.data;
       for (var i = 0, l = srcData.length; i < l; ++i) {
         dstData[i] = srcData[i];
       }
+      callback();
     };
   };
 
   exports.unpack16bit = function(dstChannel) {
     dstChannel = dstChannel || 0;
     return function(ins, outs, callback, dirty) {
-      _assert(inputs.length === 1 && outputs.length === 1);
+      _assert(ins.length === 1 && ins.length === 1);
       var src = ins[0], dst = outs[0];
       var srcChannels = _channels(src);
       _assert(srcChannels >= 2);
@@ -152,7 +159,7 @@ define(function(require, exports, module) {
         srcPtr = (sY * src.width) * srcChannels;
         dstPtr = (sY * dst.width) * dstChannels + dstChannel;
         for (sX = minX; sX < maxX; ++sX) {
-          dst[dstPtr] = src[srcPtr] + src[srcPtr + 1] * 256;
+          dstData[dstPtr] = srcData[srcPtr] + srcData[srcPtr + 1] * 256;
           srcPtr += srcChannels;
           dstPtr += dstChannels;
         }
@@ -161,21 +168,22 @@ define(function(require, exports, module) {
     }
   };
 
-  exports.ImageSource.prototype.derivatives = function(multiply, add) {
+  exports.derivatives = function(multiply, add) {
     return function(ins, outs, callback) {
-      _assert(inputs.length === 1 && outputs.length === 1);
+      _assert(ins.length === 1 && ins.length === 1);
       var src = ins[0], dst = outs[0];
       // TODO: Implement different-sized map conversion.
       _ensureDims(dst, src.width, src.height, 1, Float32Array);
       var cx = src.cx, cy = src.cy;
-      var disp = mapSrc.displacement;
+      var srcData = src.data, dstData = dst.data;
+      var dstChannels = _channels(dst);
       var x, y, h, i, x2, y2, i, derivX, derivY;
       for (y = 0; y < cy; ++y) {
         for (x = 0; x < cx; ++x) {
           h = [], i = 0;
           for (y2 = -1; y2 <= 2; ++y2) {
             for (x2 = -1; x2 <= 2; ++x2) {
-              h[i++] = disp[wrap(x + x2, cx) + wrap(y + y2, cy) * cx];
+              h[i++] = srcData[wrap(x + x2, cx) + wrap(y + y2, cy) * cx];
             }
           }
           // TODO: Optimize these constant x catmullRom calls.
@@ -192,11 +200,12 @@ define(function(require, exports, module) {
               catmullRom(h[ 8], h[ 9], h[10], h[11], 0.5),
               catmullRom(h[12], h[13], h[14], h[15], 0.5),
               0.5);
-          i = (y * cx + x) * 4;
-          packed[i + 0] = derivX * multiply + add;
-          packed[i + 1] = derivY * multiply + add;
+          i = (y * cx + x) * dstChannels;
+          dstData[i + 0] = derivX * multiply + add;
+          dstData[i + 1] = derivY * multiply + add;
         }
       }
+      callback();
     };
   };
 });

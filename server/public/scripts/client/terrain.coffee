@@ -5,8 +5,10 @@
 define [
   'THREE'
   'cs!client/array_geometry'
-], (THREE, array_geometry) ->
+  'util/image'
+], (THREE, array_geometry, uImg) ->
   Vec2 = THREE.Vector2
+  Vec3 = THREE.Vector3
 
   RenderTerrain: class RenderTerrain
     constructor: (@scene, @terrain, @gl) ->
@@ -36,7 +38,6 @@ define [
       return
 
     _setup: ->
-      maps = @_createMaps @terrain
       diffuseTex = THREE.ImageUtils.loadTexture('/a/textures/mayang-earth2.jpg')
       diffuseTex.wrapS = THREE.RepeatWrapping
       diffuseTex.wrapT = THREE.RepeatWrapping
@@ -55,33 +56,33 @@ define [
           tHeight:
             type: 't'
             value: 0
-            texture: maps.height
+            texture: null
           tHeightSize:
             type: 'v2'
-            value: new Vec2 @terrain.source.maps.height.cx, @terrain.source.maps.height.cy
+            value: new Vec2 1, 1
           tHeightScale:
             type: 'v3'
-            value: @terrain.source.maps.height.scale
+            value: new Vec3 1, 1, 1
           tSurface:
             type: 't'
             value: 1
-            texture: maps.surface
+            texture: null
           tSurfaceSize:
             type: 'v2'
-            value: new Vec2 @terrain.source.maps.surface.cx, @terrain.source.maps.surface.cy
+            value: new Vec2 1, 1
           tSurfaceScale:
             type: 'v3'
-            value: @terrain.source.maps.surface.scale
+            value: new Vec3 1, 1, 1
           tDetail:
             type: 't'
             value: 2
-            texture: maps.detail
+            texture: null
           tDetailSize:
             type: 'v2'
-            value: new Vec2 @terrain.source.maps.detail.cx, @terrain.source.maps.detail.cy
+            value: new Vec2 1, 1
           tDetailScale:
             type: 'v3'
-            value: @terrain.source.maps.detail.scale
+            value: new Vec3 1, 1, 1
           tDiffuse:
             type: 't'
             value: 3
@@ -304,6 +305,37 @@ define [
           """
       obj.material = @material
       @scene.add obj
+
+      threeFmt = (channels) -> switch channels
+        when 1 then THREE.LuminanceFormat
+        when 2 then THREE.LuminanceAlphaFormat
+        when 3 then THREE.RGBFormat
+        when 4 then THREE.RGBAFormat
+        else throw 'Unknown format'
+
+      threeType = (data) -> switch data.constructor
+        when Uint8Array then THREE.UnsignedByteType
+        when Uint8ClampedArray then THREE.UnsignedByteType
+        when Float32Array then THREE.FloatType
+        else throw 'Unknown type'
+
+      @terrain.source.maps.height.displacement._quiverNode.acquire (err, release, buffer) =>
+        if err then throw err
+        tex = new THREE.DataTexture(
+          buffer.data,
+          buffer.width,
+          buffer.height,
+          threeFmt(uImg.channels buffer),
+          threeType(buffer.data),
+          null,
+          THREE.RepeatWrapping, THREE.RepeatWrapping,
+          THREE.LinearFilter, THREE.LinearFilter)
+        tex.generateMipmaps = false
+        tex.needsUpdate = true
+        @material.uniforms.tHeight.texture = tex
+        @material.uniforms.tHeightSize.value.set buffer.width, buffer.height
+        @material.uniforms.tHeightScale.value.copy @terrain.source.maps.height.scale
+        release()
       return
 
     _createImmediateObject: ->

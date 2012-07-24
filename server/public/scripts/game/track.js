@@ -119,20 +119,20 @@ function(LFIB4, THREE, gameScenery, gameTerrain, util) {
             var pY = catmullRom(cp[0].y, cp[1].y, cp[2].y, cp[3].y, x);
             var pZ = catmullRom(cp[0].z, cp[1].z, cp[2].z, cp[3].z, x);
 
-            calls.push(drawCircleDisplacement.bind(null, maps.height, pX, pY, pZ, radius, 0.4, 0.1));
-            drawCircle(maps.surface, maps.surface.packed, 4, 2, pX, pY, 255, 100, 0.4, 1);
+            //calls.push(drawCircleDisplacement.bind(null, maps.height, pX, pY, pZ, radius, 0.4, 0.1));
+            //drawCircle(maps.surface, maps.surface.packed, 4, 2, pX, pY, 255, 100, 0.4, 1);
           }
         }
         // Stagger the drawCircle calls.
         var samples = [0, 2, 4, 1, 5, 3], jump = samples.length, j;
         for (j = 0; j < jump; ++j) {
           for (i = samples[j]; i < calls.length; i += jump) {
-            calls[i]();
+            //calls[i]();
           }
         }
 
         // TODO: Just regenerate the part we changed.
-        this.terrain.source.generateSurfaceNormalMap();
+        //this.terrain.source.generateSurfaceNormalMap();
 
         adjustCheckpointHeights();
 

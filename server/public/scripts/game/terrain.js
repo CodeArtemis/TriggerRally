@@ -9,7 +9,7 @@ define([
   'util/quiver',
   'util/util'
 ],
-function(THREE, async, uImg, utilQuiver, util) {
+function(THREE, async, uImg, quiver, util) {
   var exports = {};
 
   var Vec3 = THREE.Vector3;
@@ -32,25 +32,26 @@ function(THREE, async, uImg, utilQuiver, util) {
 
   exports.ImageSource.prototype.load = function(config, callback) {
     this.config = config;
+    var maps = this.maps;
 
     for (var k in config) {
-      var map = this.maps[k] = {
+      maps[k] = {
         scale: new Vec3(config[k].scale[0],
                         config[k].scale[1],
                         config[k].scale[2])
       };
     }
-    if (!this.maps.surface) {
-      this.maps.surface = {
-        scale: this.maps.height.scale,
+    if (!maps.surface) {
+      maps.surface = {
+        scale: maps.height.scale,
       };
     }
     // Create seed buffers. The pipeline will preserve their data types.
-    this.maps.height.displacement = uImg.createImageBuffer(
+    maps.height.displacement = uImg.createBuffer(
         null, 1, 1, 1, Float32Array);  // TODO: Make this Uint16?
-    this.maps.surface.packed = uImg.createImageBuffer(
+    maps.surface.packed = uImg.createBuffer(
         null, 1, 1, 4, Uint8ClampedArray);
-    this.maps.detail.displacement = uImg.createImageBuffer(
+    maps.detail.displacement = uImg.createBuffer(
         null, 1, 1, 1, Float32Array);  // TODO: Make this Uint8?
 
     // Note to self: elevation data in 8-bit PNG seems to compress 20% better
@@ -59,6 +60,8 @@ function(THREE, async, uImg, utilQuiver, util) {
 
     // TODO: More uniform handling of data types. Scale
     // everything to a 0-1 range?
+
+    var caller = function(err, fn) { fn && fn(); };
 
     // Set up processing pipelines.
     // TODO: discard intermediate buffers.
@@ -75,6 +78,9 @@ function(THREE, async, uImg, utilQuiver, util) {
                    uImg.derivatives(127.5 / 10, 127.5),
                    maps.surface.packed);
 
+    maps.height.displacement._quiverNode.acquire(caller);
+    maps.surface.packed._quiverNode.acquire(caller);
+
     if (config.detail) {
       quiver.connect(config.detail.url,
                      uImg.imageFromUrl(),
@@ -83,7 +89,10 @@ function(THREE, async, uImg, utilQuiver, util) {
                      maps.detail.data = {},
                      uImg.changeType(Float32Array),  // very wasteful
                      maps.detail.displacement);
+
+      maps.detail.displacement._quiverNode.acquire(caller)
     }
+    callback();
   };
 
   exports.Terrain = function(source) {
@@ -122,8 +131,9 @@ function(THREE, async, uImg, utilQuiver, util) {
     var floory = Math.floor(tY);
     var fracx = tX - floorx;
     var fracy = tY - floory;
-    var cx = mapHeight.width, cy = mapHeight.height;
-    var hmap = mapHeight.displacement;
+    var cx = mapHeight.displacement.width;
+    var cy = mapHeight.displacement.height;
+    var hmap = mapHeight.displacement.data;
     var mapDetail = this.terrain.source.maps.detail;
 
     if (!hmap) {
