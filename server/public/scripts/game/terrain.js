@@ -47,12 +47,11 @@ function(THREE, async, uImg, quiver, util) {
       };
     }
     // Create seed buffers. The pipeline will preserve their data types.
-    maps.height.displacement = uImg.createBuffer(
-        null, 1, 1, 1, Float32Array);  // TODO: Make this Uint16?
-    maps.surface.packed = uImg.createBuffer(
-        null, 1, 1, 4, Uint8ClampedArray);
-    maps.detail.displacement = uImg.createBuffer(
-        null, 1, 1, 1, Float32Array);  // TODO: Make this Uint8?
+    // TODO: Make this Uint16?
+    uImg.createBuffer(maps.height, 1, 1, 1, Float32Array);
+    maps.surface = uImg.createBuffer(maps.surface, 1, 1, 4, Uint8ClampedArray);
+    // TODO: Make this Uint8?
+    maps.detail = uImg.createBuffer(maps.detail, 1, 1, 4, Uint8ClampedArray);
 
     // Note to self: elevation data in 8-bit PNG seems to compress 20% better
     // if you split the channels into separate greyscale PNG images.
@@ -60,8 +59,6 @@ function(THREE, async, uImg, quiver, util) {
 
     // TODO: More uniform handling of data types. Scale
     // everything to a 0-1 range?
-
-    var caller = function(err, fn) { fn && fn(); };
 
     // Set up processing pipelines.
     // TODO: discard intermediate buffers.
@@ -71,26 +68,26 @@ function(THREE, async, uImg, quiver, util) {
                    uImg.getImageData({flip: true}),
                    {},
                    uImg.unpack16bit(),
-                   maps.height.displacement);
+                   maps.height);
 
     // We scale the derivatives to fit a Uint8 buffer.
-    quiver.connect(maps.height.displacement,
-                   uImg.derivatives(127.5 / 10, 127.5),
-                   maps.surface.packed);
-
-    maps.height.displacement._quiverNode.acquire(caller);
-    maps.surface.packed._quiverNode.acquire(caller);
+    quiver.connect(maps.height,
+                   uImg.catmullRomDerivatives(127.5 / 127.5, 127.5),
+                   maps.surface);
 
     if (config.detail) {
+      var imgData = {};
       quiver.connect(config.detail.url,
                      uImg.imageFromUrl(),
                      {},
                      uImg.getImageData({flip: true}),
-                     {},
-                     uImg.copyChannel(0, 0),
-                     maps.detail.displacement);
+                     imgData,
+                     uImg.copyChannel(0, 2),
+                     maps.detail);
 
-      maps.detail.displacement._quiverNode.acquire(caller)
+      quiver.connect(imgData,
+                     uImg.derivatives(2, 127.5),
+                     maps.detail);
     }
     callback();
   };
@@ -131,9 +128,9 @@ function(THREE, async, uImg, quiver, util) {
     var floory = Math.floor(tY);
     var fracx = tX - floorx;
     var fracy = tY - floory;
-    var cx = mapHeight.displacement.width;
-    var cy = mapHeight.displacement.height;
-    var hmap = mapHeight.displacement.data;
+    var cx = mapHeight.width;
+    var cy = mapHeight.height;
+    var hmap = mapHeight.data;
     var mapDetail = this.terrain.source.maps.detail;
 
     if (!hmap) {
@@ -178,23 +175,24 @@ function(THREE, async, uImg, quiver, util) {
         1).divideSelf(mapHeight.scale).normalize();
 
     if (mapDetail) {
-      var dmap = mapDetail.displacement.data;
-      cx = mapDetail.displacement.width;
-      cy = mapDetail.displacement.height;
+      var dmap = mapDetail.data;
+      cx = mapDetail.width;
+      cy = mapDetail.height;
       var detailx = x / mapDetail.scale.x;
       var detaily = y / mapDetail.scale.y;
       floorx = Math.floor(detailx);
       floory = Math.floor(detaily);
       fracx = detailx - floorx;
       fracy = detaily - floory;
-      h[0] = dmap[wrap(floorx + 0, cx) + wrap(floory + 0, cy) * cx];
-      h[1] = dmap[wrap(floorx + 1, cx) + wrap(floory + 0, cy) * cx];
-      h[2] = dmap[wrap(floorx + 0, cx) + wrap(floory + 1, cy) * cx];
-      h[3] = dmap[wrap(floorx + 1, cx) + wrap(floory + 1, cy) * cx];
+      h[0] = dmap[(wrap(floorx    , cx) + wrap(floory    , cy) * cx) * 4 + 2];
+      h[1] = dmap[(wrap(floorx + 1, cx) + wrap(floory    , cy) * cx) * 4 + 2];
+      h[2] = dmap[(wrap(floorx    , cx) + wrap(floory + 1, cy) * cx) * 4 + 2];
+      h[3] = dmap[(wrap(floorx + 1, cx) + wrap(floory + 1, cy) * cx) * 4 + 2];
       height += INTERP(
           INTERP(h[0], h[1], fracx),
           INTERP(h[2], h[3], fracx),
           fracy) * mapDetail.scale.z;
+      // Would it be faster to grab the packed derivates from the detail map?
       var detailNormal = new Vec3(
           h[0] + h[2] - h[1] - h[3],
           h[0] + h[1] - h[2] - h[3],

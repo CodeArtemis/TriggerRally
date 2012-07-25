@@ -51,17 +51,17 @@ a.disabled:visited {
   display: none;
 }
 body {
-  background: #dec;
-  color: #000;
+  background: #333;
+  color: #bbb;
   padding: 0;
   margin: 0;
   font-family: "Ubuntu", sans-serif;
   font-size: 0.8em;
   overflow: hidden;
-  text-shadow: 0 1px 0 #fff;
+  text-shadow: 0 1px 0 #000;
 }
 .field {
-  background: rgba(255,255,255,0.40);
+  background: rgba(255,255,255,0.10);
   margin: 0.5em 0;
 }
 .field :nth-child(1) {
@@ -79,7 +79,7 @@ input[type="range"] {
   width: 60%;
 }
 input:checked + label {
-  color: #800;
+  color: #e77;
 }
 #editor-toolbox {
   box-shadow: 0 0 40px #000;

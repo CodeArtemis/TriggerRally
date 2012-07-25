@@ -72,10 +72,9 @@ define [
       return
 
     sunLight: ->
-      @sunLightPos = new Vec3(-6, -7, 10)
       sunLight = new THREE.DirectionalLight( 0xffe0bb )
       sunLight.intensity = 1.3
-      sunLight.position.copy(@sunLightPos)
+      @sunLightPos = sunLight.position.set 10, 0, 10
 
       sunLight.castShadow = true
 

@@ -124,7 +124,7 @@ define(function(require, exports, module) {
       outs[0].data = data.data;
       callback();
     };
-  }
+  };
 
   // type: a JS array type, eg Float32Array.
   exports.changeType = function(type) {
@@ -164,7 +164,7 @@ define(function(require, exports, module) {
         }
       }
       callback();
-    }
+    };
   };
 
   exports.unpack16bit = function(dstChannel) {
@@ -195,10 +195,11 @@ define(function(require, exports, module) {
         }
       }
       callback();
-    }
+    };
   };
 
-  exports.derivatives = function(multiply, add) {
+  exports.derivatives = function(multiply, add, srcChannel) {
+    srcChannel = srcChannel || 0;
     return function(ins, outs, callback) {
       _assert(ins.length === 1 && ins.length === 1);
       var src = ins[0], dst = outs[0];
@@ -206,14 +207,53 @@ define(function(require, exports, module) {
       _ensureDims(dst, src.width, src.height, 1, Float32Array);
       var cx = src.width, cy = src.height;
       var srcData = src.data, dstData = dst.data;
+      var srcChannels = _channels(src);
       var dstChannels = _channels(dst);
-      var x, y, h, i, x2, y2, i, derivX, derivY;
+      var x, y, dstPtr, derivX, derivY;
+      var h = new Float32Array(4);
       for (y = 0; y < cy; ++y) {
         for (x = 0; x < cx; ++x) {
-          h = [], i = 0;
-          for (y2 = -1; y2 <= 2; ++y2) {
-            for (x2 = -1; x2 <= 2; ++x2) {
-              h[i++] = srcData[_wrap(x + x2, cx) + _wrap(y + y2, cy) * cx];
+          h[0] = srcData[(_wrap(x - 1, cx) +       y          * cx) * srcChannels + srcChannel];
+          h[1] = srcData[(_wrap(x + 1, cx) +       y          * cx) * srcChannels + srcChannel];
+          h[2] = srcData[(      x          + _wrap(y - 1, cy) * cx) * srcChannels + srcChannel];
+          h[3] = srcData[(      x          + _wrap(y + 1, cy) * cx) * srcChannels + srcChannel];
+          derivX = (h[1] - h[0]) * 0.5;
+          derivY = (h[3] - h[2]) * 0.5;
+          dstPtr = (y * cx + x) * dstChannels;
+          dstData[dstPtr + 0] = derivX * multiply + add;
+          dstData[dstPtr + 1] = derivY * multiply + add;
+        }
+      }
+      callback();
+    };
+  };
+
+  exports.catmullRomDerivatives = function(multiply, add) {
+    return function(ins, outs, callback) {
+      _assert(ins.length === 1 && ins.length === 1);
+      var src = ins[0], dst = outs[0];
+      // TODO: Implement different-sized map conversion.
+      _ensureDims(dst, src.width, src.height, 1, Float32Array);
+      var cx = src.width, cy = src.height;
+      var srcData = src.data, dstData = dst.data;
+      var srcChannels = _channels(src);
+      var dstChannels = _channels(dst);
+      var x, y, i, x2, y2, derivX, derivY;
+      var h = new Float32Array(16);
+      for (y = 0; y < cy; ++y) {
+        for (x = 0; x < cx; ++x) {
+          i = 0;
+          if (x < 1 || x > cx - 3 || y < 1 || y > cy - 3) {
+            for (y2 = -1; y2 <= 2; ++y2) {
+              for (x2 = -1; x2 <= 2; ++x2) {
+                h[i++] = srcData[(_wrap(x + x2, cx) + _wrap(y + y2, cy) * cx) * srcChannels];
+              }
+            }
+          } else {
+            for (y2 = -1; y2 <= 2; ++y2) {
+              for (x2 = -1; x2 <= 2; ++x2) {
+                h[i++] = srcData[(x + x2 + (y + y2) * cx) * srcChannels];
+              }
             }
           }
           // TODO: Optimize these constant x catmullRom calls.

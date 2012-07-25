@@ -77,7 +77,7 @@ define(function(require, exports, module) {
     this.lock = new exports.Lock();
     this.id = _getUniqueId();
 
-    this.payload._quiverNode = this;
+    this.payload._quiverNode || (this.payload._quiverNode = this);
   };
 
   exports.Node.prototype.pushInputs = function() {
@@ -109,28 +109,28 @@ define(function(require, exports, module) {
       if (this.dirty || this.payload instanceof Function) {
         // We need to acquire our inputs first.
         this._acquireInputs(function(err, releaseInputs, inputPayloads) {
-          var releaseAll = function() {
+          if (err) {
             releaseInputs();
             release();
-          }
-          if (err) {
-            releaseAll();
             callback(err);
           } else {
             if (this.payload instanceof Function) {
               var outputPayloads = _pluck(this.outputs, 'payload');
               this.payload(inputPayloads, outputPayloads, function(err) {
                 if (err) {
-                  releaseAll();
+                  releaseInputs();
+                  release();
                   callback(err);
                 } else {
+                  releaseInputs();
                   this.dirty = false;
-                  callback(null, releaseAll, true);
+                  callback(null, release, null);
                 }
               }.bind(this));
             } else {
+              releaseInputs();
               this.dirty = false;
-              callback(null, releaseAll, this.payload);
+              callback(null, release, this.payload);
             }
           }
         }.bind(this));
@@ -147,12 +147,12 @@ define(function(require, exports, module) {
     var releaseAll = _callAll.bind(null, releaseCallbacks);
     for (var i = 0, l = this.inputs.length; i < l; ++i) {
       var input = this.inputs[i];
-      tasks.push(function(cb) {
+      tasks.push(function(input, cb) {
         input.acquire(function(err, release, payload) {
           releaseCallbacks.push(release);
           cb(err, payload);
         });
-      });
+      }.bind(null, input));
     }
     async.parallel(tasks, function(err, inputPayloads) {
       if (err) {

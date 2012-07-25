@@ -157,7 +157,8 @@ define [
 
             float detailHeightAmount = 1.0;//smoothstep(0.7, 0.8, normal.z);
             vec2 detailHeightUv = worldToMapSpace(worldPosition.xy, tDetailSize, tDetailScale.xy);
-            float detailHeightSample = texture2D(tDetail, detailHeightUv).r;
+            vec4 detailSample = texture2D(tDetail, detailHeightUv);
+            float detailHeightSample = detailSample.z;
             float detailHeight = (detailHeightSample * tDetailScale.z) * detailHeightAmount;
             worldPosition.z += detailHeight;
 
@@ -194,6 +195,7 @@ define [
 
           void main() {
             float height = worldPosition.z;
+            float depth = length(eyePosition.xyz);
             vec2 diffUv = worldPosition.xy / 4.0;
             vec3 diffSample = texture2D(tDiffuse, diffUv).rgb;
             //vec3 diffSample = vec3(0.8,0.2,0.2);
@@ -201,40 +203,47 @@ define [
             //vec3 rockDiffSample = vec3(0.2,0.2,0.8);
             vec2 surfaceUv = worldToMapSpace(worldPosition.xy, tSurfaceSize, tSurfaceScale.xy);
             vec4 surfaceSample = texture2D(tSurface, surfaceUv - 0.5 / tSurfaceSize);
-            vec3 normal = vec3(0.5 - surfaceSample.x, 0.5 - surfaceSample.y, 1.0 / 20.0);
-            normal = normalize(normal / tSurfaceScale);
-            vec3 tangentU = vec3(1.0 - normal.x * normal.x, 0.0, -normal.x);
-            vec3 tangentV = vec3(0.0, 1.0 - normal.y * normal.y, -normal.y);
-            float depth = length(eyePosition.xyz);
 
-            vec2 detailHeightUv = worldToMapSpace(worldPosition.xy, tDetailSize, tDetailScale.xy);
-            float detailHeightSample = texture2D(tDetail, detailHeightUv).r;
+            vec2 surfaceDerivs = 255.0 * tSurfaceScale.z / tSurfaceScale.xy * (surfaceSample.xy - 0.5);
+
+            vec2 detailUv = worldToMapSpace(worldPosition.xy, tDetailSize, tDetailScale.xy);
+            vec4 detailSample = texture2D(tDetail, detailUv);
+            vec2 detailDerivs = vec2(tDetailScale.z / tDetailScale.xy * (detailSample.xy - 0.5));
 
             float detailHeightAmount = 1.0;//smoothstep(-0.8, -0.7, -normal.z);
             vec2 epsilon = 1.0 / tDetailSize;
-            vec3 normalDetail = normalize(vec3(
-                detailHeightAmount * (detailHeightSample - vec2(
-                    texture2D(tDetail, detailHeightUv + vec2(epsilon.x, 0.0)).r,
-                    texture2D(tDetail, detailHeightUv + vec2(0.0, epsilon.y)).r)),
-                1.0) / tDetailScale);
-            normal = normalDetail.x * tangentU +
-                     normalDetail.y * tangentV +
-                     normalDetail.z * normal;
+
+            vec3 normalDetail = normalize(vec3(- surfaceDerivs - detailDerivs, 1.0));
+            vec3 normalRegion = normalize(vec3(- surfaceDerivs, 1.0));
+
+            vec3 tangentU = vec3(1.0 - normalDetail.x * normalDetail.x, 0.0, -normalDetail.x);
+            vec3 tangentV = vec3(0.0, 1.0 - normalDetail.y * normalDetail.y, -normalDetail.y);
+
+            // Add another layer of high-detail noise.
+            vec2 detail2Uv = worldToMapSpace(worldPosition.yx, tDetailSize, tDetailScale.xy / 37.3);
+            vec4 detail2Sample = texture2D(tDetail, detail2Uv);
+            vec2 detail2Derivs = vec2(tDetailScale.z / tDetailScale.xy * (detail2Sample.xy - 0.5));
+            vec3 normalDetail2 = normalize(vec3(- detail2Derivs, 1.0));
+            normalDetail2 = normalDetail2.x * tangentU +
+                            normalDetail2.y * tangentV +
+                            normalDetail2.z * normalDetail;
 
             gl_FragColor = vec4(diffSample, 1.0);
-
-            float noiseSample = texture2D(tDiffuse, worldPosition.xy / 512.0).g;
-            float veggieFactor = smoothstep(60.0, 80.0, depth + noiseSample * 70.0) * 0.9;
-            vec3 veggieColor1 = vec3(0.21, 0.23, 0.09);
-            vec3 veggieColor2 = vec3(0.03, 0.06, 0.01);
+            float noiseSample = texture2D(tDetail, worldPosition.yx / 512.0).b;
+            float veggieFactor = 1.0; //smoothstep(60.0, 80.0, depth + noiseSample * 70.0) * 0.9;
+            vec3 veggieColor1 = vec3(0.33, 0.35, 0.15);
+            vec3 veggieColor2 = vec3(0.04, 0.07, 0.03);
             vec3 eyeVec = normalize(cameraPosition - worldPosition);
-            float veggieMix = pow(abs(dot(eyeVec, normal)), 0.4);
+            float veggieMix = pow(abs(dot(eyeVec, normalDetail2)), 0.3);
             vec3 veggieColor = mix(veggieColor1, veggieColor2, veggieMix);
             gl_FragColor.rgb = mix(gl_FragColor.rgb, veggieColor, veggieFactor);
-            //float rockMix = smoothstep(0.75, 0.95, normal.z + (noiseSample - 0.5) * 0.6 - height * 0.0001);
-            float rockMix = surfaceSample.b;
-            //float rockMix = smoothstep(0.81, 0.82, normal.z);
+            float rockMix = smoothstep(1.5*0.7, 1.5*0.75,
+                normalRegion.z + normalDetail.z * 0.5 + (noiseSample - 0.5) * 0.3 - height * 0.0002);
+            //float rockMix = surfaceSample.b;
+            //float rockMix = smoothstep(0.81, 0.82, normalDetail.z);
             gl_FragColor.rgb = mix(rockDiffSample, gl_FragColor.rgb, rockMix);
+
+            //gl_FragColor.rgb = vec3(0.5);
 
             """ +
             #THREE.ShaderChunk.shadowmap_fragment +
@@ -285,15 +294,22 @@ define [
             for (int i = 0; i < MAX_DIR_LIGHTS; ++i) {
               vec4 lDirection = viewMatrix * vec4(directionalLightDirection[i], 0.0);
               vec3 dirVector = normalize(lDirection.xyz);
-              directIllum += max(dot(normal, directionalLightDirection[i]), 0.0) * directionalLightColor[i];
+              directIllum += max(dot(normalDetail2, directionalLightDirection[i]), 0.0) * directionalLightColor[i];
+              directIllum *= step(0.0, dot(normalDetail, directionalLightDirection[i]));
+              directIllum *= step(0.0, dot(normalRegion, directionalLightDirection[i]));
             }
             #endif
             vec3 totalIllum = ambientLightColor + directIllum * shadowColor;
             gl_FragColor.rgb *= totalIllum;
 
             // For debugging.
-            //gl_FragColor.rgb = mix(gl_FragColor.rgb, normal * 0.5 + 0.5, 1.0);
+            //gl_FragColor.rgb = mix(gl_FragColor.rgb, normalDetail * 0.5 + 0.5, 1.0);
+            //gl_FragColor.rgb = mix(gl_FragColor.rgb, normal, 1.0);
             //gl_FragColor.rgb = mix(gl_FragColor.rgb, (surfaceSample.rgb - 0.5) * 5.0 + 0.5, 1.0);
+            //gl_FragColor.rgb = vec3(veggieMix);
+            //gl_FragColor.rgb = vec3(0.0, normal.y, 0.0);
+            //gl_FragColor.rgb = vec3(detailSample);
+            //gl_FragColor.rgb = 1.0 * vec3(normal.x, 0.0, normalDetail.x);
 
             //vec3 fogCol = vec3(0.8, 0.85, 0.9);
             //float clarity = 160.0 / (depth + 160.0);
@@ -306,21 +322,32 @@ define [
       obj.material = @material
       @scene.add obj
 
-      threeFmt = (channels) -> switch channels
-        when 1 then THREE.LuminanceFormat
-        when 2 then THREE.LuminanceAlphaFormat
-        when 3 then THREE.RGBFormat
-        when 4 then THREE.RGBAFormat
-        else throw 'Unknown format'
+      threeFmt = (channels) ->
+        switch channels
+          when 1 then THREE.LuminanceFormat
+          when 2 then THREE.LuminanceAlphaFormat
+          when 3 then THREE.RGBFormat
+          when 4 then THREE.RGBAFormat
+          else throw 'Unknown format'
 
-      threeType = (data) -> switch data.constructor
-        when Uint8Array then THREE.UnsignedByteType
-        when Uint8ClampedArray then THREE.UnsignedByteType
-        when Float32Array then THREE.FloatType
-        else throw 'Unknown type'
+      threeType = (data) ->
+        switch data.constructor
+          when Uint8Array then THREE.UnsignedByteType
+          when Uint8ClampedArray then THREE.UnsignedByteType
+          when Uint16Array then THREE.UnsignedShortType
+          when Float32Array then THREE.FloatType
+          else throw 'Unknown type'
 
-      createTexture = (buffer) ->
-        new THREE.DataTexture(
+      typeScale = (data) ->
+        switch data.constructor
+          when Uint8Array then 255
+          when Uint8ClampedArray then 255
+          when Uint16Array then 65535
+          when Float32Array then 1
+          else throw 'Unknown type'
+
+      createTexture = (buffer, mipmap) ->
+        tex = new THREE.DataTexture(
             buffer.data,
             buffer.width,
             buffer.height,
@@ -328,36 +355,37 @@ define [
             threeType(buffer.data),
             null,
             THREE.RepeatWrapping, THREE.RepeatWrapping,
-            THREE.LinearFilter, THREE.LinearFilter)
-
-      @terrain.source.maps.height.displacement._quiverNode.acquire (err, release, buffer) =>
-        if err then throw err
-        tex = createTexture buffer
-        tex.generateMipmaps = false
+            THREE.LinearFilter,
+            if mipmap then THREE.LinearMipMapLinearFilter else THREE.LinearFilter)
+        tex.generateMipmaps = mipmap
         tex.needsUpdate = true
-        @material.uniforms.tHeight.texture = tex
-        @material.uniforms.tHeightSize.value.set buffer.width, buffer.height
-        @material.uniforms.tHeightScale.value.copy @terrain.source.maps.height.scale
+        tex
+
+      maps = @terrain.source.maps
+      uniforms = @material.uniforms
+
+      maps.height._quiverNode.acquire (err, release, buffer) =>
+        if err then throw err
+        uniforms.tHeight.texture = createTexture buffer, false
+        uniforms.tHeightSize.value.set buffer.width, buffer.height
+        uniforms.tHeightScale.value.copy maps.height.scale
+        uniforms.tHeightScale.value.z *= typeScale buffer.data
         release()
 
-      @terrain.source.maps.surface.packed._quiverNode.acquire (err, release, buffer) =>
+      maps.surface._quiverNode.acquire (err, release, buffer) =>
         if err then throw err
-        tex = createTexture buffer
-        tex.generateMipmaps = true
-        tex.needsUpdate = true
-        @material.uniforms.tSurface.texture = tex
-        @material.uniforms.tSurfaceSize.value.set buffer.width, buffer.height
-        @material.uniforms.tSurfaceScale.value.copy @terrain.source.maps.surface.scale
+        uniforms.tSurface.texture = createTexture buffer, true
+        uniforms.tSurfaceSize.value.set buffer.width, buffer.height
+        uniforms.tSurfaceScale.value.copy maps.surface.scale
+        #uniforms.tSurfaceScale.value.z *= typeScale buffer.data
         release()
 
-      @terrain.source.maps.detail.displacement._quiverNode.acquire (err, release, buffer) =>
+      maps.detail._quiverNode.acquire (err, release, buffer) =>
         if err then throw err
-        tex = createTexture buffer
-        tex.generateMipmaps = true
-        tex.needsUpdate = true
-        @material.uniforms.tDetail.texture = tex
-        @material.uniforms.tDetailSize.value.set buffer.width, buffer.height
-        @material.uniforms.tDetailScale.value.copy @terrain.source.maps.detail.scale
+        uniforms.tDetail.texture = createTexture buffer, true
+        uniforms.tDetailSize.value.set buffer.width, buffer.height
+        uniforms.tDetailScale.value.copy maps.detail.scale
+        uniforms.tDetailScale.value.z *= typeScale buffer.data
         release()
       return
 
@@ -457,42 +485,3 @@ define [
     _render: (program, gl, frustum) ->
       @geom.render program, gl
       return
-
-    _createMaps: (terrain) ->
-      maps = terrain.source.maps
-
-      heightTex = new THREE.DataTexture(
-          maps.height.displacement,
-          maps.height.cx,
-          maps.height.cy,
-          THREE.LuminanceFormat, THREE.FloatType,
-          null,
-          THREE.RepeatWrapping, THREE.RepeatWrapping,
-          THREE.LinearFilter, THREE.LinearFilter)
-      heightTex.generateMipmaps = false
-      heightTex.needsUpdate = true
-
-      surfaceTex = new THREE.DataTexture(
-          maps.surface.packed,
-          maps.surface.cx,
-          maps.surface.cy,
-          THREE.RGBAFormat, THREE.UnsignedByteType,
-          null,
-          THREE.RepeatWrapping, THREE.RepeatWrapping)
-      surfaceTex.generateMipmaps = true
-      surfaceTex.needsUpdate = true
-
-      detailTex = new THREE.DataTexture(
-          maps.detail.displacement,
-          maps.detail.cx,
-          maps.detail.cy,
-          THREE.LuminanceFormat, THREE.FloatType,
-          null,
-          THREE.RepeatWrapping, THREE.RepeatWrapping,
-          THREE.LinearFilter, THREE.LinearFilter)
-      detailTex.generateMipmaps = true
-      detailTex.needsUpdate = true
-
-      height: heightTex
-      surface: surfaceTex
-      detail: detailTex
