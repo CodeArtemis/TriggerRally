@@ -6,17 +6,23 @@ define [
   'THREE'
   'cs!client/misc'
   'cs!client/terrain'
-], (THREE, clientMisc, clientTerrain) ->
+  'util/quiver'
+], (THREE, clientMisc, clientTerrain, quiver) ->
   Vec3 = THREE.Vector3
 
   class RenderCheckpoints
     constructor: (@scene, checkpoints) ->
       @ang = 0
-      @meshes = for cp in checkpoints
-        mesh = clientMisc.checkpointMesh()
-        mesh.position.addSelf cp
-        @scene.add mesh
-        mesh
+      @meshes = []
+      quiver.connect checkpoints
+                     (ins, outs, callback) =>
+        for mesh in @meshes
+          @scene.remove mesh
+        @meshes = for cp in checkpoints
+          mesh = clientMisc.checkpointMesh()
+          mesh.position.addSelf cp
+          @scene.add mesh
+          mesh
 
     update: (camera, delta) ->
       if false

@@ -234,7 +234,7 @@ define [
             vec3 veggieColor1 = vec3(0.33, 0.35, 0.15);
             vec3 veggieColor2 = vec3(0.04, 0.07, 0.03);
             vec3 eyeVec = normalize(cameraPosition - worldPosition);
-            float veggieMix = pow(abs(dot(eyeVec, normalDetail2)), 0.3);
+            float veggieMix = exp(dot(eyeVec, normalDetail2) - 1.0);
             vec3 veggieColor = mix(veggieColor1, veggieColor2, veggieMix);
             gl_FragColor.rgb = mix(gl_FragColor.rgb, veggieColor, veggieFactor);
             float rockMix = smoothstep(1.5*0.7, 1.5*0.75,

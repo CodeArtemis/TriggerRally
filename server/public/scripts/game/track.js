@@ -20,6 +20,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, quiver, util) {
   exports.Track = function() {
     this.config = {};
     this.checkpoints = [];
+    new quiver.Node(this.checkpoints);
   };
 
   exports.Track.prototype.loadWithConfig = function(config, callback) {
@@ -59,12 +60,13 @@ function(LFIB4, THREE, gameScenery, gameTerrain, quiver, util) {
         var maps = this.terrain.source.maps;
 
         var drawTrack = function(ins, outs, callback) {
-          var dispMap = ins[0];
+          var dispMap = ins[0];      // === outs[0]
+          var checkpoints = ins[1];  // === outs[1]
 
           var adjustCheckpointHeights = function() {
-            this.checkpoints.forEach(function (checkpoint) {
+            checkpoints.forEach(function (checkpoint) {
               var contact = this.terrain.getContact(checkpoint);
-              checkpoint.z = contact.surfacePos.z + 2;
+              checkpoint.z = contact.surfacePos.z + 20;
             }, this);
           }.bind(this);
           adjustCheckpointHeights();
@@ -110,49 +112,65 @@ function(LFIB4, THREE, gameScenery, gameTerrain, quiver, util) {
             drawCircle(map, 0, x, y, value / map.scale.z, radius, hardness, opacity);
           }
 
-          var radius = 60;
-          var points = this.checkpoints;
-          var calls = [];
-          var i;
-          for (i = 0; i < points.length - 1; ++i) {
-            var cp = [
-              points[i - 1] || points[i + 0],
-              points[i + 0],
-              points[i + 1],
-              points[i + 2] || points[i + 1]
-            ];
-            var dist = new Vec2().sub(cp[1], cp[2]).length();
-            var step = 1 / Math.ceil(20 * dist / radius);
-            for (var x = 0; x < 0.9999; x += step) {
-              var pX = catmullRom(cp[0].x, cp[1].x, cp[2].x, cp[3].x, x);
-              var pY = catmullRom(cp[0].y, cp[1].y, cp[2].y, cp[3].y, x);
-              var pZ = catmullRom(cp[0].z, cp[1].z, cp[2].z, cp[3].z, x);
+          // Track curve.
+          var pts = checkpoints;
 
-              calls.push(drawCircleDisplacement.bind(null, dispMap, pX, pY, pZ, radius, 0.4, 0.1));
+          // First we compute the chord length of the curve.
+          var totalLength = 0;
+          var chords = [];
+          var numChords = pts.length - 1;
+          var i;
+          for (i = 0; i < numChords; ++i) {
+            var chordLength = new Vec2().sub(pts[i+1], pts[i]).length();
+            chords.push(chordLength);
+            totalLength += chordLength;
+          }
+
+          var radius = 240;
+          var calls = [];
+          var tStep = radius / 2;  // too small?
+          var t = 0;
+          for (i = 0; i < numChords; ++i) {
+            // TODO: try different start point positions?
+            var cp = [ pts[i-1] || pts[i], pts[i], pts[i+1], pts[i+2] || pts[i+1] ];
+            for (; t < chords[i]; t += tStep) {
+              var u = t / chords[i];
+              var pX = catmullRom(cp[0].x, cp[1].x, cp[2].x, cp[3].x, u);
+              var pY = catmullRom(cp[0].y, cp[1].y, cp[2].y, cp[3].y, u);
+              var pZ = catmullRom(cp[0].z, cp[1].z, cp[2].z, cp[3].z, u);
+
+              drawCircleDisplacement(dispMap, pX, pY, pZ, radius, 0.2, 1);
               //drawCircle(maps.surface, maps.surface.packed, 4, 2, pX, pY, 255, 100, 0.4, 1);
             }
+            t -= chords[i];
           }
           // Stagger the drawCircle calls.
-          var samples = [0, 2, 4, 1, 5, 3], jump = samples.length, j;
+          /*var samples = [0, 2, 4, 1, 5, 3], jump = samples.length, j;
           for (j = 0; j < jump; ++j) {
             for (i = samples[j]; i < calls.length; i += jump) {
               calls[i]();
             }
-          }
+          }*/
           adjustCheckpointHeights();
           callback();
         };
 
         var heightNode = maps.height._quiverNode;
         var sourceNode = heightNode.inputs[0];
+        var drawTrackNode = new quiver.Node(drawTrack.bind(this));
         //quiver.inject(...) or
-        //quiver.break(...)
+        //quiver.disconnect(...)
         heightNode.inputs.shift();
         sourceNode.outputs.shift();  // TODO: Verify which output.
         quiver.connect(sourceNode,
-                       new quiver.Node(maps.height),
-                       drawTrack.bind(this),
+                       {},  // Create an intermediate buffer to store clean height.
+                       drawTrackNode,
                        heightNode);
+
+        var checkpointsNode = new quiver.Node(this.checkpoints);
+        quiver.connect(new quiver.Node(this.checkpoints),
+                       drawTrackNode,
+                       checkpointsNode);
 
         this.scenery = new gameScenery.Scenery(config.scenery, this);
 

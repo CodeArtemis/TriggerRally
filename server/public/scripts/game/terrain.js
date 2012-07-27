@@ -62,32 +62,28 @@ function(THREE, async, uImg, quiver, util) {
 
     // Set up processing pipelines.
     // TODO: discard intermediate buffers.
-    quiver.connect(config.height.url,
-                   uImg.imageFromUrl(),
-                   {},
-                   uImg.getImageData({flip: true}),
-                   {},
-                   uImg.unpack16bit(),
-                   maps.height);
-
-    // We scale the derivatives to fit a Uint8 buffer.
-    quiver.connect(maps.height,
-                   uImg.catmullRomDerivatives(127.5 / 127.5, 127.5),
-                   maps.surface);
+    quiver.connect(
+        config.height.url,
+        uImg.imageFromUrl(),
+        {},
+        uImg.getImageData({flip: true}),
+        {},
+        uImg.unpack16bit(),
+        maps.height,
+        // We scale the derivatives to fit a Uint8 buffer.
+        uImg.catmullRomDerivatives(127.5 / 127.5, 127.5),
+        maps.surface);
 
     if (config.detail) {
       var imgData = {};
-      quiver.connect(config.detail.url,
-                     uImg.imageFromUrl(),
-                     {},
-                     uImg.getImageData({flip: true}),
-                     imgData,
-                     uImg.copyChannel(0, 2),
-                     maps.detail);
-
-      quiver.connect(imgData,
-                     uImg.derivatives(2, 127.5),
-                     maps.detail);
+      quiver.connectParallel(
+          config.detail.url,
+          uImg.imageFromUrl(),
+          {},
+          uImg.getImageData({flip: true}),
+          imgData,
+          [ uImg.copyChannel(0, 2), uImg.derivatives(2, 127.5) ],
+          maps.detail);
     }
     callback();
   };
