@@ -6,7 +6,7 @@ define [
   'THREE'
   'cs!client/misc'
   'cs!client/terrain'
-  'util/quiver'
+  'cs!util/quiver'
 ], (THREE, clientMisc, clientTerrain, quiver) ->
   Vec3 = THREE.Vector3
 
@@ -14,8 +14,7 @@ define [
     constructor: (@scene, checkpoints) ->
       @ang = 0
       @meshes = []
-      quiver.connect checkpoints
-                     (ins, outs, callback) =>
+      quiver.connect checkpoints, (ins, outs, done) =>
         for mesh in @meshes
           @scene.remove mesh
         @meshes = for cp in checkpoints
@@ -23,6 +22,7 @@ define [
           mesh.position.addSelf cp
           @scene.add mesh
           mesh
+        done()
 
     update: (camera, delta) ->
       if false

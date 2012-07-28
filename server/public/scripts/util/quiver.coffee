@@ -1,17 +1,12 @@
 # Copyright (C) 2012 jareiko / http://www.jareiko.net/
 
-# Node/CommonJS compatibility.
-if typeof define is "undefined"
-  define = (fn) ->
-    fn require, exports, module
-
-define (require, exports, module) ->
+moduleDef = (require, exports, module) ->
   async = require("async")
-  _getUniqueId = (->
+
+  _getUniqueId = do ->
     nextId = 0
-    ->
-      ++nextId
-  )()
+    -> ++nextId
+
   _pluck = (arr, property) ->
     x[property] for x in arr
 
@@ -36,16 +31,16 @@ define (require, exports, module) ->
 
   class exports.Lock
     constructor: ->
-      # The first callback in the queue is always the one currently holding the lock.
+      # The first callback in the queue is holding the lock.
       @queue = []
 
     # callback(release)
     acquire: (callback) ->
+      q = @queue
       release = ->
         q.shift()
         # Call the next waiting callback.
         q[0] release if q.length > 0
-      q = @queue
       q.push callback
       callback(release) if q.length is 1
       return
@@ -56,12 +51,13 @@ define (require, exports, module) ->
   class exports.Node
     constructor: (opt_payload) ->
       @payload = opt_payload or {}
-      @dirty = true
       @inputs = []
       @outputs = []
       @lock = new exports.Lock()
       @id = _getUniqueId()
-      @payload._quiverNode or (@payload._quiverNode = this)
+      # It's probably not a good idea to attach multiple Nodes to the same
+      # object, but if you do, the first one keeps the _quiverNode reference.
+      @payload._quiverNode or= this
 
     pushInputs: (values...) ->
       for value in values
@@ -136,7 +132,8 @@ define (require, exports, module) ->
     releases = []
     lockedSet = new LockedSet()
     tasks = {}
-    for node in nodes
+    for val in nodes
+      node = if val instanceof exports.Node then val else val._quiverNode
       _walkOut node, nodeInfo, lockedSet, ->
         tasks[node.id] = (callback) ->
           node.execute callback
@@ -180,3 +177,9 @@ define (require, exports, module) ->
     for arg in args
       connectNodes coerceToNodeArray arg
     return
+  return
+
+if define?
+  define moduleDef
+else if exports?
+  moduleDef require, exports, module

@@ -6,7 +6,8 @@ define [
   'THREE'
   'cs!client/array_geometry'
   'util/image'
-], (THREE, array_geometry, uImg) ->
+  'cs!util/quiver'
+], (THREE, array_geometry, uImg, quiver) ->
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
 
@@ -364,29 +365,29 @@ define [
       maps = @terrain.source.maps
       uniforms = @material.uniforms
 
-      maps.height._quiverNode.acquire (err, release, buffer) =>
-        if err then throw err
+      quiver.connect maps.height, (ins, outs, done) ->
+        buffer = ins[0]
         uniforms.tHeight.texture = createTexture buffer, false
         uniforms.tHeightSize.value.set buffer.width, buffer.height
         uniforms.tHeightScale.value.copy maps.height.scale
         uniforms.tHeightScale.value.z *= typeScale buffer.data
-        release()
+        done()
 
-      maps.surface._quiverNode.acquire (err, release, buffer) =>
-        if err then throw err
+      quiver.connect maps.surface, (ins, outs, done) ->
+        buffer = ins[0]
         uniforms.tSurface.texture = createTexture buffer, true
         uniforms.tSurfaceSize.value.set buffer.width, buffer.height
         uniforms.tSurfaceScale.value.copy maps.surface.scale
         #uniforms.tSurfaceScale.value.z *= typeScale buffer.data
-        release()
+        done()
 
-      maps.detail._quiverNode.acquire (err, release, buffer) =>
-        if err then throw err
+      quiver.connect maps.detail, (ins, outs, done) ->
+        buffer = ins[0]
         uniforms.tDetail.texture = createTexture buffer, true
         uniforms.tDetailSize.value.set buffer.width, buffer.height
         uniforms.tDetailScale.value.copy maps.detail.scale
         uniforms.tDetailScale.value.z *= typeScale buffer.data
-        release()
+        done()
       return
 
     _createImmediateObject: ->

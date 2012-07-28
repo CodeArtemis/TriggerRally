@@ -6,7 +6,7 @@ define([
   'THREE',
   'async',
   'util/image',
-  'util/quiver',
+  'cs!util/quiver',
   'util/util'
 ],
 function(THREE, async, uImg, quiver, util) {
@@ -35,6 +35,8 @@ function(THREE, async, uImg, quiver, util) {
     var maps = this.maps;
 
     for (var k in config) {
+      if (config[k].url)
+        config[k].url = new String(config[k].url);
       maps[k] = {
         scale: new Vec3(config[k].scale[0],
                         config[k].scale[1],

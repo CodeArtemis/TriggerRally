@@ -40,10 +40,8 @@ describe "quiver", ->
   describe "Node", ->
     describe "_walkOut", ->
       it "can walk a simple graph", (done) ->
-        quiver.connect(
-          n1 = new quiver.Node
-          n2 = new quiver.Node
-        )
+        quiver.connect n1 = new quiver.Node
+                       n2 = new quiver.Node
         info = {}
         ls = new quiver.LockedSet()
         quiver._walkOut n1, info, ls, ->
@@ -52,11 +50,9 @@ describe "quiver", ->
           done()
 
       it "follows parallel paths", (done) ->
-        quiver.connectParallel(
-          n1 = new quiver.Node
-          [{}, {}]
-          n2 = new quiver.Node
-        )
+        quiver.connectParallel n1 = new quiver.Node
+                               [{}, {}]
+                               n2 = new quiver.Node
         info = {}
         ls = new quiver.LockedSet()
         quiver._walkOut n1, info, ls, ->

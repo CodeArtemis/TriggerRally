@@ -7,7 +7,7 @@ define([
   'THREE',
   'game/scenery',
   'game/terrain',
-  'util/quiver',
+  'cs!util/quiver',
   'util/util'
 ],
 function(LFIB4, THREE, gameScenery, gameTerrain, quiver, util) {
@@ -20,7 +20,6 @@ function(LFIB4, THREE, gameScenery, gameTerrain, quiver, util) {
   exports.Track = function() {
     this.config = {};
     this.checkpoints = [];
-    new quiver.Node(this.checkpoints);
   };
 
   exports.Track.prototype.loadWithConfig = function(config, callback) {
@@ -48,25 +47,26 @@ function(LFIB4, THREE, gameScenery, gameTerrain, quiver, util) {
 
       source.load(terrainConfig, function() {
         var course = config.course;
-        var cpts = course.checkpoints;
         if (config.gameversion <= 1) course.coordscale[1] *= -1;
-        for (i = 0; i < cpts.length; ++i) {
-          this.checkpoints.push(new Vec3(
-              cpts[i].pos[0] * course.coordscale[0],
-              cpts[i].pos[1] * course.coordscale[1],
-              0));
-        }
 
         var maps = this.terrain.source.maps;
 
         var drawTrack = function(ins, outs, callback) {
-          var dispMap = ins[0];      // === outs[0]
-          var checkpoints = ins[1];  // === outs[1]
+          var dispMap = ins[0];  // === outs[0]
+          var checkpointsXY = ins[0];
+          var checkpoints = outs[1];
+
+          checkpoints.length = 0;
+          var numCheckpoints = checkpointsXY.length;
+          for (var i = 0; i < numCheckpoints; ++i) {
+            checkpoints.push(
+                new Vec3(checkpointsXY[i].pos[0], checkpointsXY[i].pos[1], 0));
+          }
 
           var adjustCheckpointHeights = function() {
-            checkpoints.forEach(function (checkpoint) {
-              var contact = this.terrain.getContact(checkpoint);
-              checkpoint.z = contact.surfacePos.z + 20;
+            checkpoints.forEach(function (cpWithZ) {
+              var contact = this.terrain.getContact(cpWithZ);
+              cpWithZ.z = contact.surfacePos.z + 20;
             }, this);
           }.bind(this);
           adjustCheckpointHeights();
@@ -156,23 +156,24 @@ function(LFIB4, THREE, gameScenery, gameTerrain, quiver, util) {
         };
 
         var heightNode = maps.height._quiverNode;
-        var sourceNode = heightNode.inputs[0];
+        var sourceNode = heightNode.inputs[0];  // TODO: Verify which output.
         var drawTrackNode = new quiver.Node(drawTrack.bind(this));
         //quiver.inject(...) or
         //quiver.disconnect(...)
         heightNode.inputs.shift();
-        sourceNode.outputs.shift();  // TODO: Verify which output.
+        sourceNode.outputs.shift();
         quiver.connect(sourceNode,
                        {},  // Create an intermediate buffer to store clean height.
                        drawTrackNode,
                        heightNode);
 
-        var checkpointsNode = new quiver.Node(this.checkpoints);
-        quiver.connect(new quiver.Node(this.checkpoints),
+        quiver.connect(this.config.course.checkpoints,
                        drawTrackNode,
-                       checkpointsNode);
+                       this.checkpoints);
 
-        this.scenery = new gameScenery.Scenery(config.scenery, this);
+        //this.scenery = new gameScenery.Scenery(config.scenery, this);
+
+        quiver.trigger(this.config.terrain.height.url);
 
         if (callback) callback();
       }.bind(this));
