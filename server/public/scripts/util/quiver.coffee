@@ -124,10 +124,11 @@ moduleDef = (require, exports, module) ->
         lockedSet.acquireNode inNode, cb
       (outNode) -> (cb) ->
         lockedSet.acquireNode outNode, ->
-          _walkOut outNode, nodeInfo, lockedSet, ->
-            # Add ourselves as a dependency.
+          done = ->
             nodeInfo[outNode.id].deps.push node.id + ""
             cb()
+          if nodeInfo[outNode.id] then done() else
+            _walkOut outNode, nodeInfo, lockedSet, done
 
   # callback()
   _walkIn = exports._walkIn = (node, nodeInfo, lockedSet, callback) ->
@@ -137,10 +138,9 @@ moduleDef = (require, exports, module) ->
           if inNode.updated
             cb()
           else
-            _walkIn inNode, nodeInfo, lockedSet, ->
-              # Add input as a dependency.
-              nodeInfo[node.id].deps.push inNode.id + ""
-              cb()
+            nodeInfo[node.id].deps.push inNode.id + ""
+            if nodeInfo[inNode.id] then cb() else
+              _walkIn inNode, nodeInfo, lockedSet, cb
       (outNode) -> (cb) ->
         lockedSet.acquireNode outNode, cb
 
@@ -188,6 +188,7 @@ moduleDef = (require, exports, module) ->
         prevNode.pushOutputs node
         node.pushInputs prevNode
       prevNode = node
+    #exports.pull prevNode if prevNode
 
   # Like connect, but array arguments will be treated as parallel nodes.
   exports.connectParallel = (args...) ->

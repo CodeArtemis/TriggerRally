@@ -49,14 +49,16 @@ describe "quiver", ->
           ls.release()
           done()
 
-      it "follows parallel paths", (done) ->
+      it "merges diamond paths", (done) ->
         quiver.connectParallel n1 = new quiver.Node
                                [{}, {}]
                                n2 = new quiver.Node
+                               n3 = new quiver.Node
         info = {}
         ls = new quiver.LockedSet()
         quiver._walkOut n1, info, ls, ->
           expect(info[n2.id].deps.length).toBe 2
+          expect(info[n3.id].deps.length).toBe 1
           ls.release()
           done()
 
@@ -84,6 +86,19 @@ describe "quiver", ->
           ls.release()
           done()
 
+      it "merges diamond paths", (done) ->
+        quiver.connectParallel n1 = new quiver.Node
+                               n2 = new quiver.Node
+                               [{}, {}]
+                               n3 = new quiver.Node
+        info = {}
+        ls = new quiver.LockedSet()
+        quiver._walkIn n3, info, ls, ->
+          expect(info[n2.id].deps.length).toBe 1
+          expect(info[n3.id].deps.length).toBe 2
+          ls.release()
+          done()
+
     class Counter
       constructor: ->
         @count = 0
@@ -107,6 +122,18 @@ describe "quiver", ->
         quiver.push n1
 
     describe "pull", ->
+      it "executes each node exactly once", (done) ->
+        ctr = new Counter
+        quiver.connectParallel(
+          ctr.makeNode()
+          [ctr.makeNode(), ctr.makeNode()]
+          ctr.makeNode()
+          n1 = new quiver.Node (ins, outs, callback) ->
+            expect(ctr.count).toBe 0
+            done()
+        )
+        quiver.pull n1
+
       it "stops at updated nodes", (done) ->
         ctr = new Counter
         quiver.connect n1 = ctr.makeNode()

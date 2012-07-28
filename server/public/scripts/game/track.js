@@ -173,8 +173,6 @@ function(LFIB4, THREE, gameScenery, gameTerrain, quiver, util) {
 
         //this.scenery = new gameScenery.Scenery(config.scenery, this);
 
-        quiver.trigger(this.config.terrain.height.url);
-
         if (callback) callback();
       }.bind(this));
     }

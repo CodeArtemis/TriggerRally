@@ -372,6 +372,7 @@ define [
         uniforms.tHeightScale.value.copy maps.height.scale
         uniforms.tHeightScale.value.z *= typeScale buffer.data
         done()
+      quiver.pull maps.height
 
       quiver.connect maps.surface, (ins, outs, done) ->
         buffer = ins[0]
@@ -380,6 +381,7 @@ define [
         uniforms.tSurfaceScale.value.copy maps.surface.scale
         #uniforms.tSurfaceScale.value.z *= typeScale buffer.data
         done()
+      quiver.pull maps.surface
 
       quiver.connect maps.detail, (ins, outs, done) ->
         buffer = ins[0]
@@ -388,6 +390,7 @@ define [
         uniforms.tDetailScale.value.copy maps.detail.scale
         uniforms.tDetailScale.value.z *= typeScale buffer.data
         done()
+      quiver.pull maps.detail
       return
 
     _createImmediateObject: ->
