@@ -54,12 +54,15 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
 
         var drawTrack = function(ins, outs, callback) {
           var src = ins[0], dst = outs[0];
+          var surf = outs[1];
           var checkpointsXY = ins[1];
-          var checkpoints = outs[1];
+          var checkpoints = outs[2];
 
           dst.width = src.width;
           dst.height = src.height;
           dst.data = new src.data.constructor(src.data);
+
+          uImg.ensureDims(surf, src.width, src.height, 4, Uint8Array);
 
           checkpoints.length = 0;
           var numCheckpoints = checkpointsXY.length;
@@ -147,6 +150,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
               var pZ = catmullRom(cp[0].z, cp[1].z, cp[2].z, cp[3].z, u);
 
               drawCircleDisplacement(dst, pX, pY, pZ, radius, 0.2, 1);
+              drawCircle(surf, 2, pX, pY, 255 * 0.1, radius * 0.7, 0, 0.9);
               //drawCircle(maps.surface, maps.surface.packed, 4, 2, pX, pY, 255, 100, 0.4, 1);
             }
             t -= chords[i];
@@ -173,6 +177,9 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
                        uImg.createBuffer(null, 1, 1, 1, Float32Array),
                        drawTrackNode,
                        heightNode);
+
+        quiver.connect(drawTrackNode,
+                       maps.surface);
 
         quiver.connect(this.config.course.checkpoints,
                        drawTrackNode,

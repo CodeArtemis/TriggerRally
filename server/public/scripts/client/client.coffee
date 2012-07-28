@@ -54,6 +54,7 @@ define [
         alpha: false
         antialias: false
         premultipliedAlpha: false
+        clearColor: 0xffffff
       r.shadowMapEnabled = true
       r.shadowMapSoft = true
       r.shadowMapCullFrontFaces = false

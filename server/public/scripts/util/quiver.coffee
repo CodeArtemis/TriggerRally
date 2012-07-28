@@ -132,11 +132,9 @@ moduleDef = (require, exports, module) ->
 
   # callback()
   _walkIn = exports._walkIn = (node, nodeInfo, lockedSet, callback) ->
-    console.log 'walkIn: ' + node.id
     _walk node, nodeInfo, lockedSet, callback,
       (inNode) ->(cb) ->
         lockedSet.acquireNode inNode, ->
-          console.log 'acquire: ' + inNode.id
           if inNode.updated
             cb()
           else

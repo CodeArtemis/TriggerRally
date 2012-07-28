@@ -58,8 +58,8 @@ define [
       delta = Math.min 0.1, (time - lastTime) * 0.001
 
       terrainHeight = (track.terrain.getContactRayZ camPos.x, camPos.y).surfacePos.z
-      SPEED = 120 + 1.2 * Math.max 0, camPos.z - terrainHeight
-      ANG_SPEED = 1.2
+      SPEED = 120 + 0.8 * Math.max 0, camPos.z - terrainHeight
+      ANG_SPEED = 2
       VISCOSITY = 20
       camVelTarget.set 0, 0, 0
       camAngVelTarget.set 0, 0, 0

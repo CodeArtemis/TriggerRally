@@ -103,6 +103,9 @@ define [
           uniform sampler2D tHeight;
           uniform vec2 tHeightSize;
           uniform vec3 tHeightScale;
+          uniform sampler2D tSurface;
+          uniform vec2 tSurfaceSize;
+          uniform vec3 tSurfaceScale;
           uniform sampler2D tDetail;
           uniform vec2 tDetailSize;
           uniform vec3 tDetailScale;
@@ -149,6 +152,15 @@ define [
             float layerScale = scales[layer];
 
             worldPosition = position * layerScale + vec3(layerOffset, 0.0);
+
+            vec3 manhattan = abs(worldPosition - cameraPosition);
+            float morphDist = max(manhattan.x, manhattan.y) / layerScale;
+            float morph = min(1.0, max(0.0, morphDist / (31.0 / 2.0) - 3.0));
+            vec2 scaledPosition = worldPosition.xy / layerScale;
+            worldPosition.xy += layerScale *
+              mod(scaledPosition.xy, 2.0) *
+              (mod(scaledPosition.xy, 4.0) - 2.0) * morph;
+
             vec2 heightUv = worldToMapSpace(worldPosition.xy, tHeightSize, tHeightScale.xy);
             vec2 texel = 1.0 / tHeightSize;
             vec2 heightUv00 = (floor(heightUv * tHeightSize + 0.5) - 0.5) / tHeightSize;
@@ -156,7 +168,11 @@ define [
             float height = textureBicubic(tHeight, heightUv00, texel, frac) * tHeightScale.z;
             worldPosition.z = height;
 
-            float detailHeightAmount = 1.0;//smoothstep(0.7, 0.8, normal.z);
+            vec2 surfaceUv = worldToMapSpace(worldPosition.xy, tSurfaceSize, tSurfaceScale.xy);
+            vec4 surfaceSample = texture2D(tSurface, surfaceUv - 0.5 / tSurfaceSize);
+
+            float surfaceType = surfaceSample.b;
+            float detailHeightAmount = abs(0.1 - surfaceType) * 10.0;
             vec2 detailHeightUv = worldToMapSpace(worldPosition.xy, tDetailSize, tDetailScale.xy);
             vec4 detailSample = texture2D(tDetail, detailHeightUv);
             float detailHeightSample = detailSample.z;
@@ -207,11 +223,13 @@ define [
 
             vec2 surfaceDerivs = 255.0 * tSurfaceScale.z / tSurfaceScale.xy * (surfaceSample.xy - 0.5);
 
+            float surfaceType = surfaceSample.b;
+            float detailHeightAmount = abs(0.1 - surfaceType) * 10.0;
+
             vec2 detailUv = worldToMapSpace(worldPosition.xy, tDetailSize, tDetailScale.xy);
             vec4 detailSample = texture2D(tDetail, detailUv);
-            vec2 detailDerivs = vec2(tDetailScale.z / tDetailScale.xy * (detailSample.xy - 0.5));
+            vec2 detailDerivs = vec2(tDetailScale.z / tDetailScale.xy * (detailSample.xy - 0.5)) * detailHeightAmount;
 
-            float detailHeightAmount = 1.0;//smoothstep(-0.8, -0.7, -normal.z);
             vec2 epsilon = 1.0 / tDetailSize;
 
             vec3 normalDetail = normalize(vec3(- surfaceDerivs - detailDerivs, 1.0));
@@ -223,7 +241,7 @@ define [
             // Add another layer of high-detail noise.
             vec2 detail2Uv = worldToMapSpace(worldPosition.yx, tDetailSize, tDetailScale.xy / 37.3);
             vec4 detail2Sample = texture2D(tDetail, detail2Uv);
-            vec2 detail2Derivs = vec2(tDetailScale.z / tDetailScale.xy * (detail2Sample.xy - 0.5));
+            vec2 detail2Derivs = 0.5 * vec2(tDetailScale.z / tDetailScale.xy * (detail2Sample.xy - 0.5));
             vec3 normalDetail2 = normalize(vec3(- detail2Derivs, 1.0));
             normalDetail2 = normalDetail2.x * tangentU +
                             normalDetail2.y * tangentV +
@@ -239,9 +257,7 @@ define [
             vec3 veggieColor = mix(veggieColor1, veggieColor2, veggieMix);
             gl_FragColor.rgb = mix(gl_FragColor.rgb, veggieColor, veggieFactor);
             float rockMix = smoothstep(1.5*0.7, 1.5*0.75,
-                normalRegion.z + normalDetail.z * 0.5 + (noiseSample - 0.5) * 0.3 - height * 0.0002);
-            //float rockMix = surfaceSample.b;
-            //float rockMix = smoothstep(0.81, 0.82, normalDetail.z);
+                -1.0 + detailHeightAmount + normalRegion.z + normalDetail.z * 0.5 + (noiseSample - 0.5) * 0.3 - height * 0.0002);
             gl_FragColor.rgb = mix(rockDiffSample, gl_FragColor.rgb, rockMix);
 
             //gl_FragColor.rgb = vec3(0.5);
@@ -306,11 +322,12 @@ define [
             // For debugging.
             //gl_FragColor.rgb = mix(gl_FragColor.rgb, normalDetail * 0.5 + 0.5, 1.0);
             //gl_FragColor.rgb = mix(gl_FragColor.rgb, normal, 1.0);
-            //gl_FragColor.rgb = mix(gl_FragColor.rgb, (surfaceSample.rgb - 0.5) * 5.0 + 0.5, 1.0);
+            //gl_FragColor.rgb = mix(gl_FragColor.rgb, surfaceSample.rgb, 1.0);
             //gl_FragColor.rgb = vec3(veggieMix);
             //gl_FragColor.rgb = vec3(0.0, normal.y, 0.0);
             //gl_FragColor.rgb = vec3(detailSample);
             //gl_FragColor.rgb = 1.0 * vec3(normal.x, 0.0, normalDetail.x);
+            //gl_FragColor.rgb = vec3(0.5);
 
             //vec3 fogCol = vec3(0.8, 0.85, 0.9);
             //float clarity = 160.0 / (depth + 160.0);
@@ -419,9 +436,9 @@ define [
         nextLayer = Math.min layer + 1, @numLayers - 1
         for segment, segNumber in ringSegments
           rowStart = []
-          segStart = if layer > 0 then RING_WIDTH + 1 else 0
-          segWidth = if layer > 0 then RING_WIDTH else RING_WIDTH * 2 + 1
-          segLength = if layer > 0 then RING_WIDTH * 3 + 2 else RING_WIDTH * 2 + 1
+          segStart = if layer > 0 then RING_WIDTH + 0 else 0
+          segWidth = if layer > 0 then RING_WIDTH + 1 else RING_WIDTH * 2 + 1
+          segLength = if layer > 0 then RING_WIDTH * 3 + 1 else RING_WIDTH * 2 + 1
           for i in [0..segLength]
             rowStart.push posn.length / 3
             modeli = segStart - i
@@ -442,44 +459,6 @@ define [
                 else
                   idx.push start0 + 0, start1 + 0, start1 + 1
                   idx.push start0 + 0, start1 + 1, start0 + 1
-            if i % 2 == 0
-              # Draw long edge of stitch border.
-              modelj = RING_WIDTH * 2 + 2
-              segi = segment[0] * modeli + segment[1] * modelj
-              segj = segment[2] * modeli + segment[3] * modelj
-              posn.push segj / 2, segi / 2, nextLayer
-              if i > 0
-                start0 = rowStart[i-2] + segWidth
-                start1 = rowStart[i-1] + segWidth
-                start2 = rowStart[i]   + segWidth
-                idx.push start0 + 0, start1 + 0, start0 + 1
-                idx.push start0 + 1, start1 + 0, start2 + 1
-                idx.push start2 + 1, start1 + 0, start2 + 0
-          rowStart.push posn.length / 3
-          #continue
-          # Draw short edge of stitch border.
-          modeli = segStart - segLength - 1
-          for j in [0..segWidth+1]
-            if j % 2 == 0
-              modelj = segStart + j
-              segi = segment[0] * modeli + segment[1] * modelj
-              segj = segment[2] * modeli + segment[3] * modelj
-              posn.push segj / 2, segi / 2, nextLayer
-              if j > 0 and j < segWidth
-                start0 = rowStart[segLength]     + j-2
-                start1 = rowStart[segLength + 1] + j/2-1
-                idx.push start0 + 0, start1 + 0, start0 + 1
-                idx.push start0 + 1, start1 + 0, start1 + 1
-                idx.push start0 + 1, start1 + 1, start0 + 2
-          # Draw corner of stitch border.
-          j = segWidth + 1
-          start0 = rowStart[segLength - 1] + j-2
-          start1 = rowStart[segLength]     + j-2
-          start2 = rowStart[segLength + 1] + j/2-1
-          idx.push start1 + 0, start2 + 0, start1 + 1
-          idx.push start1 + 1, start2 + 0, start2 + 1
-          idx.push start1 + 1, start2 + 1, start0 + 2
-          idx.push start1 + 1, start0 + 2, start0 + 1
         scale *= 2
 
       geom.updateOffsets()
