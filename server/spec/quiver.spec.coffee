@@ -57,6 +57,7 @@ describe "quiver", ->
         info = {}
         ls = new quiver.LockedSet()
         quiver._walkOut n1, info, ls, ->
+          expect(info[n1.id].deps.length).toBe 0
           expect(info[n2.id].deps.length).toBe 2
           expect(info[n3.id].deps.length).toBe 1
           ls.release()
@@ -81,21 +82,25 @@ describe "quiver", ->
         info = {}
         ls = new quiver.LockedSet()
         quiver._walkIn n3, info, ls, ->
-          expect(info[n2.id].deps.length).toBe 0
           expect(info[n1.id]).toBeUndefined()
+          expect(info[n2.id].deps.length).toBe 0
+          expect(info[n3.id].deps.length).toBe 1
           ls.release()
           done()
 
       it "merges diamond paths", (done) ->
         quiver.connectParallel n1 = new quiver.Node
                                n2 = new quiver.Node
-                               [{}, {}]
-                               n3 = new quiver.Node
+                               [n3 = new quiver.Node, n4 = new quiver.Node]
+                               n5 = new quiver.Node
         info = {}
         ls = new quiver.LockedSet()
-        quiver._walkIn n3, info, ls, ->
+        quiver._walkIn n5, info, ls, ->
+          expect(info[n1.id].deps.length).toBe 0
           expect(info[n2.id].deps.length).toBe 1
-          expect(info[n3.id].deps.length).toBe 2
+          expect(info[n3.id].deps.length).toBe 1
+          expect(info[n4.id].deps.length).toBe 1
+          expect(info[n5.id].deps.length).toBe 2
           ls.release()
           done()
 

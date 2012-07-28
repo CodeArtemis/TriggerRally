@@ -37,7 +37,8 @@ define(function(require, exports, module) {
     return buffer;
   };
 
-  var _ensureDims = function(buffer, width, height, minChannels, defaultType) {
+  var _ensureDims =
+  exports.ensureDims = function(buffer, width, height, minChannels, defaultType) {
     if (!buffer.data ||
         buffer.width != width ||
         buffer.height != height ||

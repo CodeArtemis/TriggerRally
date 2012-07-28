@@ -7,10 +7,11 @@ define([
   'THREE',
   'game/scenery',
   'game/terrain',
+  'util/image',
   'cs!util/quiver',
   'util/util'
 ],
-function(LFIB4, THREE, gameScenery, gameTerrain, quiver, util) {
+function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
   var exports = {};
 
   var Vec2 = THREE.Vector2;
@@ -52,15 +53,21 @@ function(LFIB4, THREE, gameScenery, gameTerrain, quiver, util) {
         var maps = this.terrain.source.maps;
 
         var drawTrack = function(ins, outs, callback) {
-          var dispMap = ins[0];  // === outs[0]
-          var checkpointsXY = ins[0];
+          var src = ins[0], dst = outs[0];
+          var checkpointsXY = ins[1];
           var checkpoints = outs[1];
+
+          dst.width = src.width;
+          dst.height = src.height;
+          dst.data = new src.data.constructor(src.data);
 
           checkpoints.length = 0;
           var numCheckpoints = checkpointsXY.length;
           for (var i = 0; i < numCheckpoints; ++i) {
             checkpoints.push(
-                new Vec3(checkpointsXY[i].pos[0], checkpointsXY[i].pos[1], 0));
+                new Vec3(checkpointsXY[i].pos[0] * course.coordscale[0],
+                         checkpointsXY[i].pos[1] * course.coordscale[1],
+                         0));
           }
 
           var adjustCheckpointHeights = function() {
@@ -139,7 +146,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, quiver, util) {
               var pY = catmullRom(cp[0].y, cp[1].y, cp[2].y, cp[3].y, u);
               var pZ = catmullRom(cp[0].z, cp[1].z, cp[2].z, cp[3].z, u);
 
-              drawCircleDisplacement(dispMap, pX, pY, pZ, radius, 0.2, 1);
+              drawCircleDisplacement(dst, pX, pY, pZ, radius, 0.2, 1);
               //drawCircle(maps.surface, maps.surface.packed, 4, 2, pX, pY, 255, 100, 0.4, 1);
             }
             t -= chords[i];
@@ -163,7 +170,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, quiver, util) {
         heightNode.inputs.shift();
         sourceNode.outputs.shift();
         quiver.connect(sourceNode,
-                       {},  // Create an intermediate buffer to store clean height.
+                       uImg.createBuffer(null, 1, 1, 1, Float32Array),
                        drawTrackNode,
                        heightNode);
 
@@ -171,6 +178,8 @@ function(LFIB4, THREE, gameScenery, gameTerrain, quiver, util) {
                        drawTrackNode,
                        this.checkpoints);
 
+        //quiver.pull(heightNode);
+        //quiver.push(heightNode);
         //this.scenery = new gameScenery.Scenery(config.scenery, this);
 
         if (callback) callback();

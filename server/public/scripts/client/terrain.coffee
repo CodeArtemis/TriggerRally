@@ -365,32 +365,32 @@ define [
       maps = @terrain.source.maps
       uniforms = @material.uniforms
 
-      quiver.connect maps.height, (ins, outs, done) ->
+      quiver.connect maps.height, node = new quiver.Node (ins, outs, done) ->
         buffer = ins[0]
         uniforms.tHeight.texture = createTexture buffer, false
         uniforms.tHeightSize.value.set buffer.width, buffer.height
         uniforms.tHeightScale.value.copy maps.height.scale
         uniforms.tHeightScale.value.z *= typeScale buffer.data
         done()
-      quiver.pull maps.height
+      quiver.pull node
 
-      quiver.connect maps.surface, (ins, outs, done) ->
+      quiver.connect maps.surface, node = new quiver.Node (ins, outs, done) ->
         buffer = ins[0]
         uniforms.tSurface.texture = createTexture buffer, true
         uniforms.tSurfaceSize.value.set buffer.width, buffer.height
         uniforms.tSurfaceScale.value.copy maps.surface.scale
         #uniforms.tSurfaceScale.value.z *= typeScale buffer.data
         done()
-      quiver.pull maps.surface
+      quiver.pull node
 
-      quiver.connect maps.detail, (ins, outs, done) ->
+      quiver.connect maps.detail, node = new quiver.Node (ins, outs, done) ->
         buffer = ins[0]
         uniforms.tDetail.texture = createTexture buffer, true
         uniforms.tDetailSize.value.set buffer.width, buffer.height
         uniforms.tDetailScale.value.copy maps.detail.scale
         uniforms.tDetailScale.value.z *= typeScale buffer.data
         done()
-      quiver.pull maps.detail
+      quiver.pull node
       return
 
     _createImmediateObject: ->

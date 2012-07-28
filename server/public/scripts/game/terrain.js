@@ -49,11 +49,9 @@ function(THREE, async, uImg, quiver, util) {
       };
     }
     // Create seed buffers. The pipeline will preserve their data types.
-    // TODO: Make this Uint16?
     uImg.createBuffer(maps.height, 1, 1, 1, Float32Array);
-    maps.surface = uImg.createBuffer(maps.surface, 1, 1, 4, Uint8ClampedArray);
-    // TODO: Make this Uint8?
-    maps.detail = uImg.createBuffer(maps.detail, 1, 1, 4, Uint8ClampedArray);
+    uImg.createBuffer(maps.surface, 1, 1, 4, Uint8ClampedArray);
+    uImg.createBuffer(maps.detail, 1, 1, 4, Uint8ClampedArray);
 
     // Note to self: elevation data in 8-bit PNG seems to compress 20% better
     // if you split the channels into separate greyscale PNG images.
@@ -77,13 +75,13 @@ function(THREE, async, uImg, quiver, util) {
         maps.surface);
 
     if (config.detail) {
-      var imgData = {};
+      // TODO: omit copyChannel stage.
       quiver.connectParallel(
           config.detail.url,
           uImg.imageFromUrl(),
           {},
           uImg.getImageData({flip: true}),
-          imgData,
+          {},
           [ uImg.copyChannel(0, 2), uImg.derivatives(2, 127.5) ],
           maps.detail);
     }

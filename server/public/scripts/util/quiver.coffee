@@ -132,9 +132,11 @@ moduleDef = (require, exports, module) ->
 
   # callback()
   _walkIn = exports._walkIn = (node, nodeInfo, lockedSet, callback) ->
+    console.log 'walkIn: ' + node.id
     _walk node, nodeInfo, lockedSet, callback,
       (inNode) ->(cb) ->
         lockedSet.acquireNode inNode, ->
+          console.log 'acquire: ' + inNode.id
           if inNode.updated
             cb()
           else
@@ -181,14 +183,25 @@ moduleDef = (require, exports, module) ->
     return
 
   exports.connect = (args...) ->
+    tasks = []
     prevNode = null
+    ls = new LockedSet
     for arg in args
       node = _coerceToNode arg
-      if prevNode
-        prevNode.pushOutputs node
-        node.pushInputs prevNode
+      do (prevNode, node) ->
+        tasks.push (cb) ->
+          ls.acquireNode node, ->
+            if prevNode
+              prevNode.pushOutputs node
+              node.pushInputs prevNode
+            cb()
       prevNode = node
-    #exports.pull prevNode if prevNode
+    async.parallel tasks, ->
+      # connect should not pull automatically because we can't be sure that the
+      # user has connected all inputs yet.
+      #exports.pull prevNode if prevNode
+      ls.release()
+    return
 
   # Like connect, but array arguments will be treated as parallel nodes.
   exports.connectParallel = (args...) ->
@@ -202,16 +215,18 @@ moduleDef = (require, exports, module) ->
     connectNodes = (nodes) ->
       prevNodes.forEach (prevNode) ->
         prevNode.pushOutputs.apply prevNode, nodes
-
       nodes.forEach (node) ->
         node.pushInputs.apply node, prevNodes
-
       prevNodes = nodes
+      return
 
     for arg in args
       connectNodes coerceToNodeArray arg
+
+    exports.pull prevNode for prevNode in prevNodes
     return
-  return
+
+  return exports
 
 if define?
   define moduleDef
