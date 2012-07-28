@@ -48,37 +48,7 @@ moduleDef = (require, exports, module) ->
     isLocked: ->
       @queue.length > 0
 
-  class exports.Node
-    constructor: (opt_payload) ->
-      @payload = opt_payload or {}
-      @inputs = []
-      @outputs = []
-      @lock = new exports.Lock()
-      @id = _getUniqueId()
-      # It's probably not a good idea to attach multiple Nodes to the same
-      # object, but if you do, the first one keeps the _quiverNode reference.
-      @payload._quiverNode or= this
-
-    pushInputs: (values...) ->
-      for value in values
-        @inputs.push _coerceToNode value
-      return
-
-    pushOutputs: (values...) ->
-      for value in values
-        @outputs.push _coerceToNode value
-      return
-
-    execute: (callback) ->
-      if @payload instanceof Function
-        inputPayloads = _pluck(@inputs, 'payload')
-        outputPayloads = _pluck(@outputs, 'payload')
-        @payload inputPayloads, outputPayloads, callback
-      else
-        callback()
-      return
-
-  exports.LockedSet = class LockedSet
+  LockedSet = class exports.LockedSet
     constructor: ->
       @nodes = {}
 
@@ -100,51 +70,114 @@ moduleDef = (require, exports, module) ->
       @nodes = {}
       return
 
+  class exports.Node
+    constructor: (opt_payload) ->
+      @payload = opt_payload or {}
+      @inputs = []
+      @outputs = []
+      @updated = false
+      @lock = new exports.Lock()
+      @id = _getUniqueId()
+      # It's probably not a good idea to attach multiple Nodes to the same
+      # object, but if you do, the first one keeps the _quiverNode reference.
+      @payload._quiverNode or= this
+
+    pushInputs: (values...) ->
+      for value in values
+        @inputs.push _coerceToNode value
+      return
+
+    pushOutputs: (values...) ->
+      for value in values
+        @outputs.push _coerceToNode value
+      return
+
+    # Node, inputs and outputs should be locked before calling.
+    execute: (callback) ->
+      @updated = true
+      if @payload instanceof Function
+        inputPayloads = _pluck(@inputs, 'payload')
+        outputPayloads = _pluck(@outputs, 'payload')
+        @payload inputPayloads, outputPayloads, callback
+      else
+        callback()
+      return
+
   # callback()
-  _walkOut = exports._walkOut = (node, nodeInfo, lockedSet, callback) ->
-    # Lock the node itself.
+  _walk = exports._walk = (node, nodeInfo, lockedSet, callback, doIn, doOut) ->
     lockedSet.acquireNode node, ->
       nodeInfo[node.id] ?=
         node: node
         deps: []
       tasks = []
-      # Lock its inputs.
-      for inNode in node.inputs
-        do (inNode) ->
-          tasks.push (cb) ->
-            lockedSet.acquireNode inNode, cb
-      # Lock its outputs.
-      for outNode in node.outputs
-        do (outNode) ->
-          tasks.push (cb) ->
-            lockedSet.acquireNode outNode, ->
-              _walkOut outNode, nodeInfo, lockedSet, ->
-                # Add ourselves as a dependency.
-                nodeInfo[outNode.id].deps.push node.id + ""
-                cb()
+      tasks.push(doIn(inNode, tasks)) for inNode in node.inputs
+      tasks.push(doOut(outNode, tasks)) for outNode in node.outputs
       async.parallel tasks, (err, results) ->
         if err then throw err
         callback()
     return
 
-  exports.trigger = (nodes...) ->
+  # callback()
+  _walkOut = exports._walkOut = (node, nodeInfo, lockedSet, callback) ->
+    _walk node, nodeInfo, lockedSet, callback,
+      (inNode) -> (cb) ->
+        lockedSet.acquireNode inNode, cb
+      (outNode) -> (cb) ->
+        lockedSet.acquireNode outNode, ->
+          _walkOut outNode, nodeInfo, lockedSet, ->
+            # Add ourselves as a dependency.
+            nodeInfo[outNode.id].deps.push node.id + ""
+            cb()
+
+  # callback()
+  _walkIn = exports._walkIn = (node, nodeInfo, lockedSet, callback) ->
+    _walk node, nodeInfo, lockedSet, callback,
+      (inNode) ->(cb) ->
+        lockedSet.acquireNode inNode, ->
+          if inNode.updated
+            cb()
+          else
+            _walkIn inNode, nodeInfo, lockedSet, ->
+              # Add input as a dependency.
+              nodeInfo[node.id].deps.push inNode.id + ""
+              cb()
+      (outNode) -> (cb) ->
+        lockedSet.acquireNode outNode, cb
+
+  exports.push = (node, callback) ->
     nodeInfo = {}
     releases = []
     lockedSet = new LockedSet()
     tasks = {}
-    for val in nodes
-      node = if val instanceof exports.Node then val else val._quiverNode
-      _walkOut node, nodeInfo, lockedSet, ->
-        tasks[node.id] = (callback) ->
-          node.execute callback
+    node = if node instanceof exports.Node then node else node._quiverNode
+    _walkOut node, nodeInfo, lockedSet, ->
       for nodeId, info of nodeInfo
         do (info) ->
           tasks[nodeId] = info.deps.concat [
-            (callback) ->
-              info.node.execute callback
+            (cb) ->
+              info.node.execute cb
           ]
       async.auto tasks, (err, results) ->
         lockedSet.release()
+        callback?()
+    return
+
+  exports.pull = (node, callback) ->
+    nodeInfo = {}
+    releases = []
+    lockedSet = new LockedSet()
+    tasks = {}
+    node = if node instanceof exports.Node then node else node._quiverNode
+    _walkIn node, nodeInfo, lockedSet, ->
+      for nodeId, info of nodeInfo
+        do (info) ->
+          tasks[nodeId] = info.deps.concat [
+            (cb) ->
+              info.node.execute cb
+          ]
+      async.auto tasks, (err, results) ->
+        lockedSet.release()
+        callback?()
     return
 
   exports.connect = (args...) ->

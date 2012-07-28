@@ -45,8 +45,8 @@ describe "quiver", ->
         info = {}
         ls = new quiver.LockedSet()
         quiver._walkOut n1, info, ls, ->
-          ls.release()
           expect(info[n2.id].deps).toEqual [n1.id + ""]
+          ls.release()
           done()
 
       it "follows parallel paths", (done) ->
@@ -56,24 +56,64 @@ describe "quiver", ->
         info = {}
         ls = new quiver.LockedSet()
         quiver._walkOut n1, info, ls, ->
-          ls.release()
           expect(info[n2.id].deps.length).toBe 2
+          ls.release()
           done()
 
-    describe "trigger", ->
+    describe "_walkIn", ->
+      it "can walk a simple graph", (done) ->
+        quiver.connect n1 = new quiver.Node
+                       n2 = new quiver.Node
+        info = {}
+        ls = new quiver.LockedSet()
+        quiver._walkIn n2, info, ls, ->
+          expect(info[n2.id].deps).toEqual [n1.id + ""]
+          ls.release()
+          done()
+
+      it "stops at updated nodes", (done) ->
+        quiver.connect n1 = new quiver.Node
+                       n2 = new quiver.Node
+                       n3 = new quiver.Node
+        n1.updated = true
+        info = {}
+        ls = new quiver.LockedSet()
+        quiver._walkIn n3, info, ls, ->
+          expect(info[n2.id].deps.length).toBe 0
+          expect(info[n1.id]).toBeUndefined()
+          ls.release()
+          done()
+
+    class Counter
+      constructor: ->
+        @count = 0
+      makeNode: ->
+        @count += 1
+        return new quiver.Node (ins, outs, callback) =>
+          @count -= 1
+          callback()
+
+    describe "push", ->
       it "executes each node exactly once", (done) ->
-        count = 0
-        makeNode = ->
-          count += 1
-          return new quiver.Node (ins, outs, callback) ->
-            count -= 1
-            callback()
+        ctr = new Counter
         quiver.connectParallel(
-          n1 = makeNode()
-          [makeNode(), makeNode()]
-          makeNode()
+          n1 = ctr.makeNode()
+          [ctr.makeNode(), ctr.makeNode()]
+          ctr.makeNode()
           (ins, outs, callback) ->
-            expect(count).toBe 0
+            expect(ctr.count).toBe 0
             done()
         )
-        quiver.trigger n1
+        quiver.push n1
+
+    describe "pull", ->
+      it "stops at updated nodes", (done) ->
+        ctr = new Counter
+        quiver.connect n1 = ctr.makeNode()
+                       n2 = ctr.makeNode()
+        quiver.push n1, ->
+          expect(ctr.count).toBe 0
+          quiver.connect n2, n3 = {}
+          quiver.pull n3, ->
+            expect(ctr.count).toBe 0
+            done()
