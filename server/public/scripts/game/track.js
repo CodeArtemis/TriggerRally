@@ -62,7 +62,8 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
           dst.height = src.height;
           dst.data = new src.data.constructor(src.data);
 
-          uImg.ensureDims(surf, src.width, src.height, 4, Uint8Array);
+          //uImg.ensureDims(surf, src.width, src.height, 4, Uint8Array);
+          uImg.createBuffer(surf, src.width, src.height, 4, Uint8ClampedArray);
 
           checkpoints.length = 0;
           var numCheckpoints = checkpointsXY.length;
@@ -72,11 +73,12 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
                          checkpointsXY[i].pos[1] * course.coordscale[1],
                          0));
           }
+          quiver.push(checkpoints);
 
           var adjustCheckpointHeights = function() {
             checkpoints.forEach(function (cpWithZ) {
               var contact = this.terrain.getContact(cpWithZ);
-              cpWithZ.z = contact.surfacePos.z + 20;
+              cpWithZ.z = contact.surfacePos.z;
             }, this);
           }.bind(this);
           adjustCheckpointHeights();
@@ -150,7 +152,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
               var pZ = catmullRom(cp[0].z, cp[1].z, cp[2].z, cp[3].z, u);
 
               drawCircleDisplacement(dst, pX, pY, pZ, radius, 0.2, 1);
-              drawCircle(surf, 2, pX, pY, 255 * 0.1, radius * 0.7, 0, 0.9);
+              drawCircle(surf, 2, pX, pY, 255 * 0.1, radius * 0.5, 0.8, 1);
               //drawCircle(maps.surface, maps.surface.packed, 4, 2, pX, pY, 255, 100, 0.4, 1);
             }
             t -= chords[i];

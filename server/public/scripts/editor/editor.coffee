@@ -8,7 +8,8 @@ define [
   'util/util'
   'cs!client/client'
   'game/track'
-], ($, THREE, util, clientClient, gameTrack) ->
+  'cs!util/quiver'
+], ($, THREE, util, clientClient, gameTrack, quiver) ->
   KEYCODE = util.KEYCODE
   Vec3 = THREE.Vector3
 
@@ -51,6 +52,7 @@ define [
     camAngVelTarget = new Vec3
 
     keyDown = []
+    drawNow = false
 
     lastTime = 0
     tmpVec3 = new THREE.Vector3
@@ -95,12 +97,14 @@ define [
       camAng.addSelf tmpVec3.copy(camAngVel).multiplyScalar delta
       camAng.x = Math.max 0, Math.min 2, camAng.x
 
-      if camVel.length() > 0.1 or
+      if drawNow or
+         camVel.length() > 0.1 or
          camAngVel.length() > 0.01 or
          Math.floor(time / 1000) - Math.floor(lastTime / 1000) > 0
         # Render at max rate when moving, otherwise once a second.
         client.update delta
         client.render()
+        drawNow = false
 
       requestAnimationFrame update
       lastTime = time
@@ -108,12 +112,40 @@ define [
 
     requestAnimationFrame update
 
+    selectedCp = 0
+
     keyWeCareAbout = (event) ->
       event.keyCode <= 127
     isModifierKey = (event) ->
       event.ctrlKey or event.altKey or event.metaKey
     $(document).on 'keydown', (event) ->
       if keyWeCareAbout(event) and not isModifierKey(event)
+        checkpoints = client.track.config.course.checkpoints
+        switch event.keyCode
+          when KEYCODE['J']
+            checkpoints[selectedCp]?.pos[0] += 1
+            quiver.push checkpoints
+            drawNow = true
+          when KEYCODE['G']
+            checkpoints[selectedCp]?.pos[0] -= 1
+            quiver.push checkpoints
+            drawNow = true
+          when KEYCODE['Y']
+            checkpoints[selectedCp]?.pos[1] += 1
+            quiver.push checkpoints
+            drawNow = true
+          when KEYCODE['H']
+            checkpoints[selectedCp]?.pos[1] -= 1
+            quiver.push checkpoints
+            drawNow = true
+          when KEYCODE['U']
+            selectedCp = (selectedCp + checkpoints.length - 1) % checkpoints.length
+            client.renderCheckpoints.highlightCheckpoint selectedCp
+            drawNow = true
+          when KEYCODE['I']
+            selectedCp = (selectedCp + 1) % checkpoints.length
+            client.renderCheckpoints.highlightCheckpoint selectedCp
+            drawNow = true
         keyDown[event.keyCode] = true
         event.preventDefault()
       return
@@ -121,6 +153,9 @@ define [
       if keyWeCareAbout(event)
         keyDown[event.keyCode] = false
         event.preventDefault()
+      return
+    view3d.on 'mousemove', (event) ->
+      #client.renderCheckpoints.highlightCheckpoint 0
       return
 
     toolbox.show()

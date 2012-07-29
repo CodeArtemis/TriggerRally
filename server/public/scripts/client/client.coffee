@@ -14,6 +14,13 @@ define [
     constructor: (@scene, checkpoints) ->
       @ang = 0
       @meshes = []
+
+      @selectedMat = new THREE.MeshBasicMaterial
+        color: 0x903030
+        blending: THREE.AdditiveBlending
+        transparent: 1
+        depthWrite: false
+
       quiver.connect checkpoints, (ins, outs, done) =>
         for mesh in @meshes
           @scene.remove mesh
@@ -25,10 +32,12 @@ define [
         done()
 
     update: (camera, delta) ->
-      if false
-        @ang += delta * 3
-        for mesh in @meshes
-          mesh.rotation.y = @ang
+      return
+
+    highlightCheckpoint: (i) ->
+      for mesh in @meshes
+        mesh.material = clientMisc.checkpointMaterial()
+      @meshes[i]?.material = @selectedMat
       return
 
   TriggerClient: class TriggerClient
@@ -71,6 +80,7 @@ define [
     update: (delta) ->
       @objects.forEach (object) =>
         object.update @camera, delta
+      return
 
     render: ->
       delta = 0
@@ -81,7 +91,7 @@ define [
     sunLight: ->
       sunLight = new THREE.DirectionalLight( 0xffe0bb )
       sunLight.intensity = 1.3
-      @sunLightPos = sunLight.position.set 10, 0, 10
+      @sunLightPos = sunLight.position.set -6, 7, 10
 
       sunLight.castShadow = true
 
@@ -156,5 +166,6 @@ define [
       cubeMesh
 
     setTrack: (@track) ->
-      @objects.push new clientTerrain.RenderTerrain(@scene, track.terrain, @renderer.context)
-      @objects.push new RenderCheckpoints(@scene, track.checkpoints)
+      @objects.push new clientTerrain.RenderTerrain(@scene, @track.terrain, @renderer.context)
+      @objects.push @renderCheckpoints = new RenderCheckpoints(@scene, @track.checkpoints)
+      return

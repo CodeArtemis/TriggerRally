@@ -12,6 +12,8 @@ define [
     depthWrite: false
   checkpointGeom = new THREE.CylinderGeometry 6, 6, 3, 32, 1, false
 
+  checkpointMaterial: -> checkpointMat
+
   checkpointMesh: ->
     meshCheckpoint = new THREE.Mesh checkpointGeom, checkpointMat
     #meshCheckpoint.position.z = 1.5
