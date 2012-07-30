@@ -12,6 +12,7 @@ define([
 function(THREE, async, uImg, quiver, util) {
   var exports = {};
 
+  var Vec2 = THREE.Vector2;
   var Vec3 = THREE.Vector3;
   var INTERP = util.INTERP;
   var catmullRom = util.catmullRom;
@@ -115,7 +116,7 @@ function(THREE, async, uImg, quiver, util) {
     this.terrain = terrain;
   };
 
-  var sampleBilinear = function(map, channel, x, y, normalOut) {
+  var sampleBilinear = function(map, channel, x, y, derivsOut) {
     var numChannels = uImg.channels(map);
     var dmap = new map.data.constructor(map.data.buffer, channel);
     var cx = map.width;
@@ -136,12 +137,9 @@ function(THREE, async, uImg, quiver, util) {
         INTERP(h[0], h[1], fracx),
         INTERP(h[2], h[3], fracx),
         fracy);
-    if (normalOut) {
-      // Would it be faster to grab the packed derivates from the detail map?
-      normalOut.set(
-          h[0] + h[2] - h[1] - h[3],
-          h[0] + h[1] - h[2] - h[3],
-          2).divideSelf(map.scale).normalize();
+    if (derivsOut) {
+      derivsOut.x = (h[1] + h[3] - h[0] - h[2]) * 0.5;
+      derivsOut.y = (h[2] + h[3] - h[0] - h[1]) * 0.5;
     }
     return sample;
   };
@@ -189,18 +187,13 @@ function(THREE, async, uImg, quiver, util) {
         catmullRom(h[ 1], h[ 5], h[ 9], h[13], fracy),
         catmullRom(h[ 2], h[ 6], h[10], h[14], fracy),
         catmullRom(h[ 3], h[ 7], h[11], h[15], fracy),
-        fracx);
+        fracx) * (mapHeight.scale.z / mapHeight.scale.x);
     var derivY = catmullRomDeriv(
         catmullRom(h[ 0], h[ 1], h[ 2], h[ 3], fracx),
         catmullRom(h[ 4], h[ 5], h[ 6], h[ 7], fracx),
         catmullRom(h[ 8], h[ 9], h[10], h[11], fracx),
         catmullRom(h[12], h[13], h[14], h[15], fracx),
-        fracy);
-
-    var normal = new Vec3(
-        -derivX,
-        -derivY,
-        1).divideSelf(mapHeight.scale).normalize();
+        fracy) * (mapHeight.scale.z / mapHeight.scale.y);
 
     var detailAmount = 1;
 
@@ -211,15 +204,14 @@ function(THREE, async, uImg, quiver, util) {
     }
 
     if (mapDetail && mapDetail.data) {
-      // Would it be faster to grab the packed derivates from the detail map?
-      var detailNormal = new Vec3();
-      height += sampleBilinear(mapDetail, 2, x, y, detailNormal) *
-                detailAmount * mapDetail.scale.z;
-      normal.set(
-          detailNormal.z * normal.x + detailNormal.x * (1 - normal.x * normal.x),
-          detailNormal.z * normal.y + detailNormal.y * (1 - normal.y * normal.y),
-          detailNormal.z * normal.z);
+      detailAmount *= mapDetail.scale.z;
+      var detailDeriv = new Vec2();
+      height += sampleBilinear(mapDetail, 2, x, y, detailDeriv) * detailAmount;
+      derivX += detailDeriv.x * detailAmount / mapDetail.scale.x;
+      derivY += detailDeriv.y * detailAmount / mapDetail.scale.y;
     }
+
+    var normal = new Vec3(-derivX, -derivY, 1).normalize();
 
     return {
       normal: normal,

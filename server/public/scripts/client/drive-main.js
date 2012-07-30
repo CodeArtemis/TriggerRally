@@ -46,9 +46,9 @@ require(
     }
   },
   [
-    'cs!editor/editor'
+    'cs!client/drive'
   ],
-  function editorMain(editor) {
-    editor.run();
+  function driveMain(drive) {
+    drive.run();
   }
 );

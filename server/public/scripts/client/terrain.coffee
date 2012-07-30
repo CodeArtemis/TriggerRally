@@ -287,7 +287,9 @@ define [
             gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.2), trackMix);
             //gl_FragColor.rgb = vec3(0.5);
 
-            float specular = rockMix * 0.2 + trackMix * 0.1;
+            vec3 specular = vec3(0.0);
+            specular = mix(specular, vec3(0.20, 0.21, 0.22), rockMix);
+            specular = mix(specular, vec3(0.12, 0.11, 0.10), trackMix);
 
             """ +
             #THREE.ShaderChunk.shadowmap_fragment +
@@ -356,10 +358,10 @@ define [
             gl_FragColor.rgb = gl_FragColor.rgb * totalIllum + specularIllum * shadowColor;
 
             // For debugging.
-            //gl_FragColor.rgb = normalDetail * 0.5 + 0.5;
+            //gl_FragColor.rgb = normalDetail2 * 0.5 + 0.5;
             //gl_FragColor.rgb = normalSq;
             //gl_FragColor.rgb = vec3(surfaceSample.a);
-            //gl_FragColor.rgb = vec3(veggieMix);
+            //gl_FragColor.rgb = vec3(specular);
             //gl_FragColor.rgb = vec3(0.0, normal.y, 0.0);
             //gl_FragColor.rgb = vec3(detailSample);
             //gl_FragColor.rgb = 1.0 * vec3(normal.x, 0.0, normalDetail.x);

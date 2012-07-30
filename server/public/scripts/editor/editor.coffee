@@ -7,9 +7,10 @@ define [
   'THREE'
   'util/util'
   'cs!client/client'
+  'game/game'
   'game/track'
   'cs!util/quiver'
-], ($, THREE, util, clientClient, gameTrack, quiver) ->
+], ($, THREE, util, clientClient, gameGame, gameTrack, quiver) ->
   KEYCODE = util.KEYCODE
   Vec3 = THREE.Vector3
 
@@ -19,11 +20,14 @@ define [
     toolbox = $('#editor-toolbox')
     view3d = $('#view3d')
 
-    client = new clientClient.TriggerClient view3d[0]
+    game = new gameGame.Game()
+    client = new clientClient.TriggerClient view3d[0], game
+    $(document).on 'keydown', (event) -> client.onKeyDown event
+    $(document).on 'keyup', (event) -> client.onKeyUp event
 
-    track = new gameTrack.Track()
-    track.loadWithConfig TRIGGER.TRACK.CONFIG, ->
-      client.setTrack track
+    track = null
+    game.setTrackConfig TRIGGER.TRACK.CONFIG, (tr) ->
+      track = tr
 
     layout = ->
       [toolbox, view3d].forEach (panel) ->
@@ -40,9 +44,6 @@ define [
     container.on 'resize', ->
       layout()
 
-    #view3d.on 'mousemove', ->
-    #  client.render()
-
     client.camera.eulerOrder = 'ZYX'
     camPos = client.camera.position.set 0, 0, 2000
     camAng = client.camera.rotation.set 0.6, 0, 0
@@ -51,7 +52,6 @@ define [
     camAngVel = new Vec3
     camAngVelTarget = new Vec3
 
-    keyDown = []
     drawNow = false
 
     lastTime = 0
@@ -59,12 +59,15 @@ define [
     update = (time) ->
       delta = Math.min 0.1, (time - lastTime) * 0.001
 
-      terrainHeight = (track.terrain.getContactRayZ camPos.x, camPos.y).surfacePos.z
+      terrainHeight = 0
+      if track?
+        terrainHeight = (track.terrain.getContactRayZ camPos.x, camPos.y).surfacePos.z
       SPEED = 120 + 0.8 * Math.max 0, camPos.z - terrainHeight
       ANG_SPEED = 2
       VISCOSITY = 20
       camVelTarget.set 0, 0, 0
       camAngVelTarget.set 0, 0, 0
+      keyDown = client.keyDown
       if keyDown[KEYCODE.SHIFT] then SPEED *= 3
       if keyDown[KEYCODE.RIGHT] then camVelTarget.x += SPEED
       if keyDown[KEYCODE.LEFT] then camVelTarget.x -= SPEED
@@ -91,8 +94,9 @@ define [
       camAngVel.z = camAngVelTarget.z + (camAngVel.z - camAngVelTarget.z) * mult
 
       camPos.addSelf tmpVec3.copy(camVel).multiplyScalar delta
-      terrainHeight = (track.terrain.getContactRayZ camPos.x, camPos.y).surfacePos.z
-      camPos.z = Math.max camPos.z, terrainHeight + 1
+      if track?
+        terrainHeight = (track.terrain.getContactRayZ camPos.x, camPos.y).surfacePos.z
+        camPos.z = Math.max camPos.z, terrainHeight + 1
 
       camAng.addSelf tmpVec3.copy(camAngVel).multiplyScalar delta
       camAng.x = Math.max 0, Math.min 2, camAng.x
@@ -114,13 +118,9 @@ define [
 
     selectedCp = 0
 
-    keyWeCareAbout = (event) ->
-      event.keyCode <= 127
-    isModifierKey = (event) ->
-      event.ctrlKey or event.altKey or event.metaKey
-    $(document).on 'keydown', (event) ->
-      if keyWeCareAbout(event) and not isModifierKey(event)
-        checkpoints = client.track.config.course.checkpoints
+    client.on 'keydown', (event) ->
+      if track?
+        checkpoints = track.config.course.checkpoints
         moveAmt = 1
         if keyDown[KEYCODE.SHIFT] then moveAmt *= 5
         switch event.keyCode
@@ -150,17 +150,6 @@ define [
             drawNow = true
           when KEYCODE.SPACE
             console.log JSON.stringify(client.track.config)
-        keyDown[event.keyCode] = true
-        event.preventDefault()
-      return
-    $(document).on 'keyup', (event) ->
-      if keyWeCareAbout(event)
-        keyDown[event.keyCode] = false
-        event.preventDefault()
-      return
-    view3d.on 'mousemove', (event) ->
-      #client.renderCheckpoints.highlightCheckpoint 0
-      return
 
     toolbox.show()
     return

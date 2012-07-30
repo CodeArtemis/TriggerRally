@@ -34,7 +34,8 @@
 
   !=partial('partial/footer')
 
-script(src="/js/Three.js")
+- if (urlTrack.config.gameversion === 1)
+  script(src="/js/Three.js")
 script(src="/js/Detector.js")
 script(src="/js/Stats.js")
 
@@ -56,4 +57,7 @@ script
 - if (user)
   script TRIGGER.USER_LOGGED_IN = '#{user.pub_id}';
 
-script(src="/js/trigger.js")
+- if (urlTrack.config.gameversion === 1)
+  script(src="/js/trigger-v1.js")
+- else
+  script(data-main="/scripts/client/drive-main", src="/js/require.js")

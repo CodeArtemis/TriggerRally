@@ -192,7 +192,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
               derivY = srcData[srcPtr + 1] / 127.5 - 1;
               type = srcData[srcPtr + 2];
               gradient = Math.sqrt(derivX * derivX + derivY * derivY);
-              roughness = gradient * 0.1 * type + 0.05;
+              roughness = gradient * 0.1 * type + 0.02;
               dstData[dstPtr + 3] = Math.min(255, roughness * 256);
               srcPtr += srcChannels;
               dstPtr += dstChannels;

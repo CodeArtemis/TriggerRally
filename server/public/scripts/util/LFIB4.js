@@ -5,6 +5,7 @@
 define([
 ], function() {
   var exports = {};
+
   function Mash() {
     var n = 0xefc8249d;
 
