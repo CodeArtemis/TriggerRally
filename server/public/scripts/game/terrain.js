@@ -50,8 +50,8 @@ function(THREE, async, uImg, quiver, util) {
     }
     // Create seed buffers. The pipeline will preserve their data types.
     uImg.createBuffer(maps.height, 1, 1, 1, Float32Array);
-    uImg.createBuffer(maps.surface, 1, 1, 4, Uint8ClampedArray);
-    uImg.createBuffer(maps.detail, 1, 1, 4, Uint8ClampedArray);
+    //uImg.createBuffer(maps.surface, 1, 1, 4, Uint8Array);
+    uImg.createBuffer(maps.detail, 1, 1, 4, Uint8Array);
 
     // Note to self: elevation data in 8-bit PNG seems to compress 20% better
     // if you split the channels into separate greyscale PNG images.
@@ -115,9 +115,42 @@ function(THREE, async, uImg, quiver, util) {
     this.terrain = terrain;
   };
 
+  var sampleBilinear = function(map, channel, x, y, normalOut) {
+    var numChannels = uImg.channels(map);
+    var dmap = new map.data.constructor(map.data.buffer, channel);
+    var cx = map.width;
+    var cy = map.height;
+    var mx = x / map.scale.x;
+    var my = y / map.scale.y;
+    var floorx = Math.floor(mx);
+    var floory = Math.floor(my);
+    var h = [
+      dmap[(wrap(floorx    , cx) + wrap(floory    , cy) * cx) * numChannels],
+      dmap[(wrap(floorx + 1, cx) + wrap(floory    , cy) * cx) * numChannels],
+      dmap[(wrap(floorx    , cx) + wrap(floory + 1, cy) * cx) * numChannels],
+      dmap[(wrap(floorx + 1, cx) + wrap(floory + 1, cy) * cx) * numChannels]
+    ]
+    var fracx = mx - floorx;
+    var fracy = my - floory;
+    var sample = INTERP(
+        INTERP(h[0], h[1], fracx),
+        INTERP(h[2], h[3], fracx),
+        fracy);
+    if (normalOut) {
+      // Would it be faster to grab the packed derivates from the detail map?
+      normalOut.set(
+          h[0] + h[2] - h[1] - h[3],
+          h[0] + h[1] - h[2] - h[3],
+          2).divideSelf(map.scale).normalize();
+    }
+    return sample;
+  };
+
   // lx, ly = local tile space coordinates
   exports.TerrainTile.prototype.getContactRayZ = function(x, y) {
     var mapHeight = this.terrain.source.maps.height;
+    var mapDetail = this.terrain.source.maps.detail;
+    var mapSurface = this.terrain.source.maps.surface;
     var tX = x / mapHeight.scale.x;
     var tY = y / mapHeight.scale.y;
     var floorx = Math.floor(tX);
@@ -127,7 +160,6 @@ function(THREE, async, uImg, quiver, util) {
     var cx = mapHeight.width;
     var cy = mapHeight.height;
     var hmap = mapHeight.data;
-    var mapDetail = this.terrain.source.maps.detail;
 
     if (!hmap) {
       // No data yet.
@@ -170,29 +202,19 @@ function(THREE, async, uImg, quiver, util) {
         -derivY,
         1).divideSelf(mapHeight.scale).normalize();
 
-    if (mapDetail) {
-      var dmap = mapDetail.data;
-      cx = mapDetail.width;
-      cy = mapDetail.height;
-      var detailx = x / mapDetail.scale.x;
-      var detaily = y / mapDetail.scale.y;
-      floorx = Math.floor(detailx);
-      floory = Math.floor(detaily);
-      fracx = detailx - floorx;
-      fracy = detaily - floory;
-      h[0] = dmap[(wrap(floorx    , cx) + wrap(floory    , cy) * cx) * 4 + 2];
-      h[1] = dmap[(wrap(floorx + 1, cx) + wrap(floory    , cy) * cx) * 4 + 2];
-      h[2] = dmap[(wrap(floorx    , cx) + wrap(floory + 1, cy) * cx) * 4 + 2];
-      h[3] = dmap[(wrap(floorx + 1, cx) + wrap(floory + 1, cy) * cx) * 4 + 2];
-      height += INTERP(
-          INTERP(h[0], h[1], fracx),
-          INTERP(h[2], h[3], fracx),
-          fracy) * mapDetail.scale.z;
+    var detailAmount = 1;
+
+    if (mapSurface && mapSurface.data) {
+      detailAmount *= sampleBilinear(mapSurface, 3,
+                                     x - 0.5 * mapSurface.scale.x,
+                                     y - 0.5 * mapSurface.scale.y) / 255;
+    }
+
+    if (mapDetail && mapDetail.data) {
       // Would it be faster to grab the packed derivates from the detail map?
-      var detailNormal = new Vec3(
-          h[0] + h[2] - h[1] - h[3],
-          h[0] + h[1] - h[2] - h[3],
-          2).divideSelf(mapDetail.scale).normalize();
+      var detailNormal = new Vec3();
+      height += sampleBilinear(mapDetail, 2, x, y, detailNormal) *
+                detailAmount * mapDetail.scale.z;
       normal.set(
           detailNormal.z * normal.x + detailNormal.x * (1 - normal.x * normal.x),
           detailNormal.z * normal.y + detailNormal.y * (1 - normal.y * normal.y),

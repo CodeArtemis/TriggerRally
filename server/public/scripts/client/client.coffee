@@ -154,7 +154,7 @@ define [
           void main() {
             vec3 wPos = normalize(cameraPosition - vViewPosition);
             gl_FragColor = textureCube( tCube, vec3( tFlip * wPos.x, wPos.yz ) );
-            gl_FragColor.rgb = mix(fogColor, gl_FragColor.rgb, smoothstep(0.05, 0.3, wPos.z));
+            gl_FragColor.rgb = mix(fogColor, gl_FragColor.rgb, smoothstep(0.0, 0.05, wPos.z));
           }
           """
       #cubeMaterial.transparent = 1  # Force draw at end.

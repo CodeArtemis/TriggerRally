@@ -121,21 +121,23 @@ define [
     $(document).on 'keydown', (event) ->
       if keyWeCareAbout(event) and not isModifierKey(event)
         checkpoints = client.track.config.course.checkpoints
+        moveAmt = 1
+        if keyDown[KEYCODE.SHIFT] then moveAmt *= 5
         switch event.keyCode
           when KEYCODE['J']
-            checkpoints[selectedCp]?.pos[0] += 1
+            checkpoints[selectedCp]?.pos[0] += moveAmt
             quiver.push checkpoints
             drawNow = true
           when KEYCODE['G']
-            checkpoints[selectedCp]?.pos[0] -= 1
+            checkpoints[selectedCp]?.pos[0] -= moveAmt
             quiver.push checkpoints
             drawNow = true
           when KEYCODE['Y']
-            checkpoints[selectedCp]?.pos[1] += 1
+            checkpoints[selectedCp]?.pos[1] += moveAmt
             quiver.push checkpoints
             drawNow = true
           when KEYCODE['H']
-            checkpoints[selectedCp]?.pos[1] -= 1
+            checkpoints[selectedCp]?.pos[1] -= moveAmt
             quiver.push checkpoints
             drawNow = true
           when KEYCODE['U']
@@ -146,6 +148,8 @@ define [
             selectedCp = (selectedCp + 1) % checkpoints.length
             client.renderCheckpoints.highlightCheckpoint selectedCp
             drawNow = true
+          when KEYCODE.SPACE
+            console.log JSON.stringify(client.track.config)
         keyDown[event.keyCode] = true
         event.preventDefault()
       return

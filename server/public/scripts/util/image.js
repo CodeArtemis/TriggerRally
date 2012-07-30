@@ -205,7 +205,7 @@ define(function(require, exports, module) {
       _assert(ins.length === 1 && ins.length === 1);
       var src = ins[0], dst = outs[0];
       // TODO: Implement different-sized map conversion.
-      _ensureDims(dst, src.width, src.height, 1, Float32Array);
+      _ensureDims(dst, src.width, src.height, 1, Uint8Array);
       var cx = src.width, cy = src.height;
       var srcData = src.data, dstData = dst.data;
       var srcChannels = _channels(src);
@@ -234,7 +234,7 @@ define(function(require, exports, module) {
       _assert(ins.length === 1 && ins.length === 1);
       var src = ins[0], dst = outs[0];
       // TODO: Implement different-sized map conversion.
-      _ensureDims(dst, src.width, src.height, 1, Float32Array);
+      _ensureDims(dst, src.width, src.height, 1, Uint8Array);
       var cx = src.width, cy = src.height;
       var srcData = src.data, dstData = dst.data;
       var srcChannels = _channels(src);
@@ -272,8 +272,8 @@ define(function(require, exports, module) {
               catmullRom(h[12], h[13], h[14], h[15], 0.5),
               0.5);
           i = (y * cx + x) * dstChannels;
-          dstData[i + 0] = derivX * multiply + add;
-          dstData[i + 1] = derivY * multiply + add;
+          dstData[i + 0] = Math.max(0, Math.min(255, derivX * multiply + add));
+          dstData[i + 1] = Math.max(0, Math.min(255, derivY * multiply + add));
         }
       }
       callback();

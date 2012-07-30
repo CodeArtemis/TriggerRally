@@ -10,7 +10,7 @@ define [
     blending: THREE.AdditiveBlending
     transparent: 1
     depthWrite: false
-  checkpointGeom = new THREE.CylinderGeometry 6, 6, 3, 32, 1, false
+  checkpointGeom = new THREE.CylinderGeometry 16, 16, 3, 32, 1, false
 
   checkpointMaterial: -> checkpointMat
 

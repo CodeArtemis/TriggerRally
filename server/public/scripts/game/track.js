@@ -63,7 +63,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
           dst.data = new src.data.constructor(src.data);
 
           //uImg.ensureDims(surf, src.width, src.height, 4, Uint8Array);
-          uImg.createBuffer(surf, src.width, src.height, 4, Uint8ClampedArray);
+          uImg.createBuffer(surf, src.width, src.height, 4, Uint8Array);
 
           checkpoints.length = 0;
           var numCheckpoints = checkpointsXY.length;
@@ -124,6 +124,13 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
             drawCircle(map, 0, x, y, value / map.scale.z, radius, hardness, opacity);
           }
 
+          // Fill type
+          (function() {
+            for (var i = 2, l = surf.data.length; i < l; i += 4) {
+              surf.data[i] = 255 * 0.1;
+            }
+          })();
+
           // Track curve.
           var pts = checkpoints;
 
@@ -138,10 +145,12 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
             totalLength += chordLength;
           }
 
-          var radius = 240;
+          var radius = 120;
           var calls = [];
-          var tStep = radius / 2;  // too small?
+          var tStep = radius / 3;
           var t = 0;
+          var halfX = surf.scale.x / 2;
+          var halfY = surf.scale.y / 2;
           for (i = 0; i < numChords; ++i) {
             // TODO: try different start point positions?
             var cp = [ pts[i-1] || pts[i], pts[i], pts[i+1], pts[i+2] || pts[i+1] ];
@@ -151,8 +160,8 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
               var pY = catmullRom(cp[0].y, cp[1].y, cp[2].y, cp[3].y, u);
               var pZ = catmullRom(cp[0].z, cp[1].z, cp[2].z, cp[3].z, u);
 
-              drawCircleDisplacement(dst, pX, pY, pZ, radius, 0.2, 1);
-              drawCircle(surf, 2, pX, pY, 255 * 0.1, radius * 0.5, 0.8, 1);
+              drawCircleDisplacement(dst, pX, pY, pZ, radius, 0, 0.6);
+              drawCircle(surf, 2, pX - halfX, pY - halfY, 255 * 0, radius * 0.5, 0.8, 1);
               //drawCircle(maps.surface, maps.surface.packed, 4, 2, pX, pY, 255, 100, 0.4, 1);
             }
             t -= chords[i];
@@ -168,27 +177,63 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
           callback();
         };
 
-        var heightNode = maps.height._quiverNode;
-        var sourceNode = heightNode.inputs[0];  // TODO: Verify which output.
-        var drawTrackNode = new quiver.Node(drawTrack.bind(this));
-        //quiver.inject(...) or
-        //quiver.disconnect(...)
-        heightNode.inputs.shift();
-        sourceNode.outputs.shift();
-        quiver.connect(sourceNode,
-                       uImg.createBuffer(null, 1, 1, 1, Float32Array),
-                       drawTrackNode,
-                       heightNode);
+        var prepSurface = function(ins, outs, callback) {
+          var src = ins[0], dst = outs[0];
+          var srcData = src.data, srcChannels = uImg.channels(src);
+          uImg.ensureDims(dst, src.width, src.height, srcChannels, Uint8Array);
+          var dstData = dst.data, dstChannels = uImg.channels(dst);
+          var minX = 0, minY = 0, maxX = src.width, maxY = src.height;
+          var sX, sY, srcPtr, dstPtr, derivX, derivY, type, gradient, roughness;
+          for (sY = minY; sY < maxY; ++sY) {
+            srcPtr = (sY * src.width) * srcChannels;
+            dstPtr = (sY * dst.width) * dstChannels;
+            for (sX = minX; sX < maxX; ++sX) {
+              derivX = srcData[srcPtr + 0] / 127.5 - 1;
+              derivY = srcData[srcPtr + 1] / 127.5 - 1;
+              type = srcData[srcPtr + 2];
+              gradient = Math.sqrt(derivX * derivX + derivY * derivY);
+              roughness = gradient * 0.1 * type + 0.05;
+              dstData[dstPtr + 3] = Math.min(255, roughness * 256);
+              srcPtr += srcChannels;
+              dstPtr += dstChannels;
+            }
+          }
+          callback();
+        };
 
-        quiver.connect(drawTrackNode,
-                       maps.surface);
+        // Move to quiver? insertBefore?
+        var disconnect = function(srcNode, dstNode) {
+          srcNode.outputs.splice(srcNode.outputs.indexOf(dstNode), 1);
+          dstNode.outputs.splice(dstNode.inputs.indexOf(srcNode), 1);
+        };
 
-        quiver.connect(this.config.course.checkpoints,
-                       drawTrackNode,
-                       this.checkpoints);
+        (function() {
+          var heightNode = maps.height._quiverNode;
+          var sourceNode = heightNode.inputs[0];
+          var drawTrackNode = new quiver.Node(drawTrack.bind(this));
+          disconnect(sourceNode, heightNode);
+          quiver.connect(sourceNode,
+                         uImg.createBuffer(null, 1, 1, 1, Float32Array),
+                         drawTrackNode,
+                         heightNode);
 
-        //quiver.pull(heightNode);
-        //quiver.push(heightNode);
+          quiver.connect(drawTrackNode,
+                         maps.surface);
+
+          quiver.connect(this.config.course.checkpoints,
+                         drawTrackNode,
+                         this.checkpoints);
+        }).call(this);
+
+        (function() {
+          var oldSurfaceNode = maps.surface._quiverNode;
+          var newSurfaceNode = new quiver.Node(maps.surface);
+          maps.surface._quiverNode = newSurfaceNode;
+          quiver.connect(oldSurfaceNode,
+                         prepSurface,
+                         newSurfaceNode);
+        }).call(this);
+
         //this.scenery = new gameScenery.Scenery(config.scenery, this);
 
         if (callback) callback();

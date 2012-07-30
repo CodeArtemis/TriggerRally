@@ -18,6 +18,9 @@ define [
       #console.assert @gl.getExtension('OES_standard_derivatives')
       @numLayers = 10
       @totalTime = 0
+      @glAniso =
+        @gl.getExtension("EXT_texture_filter_anisotropic") or
+        @gl.getExtension("WEBKIT_EXT_texture_filter_anisotropic")
       return
 
     update: (camera, delta) ->
@@ -146,6 +149,26 @@ define [
                 frac.y);
           }
 
+          float getHeight(vec2 worldPosition) {
+            vec2 heightUv = worldToMapSpace(worldPosition, tHeightSize, tHeightScale.xy);
+            vec2 texel = 1.0 / tHeightSize;
+            vec2 heightUv00 = (floor(heightUv * tHeightSize + 0.5) - 0.5) / tHeightSize;
+            vec2 frac = (heightUv - heightUv00) * tHeightSize;
+            float coarseHeight = textureBicubic(tHeight, heightUv00, texel, frac) * tHeightScale.z;
+
+            vec2 surfaceUv = worldToMapSpace(worldPosition, tSurfaceSize, tSurfaceScale.xy);
+            vec4 surfaceSample = texture2D(tSurface, surfaceUv - 0.5 / tSurfaceSize);
+
+            float surfaceType = surfaceSample.a;
+            float detailHeightAmount = surfaceSample.a;
+            vec2 detailHeightUv = worldToMapSpace(worldPosition.xy, tDetailSize, tDetailScale.xy);
+            vec4 detailSample = texture2D(tDetail, detailHeightUv);
+            float detailHeightSample = detailSample.z;
+            float detailHeight = detailHeightSample * tDetailScale.z * detailHeightAmount;
+
+            return coarseHeight + detailHeight;
+          }
+
           void main() {
             int layer = int(position.z);
             vec2 layerOffset = offsets[layer];
@@ -157,27 +180,14 @@ define [
             float morphDist = max(manhattan.x, manhattan.y) / layerScale;
             float morph = min(1.0, max(0.0, morphDist / (31.0 / 2.0) - 3.0));
             vec2 scaledPosition = worldPosition.xy / layerScale;
-            worldPosition.xy += layerScale *
+            vec3 morphTargetPosition = vec3(worldPosition.xy + layerScale *
               mod(scaledPosition.xy, 2.0) *
-              (mod(scaledPosition.xy, 4.0) - 2.0) * morph;
+              (mod(scaledPosition.xy, 4.0) - 2.0), 0.0);
 
-            vec2 heightUv = worldToMapSpace(worldPosition.xy, tHeightSize, tHeightScale.xy);
-            vec2 texel = 1.0 / tHeightSize;
-            vec2 heightUv00 = (floor(heightUv * tHeightSize + 0.5) - 0.5) / tHeightSize;
-            vec2 frac = (heightUv - heightUv00) * tHeightSize;
-            float height = textureBicubic(tHeight, heightUv00, texel, frac) * tHeightScale.z;
-            worldPosition.z = height;
+            worldPosition.z = getHeight(worldPosition.xy);
+            morphTargetPosition.z = getHeight(morphTargetPosition.xy);
 
-            vec2 surfaceUv = worldToMapSpace(worldPosition.xy, tSurfaceSize, tSurfaceScale.xy);
-            vec4 surfaceSample = texture2D(tSurface, surfaceUv - 0.5 / tSurfaceSize);
-
-            float surfaceType = surfaceSample.b;
-            float detailHeightAmount = abs(0.1 - surfaceType) * 10.0;
-            vec2 detailHeightUv = worldToMapSpace(worldPosition.xy, tDetailSize, tDetailScale.xy);
-            vec4 detailSample = texture2D(tDetail, detailHeightUv);
-            float detailHeightSample = detailSample.z;
-            float detailHeight = (detailHeightSample * tDetailScale.z) * detailHeightAmount;
-            worldPosition.z += detailHeight;
+            worldPosition = mix(worldPosition, morphTargetPosition, morph);
 
             eyePosition = modelViewMatrix * vec4(worldPosition, 1.0);
             gl_Position = projectionMatrix * eyePosition;
@@ -224,7 +234,7 @@ define [
             vec2 surfaceDerivs = 255.0 * tSurfaceScale.z / tSurfaceScale.xy * (surfaceSample.xy - 0.5);
 
             float surfaceType = surfaceSample.b;
-            float detailHeightAmount = abs(0.1 - surfaceType) * 10.0;
+            float detailHeightAmount = surfaceSample.a;
 
             vec2 detailUv = worldToMapSpace(worldPosition.xy, tDetailSize, tDetailScale.xy);
             vec4 detailSample = texture2D(tDetail, detailUv);
@@ -239,14 +249,22 @@ define [
             vec3 tangentV = vec3(0.0, 1.0 - normalDetail.y * normalDetail.y, -normalDetail.y);
 
             // Add another layer of high-detail noise.
+            vec3 normalSq = normalDetail * normalDetail;
+            //normalSq = pow(normalSq, vec3(3.0));
+            #if 1
             vec2 detail2SampleX = texture2D(tDetail, worldToMapSpace(worldPosition.zy, tDetailSize, tDetailScale.xy / 37.3)).xy;
             vec2 detail2SampleY = texture2D(tDetail, worldToMapSpace(worldPosition.xz, tDetailSize, tDetailScale.xy / 37.3)).xy;
             vec2 detail2SampleZ = texture2D(tDetail, worldToMapSpace(worldPosition.yx, tDetailSize, tDetailScale.xy / 37.3)).xy;
-            vec3 normalSq = normalDetail * normalDetail;
             vec2 detail2Sample = detail2SampleX * normalSq.x +
                                  detail2SampleY * normalSq.y +
                                  detail2SampleZ * normalSq.z;
-            vec2 detail2Derivs = 0.5 * vec2(tDetailScale.z / tDetailScale.xy * (detail2Sample.xy - 0.5));
+            #else
+            vec2 detail2xy = normalSq.x > normalSq.y ?
+              (normalSq.x > normalSq.z ? worldPosition.zy : worldPosition.yx) :
+              (normalSq.y > normalSq.z ? worldPosition.xz : worldPosition.yx);
+            vec2 detail2Sample = texture2D(tDetail, worldToMapSpace(detail2xy, tDetailSize, tDetailScale.xy / 37.3)).xy;
+            #endif
+            vec2 detail2Derivs = vec2(2.0 / tDetailScale.xy * (detail2Sample.xy - 0.5));
             vec3 normalDetail2 = normalize(vec3(- detail2Derivs, 1.0));
             normalDetail2 = normalDetail2.x * tangentU +
                             normalDetail2.y * tangentV +
@@ -261,12 +279,15 @@ define [
             float veggieMix = exp(dot(eyeVec, normalDetail2) - 1.0);
             vec3 veggieColor = mix(veggieColor1, veggieColor2, veggieMix);
             gl_FragColor.rgb = mix(gl_FragColor.rgb, veggieColor, veggieFactor);
-            float rockMix = smoothstep(1.5*0.71, 1.5*0.74,
-                -1.0 + detailHeightAmount + normalRegion.z + normalDetail.z * 0.5 + (noiseSample - 0.5) * 0.3 - height * 0.0002);
-            gl_FragColor.rgb = mix(rockDiffSample, gl_FragColor.rgb, rockMix);
-            float specular = (1.0 - rockMix) * 0.2;
+            float rockMix = 1.0 - smoothstep(1.5*0.71, 1.5*0.74,
+                normalRegion.z + normalDetail.z * 0.5 + (noiseSample - 0.5) * 0.3 - height * 0.0002);
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, rockDiffSample, rockMix);
 
+            float trackMix = 1.0 - smoothstep(0.01, 0.02, surfaceType);
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.2), trackMix);
             //gl_FragColor.rgb = vec3(0.5);
+
+            float specular = rockMix * 0.2 + trackMix * 0.1;
 
             """ +
             #THREE.ShaderChunk.shadowmap_fragment +
@@ -319,6 +340,7 @@ define [
               vec4 lDirection = viewMatrix * vec4(directionalLightDirection[i], 0.0);
               vec3 dirVector = normalize(lDirection.xyz);
               directIllum += max(dot(normalDetail2, directionalLightDirection[i]), 0.0);
+              //directIllum += exp(dot(normalDetail2, directionalLightDirection[i]) - 1.0) / exp(-2.0);
               specularIllum += specular *
                   pow(max(0.0, dot(normalDetail2,
                                    normalize(eyeVec + directionalLightDirection[i]))),
@@ -326,7 +348,7 @@ define [
               directIllum *= directionalLightColor[i];
               float mask = step(0.0, dot(normalDetail, directionalLightDirection[i])) *
                            step(0.0, dot(normalRegion, directionalLightDirection[i]));
-              directIllum *= mask;
+              //directIllum *= mask;
               specularIllum *= mask;
             }
             #endif
@@ -334,9 +356,9 @@ define [
             gl_FragColor.rgb = gl_FragColor.rgb * totalIllum + specularIllum * shadowColor;
 
             // For debugging.
-            //gl_FragColor.rgb = mix(gl_FragColor.rgb, normalDetail2 * 0.5 + 0.5, 1.0);
-            //gl_FragColor.rgb = mix(gl_FragColor.rgb, normal, 1.0);
-            //gl_FragColor.rgb = mix(gl_FragColor.rgb, surfaceSample.rgb, 1.0);
+            //gl_FragColor.rgb = normalDetail * 0.5 + 0.5;
+            //gl_FragColor.rgb = normalSq;
+            //gl_FragColor.rgb = vec3(surfaceSample.a);
             //gl_FragColor.rgb = vec3(veggieMix);
             //gl_FragColor.rgb = vec3(0.0, normal.y, 0.0);
             //gl_FragColor.rgb = vec3(detailSample);
@@ -347,7 +369,7 @@ define [
             //float clarity = 160.0 / (depth + 160.0);
             const float LOG2 = 1.442695;
             float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );
-            fogFactor = clamp( 1.0 - fogFactor, 0.0, 0.9 );
+            fogFactor = clamp( 1.0 - fogFactor, 0.0, 1.0 );
             gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor, fogFactor);
           }
           """
@@ -378,7 +400,7 @@ define [
           when Float32Array then 1
           else throw 'Unknown type'
 
-      createTexture = (buffer, mipmap) ->
+      createTexture = (buffer, mipmap) =>
         tex = new THREE.DataTexture(
             buffer.data,
             buffer.width,
@@ -417,6 +439,8 @@ define [
       quiver.connect maps.detail, node = new quiver.Node (ins, outs, done) ->
         buffer = ins[0]
         uniforms.tDetail.texture = createTexture buffer, true
+        #if @glAniso then uniforms.tDetail.texture.onUpdate = =>
+        #  @gl.texParameteri @gl.TEXTURE_2D, @glAniso.TEXTURE_MAX_ANISOTROPY_EXT, 8
         uniforms.tDetailSize.value.set buffer.width, buffer.height
         uniforms.tDetailScale.value.copy maps.detail.scale
         uniforms.tDetailScale.value.z *= typeScale buffer.data
