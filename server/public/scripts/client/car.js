@@ -127,12 +127,12 @@ function(THREE, util) {
 
       // rig the car
 
-      var s = this.config.scale || 1,
-          faceMaterial = new THREE.MeshFaceMaterial();
+      var s = this.config.scale || 1;
 
       // body
 
-      this.bodyMesh = new THREE.Mesh(this.bodyGeometry, faceMaterial);
+      this.bodyMesh = new THREE.Mesh(this.bodyGeometry, this.bodyGeometry.materials[0]);
+      this.bodyMesh.material.ambient = this.bodyMesh.material.color;
       this.bodyMesh.position.copy(center).multiplyScalar(-1);
       this.bodyMesh.scale.set( s, s, s );
       this.bodyMesh.castShadow = true;
@@ -144,7 +144,8 @@ function(THREE, util) {
         var cfg = this.config.wheels[i];
         var wheel = {};
         wheel.cfg = cfg;
-        wheel.mesh = new THREE.Mesh( this.wheelGeometry, faceMaterial );
+        wheel.mesh = new THREE.Mesh(this.wheelGeometry, this.wheelGeometry.materials[0]);
+        wheel.mesh.material.ambient = wheel.mesh.material.color;
         wheel.mesh.scale.set( s, s, s );
         if (cfg.flip) wheel.mesh.rotation.z = Math.PI;
         wheel.mesh.castShadow = true;

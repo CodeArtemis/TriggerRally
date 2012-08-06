@@ -15,9 +15,10 @@ define [
     constructor: (@scene, @terrain, @gl) ->
       # We currently grab the terrain source directly. This is not very kosher.
       @geom = null
-      #console.assert @gl.getExtension('OES_standard_derivatives')
       @numLayers = 10
       @totalTime = 0
+      @glDerivs = @gl.getExtension('OES_standard_derivatives')
+      @baseScale = 0.5
       @glAniso =
         @gl.getExtension("EXT_texture_filter_anisotropic") or
         @gl.getExtension("WEBKIT_EXT_texture_filter_anisotropic")
@@ -30,7 +31,7 @@ define [
       unless @geom? then return
       offsets = @material.uniforms['offsets'].value
       scales = @material.uniforms['scales'].value
-      scale = Math.pow(2,
+      scale = @baseScale * Math.pow(2,
         Math.floor(Math.log(Math.max(1, camera.position.z / 2000)) / Math.LN2))
       for layer in [0...@numLayers]
         offset = offsets[layer] ?= new THREE.Vector2()
@@ -205,7 +206,10 @@ define [
           THREE.ShaderChunk.shadowmap_pars_fragment + '\n' +
           """
 
+          #extension GL_OES_standard_derivatives : enable
+
           uniform sampler2D tSurface;
+
           uniform vec2 tSurfaceSize;
           uniform vec3 tSurfaceScale;
           uniform sampler2D tDetail;
@@ -218,6 +222,11 @@ define [
 
           vec2 worldToMapSpace(vec2 coord, vec2 size, vec2 scale) {
             return (coord / scale + 0.5) / size;
+          }
+
+          mat2 inverse(mat2 m) {
+            float det = m[0][0] * m[1][1] - m[0][1] * m[1][0];
+            return mat2(m[1][1], -m[1][0], -m[0][1], m[0][0]) / det;
           }
 
           void main() {
@@ -233,11 +242,14 @@ define [
 
             vec2 surfaceDerivs = 255.0 * tSurfaceScale.z / tSurfaceScale.xy * (surfaceSample.xy - 0.5);
 
+            mat2 screenToSurfaceSpace = inverse(mat2(dFdx(surfaceUv), dFdy(surfaceUv)));
+
             float surfaceType = surfaceSample.b;
             float detailHeightAmount = surfaceSample.a;
 
             vec2 detailUv = worldToMapSpace(worldPosition.xy, tDetailSize, tDetailScale.xy);
             vec4 detailSample = texture2D(tDetail, detailUv);
+            float detailHeight = detailSample.z;
             vec2 detailDerivs = vec2(tDetailScale.z / tDetailScale.xy * (detailSample.xy - 0.5)) * detailHeightAmount;
 
             vec2 epsilon = 1.0 / tDetailSize;
@@ -251,19 +263,12 @@ define [
             // Add another layer of high-detail noise.
             vec3 normalSq = normalDetail * normalDetail;
             //normalSq = pow(normalSq, vec3(3.0));
-            #if 1
             vec2 detail2SampleX = texture2D(tDetail, worldToMapSpace(worldPosition.zy, tDetailSize, tDetailScale.xy / 37.3)).xy;
             vec2 detail2SampleY = texture2D(tDetail, worldToMapSpace(worldPosition.xz, tDetailSize, tDetailScale.xy / 37.3)).xy;
             vec2 detail2SampleZ = texture2D(tDetail, worldToMapSpace(worldPosition.yx, tDetailSize, tDetailScale.xy / 37.3)).xy;
             vec2 detail2Sample = detail2SampleX * normalSq.x +
                                  detail2SampleY * normalSq.y +
                                  detail2SampleZ * normalSq.z;
-            #else
-            vec2 detail2xy = normalSq.x > normalSq.y ?
-              (normalSq.x > normalSq.z ? worldPosition.zy : worldPosition.yx) :
-              (normalSq.y > normalSq.z ? worldPosition.xz : worldPosition.yx);
-            vec2 detail2Sample = texture2D(tDetail, worldToMapSpace(detail2xy, tDetailSize, tDetailScale.xy / 37.3)).xy;
-            #endif
             vec2 detail2Derivs = vec2(2.0 / tDetailScale.xy * (detail2Sample.xy - 0.5));
             vec3 normalDetail2 = normalize(vec3(- detail2Derivs, 1.0));
             normalDetail2 = normalDetail2.x * tangentU +
@@ -361,7 +366,8 @@ define [
             //gl_FragColor.rgb = normalDetail2 * 0.5 + 0.5;
             //gl_FragColor.rgb = normalSq;
             //gl_FragColor.rgb = vec3(surfaceSample.a);
-            //gl_FragColor.rgb = vec3(specular);
+            //gl_FragColor.rgb = vec3(detailHeightAmountDerivs, 0.0) * 0.001 + 0.5;
+            //gl_FragColor.rgb = vec3(screenToSurfaceSpace[0], 0.0) * 1.0 + 0.5;
             //gl_FragColor.rgb = vec3(0.0, normal.y, 0.0);
             //gl_FragColor.rgb = vec3(detailSample);
             //gl_FragColor.rgb = 1.0 * vec3(normal.x, 0.0, normalDetail.x);
@@ -471,7 +477,7 @@ define [
         [ -1,  0,  0, -1 ],
         [  0,  1, -1,  0 ]
       ]
-      scale = 1
+      scale = @baseScale
       for layer in [0...@numLayers]
         nextLayer = Math.min layer + 1, @numLayers - 1
         for segment, segNumber in ringSegments

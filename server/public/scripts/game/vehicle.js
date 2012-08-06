@@ -3,13 +3,12 @@
  */
 
 define([
-  'underscore',
   'THREE',
   'game/sim',
   'cs!util/collision',
   'util/util'
 ],
-function(_, THREE, psim, collision, util) {
+function(THREE, psim, collision, util) {
   var exports = {};
 
   var Vec2 = THREE.Vector2;

@@ -57,8 +57,8 @@ define [
         targetPos = @car.root.position.clone()
         targetPos.addSelf(@car.vehic.body.linVel.clone().multiplyScalar(.17))
         targetPos.addSelf(@car.root.matrix.getColumnX().clone().multiplyScalar(0))
-        targetPos.addSelf(@car.root.matrix.getColumnY().clone().multiplyScalar(2.2))
-        targetPos.addSelf(@car.root.matrix.getColumnZ().clone().multiplyScalar(-4.9))
+        targetPos.addSelf(@car.root.matrix.getColumnY().clone().multiplyScalar(1.2))
+        targetPos.addSelf(@car.root.matrix.getColumnZ().clone().multiplyScalar(-2.9))
         camDelta = delta * 5
         @camera.position.x = PULLTOWARD(@camera.position.x, targetPos.x, camDelta)
         @camera.position.y = PULLTOWARD(@camera.position.y, targetPos.y, camDelta)
@@ -137,7 +137,7 @@ define [
       @camera = new THREE.PerspectiveCamera 75, 1, 0.1, 10000000
       @camera.up.set 0, 0, 1
       @scene.add @camera
-      @scene.fog = new THREE.FogExp2 0xdddddd, 0.00005
+      @scene.fog = new THREE.FogExp2 0xdddddd, 0.0001
 
       @scene.add new THREE.AmbientLight 0x446680
       @scene.add @cubeMesh()
@@ -196,10 +196,20 @@ define [
       @render()
       return
 
+    debouncedMuteAudio: _.debounce((audio) ->
+      audio.setGain 0
+    , 500)
+
+    muteAudioIfStopped: ->
+      @audio.setGain 1
+      @debouncedMuteAudio @audio
+      return
+
     update: (delta) ->
       @game.sim.tick delta
       @objects.forEach (object) =>
         object.update @camera, delta
+      @muteAudioIfStopped()
       return
 
     render: ->

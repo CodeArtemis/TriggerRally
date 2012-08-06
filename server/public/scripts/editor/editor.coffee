@@ -22,11 +22,9 @@ define [
 
     game = new gameGame.Game()
     client = new clientClient.TriggerClient view3d[0], game
-    $(document).on 'keydown', (event) -> client.onKeyDown event
-    $(document).on 'keyup', (event) -> client.onKeyUp event
 
     track = null
-    game.setTrackConfig TRIGGER.TRACK.CONFIG, (tr) ->
+    game.setTrackConfig TRIGGER.TRACK.CONFIG, (err, tr) ->
       track = tr
 
     layout = ->
@@ -118,11 +116,13 @@ define [
 
     selectedCp = 0
 
+    $(document).on 'keyup', (event) -> client.onKeyUp event
+    $(document).on 'keydown', (event) -> client.onKeyDown event
     client.on 'keydown', (event) ->
       if track?
         checkpoints = track.config.course.checkpoints
         moveAmt = 1
-        if keyDown[KEYCODE.SHIFT] then moveAmt *= 5
+        if client.keyDown[KEYCODE.SHIFT] then moveAmt *= 5
         switch event.keyCode
           when KEYCODE['J']
             checkpoints[selectedCp]?.pos[0] += moveAmt
@@ -149,7 +149,7 @@ define [
             client.renderCheckpoints.highlightCheckpoint selectedCp
             drawNow = true
           when KEYCODE.SPACE
-            console.log JSON.stringify(client.track.config)
+            console.log JSON.stringify(track.config)
 
     toolbox.show()
     return

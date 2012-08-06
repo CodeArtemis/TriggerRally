@@ -6,7 +6,7 @@ define [
   'THREE'
 ], (THREE) ->
   checkpointMat = new THREE.MeshBasicMaterial
-    color: 0x309030
+    color: 0x103010
     blending: THREE.AdditiveBlending
     transparent: 1
     depthWrite: false
@@ -18,5 +18,5 @@ define [
     meshCheckpoint = new THREE.Mesh checkpointGeom, checkpointMat
     #meshCheckpoint.position.z = 1.5
     meshCheckpoint.rotation.x = Math.PI / 2
-    meshCheckpoint.castShadow = true
+    #meshCheckpoint.castShadow = true
     meshCheckpoint

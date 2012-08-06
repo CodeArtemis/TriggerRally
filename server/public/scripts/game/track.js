@@ -145,7 +145,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
             totalLength += chordLength;
           }
 
-          var radius = 120;
+          var radius = 30;
           var calls = [];
           var tStep = radius / 3;
           var t = 0;
