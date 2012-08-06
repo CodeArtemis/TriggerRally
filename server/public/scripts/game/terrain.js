@@ -212,8 +212,8 @@ function(THREE, async, uImg, quiver, util) {
       var detailHeight = sampleBilinear(mapDetail, 2, x, y, detailHeightDeriv) * mapDetail.scale.z;
       height += detailHeight * detailAmount;
       // Product rule.
-      derivX += detailAmount * detailHeightDeriv.x;
-      derivY += detailAmount * detailHeightDeriv.y;
+      derivX += detailAmount * detailHeightDeriv.x * mapDetail.scale.z;
+      derivY += detailAmount * detailHeightDeriv.y * mapDetail.scale.z;
       derivX += detailAmountDeriv.x * detailHeight;
       derivY += detailAmountDeriv.y * detailHeight;
     }
