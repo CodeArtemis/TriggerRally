@@ -38,7 +38,6 @@ define [
           mesh.scale.copy object.scale
           if renderConfig.scale? then mesh.scale.multiplyScalar renderConfig.scale
           mesh.scale.multiplyScalar entity.scale
-          #mesh.position.copy entity.position
           mesh.position.sub entity.position, tile.position
           mesh.rotation.add object.rotation, entity.rotation
           mergedGeom.mergeMesh mesh

@@ -56,7 +56,10 @@ define [
     tmpVec3 = new THREE.Vector3
     update = (time) ->
       requestId = 0
-      delta = Math.min 0.1, (time - lastTime) * 0.001
+      if lastTime
+        delta = Math.min 0.1, (time - lastTime) * 0.001
+      else
+        delta = 0.001
 
       terrainHeight = 0
       if track?
@@ -103,11 +106,12 @@ define [
       client.update delta
       client.render()
 
-      lastTime = time
-
       if camVel.length() > 0.1 or
          camAngVel.length() > 0.01
+        lastTime = time
         requestAnim()
+      else
+        lastTime = 0
       return
 
     requestAnim = ->
