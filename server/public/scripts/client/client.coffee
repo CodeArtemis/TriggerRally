@@ -7,12 +7,13 @@ define [
   'client/audio'
   'client/car'
   'cs!client/misc'
+  'cs!client/scenery'
   'cs!client/terrain'
   'game/game'
   'util/pubsub'
   'cs!util/quiver'
   'util/util'
-], (THREE, clientAudio, clientCar, clientMisc, clientTerrain, gameGame, pubsub, quiver, util) ->
+], (THREE, clientAudio, clientCar, clientMisc, clientScenery, clientTerrain, gameGame, pubsub, quiver, util) ->
   Vec3 = THREE.Vector3
   PULLTOWARD = util.PULLTOWARD
 
@@ -38,6 +39,8 @@ define [
         done()
 
     update: (camera, delta) ->
+      for mesh in @meshes
+        mesh.rotation.z += delta * 3
       return
 
     highlightCheckpoint: (i) ->
@@ -68,6 +71,17 @@ define [
         lookPos = @car.root.position.clone()
         lookPos.addSelf(@car.root.matrix.getColumnY().clone().multiplyScalar(0.7))
         @camera.lookAt(lookPos)
+      return
+
+  class CamTerrainClipping
+    constructor: (@camera, @terrain) ->
+      return
+
+    update: (camera, delta) ->
+      camPos = @camera.position
+      contact = @terrain.getContactRayZ camPos.x, camPos.y
+      terrainHeight = contact.surfacePos.z
+      camPos.z = Math.max camPos.z, terrainHeight + 1
       return
 
   class CarControl
@@ -137,7 +151,7 @@ define [
       @camera = new THREE.PerspectiveCamera 75, 1, 0.1, 10000000
       @camera.up.set 0, 0, 1
       @scene.add @camera
-      @scene.fog = new THREE.FogExp2 0xdddddd, 0.0001
+      @scene.fog = new THREE.FogExp2 0xdddddd, 0.0003
 
       @scene.add new THREE.AmbientLight 0x446680
       @scene.add @cubeMesh()
@@ -149,6 +163,10 @@ define [
       @game.on 'settrack', (track) =>
         @add new clientTerrain.RenderTerrain(@scene, track.terrain, @renderer.context)
         @add @renderCheckpoints = new RenderCheckpoints(@scene, track.checkpoints)
+        sceneLoader = new THREE.SceneLoader()
+        loadFunc = (url, callback) -> sceneLoader.load url, callback
+        @add new clientScenery.RenderScenery(@scene, track.scenery, loadFunc, @renderer)
+        @add new CamTerrainClipping(@camera, track.terrain)
         return
 
       @game.on 'addcar', (car) =>
@@ -260,7 +278,7 @@ define [
           void main() {
             vec3 wPos = normalize(cameraPosition - vViewPosition);
             gl_FragColor = textureCube( tCube, vec3( tFlip * wPos.x, wPos.yz ) );
-            gl_FragColor.rgb = mix(fogColor, gl_FragColor.rgb, smoothstep(0.0, 0.05, wPos.z));
+            gl_FragColor.rgb = mix(fogColor, gl_FragColor.rgb, smoothstep(0.05, 0.15, wPos.z));
           }
           """
       #cubeMaterial.transparent = 1  # Force draw at end.

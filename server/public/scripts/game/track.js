@@ -234,7 +234,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
                          newSurfaceNode);
         }).call(this);
 
-        //this.scenery = new gameScenery.Scenery(config.scenery, this);
+        this.scenery = new gameScenery.Scenery(config.scenery, this);
 
         if (callback) callback();
       }.bind(this));

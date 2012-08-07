@@ -197,6 +197,7 @@ function(THREE, async, uImg, quiver, util) {
 
     var detailAmount = 1;
     var detailAmountDeriv = new Vec2(0, 0);
+    var surfaceType = 0;
 
     if (mapSurface && mapSurface.data) {
       detailAmount *= sampleBilinear(mapSurface, 3,
@@ -205,11 +206,14 @@ function(THREE, async, uImg, quiver, util) {
                                      detailAmountDeriv) / 255;
       detailAmountDeriv.x /= 255;
       detailAmountDeriv.y /= 255;
+      surfaceType = sampleBilinear(mapSurface, 2,
+                                     x - 0.5 * mapSurface.scale.x,
+                                     y - 0.5 * mapSurface.scale.y);
     }
 
     if (mapDetail && mapDetail.data) {
       var detailHeightDeriv = new Vec2();
-      var detailHeight = sampleBilinear(mapDetail, 2, x, y, detailHeightDeriv) * mapDetail.scale.z;
+      var detailHeight = (sampleBilinear(mapDetail, 2, x, y, detailHeightDeriv) - 127.5) * mapDetail.scale.z;
       height += detailHeight * detailAmount;
       // Product rule.
       derivX += detailAmount * detailHeightDeriv.x * mapDetail.scale.z;
@@ -222,7 +226,8 @@ function(THREE, async, uImg, quiver, util) {
 
     return {
       normal: normal,
-      surfacePos: new Vec3(x, y, height)
+      surfacePos: new Vec3(x, y, height),
+      surfaceType: surfaceType
     };
   };
 

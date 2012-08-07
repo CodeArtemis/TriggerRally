@@ -43,9 +43,13 @@ define [
       return
 
     _setup: ->
-      diffuseTex = THREE.ImageUtils.loadTexture('/a/textures/mayang-earth2.jpg')
-      diffuseTex.wrapS = THREE.RepeatWrapping
-      diffuseTex.wrapT = THREE.RepeatWrapping
+      diffuseDirtTex = THREE.ImageUtils.loadTexture('/a/textures/dirt.jpg')
+      diffuseDirtTex.wrapS = THREE.RepeatWrapping
+      diffuseDirtTex.wrapT = THREE.RepeatWrapping
+
+      diffuseRockTex = THREE.ImageUtils.loadTexture('/a/textures/rock.jpg')
+      diffuseRockTex.wrapS = THREE.RepeatWrapping
+      diffuseRockTex.wrapT = THREE.RepeatWrapping
 
       @geom = @_createGeom()
       obj = @_createImmediateObject()
@@ -88,10 +92,14 @@ define [
           tDetailScale:
             type: 'v3'
             value: new Vec3 1, 1, 1
-          tDiffuse:
+          tDiffuseDirt:
             type: 't'
             value: 3
-            texture: diffuseTex
+            texture: diffuseDirtTex
+          tDiffuseRock:
+            type: 't'
+            value: 4
+            texture: diffuseRockTex
           offsets:
             type: 'v2v'
             value: []
@@ -164,7 +172,7 @@ define [
             float detailHeightAmount = surfaceSample.a;
             vec2 detailHeightUv = worldToMapSpace(worldPosition.xy, tDetailSize, tDetailScale.xy);
             vec4 detailSample = texture2D(tDetail, detailHeightUv);
-            float detailHeightSample = detailSample.z;
+            float detailHeightSample = detailSample.z - 0.5;
             float detailHeight = detailHeightSample * tDetailScale.z * detailHeightAmount;
 
             return coarseHeight + detailHeight;
@@ -215,7 +223,8 @@ define [
           uniform sampler2D tDetail;
           uniform vec2 tDetailSize;
           uniform vec3 tDetailScale;
-          uniform sampler2D tDiffuse;
+          uniform sampler2D tDiffuseDirt;
+          uniform sampler2D tDiffuseRock;
 
           varying vec4 eyePosition;
           varying vec3 worldPosition;
@@ -233,10 +242,8 @@ define [
             float height = worldPosition.z;
             float depth = length(eyePosition.xyz);
             vec2 diffUv = worldPosition.xy / 4.0;
-            vec3 diffSample = texture2D(tDiffuse, diffUv).rgb;
-            //vec3 diffSample = vec3(0.8,0.2,0.2);
-            vec3 rockDiffSample = texture2D(tDiffuse, diffUv / 16.0).rgb;
-            //vec3 rockDiffSample = vec3(0.2,0.2,0.8);
+            vec3 diffDirtSample = texture2D(tDiffuseDirt, diffUv).rgb;
+            vec3 diffRockSample = texture2D(tDiffuseRock, diffUv / 8.0).rgb;
             vec2 surfaceUv = worldToMapSpace(worldPosition.xy, tSurfaceSize, tSurfaceScale.xy);
             vec4 surfaceSample = texture2D(tSurface, surfaceUv - 0.5 / tSurfaceSize);
 
@@ -275,26 +282,24 @@ define [
                             normalDetail2.y * tangentV +
                             normalDetail2.z * normalDetail;
 
-            gl_FragColor = vec4(diffSample, 1.0);
             float noiseSample = texture2D(tDetail, worldPosition.yx / 512.0).b;
-            float veggieFactor = 1.0; //smoothstep(60.0, 80.0, depth + noiseSample * 70.0) * 0.9;
             vec3 veggieColor1 = vec3(0.33, 0.35, 0.15);
             vec3 veggieColor2 = vec3(0.04, 0.07, 0.03);
             vec3 eyeVec = normalize(cameraPosition - worldPosition);
             float veggieMix = exp(dot(eyeVec, normalDetail2) - 1.0);
             vec3 veggieColor = mix(veggieColor1, veggieColor2, veggieMix);
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, veggieColor, veggieFactor);
             float rockMix = 1.0 - smoothstep(1.5*0.71, 1.5*0.74,
                 normalRegion.z + normalDetail.z * 0.5 + (noiseSample - 0.5) * 0.3 - height * 0.0002);
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, rockDiffSample, rockMix);
 
-            float trackMix = 1.0 - smoothstep(0.01, 0.02, surfaceType);
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.2), trackMix);
-            //gl_FragColor.rgb = vec3(0.5);
+            float trackMix = 1.0 - smoothstep(0.02, 0.04, surfaceType);
+
+            gl_FragColor.rgb = veggieColor;
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, diffRockSample, rockMix);
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, diffDirtSample, trackMix);
 
             vec3 specular = vec3(0.0);
             specular = mix(specular, vec3(0.20, 0.21, 0.22), rockMix);
-            specular = mix(specular, vec3(0.12, 0.11, 0.10), trackMix);
+            specular = mix(specular, vec3(0.0), trackMix);
 
             """ +
             #THREE.ShaderChunk.shadowmap_fragment +

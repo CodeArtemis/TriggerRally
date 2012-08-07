@@ -50,17 +50,18 @@ define [
     camAngVel = new Vec3
     camAngVelTarget = new Vec3
 
-    drawNow = false
+    requestId = 0
 
     lastTime = 0
     tmpVec3 = new THREE.Vector3
     update = (time) ->
+      requestId = 0
       delta = Math.min 0.1, (time - lastTime) * 0.001
 
       terrainHeight = 0
       if track?
         terrainHeight = (track.terrain.getContactRayZ camPos.x, camPos.y).surfacePos.z
-      SPEED = 120 + 0.8 * Math.max 0, camPos.z - terrainHeight
+      SPEED = 80 + 0.8 * Math.max 0, camPos.z - terrainHeight
       ANG_SPEED = 2
       VISCOSITY = 20
       camVelTarget.set 0, 0, 0
@@ -99,20 +100,20 @@ define [
       camAng.addSelf tmpVec3.copy(camAngVel).multiplyScalar delta
       camAng.x = Math.max 0, Math.min 2, camAng.x
 
-      if drawNow or
-         camVel.length() > 0.1 or
-         camAngVel.length() > 0.01 or
-         Math.floor(time / 1000) - Math.floor(lastTime / 1000) > 0
-        # Render at max rate when moving, otherwise once a second.
-        client.update delta
-        client.render()
-        drawNow = false
+      client.update delta
+      client.render()
 
-      requestAnimationFrame update
       lastTime = time
+
+      if camVel.length() > 0.1 or
+         camAngVel.length() > 0.01
+        requestAnim()
       return
 
-    requestAnimationFrame update
+    requestAnim = ->
+      unless requestId then requestId = requestAnimationFrame update
+
+    setInterval requestAnim, 1000
 
     selectedCp = 0
 
@@ -127,29 +128,24 @@ define [
           when KEYCODE['J']
             checkpoints[selectedCp]?.pos[0] += moveAmt
             quiver.push checkpoints
-            drawNow = true
           when KEYCODE['G']
             checkpoints[selectedCp]?.pos[0] -= moveAmt
             quiver.push checkpoints
-            drawNow = true
           when KEYCODE['Y']
             checkpoints[selectedCp]?.pos[1] += moveAmt
             quiver.push checkpoints
-            drawNow = true
           when KEYCODE['H']
             checkpoints[selectedCp]?.pos[1] -= moveAmt
             quiver.push checkpoints
-            drawNow = true
           when KEYCODE['U']
             selectedCp = (selectedCp + checkpoints.length - 1) % checkpoints.length
             client.renderCheckpoints.highlightCheckpoint selectedCp
-            drawNow = true
           when KEYCODE['I']
             selectedCp = (selectedCp + 1) % checkpoints.length
             client.renderCheckpoints.highlightCheckpoint selectedCp
-            drawNow = true
           when KEYCODE.SPACE
             console.log JSON.stringify(track.config)
+      requestAnim()
 
     toolbox.show()
     return

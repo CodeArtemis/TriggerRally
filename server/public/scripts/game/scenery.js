@@ -28,27 +28,6 @@ function(LFIB4, collision, hash2d, util, THREE) {
       this.layers.push(layer);
       this.layersById[layer.config.id] = layer;
     }
-    this.trackPts = new hash2d.IndirectHash2D(10);
-    var radius = 10;
-    var points = [ new Vec2(100, 100) ].concat(track.checkpoints);
-    for (var i = 0; i < points.length - 1; ++i) {
-      var cp = [
-        points[i - 1] || points[i + 0],
-        points[i + 0],
-        points[i + 1],
-        points[i + 2] || points[i + 1]
-      ];
-      var dist = new Vec2().sub(cp[1], cp[2]).length();
-      var step = 1 / Math.ceil(dist / 10);
-      for (var x = 0; x < 0.9999; x += step) {
-        var interp = new THREE.Vector2(
-          catmullRom(cp[0].x, cp[1].x, cp[2].x, cp[3].x, x),
-          catmullRom(cp[0].y, cp[1].y, cp[2].y, cp[3].y, x)
-        );
-        interp.radius = radius;
-        this.trackPts.addCircle(interp.x, interp.y, radius, interp);
-      }
-    }
   };
 
   exports.Scenery.prototype.getLayer = function(id) {
@@ -153,8 +132,6 @@ function(LFIB4, collision, hash2d, util, THREE) {
         objects = objects.concat(addObjects);
       }
     }
-    var trackPts = this.scenery.trackPts.getObjects(
-        baseX, baseY, baseX + tileSize, baseY + tileSize);
     for (i = 0; i < maxObjects; ++i) {
       // TODO: Remove object if in 'sub' list.
       var drop = false;
@@ -169,27 +146,21 @@ function(LFIB4, collision, hash2d, util, THREE) {
       }
 
       var probability = 1;
-      var gradient = density && density.gradient;
-      if (gradient && contact) {
-        var gradProb = (contact.normal.z - gradient.min) /
-                       (gradient.full - gradient.min);
-        if (gradProb <= 0) continue;
-        probability *= Math.min(gradProb, 1);
+      if (contact) {
+        var gradient = density && density.gradient;
+        if (gradient) {
+          var gradProb = (contact.normal.z - gradient.min) /
+                         (gradient.full - gradient.min);
+          if (gradProb <= 0) continue;
+          probability *= Math.min(gradProb, 1);
+        }
+
+        var typeProb = 1 - 0.2 * Math.abs(contact.surfaceType - 25);
+        if (typeProb <= 0) continue;
+        probability *= Math.min(typeProb, 1);
       }
 
-      for (j in trackPts) {
-        var tp = trackPts[j];
-        tmpVec2.sub(object.position, tp);
-        leng = tmpVec2.length();
-        var probTp = (leng - tp.radius) / 2;
-        probability *= Math.min(probTp, 1);
-        if (probability <= 0) break;
-      }
-
-      if (probability <= 0 ||
-          probability < random()) continue;
-
-      object.scale = (random() * 0.3 + 0.3) * probability;
+      object.scale = (random() * 0.06 * probability + 0.3);
 
       /*
       // Enforce minimum distance between objects.

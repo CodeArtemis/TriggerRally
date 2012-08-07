@@ -27,9 +27,6 @@ define [
     game.setTrackConfig TRIGGER.TRACK.CONFIG
     game.addCarConfig TRIGGER.CAR.CONFIG
 
-    keyDown = []
-    drawNow = false
-
     lastTime = 0
     tmpVec3 = new THREE.Vector3
     update = (time) ->
