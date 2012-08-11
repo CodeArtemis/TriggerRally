@@ -60,7 +60,7 @@ script
 - if (urlTrack.config.gameversion === 1)
   script(src="/js/trigger-v1.js")
 - else
-  - if ('production' !== process.env.NODE_ENV)
-    script(data-main="/build/client/drive-main", src="/js/require.js")
+  - if ('production' === process.env.NODE_ENV)
+    script(data-main="/build-v2/drive-main", src="/js/require.js")
   - else
-    script(data-main="/scripts/client/drive-main", src="/js/require.js")
+    script(data-main="/scripts/drive-main", src="/js/require.js")

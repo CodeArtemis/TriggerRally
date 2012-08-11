@@ -1,10 +1,10 @@
 ({
   baseUrl: "../public/scripts",
-  dir: "../public/build",
-  optimize: "uglify",
+  dir: "../public/build-v2",
+  optimize: "none",
   modules: [
       {
-          name: "client/drive-main",
+          name: "drive-main",
           exclude: [ 'coffee-script' ]
       }
   ],
