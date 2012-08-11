@@ -58,7 +58,7 @@ script
   script TRIGGER.USER_LOGGED_IN = '#{user.pub_id}';
 
 - if (urlTrack.config.gameversion === 1)
-  script(src="/js/trigger-v1.js")
+  script(src="/build-v1/trigger.js")
 - else
   - if ('production' === process.env.NODE_ENV)
     script(data-main="/build-v2/drive-main", src="/js/require.js")
