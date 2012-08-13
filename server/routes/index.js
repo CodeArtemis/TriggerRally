@@ -175,7 +175,7 @@ function topRuns(track, car, limit, callback) {
 };
 
 exports.top = function(req, res) {
-  topRuns(req.urlTrack.id, req.urlCar.id, 500, function(error, runs) {
+  topRuns(req.urlTrack.id, req.urlCar.id, 50, function(error, runs) {
     if (error) {
       console.log('Error fetching runs:');
       console.log(error);

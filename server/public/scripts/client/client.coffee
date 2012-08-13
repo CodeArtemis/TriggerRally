@@ -17,7 +17,7 @@ define [
   Vec3 = THREE.Vector3
   PULLTOWARD = util.PULLTOWARD
 
-  class RenderCheckpoints
+  class RenderCheckpointsEditor
     constructor: (@scene, checkpoints) ->
       @ang = 0
       @meshes = []
@@ -47,6 +47,30 @@ define [
       for mesh in @meshes
         mesh.material = clientMisc.checkpointMaterial()
       @meshes[i]?.material = @selectedMat
+      return
+
+  class RenderCheckpointsDrive
+    constructor: (@scene, @checkpoints) ->
+      @ang = 0
+      @mesh = clientMisc.checkpointMesh()
+      @initPos = @mesh.position.clone()
+      @current = 0
+      @scene.add @mesh
+
+    update: (camera, delta) ->
+      targetPos = @checkpoints[@current]
+      if targetPos?
+        @mesh.rotation.z += delta * 3
+        meshPos = @mesh.position
+        pull = delta * 2
+        pull = 1 if @current is 0
+        meshPos.x = PULLTOWARD meshPos.x, targetPos.x + @initPos.x, pull
+        meshPos.y = PULLTOWARD meshPos.y, targetPos.y + @initPos.y, pull
+        meshPos.z = PULLTOWARD meshPos.z, targetPos.z + @initPos.z, pull
+      return
+
+    highlightCheckpoint: (i) ->
+      @current = i
       return
 
   class CamControl
@@ -160,20 +184,34 @@ define [
 
       @audio = new clientAudio.WebkitAudio()
 
+      onTrackCar = (track, car, progress) =>
+        @add new CamTerrainClipping(@camera, track.terrain)
+        @add renderCheckpoints = new RenderCheckpointsDrive(@scene, track.checkpoints)
+        progress.on 'advance', ->
+          renderCheckpoints.highlightCheckpoint progress.nextCpIndex
+
+      deferredCars = []
+
       @game.on 'settrack', (track) =>
         @add new clientTerrain.RenderTerrain(@scene, track.terrain, @renderer.context)
-        @add @renderCheckpoints = new RenderCheckpoints(@scene, track.checkpoints)
         sceneLoader = new THREE.SceneLoader()
         loadFunc = (url, callback) -> sceneLoader.load url, callback
         @add new clientScenery.RenderScenery(@scene, track.scenery, loadFunc, @renderer)
-        @add new CamTerrainClipping(@camera, track.terrain)
+        @track = track
+        for car, progress in deferredCars
+          onTrackCar track, car, progress
+        deferredCars = null
         return
 
-      @game.on 'addcar', (car) =>
+      @game.on 'addcar', (car, progress) =>
         renderCar = new clientCar.RenderCar(@scene, car, @audio)
         @add renderCar
         @add new CamControl(@camera, renderCar)
         @add new CarControl(car, this)
+        if @track
+          onTrackCar @track, car, progress
+        else
+          deferredCars.push [car, progress]
         @pubsub.publish 'addcar'
         return
 
@@ -237,7 +275,7 @@ define [
       return
 
     cubeMesh: ->
-      path = "/a/textures/miramar-512/miramar_"
+      path = "/a/textures/miramar-z-512/miramar_"
       format = '.jpg'
       urls = [
         path + 'rt' + format, path + 'lf' + format

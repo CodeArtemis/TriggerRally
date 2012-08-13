@@ -26,6 +26,10 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     this.cpTimes = [];
   };
 
+  exports.Progress.prototype.on = function(event, callback) {
+    this.pubsub.subscribe(event, callback);
+  };
+
   exports.Progress.prototype.nextCheckpoint = function(i) {
     return this.checkpoints[this.nextCpIndex + (i || 0)] || null;
   };
@@ -36,7 +40,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     if (nextCp) {
       var cpVec = new Vec2(vehic.body.pos.x - nextCp.x, vehic.body.pos.y - nextCp.y);
       var cpDistSq = cpVec.lengthSq();
-      var CP_TEST = 64;
+      var CP_TEST = 18*18;
       if (cpDistSq < CP_TEST) {
         var cpDist = Math.sqrt(cpDistSq);
         var lastCpDist = Math.sqrt(this.lastCpDistSq);
@@ -116,21 +120,19 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
 
     vehicle.body.pos.set(100, 100, 2000);
     vehicle.body.ori.set(1, 1, 1, 1).normalize();
-    if (this.track) {
-      vehicle.body.pos.set(
-          this.track.config.course.startposition.pos[0],
-          this.track.config.course.startposition.pos[1],
-          this.track.config.course.startposition.pos[2]);
-      var tmpQuat = new THREE.Quaternion().setFromAxisAngle(
-          new Vec3(0,0,1),
-          this.track.config.course.startposition.oridegrees * Math.PI / 180);
-      vehicle.body.ori = tmpQuat.multiplySelf(vehicle.body.ori);
-    }
+    vehicle.body.pos.set(
+        this.track.config.course.startposition.pos[0],
+        this.track.config.course.startposition.pos[1],
+        this.track.config.course.startposition.pos[2]);
+    var tmpQuat = new THREE.Quaternion().setFromAxisAngle(
+        new Vec3(0,0,1),
+        this.track.config.course.startposition.oridegrees * Math.PI / 180);
+    vehicle.body.ori = tmpQuat.multiplySelf(vehicle.body.ori);
 
     var progress = new exports.Progress(this.track, vehicle);
     this.progs.push(progress);
     if (callback) callback(progress);
-    this.pubsub.publish('addcar', vehicle);
+    this.pubsub.publish('addcar', vehicle, progress);
   };
 
   exports.Game.prototype.onSimStep = function() {
@@ -138,7 +140,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
 
     var disabled = (this.sim.time < this.startTime);
     this.progs.forEach(function(progress) {
-      progress.update();
+      if (!disabled) progress.update();
       progress.vehicle.disabled = disabled;
     });
   };
