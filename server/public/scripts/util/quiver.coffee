@@ -195,33 +195,7 @@ moduleDef = (require, exports, module) ->
             cb()
       prevNode = node
     async.parallel tasks, ->
-      # connect should not pull automatically because we can't be sure that the
-      # user has connected all inputs yet.
-      #exports.pull prevNode if prevNode
       ls.release()
-    return
-
-  # Like connect, but array arguments will be treated as parallel nodes.
-  exports.connectParallel = (args...) ->
-    prevNodes = []
-    coerceToNodeArray = (value) ->
-      if value instanceof Array
-        _coerceToNode(val) for val in value
-      else
-        [_coerceToNode(value)]
-
-    connectNodes = (nodes) ->
-      prevNodes.forEach (prevNode) ->
-        prevNode.pushOutputs.apply prevNode, nodes
-      nodes.forEach (node) ->
-        node.pushInputs.apply node, prevNodes
-      prevNodes = nodes
-      return
-
-    for arg in args
-      connectNodes coerceToNodeArray arg
-
-    exports.pull prevNode for prevNode in prevNodes
     return
 
   return exports
