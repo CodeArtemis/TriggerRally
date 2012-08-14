@@ -24,8 +24,9 @@ define [
     client = new clientClient.TriggerClient view3d[0], game
 
     track = null
-    game.setTrackConfig TRIGGER.TRACK.CONFIG, (err, tr) ->
-      track = tr
+    game.setTrackConfig TRIGGER.TRACK.CONFIG, (err, theTrack) ->
+      track = theTrack
+      client.addEditorCheckpoints track
 
     layout = ->
       [toolbox, view3d].forEach (panel) ->

@@ -10,6 +10,9 @@
       |  &mdash;
       a(href="/run/#{runs[0].pub_id}/replay") watch replay
 
+  - if (urlTrack.config.gameversion === 2)
+    p(style="color:red") Development version. Some features may be missing or broken!
+
   .frame3d
     .loading
       div(style="height: 6em")

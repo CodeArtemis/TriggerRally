@@ -252,6 +252,9 @@ define [
       @render()
       return
 
+    addEditorCheckpoints: (track) ->
+      @add @renderCheckpoints = new RenderCheckpointsEditor @scene, track.checkpoints
+
     debouncedMuteAudio: _.debounce((audio) ->
       audio.setGain 0
     , 500)

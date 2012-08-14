@@ -74,12 +74,12 @@ define [
           # Race complete.
           updateTimer = false
           runTimer.removeClass()
-          if !TRIGGER.RUN
-            if TRIGGER.USER_LOGGED_IN
-              _.delay(uploadRun, 1000)
-            else
-              # We can't save the run, but show a Twitter link.
-              showTwitterLink()
+          #if !TRIGGER.RUN
+          #  if TRIGGER.USER_LOGGED_IN
+          #    _.delay(uploadRun, 1000)
+          #  else
+          #    # We can't save the run, but show a Twitter link.
+          #    showTwitterLink()
 
     lastTime = 0
     lastRaceTime = 0

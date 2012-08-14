@@ -1,6 +1,6 @@
 ({
   baseUrl: "../public/scripts",
-  dir: "../public/build-v2",
+  dir: "../public/build-out",
   optimize: "none",
   modules: [
       {
@@ -28,11 +28,11 @@
   },
   paths: {
       'THREE': '../js/Three'
-    , 'async': '../js/async'
+    , 'async': '../js/async.min'
     , 'cs': '../js/cs'
     , 'coffee-script': '../js/coffee-script'
     , 'underscore': '../js/underscore-min'
-    , 'zepto': '../js/zepto'
+    , 'zepto': '../js/zepto.min'
   },
   stubModules: ['cs']
 })
