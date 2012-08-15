@@ -159,7 +159,7 @@ define [
       return
 
   keyWeCareAbout = (event) ->
-    event.keyCode <= 127
+    event.keyCode <= 255
   isModifierKey = (event) ->
     event.ctrlKey or event.altKey or event.metaKey
 

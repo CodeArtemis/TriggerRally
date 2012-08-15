@@ -53,6 +53,8 @@ define [
     camAngVel = new Vec3
     camAngVelTarget = new Vec3
 
+    selected = []
+
     requestId = 0
 
     lastTime = 0
@@ -85,6 +87,18 @@ define [
       if keyDown[KEYCODE.A] then camAngVelTarget.z += ANG_SPEED
       if keyDown[KEYCODE.D] then camAngVelTarget.z -= ANG_SPEED
 
+      objSpinVel = 0
+      if keyDown[188] then objSpinVel += 3
+      if keyDown[190] then objSpinVel -= 3
+
+      if objSpinVel isnt 0
+        layers = {}
+        for sel in selected when sel.type is 'scenery'
+          sel.object.rot[2] += objSpinVel * delta
+          layers[sel.layer] = true
+        for layer of layers
+          track.scenery.invalidateLayer layer
+
       camVelTarget.set(
           camVelTarget.x * Math.cos(camAng.z) - camVelTarget.y * Math.sin(camAng.z),
           camVelTarget.x * Math.sin(camAng.z) + camVelTarget.y * Math.cos(camAng.z),
@@ -110,7 +124,8 @@ define [
       client.render()
 
       if camVel.length() > 0.1 or
-         camAngVel.length() > 0.01
+         camAngVel.length() > 0.01 or
+         objSpinVel isnt 0
         lastTime = time
         requestAnim()
       else
@@ -154,8 +169,6 @@ define [
             console.log JSON.stringify(track.config)
       requestAnim()
       return
-
-    selected = []
 
     clearSelection = ->
       for sel in selected
@@ -213,7 +226,9 @@ define [
           tmp.copy(forward).multiplyScalar eye.y
           pos[0] += tmp.x
           pos[1] += tmp.y
-          # TODO: update pos[2]
+          tmp.set pos[0], pos[1], -Infinity
+          contact = track.terrain.getContact tmp
+          if contact then pos[2] = contact.surfacePos.z
           sel.mesh.position.set pos[0], pos[1], pos[2]
         for layer of layers
           track.scenery.invalidateLayer layer
