@@ -101,14 +101,17 @@ function(LFIB4, collision, hash2d, util, THREE) {
     var isect = [], key;
     for (key in this.cache.tiles) {
       var tile = this.cache.tiles[key];
+      // TODO: Broad check for intersection with tile boundaries.
       tile.forEach(function(object) {
         var vec = ray.origin.clone().subSelf(object.position);
         var a = 1;//ray.direction.dot(ray.direction);
-        var b = 2 * ray.direction.dot(vec);
+        var along = ray.direction.dot(vec);
+        var b = 2 * along;
         var c = vec.dot(vec) - radiusSq;
         var discrim = b * b - 4 * a * c;
         if (discrim >= 0) {
           isect.push({
+            distance: -along,
             type: 'scenery',
             layer: this.config.id,
             tile: key,

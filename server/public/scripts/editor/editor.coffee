@@ -7,11 +7,13 @@ define [
   'THREE'
   'util/util'
   'cs!client/client'
+  'cs!client/misc'
   'game/game'
   'game/track'
   'cs!util/quiver'
-], ($, THREE, util, clientClient, gameGame, gameTrack, quiver) ->
+], ($, THREE, util, clientClient, clientMisc, gameGame, gameTrack, quiver) ->
   KEYCODE = util.KEYCODE
+  Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
 
   run: ->
@@ -151,9 +153,64 @@ define [
           when KEYCODE.SPACE
             console.log JSON.stringify(track.config)
       requestAnim()
+      return
+
+    selected = []
+
+    clearSelection = ->
+      for sel in selected
+        client.scene.remove sel.mesh
+      selected = []
+      return
+
+    addSelection = (sel) ->
+      sel.mesh = clientMisc.selectionMesh()
+      sel.mesh.position.copy sel.object.position
+      client.scene.add sel.mesh
+      selected.push sel
+      return
+
+    # TODO: encapsulate mouse event handling
+    mouseX = 0
+    mouseY = 0
+    buttons = 0
 
     view3d.on 'mousedown', (event) ->
-      console.log client.findObject event.layerX, event.layerY
+      mouseX = event.layerX
+      mouseY = event.layerY
+      isect = client.findObject mouseX, mouseY
+      clearSelection()
+      for sel in isect
+        addSelection sel
+      requestAnim()
+      buttons |= Math.pow(2, event.button)
+      return
+
+    view3d.on 'mouseup', (event) ->
+      buttons &= ~Math.pow(2, event.button)
+      return
+
+    view3d.on 'mousemove', (event) ->
+      if buttons & 1 and selected.length > 0
+        right = client.camera.matrixWorld.getColumnX()
+        forward = (new Vec3).cross client.camera.up, right
+        eye = client.viewToEyeRel new Vec2 event.layerX - mouseX, event.layerY - mouseY
+        dist = 0
+        dist += sel.distance for sel in selected
+        dist /= selected.length
+        eye.multiplyScalar dist
+        mouseX = event.layerX
+        mouseY = event.layerY
+        tmp = new Vec3
+        for sel in selected
+          tmp.copy(right).multiplyScalar eye.x
+          sel.object.position.addSelf tmp
+          tmp.copy(forward).multiplyScalar eye.y
+          sel.object.position.addSelf tmp
+          sel.mesh.position.copy sel.object.position
+        client.renderScenery.invalidateSelection selected
+        requestAnim()
+      return
 
     toolbox.show()
     return

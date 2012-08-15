@@ -11,7 +11,7 @@ define [
   RenderScenery: class RenderScenery
     constructor: (@scene, @scenery, loadFunc, @renderer) ->
       @fadeSpeed = 2
-      @layers = ({ src: l, tiles: {} } for l in scenery.layers)
+      @layers = ({ src: l, tiles: {} } for l in @scenery.layers)
       for layer in @layers
         do (layer) ->
           loadFunc layer.src.config.render.scene, (result) ->
@@ -77,7 +77,7 @@ define [
               tile = layer.tiles[key] = @createTile layer, tx, ty
               @scene.add tile
             if tile and tile.opacity < 1
-                tile.opacity = Math.min(tile.opacity + fadeAmount, 1)
+                tile.opacity = Math.min 1, tile.opacity + fadeAmount
                 for mesh in tile.children
                   mesh.material.opacity = tile.opacity
         toRemove = (key for key of layer.tiles when not visibleTiles[key])
@@ -88,8 +88,22 @@ define [
             for mesh in tile.children
               mesh.material.opacity = tile.opacity
           else
-            @scene.remove layer.tiles[key]
-            for mesh in layer.tiles[key]
-              @renderer.deallocateObject mesh
-            delete layer.tiles[key]
+            @removeTile layer, key
+      return
+
+    removeTile: (layer, key) ->
+      if layer.tiles[key]
+        @scene.remove layer.tiles[key]
+        for mesh in layer.tiles[key]
+          @renderer.deallocateObject mesh
+        delete layer.tiles[key]
+      return
+
+    invalidateSelection: (selected) ->
+      tiles = {}
+      for sel in selected when sel.type is 'scenery'
+        key = sel.layer + ',' + sel.tile
+        tiles[key] = [sel.layer, sel.tile]
+      for key, [layer, tile] of tiles
+        @removeTile layer, tile
       return

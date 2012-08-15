@@ -14,6 +14,7 @@ define [
   'cs!util/quiver'
   'util/util'
 ], (THREE, clientAudio, clientCar, clientMisc, clientScenery, clientTerrain, gameGame, pubsub, quiver, util) ->
+  Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
   PULLTOWARD = util.PULLTOWARD
 
@@ -188,8 +189,8 @@ define [
         checkpointBuffer = buffer
 
       onTrackCar = (track, car, progress) =>
-        @add new CamTerrainClipping(@camera, track.terrain)
-        @add renderCheckpoints = new RenderCheckpointsDrive(@scene, track.checkpoints)
+        @add new CamTerrainClipping @camera, track.terrain
+        @add renderCheckpoints = new RenderCheckpointsDrive @scene, track.checkpoints
         progress.on 'advance', =>
           renderCheckpoints.highlightCheckpoint progress.nextCpIndex
           if checkpointBuffer?
@@ -198,10 +199,10 @@ define [
       deferredCars = []
 
       @game.on 'settrack', (track) =>
-        @add new clientTerrain.RenderTerrain(@scene, track.terrain, @renderer.context)
+        @add new clientTerrain.RenderTerrain @scene, track.terrain, @renderer.context
         sceneLoader = new THREE.SceneLoader()
         loadFunc = (url, callback) -> sceneLoader.load url, callback
-        @add new clientScenery.RenderScenery(@scene, track.scenery, loadFunc, @renderer)
+        @add @renderScenery = new clientScenery.RenderScenery @scene, track.scenery, loadFunc, @renderer
         @track = track
         for car, progress in deferredCars
           onTrackCar track, car, progress
@@ -209,10 +210,10 @@ define [
         return
 
       @game.on 'addcar', (car, progress) =>
-        renderCar = new clientCar.RenderCar(@scene, car, @audio)
+        renderCar = new clientCar.RenderCar @scene, car, @audio
         @add renderCar
-        @add new CamControl(@camera, renderCar)
-        @add new CarControl(car, this)
+        @add new CamControl @camera, renderCar
+        @add new CarControl car, this
         if @track
           onTrackCar @track, car, progress
         else
@@ -335,10 +336,19 @@ define [
       cubeMesh.position.set(0, 0, 20000)
       cubeMesh
 
+    viewToEye: (vec) ->
+      vec.x = (vec.x / @width) * 2 - 1
+      vec.y = 1 - (vec.y / @height) * 2
+      vec
+
+    viewToEyeRel: (vec) ->
+      vec.x = (vec.x / @width) * 2
+      vec.y = - (vec.y / @height) * 2
+      vec
+
     findObject: (viewX, viewY) ->
-      eyeX = (viewX / @width) * 2 - 1
-      eyeY = 1 - (viewY / @height) * 2
-      vec = new Vec3 eyeX, eyeY, 0.9
+      eye = @viewToEye new Vec2 viewX, viewY
+      vec = new Vec3 eye.x, eye.y, 0.9
       projector.unprojectVector vec, @camera
       ray = new THREE.Ray @camera.position,
                           vec.subSelf(@camera.position).normalize()
