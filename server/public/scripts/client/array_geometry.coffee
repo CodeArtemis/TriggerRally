@@ -215,9 +215,9 @@ define [
         for offset in @offsets
           @setupBuffers program, gl, offset.index
           gl.drawElements PRIMITIVE, offset.count, ELEMENT_TYPE, offset.start * ELEMENT_SIZE
-      else
+      else if @vertexPositionBuffer.numItems > 0
         @setupBuffers program, gl, 0
-        gl.drawArrays gl.TRIANGLES, 0, vertexPositionBuffer.numItems / 3
+        gl.drawArrays gl.TRIANGLES, 0, @vertexPositionBuffer.numItems / 3
       return
 
     setupBuffers: (program, gl, offset) ->

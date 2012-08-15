@@ -152,5 +152,8 @@ define [
             console.log JSON.stringify(track.config)
       requestAnim()
 
+    view3d.on 'mousedown', (event) ->
+      console.log client.findObject event.layerX, event.layerY
+
     toolbox.show()
     return

@@ -42,6 +42,14 @@ function(LFIB4, collision, hash2d, util, THREE) {
     });
   };
 
+  exports.Scenery.prototype.intersectRay = function(ray) {
+    var isect = [], i, l;
+    for (i = 0, l = this.layers.length; i < l; ++i) {
+      isect.push(this.layers[i].intersectRay(ray));
+    }
+    return [].concat.apply([], isect);
+  };
+
   exports.Layer = function(config, scenery) {
     this.config = config;
     this.scenery = scenery;
@@ -85,6 +93,31 @@ function(LFIB4, collision, hash2d, util, THREE) {
       contactArrays.push(objHull.collideSphereHull(hull));
     });
     return [].concat.apply([], contactArrays);
+  };
+
+  exports.Layer.prototype.intersectRay = function(ray) {
+    // We currently only intersect with allocated tiles.
+    var radiusSq = 4;
+    var isect = [], key;
+    for (key in this.cache.tiles) {
+      var tile = this.cache.tiles[key];
+      tile.forEach(function(object) {
+        var vec = ray.origin.clone().subSelf(object.position);
+        var a = 1;//ray.direction.dot(ray.direction);
+        var b = 2 * ray.direction.dot(vec);
+        var c = vec.dot(vec) - radiusSq;
+        var discrim = b * b - 4 * a * c;
+        if (discrim >= 0) {
+          isect.push({
+            type: 'scenery',
+            layer: this.config.id,
+            tile: key,
+            object: object
+          });
+        }
+      }, this);
+    }
+    return isect;
   };
 
   exports.Layer.prototype.getObjects = function(minX, minY, maxX, maxY) {

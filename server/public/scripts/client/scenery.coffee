@@ -30,31 +30,33 @@ define [
       tile = new THREE.Object3D
       tile.position.x = (tx + 0.5) * layer.src.cache.gridSize
       tile.position.y = (ty + 0.5) * layer.src.cache.gridSize
-      for object in layer.meshes
-        # We merge copies of each object into a single mesh.
-        mergedGeom = new array_geometry.ArrayGeometry()
-        mesh = new THREE.Mesh object.geometry
-        for entity in entities
-          mesh.scale.copy object.scale
-          if renderConfig.scale? then mesh.scale.multiplyScalar renderConfig.scale
-          mesh.scale.multiplyScalar entity.scale
-          mesh.position.sub entity.position, tile.position
-          mesh.rotation.add object.rotation, entity.rotation
-          mergedGeom.mergeMesh mesh
-        mergedGeom.updateOffsets()
-        mergedGeom.createBuffers(@renderer.context)
-        # Clone the material so that we can independently adjust opacity.
-        material = new THREE.MeshLambertMaterial(object.material)
-        # Color doesn't get copied correctly.
-        material.color = object.material.color
-        material.ambient = object.material.ambient
-        material.emissive = object.material.emissive
-        material.opacity = 0
-        mesh = new THREE.Mesh mergedGeom, material
-        mesh.doubleSided = object.doubleSided
-        mesh.castShadow = object.castShadow
-        mesh.receiveShadow = object.receiveShadow
-        tile.add mesh
+      tile.opacity = 0
+      if layer.meshes.length > 0 and entities.length > 0
+        for object in layer.meshes
+          # We merge copies of each object into a single mesh.
+          mergedGeom = new array_geometry.ArrayGeometry()
+          mesh = new THREE.Mesh object.geometry
+          for entity in entities
+            mesh.scale.copy object.scale
+            if renderConfig.scale? then mesh.scale.multiplyScalar renderConfig.scale
+            mesh.scale.multiplyScalar entity.scale
+            mesh.position.sub entity.position, tile.position
+            mesh.rotation.add object.rotation, entity.rotation
+            mergedGeom.mergeMesh mesh
+          mergedGeom.updateOffsets()
+          mergedGeom.createBuffers(@renderer.context)
+          # Clone the material so that we can independently adjust opacity.
+          material = new THREE.MeshLambertMaterial(object.material)
+          # Color doesn't get copied correctly.
+          material.color = object.material.color
+          material.ambient = object.material.ambient
+          material.emissive = object.material.emissive
+          material.opacity = 0
+          mesh = new THREE.Mesh mergedGeom, material
+          mesh.doubleSided = object.doubleSided
+          mesh.castShadow = object.castShadow
+          mesh.receiveShadow = object.receiveShadow
+          tile.add mesh
       return tile
 
     update: (camera, delta) ->
@@ -74,20 +76,17 @@ define [
               added = true
               tile = layer.tiles[key] = @createTile layer, tx, ty
               @scene.add tile
-            if tile
-              opacity = tile.children[0].material.opacity
-              if opacity < 1
-                opacity = Math.min(opacity + fadeAmount, 1)
+            if tile and tile.opacity < 1
+                tile.opacity = Math.min(tile.opacity + fadeAmount, 1)
                 for mesh in tile.children
-                  mesh.material.opacity = opacity
+                  mesh.material.opacity = tile.opacity
         toRemove = (key for key of layer.tiles when not visibleTiles[key])
         for key in toRemove
           tile = layer.tiles[key]
-          opacity = tile.children[0].material.opacity
-          opacity -= fadeAmount
-          if opacity > 0
+          tile.opacity -= fadeAmount
+          if tile.opacity > 0
             for mesh in tile.children
-              mesh.material.opacity = opacity
+              mesh.material.opacity = tile.opacity
           else
             @scene.remove layer.tiles[key]
             for mesh in layer.tiles[key]

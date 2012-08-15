@@ -17,6 +17,8 @@ define [
   Vec3 = THREE.Vector3
   PULLTOWARD = util.PULLTOWARD
 
+  projector = new THREE.Projector
+
   class RenderCheckpointsEditor
     constructor: (@scene, checkpoints) ->
       @ang = 0
@@ -332,3 +334,18 @@ define [
       cubeMesh.flipSided = true
       cubeMesh.position.set(0, 0, 20000)
       cubeMesh
+
+    findObject: (viewX, viewY) ->
+      eyeX = (viewX / @width) * 2 - 1
+      eyeY = 1 - (viewY / @height) * 2
+      vec = new Vec3 eyeX, eyeY, 0.9
+      projector.unprojectVector vec, @camera
+      ray = new THREE.Ray @camera.position,
+                          vec.subSelf(@camera.position).normalize()
+      @intersectRay ray
+
+    # TODO: Does this belong in client?
+    intersectRay: (ray) ->
+      isect = []
+      isect.push @track.scenery.intersectRay ray
+      [].concat.apply [], isect
