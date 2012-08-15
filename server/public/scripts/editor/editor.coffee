@@ -165,7 +165,8 @@ define [
 
     addSelection = (sel) ->
       sel.mesh = clientMisc.selectionMesh()
-      sel.mesh.position.copy sel.object.position
+      pos = sel.object.pos
+      sel.mesh.position.set pos[0], pos[1], pos[2]
       client.scene.add sel.mesh
       selected.push sel
       return
@@ -202,13 +203,20 @@ define [
         mouseX = event.layerX
         mouseY = event.layerY
         tmp = new Vec3
-        for sel in selected
+        layers = {}
+        for sel in selected when sel.type is 'scenery'
+          layers[sel.layer] = true
+          pos = sel.object.pos
           tmp.copy(right).multiplyScalar eye.x
-          sel.object.position.addSelf tmp
+          pos[0] += tmp.x
+          pos[1] += tmp.y
           tmp.copy(forward).multiplyScalar eye.y
-          sel.object.position.addSelf tmp
-          sel.mesh.position.copy sel.object.position
-        client.renderScenery.invalidateSelection selected
+          pos[0] += tmp.x
+          pos[1] += tmp.y
+          # TODO: update pos[2]
+          sel.mesh.position.set pos[0], pos[1], pos[2]
+        for layer of layers
+          track.scenery.invalidateLayer layer
         requestAnim()
       return
 

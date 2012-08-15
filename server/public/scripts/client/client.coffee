@@ -249,7 +249,7 @@ define [
       r.shadowMapSoft = true
       r.shadowMapCullFrontFaces = false
       r.autoClear = false
-      return r
+      r
 
     setSize: (@width, @height) ->
       @renderer.setSize @width, @height

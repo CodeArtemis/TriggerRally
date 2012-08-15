@@ -45,7 +45,7 @@ define [
             mergedGeom.mergeMesh mesh
           mergedGeom.updateOffsets()
           mergedGeom.createBuffers(@renderer.context)
-          # Clone the material so that we can independently adjust opacity.
+          # Clone the material so that we can adjust opacity per tile.
           material = new THREE.MeshLambertMaterial(object.material)
           # Color doesn't get copied correctly.
           material.color = object.material.color
@@ -59,9 +59,26 @@ define [
           tile.add mesh
       return tile
 
+    removeTile: (layer, key) ->
+      @scene.remove layer.tiles[key]
+      for mesh in layer.tiles[key]
+        @renderer.deallocateObject mesh
+      delete layer.tiles[key]
+      return
+
     update: (camera, delta) ->
       added = false
+      addAll = false
       fadeAmount = @fadeSpeed * delta
+
+      for layer, i in @scenery.layers
+        if @layers[i].src isnt layer
+          keys = for key of @layers[i].tiles
+            key
+          @removeTile @layers[i], key for key in keys
+          @layers[i].src = layer
+          addAll = true
+
       for layer in @layers
         continue unless layer.meshes?  # Check that we have something to draw.
         visibleTiles = {}
@@ -72,7 +89,7 @@ define [
             key = tx + ',' + ty
             visibleTiles[key] = true
             tile = layer.tiles[key]
-            if not tile and not added
+            if not tile and (addAll or not added)
               added = true
               tile = layer.tiles[key] = @createTile layer, tx, ty
               @scene.add tile
@@ -89,21 +106,4 @@ define [
               mesh.material.opacity = tile.opacity
           else
             @removeTile layer, key
-      return
-
-    removeTile: (layer, key) ->
-      if layer.tiles[key]
-        @scene.remove layer.tiles[key]
-        for mesh in layer.tiles[key]
-          @renderer.deallocateObject mesh
-        delete layer.tiles[key]
-      return
-
-    invalidateSelection: (selected) ->
-      tiles = {}
-      for sel in selected when sel.type is 'scenery'
-        key = sel.layer + ',' + sel.tile
-        tiles[key] = [sel.layer, sel.tile]
-      for key, [layer, tile] of tiles
-        @removeTile layer, tile
       return

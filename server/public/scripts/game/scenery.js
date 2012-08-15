@@ -26,12 +26,12 @@ function(LFIB4, collision, hash2d, util, THREE) {
     for (var i = 0; i < config.layers.length; ++i) {
       var layer = new exports.Layer(config.layers[i], this);
       this.layers.push(layer);
-      this.layersById[layer.config.id] = layer;
+      this.layersById[layer.config.id] = i;
     }
   };
 
   exports.Scenery.prototype.getLayer = function(id) {
-    return this.layersById[id];
+    return this.layers[this.layersById[id]];
   };
 
   exports.Scenery.prototype.addToSim = function(sim) {
@@ -48,6 +48,13 @@ function(LFIB4, collision, hash2d, util, THREE) {
       isect.push(this.layers[i].intersectRay(ray));
     }
     return [].concat.apply([], isect);
+  };
+
+  exports.Scenery.prototype.invalidateLayer = function(id) {
+    if (id in this.layersById) {
+      var i = this.layersById[id];
+      this.layers[i] = new exports.Layer(this.config.layers[i], this);
+    }
   };
 
   exports.Layer = function(config, scenery) {
@@ -98,28 +105,26 @@ function(LFIB4, collision, hash2d, util, THREE) {
   exports.Layer.prototype.intersectRay = function(ray) {
     // We currently only intersect with allocated tiles.
     var radiusSq = 4;
-    var isect = [], key;
-    for (key in this.cache.tiles) {
-      var tile = this.cache.tiles[key];
-      // TODO: Broad check for intersection with tile boundaries.
-      tile.forEach(function(object) {
-        var vec = ray.origin.clone().subSelf(object.position);
-        var a = 1;//ray.direction.dot(ray.direction);
-        var along = ray.direction.dot(vec);
-        var b = 2 * along;
-        var c = vec.dot(vec) - radiusSq;
-        var discrim = b * b - 4 * a * c;
-        if (discrim >= 0) {
-          isect.push({
-            distance: -along,
-            type: 'scenery',
-            layer: this.config.id,
-            tile: key,
-            object: object
-          });
-        }
-      }, this);
-    }
+    var isect = [];
+    var add = this.config.density.add;
+    add && add.forEach(function(obj, idx) {
+      var vec = new Vec3(obj.pos[0], obj.pos[1], obj.pos[2]);
+      vec.subSelf(ray.origin);
+      var a = 1;//ray.direction.dot(ray.direction);
+      var along = ray.direction.dot(vec);
+      var b = -2 * along;
+      var c = vec.dot(vec) - radiusSq;
+      var discrim = b * b - 4 * a * c;
+      if (discrim >= 0) {
+        isect.push({
+          distance: along,
+          type: 'scenery',
+          layer: this.config.id,
+          object: obj,
+          idx: idx
+        });
+      }
+    }, this);
     return isect;
   };
 
