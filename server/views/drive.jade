@@ -10,9 +10,6 @@
       |  &mdash;
       a(href="/run/#{runs[0].pub_id}/replay") watch replay
 
-  - if (urlTrack.config.gameversion === 2)
-    p(style="color:red") Development version. Some features may be missing or broken!
-
   .frame3d
     .loading
       div(style="height: 6em")
@@ -32,6 +29,11 @@
     p#replays
 
   p.note Controls: arrow keys or W/S/A/D to drive, space for handbrake, C for camera.
+
+  p.note
+    span Game code version #{urlTrack.config.gameversion}
+    - if (urlTrack.config.gameversion > 1)
+      span : development version. Some features may be missing or broken.
 
   !=partial('partial/footer')
 

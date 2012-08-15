@@ -39,8 +39,6 @@ define [
         done()
 
     update: (camera, delta) ->
-      for mesh in @meshes
-        mesh.rotation.z += delta * 3
       return
 
     highlightCheckpoint: (i) ->
