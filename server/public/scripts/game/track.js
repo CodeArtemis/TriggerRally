@@ -204,7 +204,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
         // Move to quiver? insertBefore?
         var disconnect = function(srcNode, dstNode) {
           srcNode.outputs.splice(srcNode.outputs.indexOf(dstNode), 1);
-          dstNode.outputs.splice(dstNode.inputs.indexOf(srcNode), 1);
+          dstNode.inputs.splice(dstNode.inputs.indexOf(srcNode), 1);
         };
 
         (function() {

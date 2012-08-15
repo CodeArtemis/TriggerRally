@@ -183,12 +183,17 @@ define [
       @add new SunLight @scene
 
       @audio = new clientAudio.WebkitAudio()
+      checkpointBuffer = null
+      @audio.loadBuffer '/a/sounds/checkpoint.wav', (buffer) ->
+        checkpointBuffer = buffer
 
       onTrackCar = (track, car, progress) =>
         @add new CamTerrainClipping(@camera, track.terrain)
         @add renderCheckpoints = new RenderCheckpointsDrive(@scene, track.checkpoints)
-        progress.on 'advance', ->
+        progress.on 'advance', =>
           renderCheckpoints.highlightCheckpoint progress.nextCpIndex
+          if checkpointBuffer?
+            @audio.playSound checkpointBuffer, false, 1, 1
 
       deferredCars = []
 

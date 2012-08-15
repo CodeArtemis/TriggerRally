@@ -77,14 +77,21 @@ function(THREE, async, uImg, quiver, util) {
 
     if (config.detail) {
       // TODO: omit copyChannel stage.
-      quiver.connectParallel(
+      var imageData = {};
+      quiver.connect(
           config.detail.url,
           uImg.imageFromUrl(),
           {},
           uImg.getImageData({flip: true}),
-          {},
-          [ uImg.copyChannel(0, 2), uImg.derivatives(2, 127.5) ],
-          maps.detail);
+          imageData);
+      quiver.connect(
+          imageData,
+          uImg.copyChannel(0, 2),
+          maps.detail)
+      quiver.connect(
+          imageData,
+          uImg.derivatives(2, 127.5),
+          maps.detail)
     }
     callback();
   };
