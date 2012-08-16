@@ -14,60 +14,59 @@
 define [
   'THREE'
 ], (THREE) ->
-  SphereHull: class SphereHull
+  SphereList: class SphereList
 
     Vec3 = THREE.Vector3
     _tmpVec3a = new Vec3()
 
     # Points passed in will be modified (center will be subtracted).
-    constructor: (points, radius) ->
-      @points = points or []
-      @radius = radius or 0
+    constructor: (@points) ->
       @_centerPoints()
 
     _centerPoints: ->
       min = new Vec3 Infinity, Infinity, Infinity
       max = new Vec3 -Infinity, -Infinity, -Infinity
-      radSq = 0
       for pt in @points
-        min.x = Math.min min.x, pt.x
-        min.y = Math.min min.y, pt.y
-        min.z = Math.min min.z, pt.z
-        max.x = Math.max max.x, pt.x
-        max.y = Math.max max.y, pt.y
-        max.z = Math.max max.z, pt.z
+        rad = pt.radius
+        min.x = Math.min min.x, pt.x - rad
+        min.y = Math.min min.y, pt.y - rad
+        min.z = Math.min min.z, pt.z - rad
+        max.x = Math.max max.x, pt.x + rad
+        max.y = Math.max max.y, pt.y + rad
+        max.z = Math.max max.z, pt.z + rad
       center = min.clone().addSelf(max).multiplyScalar(0.5)
+      radius = 0
+      # TODO: Stop subtracting center from all pts? It adds a lot of overhead later.
       for pt in @points
         pt.subSelf center
-        radSq = Math.max radSq, pt.lengthSq()
+        radius = Math.max radius, pt.length() + pt.radius
       @bounds =
         center: center
         min: min
         max: max
-        radius: Math.sqrt(radSq) + @radius
+        radius: radius
 
-    collideSphereHull: (hull2) ->
-      hull1 = @
+    collideSphereList: (sl2) ->
+      sl1 = @
       contacts = []
-      bothRadius = hull1.radius + hull2.radius
-      bothRadiusSq = bothRadius * bothRadius
-      center1 = hull1.bounds.center
-      center2 = hull2.bounds.center
-      # TODO: Add a quick center-distance check.
-      # Collide sphere-sphere.
-      for pt1 in hull1.points
-        for pt2 in hull2.points
-          _tmpVec3a.sub pt2, pt1
-          _tmpVec3a.addSelf center2
-          _tmpVec3a.subSelf center1
-          distSq = _tmpVec3a.lengthSq()
-          unless distSq < bothRadiusSq then continue
-          dist = Math.sqrt distSq
-          _tmpVec3a.multiplyScalar 1/dist
-          contact =
-            normal: _tmpVec3a.clone()
-            depth: bothRadius - dist
-            pos1: _tmpVec3a.clone().multiplyScalar(hull1.radius).addSelf(pt1).addSelf(center1)
-            pos2: _tmpVec3a.clone().multiplyScalar(-hull2.radius).addSelf(pt2).addSelf(center2)
-          contacts.push contact
+      center1 = sl1.bounds.center
+      center2 = sl2.bounds.center
+      _tmpVec3a.sub center2, center1
+      if _tmpVec3a.length() < sl1.bounds.radius + sl2.bounds.radius
+        # Collide MxN sphere to sphere.
+        for pt1 in sl1.points
+          for pt2 in sl2.points
+            _tmpVec3a.sub pt2, pt1
+            _tmpVec3a.addSelf center2
+            _tmpVec3a.subSelf center1
+            dist = _tmpVec3a.length()
+            bothRadius = pt1.radius + pt2.radius
+            continue unless dist < bothRadius
+            _tmpVec3a.multiplyScalar 1 / dist
+            contact =
+              normal: _tmpVec3a.clone()
+              depth: bothRadius - dist
+              pos1: _tmpVec3a.clone().multiplyScalar(pt1.radius).addSelf(pt1).addSelf(center1)
+              pos2: _tmpVec3a.clone().multiplyScalar(-pt2.radius).addSelf(pt2).addSelf(center2)
+            contacts.push contact
       contacts

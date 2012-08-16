@@ -410,10 +410,12 @@ function(THREE, psim, collision, util) {
       // TODO: Pre-alloc worldPts.
       var worldPts = [];
       this.cfg.clips.forEach(function(clip) {
-        worldPts.push(this.body.getLocToWorldPoint(Vec3FromArray(clip.pos)).clone());
+        var pt = this.body.getLocToWorldPoint(Vec3FromArray(clip.pos)).clone();
+        pt.radius = clip.radius;
+        worldPts.push(pt);
       }, this);
-      var hull = new collision.SphereHull(worldPts, 0.1);
-      var contacts = this.sim.collideSphereHull(hull);
+      var list = new collision.SphereList(worldPts);
+      var contacts = this.sim.collideSphereList(list);
       contacts.forEach(this.contactResponse, this);
     }).call(this);
 

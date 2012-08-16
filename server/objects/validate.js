@@ -61,3 +61,9 @@ exports.validation.Track.validator = {
   name: validate.required,
   pub_id: validate.required
 };
+
+exports.validation.Car = {};
+exports.validation.Car.validator = {
+  name: validate.required,
+  pub_id: validate.required
+};

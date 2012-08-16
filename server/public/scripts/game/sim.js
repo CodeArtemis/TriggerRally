@@ -101,59 +101,24 @@ function(THREE, pubsub, util) {
     return contacts;
   };
 
-  // Collide a hull against registered static objects.
-  exports.Sim.prototype.collideSphereHull = function(hull) {
+  // Collide a sphere list against registered static objects.
+  exports.Sim.prototype.collideSphereList = function(sphereList) {
     var contactsArrays = [];
     // Collide points first.
     var tmpVec3 = new Vec3();
-    var offset = new Vec3(0, 0, -hull.radius).addSelf(hull.bounds.center);
-    hull.points.forEach(function(point) {
+    var offset = new Vec3(0, 0, -sphereList.radius).addSelf(sphereList.bounds.center);
+    sphereList.points.forEach(function(point) {
       tmpVec3.add(point, offset);
+      tmpVec3.z -= point.radius;
       contactsArrays.push(this.collidePoint(tmpVec3));
     }, this);
-    // Then collide hulls.
+    // Then collide sphere lists.
     this.staticObjects.forEach(function(obj) {
-      if (obj.collideSphereHull) {
-        contactsArrays.push(obj.collideSphereHull(hull));
+      if (obj.collideSphereList) {
+        contactsArrays.push(obj.collideSphereList(sphereList));
       }
     });
     return [].concat.apply([], contactsArrays);
-  };
-
-  exports.Sim.prototype.collideLineSegment = function(pt1, pt2) {
-    var i, contacts = [];
-    var direc = pt2.clone().subSelf(pt1);
-    var leng = direc.length();
-    direc.divideScalar(leng);
-    var cylVec = new Vec3(0,1,0);
-    var cross = new Vec3().cross(cylVec, direc);
-    var lambda1 = cross.dot(pt1);
-    // TODO: Use a hash map to optimize collision tests.
-    // TODO: Migrate to ammo. This is messy.
-    for (i = 0; i < this.cylinders.length; ++i) {
-      var cyl = this.cylinders[i];
-      var lambda2 = cross.dot(cyl);
-      if (Math.abs(lambda1 - lambda2) < cyl.radius) {
-        var dlambdac = direc.dot(cyl) - direc.dot(pt1);
-        if (dlambdac > 0 && dlambdac < leng) {
-          var ptOnLine = direc.clone().multiplyScalar(dlambdac).addSelf(pt1);
-          tmpVec3a.sub(ptOnLine, cyl);
-          var normal = tmpVec.subSelf(cylVec.clone().multiplyScalar(tmpVec3a.dot(cylVec)));
-          normal.normalize();
-          //var ptOnSurf = cylVec.multiplyScalar(cylVec.dot(ptOnLine)).
-          //    addSelf(normal.clone().multiplyScalar(cyl.radius));
-          var embedFactor = ptOnLine.clone().subSelf(cyl).dot(normal);
-          var depth = cyl.radius - embedFactor;
-          var contact = {
-            normal: normal,
-            surfacePos: ptOnLine.addSelf(normal.clone().multiplyScalar(depth)),
-            depth: depth
-          };
-          contacts.push(contact);
-        }
-      }
-    }
-    return contacts;
   };
 
   exports.ReferenceFrame = function() {

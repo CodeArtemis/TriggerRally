@@ -303,6 +303,14 @@ var editTrack = function(req, res, next) {
   }
 };
 
+var editCar = function(req, res, next) {
+  if (!req.urlCar.isAuthenticated) next('Unauthorized');
+  else {
+    req.editing = true;
+    next();
+  }
+};
+
 var editUser = function(req, res, next) {
   if (!req.urlUser.isAuthenticated) next('Unauthorized');
   else {
@@ -327,6 +335,8 @@ app.get('/track/:idTrack/json/edit', loadUrlTrack, editTrack, routes.trackJson);
 app.post('/track/:idTrack/json/save', loadUrlTrack, editTrack, routes.trackJsonSave);
 app.get('/car/:idCar', loadUrlCar, routes.car);
 app.get('/car/:idCar/json', loadUrlCar, routes.carJson);
+app.get('/car/:idCar/json/edit', loadUrlCar, editCar, routes.carJson);
+app.post('/car/:idCar/json/save', loadUrlCar, editCar, routes.carJsonSave);
 app.get('/run/:idRun', loadUrlRun, routes.run);
 app.post('/run/new', routes.runSave);
 app.get('/run/:idRun/replay', loadUrlRun, routes.runReplay);

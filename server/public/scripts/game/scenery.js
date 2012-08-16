@@ -74,30 +74,33 @@ function(LFIB4, collision, hash2d, util, THREE) {
         this.add.addObject(object.position.x, object.position.y, object);
       }, this);
     }
-    this.hull = null;
+    this.sphereList = null;
     if (config.collision) {
       if (config.collision.capsule) {
-        this.hull = new collision.SphereHull([
+        var pts = [
           new Vec3(0, 0, 1.0),
           new Vec3(0, 0, config.collision.capsule.height - 0.5)
-        ], config.collision.capsule.radius);
-        this.hull.originalCenter = this.hull.bounds.center.clone();
+        ];
+        pts[0].radius = config.collision.capsule.radius;
+        pts[1].radius = config.collision.capsule.radius;
+        this.sphereList = new collision.SphereList(pts);
+        this.sphereList.originalCenter = this.sphereList.bounds.center.clone();
       }
     }
   };
 
-  exports.Layer.prototype.collideSphereHull = function(hull) {
+  exports.Layer.prototype.collideSphereList = function(sphereList) {
+    var thisSphereList = this.sphereList;
     // TODO: This algorithm seems more efficient than IndirectHash2D. Replace it?
-    var radius = hull.bounds.radius + this.hull.bounds.radius;
-    var center = hull.bounds.center;
+    var radius = sphereList.bounds.radius + thisSphereList.bounds.radius;
+    var center = sphereList.bounds.center;
     var objects = this.getObjects(
         center.x - radius, center.y - radius,
         center.x + radius, center.y + radius);
     var contactArrays = [];
-    var objHull = this.hull;
     objects.forEach(function(object) {
-      objHull.bounds.center.add(objHull.originalCenter, object.position);
-      contactArrays.push(objHull.collideSphereHull(hull));
+      thisSphereList.bounds.center.add(thisSphereList.originalCenter, object.position);
+      contactArrays.push(thisSphereList.collideSphereList(sphereList));
     });
     return [].concat.apply([], contactArrays);
   };

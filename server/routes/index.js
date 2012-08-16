@@ -153,8 +153,36 @@ exports.car = function(req, res) {
 };
 
 exports.carJson = function(req, res) {
-  res.contentType('json');
-  res.send(req.urlCar.config);
+  if (req.editing) {
+    req.jadeParams.title = req.urlCar.name;
+    req.jadeParams.urlCar = req.urlCar;
+    req.jadeParams.editing = true;
+    req.jadeParams.validate = objects.validation.Car.validator;
+    res.render('carjson', req.jadeParams);
+  } else {
+    res.contentType('json');
+    res.send(req.urlCar.config);
+  }
+};
+
+exports.carJsonSave = function(req, res) {
+  var car = req.urlCar;
+  car.name = req.body.name;
+  car.pub_id = req.body.pub_id;
+  car.config = JSON.parse(req.body.config);
+  car.save(function(error) {
+    if (error) {
+      console.log('Error updating car:');
+      console.log(error);
+      res.send(500);
+    } else {
+      if (req.header('referer').match('/json/edit$')) {
+        res.redirect('/car/' + car.pub_id + '/json/edit');
+      } else {
+        res.send(200);
+      }
+    }
+  });
 };
 
 exports.drive = function(req, res) {
