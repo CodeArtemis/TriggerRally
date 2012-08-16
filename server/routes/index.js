@@ -136,7 +136,13 @@ exports.trackJsonSave = function(req, res) {
       console.log('Error updating track:');
       console.log(error);
       res.send(500);
-    } else res.redirect('/track/' + track.pub_id + '/json/edit');
+    } else {
+      if (req.header('referer').match('/json/edit$')) {
+        res.redirect('/track/' + track.pub_id + '/json/edit');
+      } else {
+        res.send(200);
+      }
+    }
   });
 };
 

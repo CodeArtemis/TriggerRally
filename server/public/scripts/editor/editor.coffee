@@ -21,6 +21,10 @@ define [
     container = $(window)
     toolbox = $('#editor-toolbox')
     view3d = $('#view3d')
+    status = $('#status')
+
+    setStatus = (msg) -> status.html msg
+    setStatus 'OK'
 
     game = new gameGame.Game()
     client = new clientClient.TriggerClient view3d[0], game
@@ -54,6 +58,23 @@ define [
     camAngVelTarget = new Vec3
 
     selected = []
+
+    doSave = _.debounce ->
+      formData = new FormData()
+      formData.append 'name', TRIGGER.TRACK.NAME
+      formData.append 'pub_id', TRIGGER.TRACK.ID
+      formData.append 'config', JSON.stringify track.config
+      request = new XMLHttpRequest()
+      url = '/track/' + TRIGGER.TRACK.ID + '/json/save'
+      request.open 'POST', url, true
+      request.onload = ->
+        setStatus 'OK'
+      request.send formData
+    , 1000
+
+    requestSave = ->
+      setStatus 'Saving...'
+      doSave()
 
     requestId = 0
 
@@ -94,10 +115,13 @@ define [
       if objSpinVel isnt 0
         layers = {}
         for sel in selected when sel.type is 'scenery'
-          sel.object.rot[2] += objSpinVel * delta
+          rot = sel.object.rot[2] + objSpinVel * delta
+          rot -= Math.floor(rot / Math.PI / 2)
+          sel.object.rot[2] = rot
           layers[sel.layer] = true
         for layer of layers
           track.scenery.invalidateLayer layer
+        requestSave()
 
       camVelTarget.set(
           camVelTarget.x * Math.cos(camAng.z) - camVelTarget.y * Math.sin(camAng.z),
@@ -150,23 +174,36 @@ define [
           when KEYCODE['J']
             checkpoints[selectedCp]?.pos[0] += moveAmt
             quiver.push checkpoints
+            requestSave()
           when KEYCODE['G']
             checkpoints[selectedCp]?.pos[0] -= moveAmt
             quiver.push checkpoints
+            requestSave()
           when KEYCODE['Y']
             checkpoints[selectedCp]?.pos[1] += moveAmt
             quiver.push checkpoints
+            requestSave()
           when KEYCODE['H']
             checkpoints[selectedCp]?.pos[1] -= moveAmt
             quiver.push checkpoints
+            requestSave()
           when KEYCODE['U']
             selectedCp = (selectedCp + checkpoints.length - 1) % checkpoints.length
             client.renderCheckpoints.highlightCheckpoint selectedCp
           when KEYCODE['I']
             selectedCp = (selectedCp + 1) % checkpoints.length
             client.renderCheckpoints.highlightCheckpoint selectedCp
-          when KEYCODE.SPACE
-            console.log JSON.stringify(track.config)
+          when KEYCODE['P']
+            for sel in selected when sel.type is 'scenery'
+              pos = sel.object.pos
+              rot = sel.object.rot
+              layer = track.scenery.getLayer sel.layer
+              layer.config.density.add.push
+                pos: [pos[0], pos[1], pos[2]]
+                rot: [rot[0], rot[1], rot[2]]
+                scale: sel.object.scale
+              sel.mesh.position.z = pos[2] += 2
+              track.scenery.invalidateLayer sel.layer
       requestAnim()
       return
 
@@ -193,9 +230,9 @@ define [
       mouseX = event.layerX
       mouseY = event.layerY
       isect = client.findObject mouseX, mouseY
+      isect.sort (a, b) -> a.distance > b.distance
       clearSelection()
-      for sel in isect
-        addSelection sel
+      addSelection isect[0] if isect[0]?
       requestAnim()
       buttons |= Math.pow(2, event.button)
       return
@@ -232,6 +269,7 @@ define [
           sel.mesh.position.set pos[0], pos[1], pos[2]
         for layer of layers
           track.scenery.invalidateLayer layer
+        requestSave()
         requestAnim()
       return
 
