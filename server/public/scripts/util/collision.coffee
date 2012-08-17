@@ -21,7 +21,20 @@ define [
 
     # Points passed in will be modified (center will be subtracted).
     constructor: (@points) ->
-      @_centerPoints()
+      @_centerPoints() if points
+
+    clone: ->
+      sl = new SphereList
+      sl.points = for pt in @points
+        p = pt.clone()
+        p.radius = pt.radius
+        p
+      sl.bounds =
+        center: @bounds.center.clone()
+        min: @bounds.min.clone()
+        max: @bounds.max.clone()
+        radius: @bounds.radius
+      sl
 
     _centerPoints: ->
       min = new Vec3 Infinity, Infinity, Infinity

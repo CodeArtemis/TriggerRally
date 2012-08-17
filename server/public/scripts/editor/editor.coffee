@@ -69,6 +69,8 @@ define [
       request.open 'POST', url, true
       request.onload = ->
         setStatus 'OK'
+      request.onerror = ->
+        setStatus 'ERROR'
       request.send formData
     , 1000
 
@@ -109,14 +111,14 @@ define [
       if keyDown[KEYCODE.D] then camAngVelTarget.z -= ANG_SPEED
 
       objSpinVel = 0
-      if keyDown[188] then objSpinVel += 3
-      if keyDown[190] then objSpinVel -= 3
+      if keyDown[188] then objSpinVel += 1
+      if keyDown[190] then objSpinVel -= 1
 
       if objSpinVel isnt 0
         layers = {}
         for sel in selected when sel.type is 'scenery'
           rot = sel.object.rot[2] + objSpinVel * delta
-          rot -= Math.floor(rot / Math.PI / 2)
+          rot -= Math.floor(rot / Math.PI / 2) * Math.PI * 2
           sel.object.rot[2] = rot
           layers[sel.layer] = true
         for layer of layers

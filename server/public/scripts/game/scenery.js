@@ -76,15 +76,15 @@ function(LFIB4, collision, hash2d, util, THREE) {
     }
     this.sphereList = null;
     if (config.collision) {
-      if (config.collision.capsule) {
-        var pts = [
-          new Vec3(0, 0, 1.0),
-          new Vec3(0, 0, config.collision.capsule.height - 0.5)
-        ];
-        pts[0].radius = config.collision.capsule.radius;
-        pts[1].radius = config.collision.capsule.radius;
+      if (config.collision.spheres) {
+        var pts = [];
+        config.collision.spheres.forEach(function (sphere) {
+          var pt = new Vec3(sphere.pos[0], sphere.pos[1], sphere.pos[2]);
+          pt.radius = sphere.radius;
+          pts.push(pt);
+        })
         this.sphereList = new collision.SphereList(pts);
-        this.sphereList.originalCenter = this.sphereList.bounds.center.clone();
+        //this.sphereList.originalCenter = this.sphereList.bounds.center.clone();
       }
     }
   };
@@ -98,9 +98,22 @@ function(LFIB4, collision, hash2d, util, THREE) {
         center.x - radius, center.y - radius,
         center.x + radius, center.y + radius);
     var contactArrays = [];
+    var mat4 = new THREE.Matrix4();
+    var sl = thisSphereList.clone();
+    var i, numpts = sl.points.length;
+    var scale = new Vec3(), pt;
     objects.forEach(function(object) {
-      thisSphereList.bounds.center.add(thisSphereList.originalCenter, object.position);
-      contactArrays.push(thisSphereList.collideSphereList(sphereList));
+      mat4.setRotationFromEuler(object.rotation);
+      mat4.scale(scale.set(object.scale, object.scale, object.scale));
+      for (i = 0; i < numpts; ++i) {
+        pt = sl.points[i];
+        pt.copy(thisSphereList.points[i]);
+        mat4.multiplyVector3(pt);
+        pt.radius *= object.scale;
+      }
+      mat4.multiplyVector3(sl.bounds.center);
+      sl.bounds.center.add(thisSphereList.bounds.center, object.position);
+      contactArrays.push(sl.collideSphereList(sphereList));
     });
     return [].concat.apply([], contactArrays);
   };
@@ -132,6 +145,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
   };
 
   exports.Layer.prototype.getObjects = function(minX, minY, maxX, maxY) {
+    // TODO: Filter results again for better precision.
     return this.cache.getObjects(minX, minY, maxX, maxY);
   };
 
