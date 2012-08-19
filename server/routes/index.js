@@ -4,7 +4,6 @@ var objects = require('../objects');
 var mongoose = require('mongoose');
 var async = require('async');
 var _ = require('underscore');
-var recorder = require('../shared/recorder');
 
 var User = mongoose.model('User');
 var Verify = mongoose.model('Verify');
@@ -289,94 +288,6 @@ exports.runSave = function(req, res) {
 exports.runReplay = function(req, res) {
   req.jadeParams.urlRun = req.urlRun;
   res.render('replay', req.jadeParams);
-};
-
-function verifyRun(run, user, track, car) {
-  var shared = require('../shared');
-  var game = new shared.Game(require('http'));
-  async.parallel({
-    track: function(cb) {
-      game.setTrackConfig(track.config, cb);
-    },
-    progress: function(cb) {
-      game.addCarConfig(car.config, function(err, progress) {
-        if (err) throw new Error(err);
-        else cb(null, progress);
-      });
-    },
-  }, function(err, data) {
-    if (err) throw new Error(err);
-    else {
-      var input = {};
-      var vehicle = data.progress.vehicle;
-      var vehicleInput = vehicle.controller.input;
-      var record = run.input;
-      var recordIndex = 0;
-      var nextRecordIndex = 0;
-      var timeline = record.timeline;
-      var keys = {
-        nextCpIndex: 0,
-        vehicle: {
-          body: {
-            pos: {x:3,y:3,z:3},
-            ori: {x:3,y:3,z:3,w:3},
-            linVel: {x:3,y:3,z:3},
-            angVel: {x:3,y:3,z:3}
-          },
-          controller: {
-            input: {
-              forward: 0,
-              back: 0,
-              left: 0,
-              right: 0,
-              handbrake: 0
-            }
-          },
-          wheels: [{
-            spinVel: 1
-          }],
-          engineAngVel: 3
-        }
-      };
-      var playback = new recorder.StateRecorder(data.progress, keys, 20);
-      var inputKeyMap = record.keyMap;
-      // New record format will change index sync.
-      timeline.forEach(function(segment) {
-        var duration = segment[0];
-        var inputData = segment[1];
-        nextRecordIndex += duration;
-        if (nextRecordIndex > 100000) {
-          console.log('verifyRun: nextRecordIndex too large: ' + nextRecordIndex);
-          return;  // DOS protection.
-        }
-        // Update to new input values.
-        // TODO: Build this functionality into recorder.
-        for (var k in inputData) {
-          input[inputKeyMap[k]] = parseFloat(inputData[k]);
-        }
-        // Update simulation
-        for (; recordIndex < nextRecordIndex; ++recordIndex) {
-          // Write input values every time.
-          _.extend(vehicleInput, input);
-          playback.observe();
-          game.sim.step();
-        }
-      });
-      if (data.progress.cpTimes.length == data.progress.checkpoints.length) {
-        run.status = 'Verified';
-        run.time = _.last(data.progress.cpTimes) - game.startTime;
-      } else {
-        run.status = 'Error';
-      }
-      run.playback = playback.serialize();
-      run.save(function(error) {
-        if (error) {
-          console.log('Error processing run:');
-          console.log(error);
-        }
-      });
-    }
-  });
 };
 
 exports.metricsSave = function(req, res) {
