@@ -223,6 +223,8 @@ define [
 
       @keyDown = []
 
+      @socket = io.connect 'http://localhost'
+
     onKeyDown: (event) ->
       if keyWeCareAbout(event) and not isModifierKey(event)
         @keyDown[event.keyCode] = true
