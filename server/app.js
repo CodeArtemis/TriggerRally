@@ -434,7 +434,7 @@ sio.sockets.on('connection', function (socket) {
   // Stuff a custom storage object into the socket.
   socket.hackyStore = {};
   socket.on('c2s', function(data) {
-    console.log('Update from ' + wireId + tag);
+    //console.log('Update from ' + wireId + tag);
     if (data.config) {
       // TODO: Find a cleaner way of signaling that cars are remote?
       data.config.isRemote = true;
