@@ -83,7 +83,8 @@ function(THREE, util) {
       for (var w = 0; w < this.wheels.length; ++w) {
         var wheel = this.wheels[w];
         var vWheel = this.vehic.wheels[w];
-        wheel.root.position.y = wheel.cfg.pos[1] + vWheel.ridePos;
+        wheel.root.position.y = wheel.cfg.pos[1] -
+                                this.config.center[1] + vWheel.ridePos;
         wheel.root.rotation.y = this.vehic.getWheelTurnPos(vWheel);
         wheel.mesh.rotation.x = vWheel.spinPos;
       }
@@ -133,7 +134,7 @@ function(THREE, util) {
 
       this.bodyMesh = new THREE.Mesh(this.bodyGeometry, this.bodyGeometry.materials[0]);
       this.bodyMesh.material.ambient = this.bodyMesh.material.color;
-      this.bodyMesh.position.copy(center).multiplyScalar(-1);
+      this.bodyMesh.position.subSelf(center);
       this.bodyMesh.scale.set( s, s, s );
       this.bodyMesh.castShadow = true;
       this.bodyMesh.receiveShadow = true;
@@ -152,6 +153,7 @@ function(THREE, util) {
         wheel.mesh.receiveShadow = true;
         wheel.root = new THREE.Object3D();
   			wheel.root.position = new THREE.Vector3(cfg.pos[0], cfg.pos[1], cfg.pos[2]);
+        wheel.root.position.subSelf(center);
         wheel.root.add(wheel.mesh);
         this.root.add(wheel.root);
         this.wheels.push(wheel);
@@ -177,6 +179,11 @@ function(THREE, util) {
           }.bind(this, c));
         }
       }
+    };
+
+    this.destroy = function() {
+      // TODO: More complete clean-up. (renderer.deallocateObject)
+      scene.remove(this.root);
     };
 
     // TODO: Clean up this control flow.

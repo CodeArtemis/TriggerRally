@@ -132,7 +132,15 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     var progress = new exports.Progress(this.track, vehicle);
     this.progs.push(progress);
     if (callback) callback(progress);
-    this.pubsub.publish('addcar', vehicle, progress);
+    this.pubsub.publish('addvehicle', vehicle, progress);
+  };
+
+  exports.Game.prototype.deleteCar = function(progress) {
+    var idx = this.progs.indexOf(progress);
+    if (idx !== -1) {
+      this.progs.splice(idx, 1);
+      this.pubsub.publish('deletevehicle', progress);
+    }
   };
 
   exports.Game.prototype.onSimStep = function() {

@@ -30,6 +30,7 @@ function(THREE, pubsub, util) {
     this.timeStep = timeStep;
     this.alpha = 0;
     this.pubsub = new pubsub.PubSub();
+    this.on = this.pubsub.subscribe.bind(this.pubsub);
   };
 
   exports.Sim.prototype.addObject = function(obj) {

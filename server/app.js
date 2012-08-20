@@ -351,17 +351,17 @@ app.get('/x/:idTrack/:idCar/top', loadUrlTrack, loadUrlCar, routes.top);  // TOD
 app.post('/metrics', routes.metricsSave);
 
 app.get('/auth/facebook', passport.authenticate('facebook'));
-app.get('/auth/facebook/callback', 
+app.get('/auth/facebook/callback',
     passport.authenticate('facebook', { failureRedirect: '/login' }),
     authenticationSuccessful);
 
 app.get('/auth/google', passport.authenticate('google'));
-app.get('/auth/google/return', 
+app.get('/auth/google/return',
     passport.authenticate('google', { failureRedirect: '/login' }),
     authenticationSuccessful);
 
 app.get('/auth/twitter', passport.authenticate('twitter'));
-app.get('/auth/twitter/callback', 
+app.get('/auth/twitter/callback',
     passport.authenticate('twitter', { failureRedirect: '/login' }),
     authenticationSuccessful);
 
@@ -387,12 +387,18 @@ app.listen(PORT);
 var sio = io.listen(app);
 console.log("Server listening on port %d in %s mode", app.address().port, app.settings.env);
 
+if ('production' === process.env.NODE_ENV) {
+  sio.set('log level', 1);
+} else {
+  sio.set('log level', 2);
+}
+
 sio.set('authorization', function (data, accept) {
   // http://www.danielbaulig.de/socket-ioexpress/
-  var Session = connect.middleware.session.Session;
   if (data.headers.cookie) {
-    data.cookie = connect.utils.parseCookie(data.headers.cookie);
-    data.sessionID = data.cookie['express.sid'];
+    var cookie = require('cookie');
+    data.cookie = cookie.parse(decodeURIComponent(data.headers.cookie));
+    data.sessionID = data.cookie['connect.sid'];
     // save the session store to the data object
     // (as required by the Session constructor)
     data.sessionStore = sessionStore;
@@ -402,8 +408,17 @@ sio.set('authorization', function (data, accept) {
       } else {
         // create a session object, passing data as request and our
         // just acquired session data
+        var Session = connect.middleware.session.Session;
         data.session = new Session(data, session);
-        accept(null, true);
+        // TODO: accept fast, before deserialization?
+        passport.deserializeUser(data.session.passport.user, function(err, userPassport) {
+          if (err) accept('passport error: ' + err, false);
+          else {
+            data.session.user = userPassport.user;
+            data.session.userPassport = userPassport;
+            accept(null, true);
+          }
+        });
       }
     });
   } else {
@@ -412,28 +427,64 @@ sio.set('authorization', function (data, accept) {
 });
 
 sio.sockets.on('connection', function (socket) {
-  // http://www.danielbaulig.de/socket-ioexpress/
-  var hs = socket.handshake;
-  console.log('A socket with sessionID ' + hs.sessionID
-      + ' connected!');
-  /*
-  // setup an inteval that will keep our session fresh
-  var intervalID = setInterval(function () {
-    // reload the session (just in case something changed,
-    // we don't want to override anything, but the age)
-    // reloading will also ensure we keep an up2date copy
-    // of the session with our connection.
-    hs.session.reload(function () {
-      // "touch" it (resetting maxAge and lastAccess)
-      // and save it back again.
-      hs.session.touch().save();
-    });
-  }, 60 * 1000);
-  */
+  var session = socket.handshake.session;
+  var wireId = socket.id;
+  var tag = session.user ? ' (' + session.user.pub_id + ')' : '';
+  console.log(wireId + ' connected' + tag);
+  // Stuff a custom storage object into the socket.
+  socket.hackyStore = {};
+  socket.on('c2s', function(data) {
+    console.log('Update from ' + wireId + tag);
+    if (data.config) {
+      // TODO: Find a cleaner way of signaling that cars are remote?
+      data.config.isRemote = true;
+      socket.hackyStore['config'] = data.config;
+    }
+    if (data.carstate) {
+      var clients = sio.sockets.clients();
+      clients.forEach(function(client) {
+        if (client.id !== wireId) {
+          var seen = client.hackyStore['seen'] || (client.hackyStore['seen'] = {});
+          if (!(wireId in seen)) {
+            seen[wireId] = true;
+            client.emit('addcar', {
+              wireId: wireId,
+              config: socket.hackyStore['config']
+            });
+          }
+          client.volatile.emit('s2c', {
+            wireId: wireId,
+            carstate: data.carstate
+          });
+        }
+      });
+    }
+  });
   socket.on('disconnect', function () {
-    console.log('A socket with sessionID ' + hs.sessionID
-        + ' disconnected!');
-    // clear the socket interval to stop refreshing the session
-    //clearInterval(intervalID);
+    console.log(wireId + ' disconnected' + tag);
+    var clients = sio.sockets.clients();
+    clients.forEach(function(client) {
+      if (client.id !== wireId) {
+        var seen = client.hackyStore['seen'] || (client.hackyStore['seen'] = {});
+        if (wireId in seen) {
+          delete seen[wireId];
+          client.emit('deletecar', {
+            wireId: wireId
+          });
+        }
+      }
+    });
+  });
+  socket.on('error', function(data) {
+    console.log('Error from ' + wireId + ': ' + data.msg);
   });
 });
+
+setInterval(function() {
+  var clients = sio.sockets.clients();
+  console.log('Connected sockets: ' + clients.length);
+  //clients.forEach(function(client) {
+  //  var session = client.handshake.session;
+  //  //console.log(session.user.pub_id);
+  //});
+}, 5000);

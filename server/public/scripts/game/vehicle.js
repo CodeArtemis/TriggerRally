@@ -181,20 +181,26 @@ function(THREE, psim, collision, util) {
     this.wheelTurnVel = 0;
     this.totalDrive = 0;
 
+    this.clips = [];
     for (var i = 0; i < config.clips.length; ++i) {
       var cfg = config.clips[i];
-      cfg.pos[0] -= config.center[0];
-      cfg.pos[1] -= config.center[1];
-      cfg.pos[2] -= config.center[2];
+      this.clips.push({
+        pos: new Vec3(
+          cfg.pos[0] - config.center[0],
+          cfg.pos[1] - config.center[1],
+          cfg.pos[2] - config.center[2]),
+        radius: cfg.radius
+      });
     }
 
     this.wheels = [];
     for (var w = 0; w < config.wheels.length; ++w) {
       var wheel = this.wheels[w] = {};
       wheel.cfg = config.wheels[w];
-      wheel.cfg.pos[0] -= config.center[0];
-      wheel.cfg.pos[1] -= config.center[1];
-      wheel.cfg.pos[2] -= config.center[2];
+      wheel.pos = new Vec3(
+        wheel.cfg.pos[0] - config.center[0],
+        wheel.cfg.pos[1] - config.center[1],
+        wheel.cfg.pos[2] - config.center[2]);
       wheel.ridePos = 0;
       wheel.rideVel = 0;
       wheel.spinPos = 0;
@@ -409,8 +415,8 @@ function(THREE, psim, collision, util) {
       // TODO: Use real clip geometry instead of just points.
       // TODO: Pre-alloc worldPts.
       var worldPts = [];
-      this.cfg.clips.forEach(function(clip) {
-        var pt = this.body.getLocToWorldPoint(Vec3FromArray(clip.pos)).clone();
+      this.clips.forEach(function(clip) {
+        var pt = this.body.getLocToWorldPoint(clip.pos).clone();
         pt.radius = clip.radius;
         worldPts.push(pt);
       }, this);
@@ -506,7 +512,7 @@ function(THREE, psim, collision, util) {
 
     // TICK STUFF ABOVE HERE
 
-    var clipPos = this.body.getLocToWorldPoint(Vec3FromArray(wheel.cfg.pos));
+    var clipPos = this.body.getLocToWorldPoint(wheel.pos);
 
     // TODO: Try moving along radius instead of straight down?
     clipPos.z += wheel.ridePos - wheel.cfg.radius;

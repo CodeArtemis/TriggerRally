@@ -63,6 +63,7 @@ define [
 
     game.setTrackConfig TRIGGER.TRACK.CONFIG
     followProgress = null
+
     game.addCarConfig TRIGGER.CAR.CONFIG, (progress) ->
       followProgress = progress
       followProgress.on 'advance', ->

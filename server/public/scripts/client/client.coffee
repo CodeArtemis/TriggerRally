@@ -10,10 +10,11 @@ define [
   'cs!client/scenery'
   'cs!client/terrain'
   'game/game'
+  'cs!game/synchro'
   'util/pubsub'
   'cs!util/quiver'
   'util/util'
-], (THREE, clientAudio, clientCar, clientMisc, clientScenery, clientTerrain, gameGame, pubsub, quiver, util) ->
+], (THREE, clientAudio, clientCar, clientMisc, clientScenery, clientTerrain, gameGame, synchro, pubsub, quiver, util) ->
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
   PULLTOWARD = util.PULLTOWARD
@@ -166,7 +167,7 @@ define [
   TriggerClient: class TriggerClient
     constructor: (@containerEl, @game) ->
       # TODO: Add Detector support.
-      @objects = []
+      @objects = {}
       @pubsub = new pubsub.PubSub()
 
       @renderer = @createRenderer()
@@ -175,6 +176,7 @@ define [
       @scene = new THREE.Scene()
       @camera = new THREE.PerspectiveCamera 75, 1, 0.1, 10000000
       @camera.up.set 0, 0, 1
+      @camera.position.set 110, 2530, 500
       @scene.add @camera
       @scene.fog = new THREE.FogExp2 0xdddddd, 0.0003
 
@@ -188,13 +190,15 @@ define [
       @audio.loadBuffer '/a/sounds/checkpoint.wav', (buffer) ->
         checkpointBuffer = buffer
 
+      @sync = new synchro.Synchro @game
+
       onTrackCar = (track, car, progress) =>
-        @add new CamTerrainClipping @camera, track.terrain
-        @add renderCheckpoints = new RenderCheckpointsDrive @scene, track.checkpoints
-        progress.on 'advance', =>
-          renderCheckpoints.highlightCheckpoint progress.nextCpIndex
-          if checkpointBuffer?
-            @audio.playSound checkpointBuffer, false, 1, 1
+        unless car.cfg.isRemote
+          @add renderCheckpoints = new RenderCheckpointsDrive @scene, track.checkpoints
+          progress.on 'advance', =>
+            renderCheckpoints.highlightCheckpoint progress.nextCpIndex
+            if checkpointBuffer?
+              @audio.playSound checkpointBuffer, false, 1, 1
 
       deferredCars = []
 
@@ -207,23 +211,33 @@ define [
         for car, progress in deferredCars
           onTrackCar track, car, progress
         deferredCars = null
+        @add new CamTerrainClipping(@camera, track.terrain), 10
         return
 
-      @game.on 'addcar', (car, progress) =>
-        renderCar = new clientCar.RenderCar @scene, car, @audio
+      @game.on 'addvehicle', (car, progress) =>
+        audio = if car.cfg.isRemote then null else @audio
+        renderCar = new clientCar.RenderCar @scene, car, audio
+        progress._renderCar = renderCar
         @add renderCar
-        @add new CamControl @camera, renderCar
-        @add new CarControl car, this
+        unless car.cfg.isRemote
+          @add new CamControl @camera, renderCar
+          @add new CarControl car, this
         if @track
           onTrackCar @track, car, progress
         else
           deferredCars.push [car, progress]
-        @pubsub.publish 'addcar'
         return
 
-      @keyDown = []
+      @game.on 'deletevehicle', (progress) =>
+        renderCar = progress._renderCar
+        progress._renderCar = null
+        for layer in @objects
+          idx = layer.indexOf renderCar
+          if idx isnt -1
+            layer.splice idx, 1
+        renderCar.destroy()
 
-      @socket = io.connect 'http://localhost'
+      @keyDown = []
 
     onKeyDown: (event) ->
       if keyWeCareAbout(event) and not isModifierKey(event)
@@ -239,7 +253,9 @@ define [
 
     on: (event, handler) -> @pubsub.subscribe event, handler
 
-    add: (obj) -> @objects.push obj
+    add: (obj, priority = 0) ->
+      layer = @objects[priority] ?= []
+      layer.push obj
 
     createRenderer: ->
       r = new THREE.WebGLRenderer
@@ -274,8 +290,9 @@ define [
 
     update: (delta) ->
       @game.sim.tick delta
-      @objects.forEach (object) =>
-        object.update @camera, delta
+      for priority, layer of @objects
+        for object in layer
+          object.update @camera, delta
       @muteAudioIfStopped()
       return
 
