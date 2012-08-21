@@ -480,11 +480,13 @@ sio.sockets.on('connection', function (socket) {
   });
 });
 
+var lastNumConnected = 0;
+
 setInterval(function() {
   var clients = sio.sockets.clients();
-  console.log('Connected sockets: ' + clients.length);
-  //clients.forEach(function(client) {
-  //  var session = client.handshake.session;
-  //  //console.log(session.user.pub_id);
-  //});
-}, 5000);
+  var numConnected = clients.length;
+  if (numConnected !== lastNumConnected) {
+    console.log('Connected sockets: ' + numConnected);
+    lastNumConnected = numConnected;
+  }
+}, 1000);
