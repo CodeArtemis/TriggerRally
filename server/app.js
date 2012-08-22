@@ -426,11 +426,19 @@ sio.set('authorization', function (data, accept) {
   }
 });
 
+function showNumberConnected() {
+  var clients = sio.sockets.clients();
+  var numConnected = clients.length;
+  console.log('[' + (new Date).toISOString() + ']' +
+      ' Connected sockets: ' + numConnected);
+}
+
 sio.sockets.on('connection', function (socket) {
   var session = socket.handshake.session;
   var wireId = socket.id;
   var tag = session.user ? ' (' + session.user.pub_id + ')' : '';
   console.log(wireId + ' connected' + tag);
+  showNumberConnected();
   // Stuff a custom storage object into the socket.
   socket.hackyStore = {};
   socket.on('c2s', function(data) {
@@ -461,6 +469,7 @@ sio.sockets.on('connection', function (socket) {
     }
   });
   socket.on('disconnect', function () {
+    showNumberConnected();
     console.log(wireId + ' disconnected' + tag);
     var clients = sio.sockets.clients();
     clients.forEach(function(client) {
@@ -479,14 +488,3 @@ sio.sockets.on('connection', function (socket) {
     console.log('Error from ' + wireId + ': ' + data.msg);
   });
 });
-
-var lastNumConnected = 0;
-
-setInterval(function() {
-  var clients = sio.sockets.clients();
-  var numConnected = clients.length;
-  if (numConnected !== lastNumConnected) {
-    console.log('Connected sockets: ' + numConnected);
-    lastNumConnected = numConnected;
-  }
-}, 1000);

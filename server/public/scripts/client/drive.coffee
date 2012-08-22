@@ -61,26 +61,7 @@ define [
     container.on 'mozfullscreenchange', debouncedOnWindowResize
     container.on 'webkitfullscreenchange', debouncedOnWindowResize
 
-    game.setTrackConfig TRIGGER.TRACK.CONFIG
     followProgress = null
-
-    game.addCarConfig TRIGGER.CAR.CONFIG, (progress) ->
-      followProgress = progress
-      followProgress.on 'advance', ->
-        checkpoints.html followProgress.nextCpIndex + ' / ' + game.track.checkpoints.length
-
-        nextCp = followProgress.nextCheckpoint(0)
-
-        if !nextCp
-          # Race complete.
-          updateTimer = false
-          runTimer.removeClass()
-          #if !TRIGGER.RUN
-          #  if TRIGGER.USER_LOGGED_IN
-          #    _.delay(uploadRun, 1000)
-          #  else
-          #    # We can't save the run, but show a Twitter link.
-          #    showTwitterLink()
 
     lastTime = 0
     lastRaceTime = 0
@@ -111,11 +92,35 @@ define [
       lastTime = time
       return
 
-    requestAnimationFrame update
+    game.setTrackConfig TRIGGER.TRACK.CONFIG, ->
+      quiver.connect game.track.terrain.source.maps.height,
+        node = (ins, outs, callback) ->
+          unless started
+            $('.loading').addClass 'loaded'
+            requestAnimationFrame update
+            started = true
+          callback()
+      quiver.pull node
+
+    game.addCarConfig TRIGGER.CAR.CONFIG, (progress) ->
+      followProgress = progress
+      followProgress.on 'advance', ->
+        checkpoints.html followProgress.nextCpIndex + ' / ' + game.track.checkpoints.length
+
+        nextCp = followProgress.nextCheckpoint(0)
+
+        if !nextCp
+          # Race complete.
+          updateTimer = false
+          runTimer.removeClass()
+          #if !TRIGGER.RUN
+          #  if TRIGGER.USER_LOGGED_IN
+          #    _.delay(uploadRun, 1000)
+          #  else
+          #    # We can't save the run, but show a Twitter link.
+          #    showTwitterLink()
 
     $(document).on 'keydown', (event) -> client.onKeyDown event
     $(document).on 'keyup', (event) -> client.onKeyUp event
-
-    $('.loading').addClass 'loaded'
 
     return
