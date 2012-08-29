@@ -17,6 +17,7 @@ function(THREE, pubsub, util) {
 
   var tmpVec3a = new Vec3();
   var tmpVec3b = new Vec3();
+  var tmpQuat = new Quat();
 
   exports.Sim = function(timeStep) {
     this.gravity = new Vec3(0, 0, -9.81);
@@ -290,11 +291,12 @@ function(THREE, pubsub, util) {
   exports.RigidBody.prototype.getLinearVelAtPoint = function(pt) {
     var ptLoc = pt.clone().subSelf(this.pos);
     var angVel2 = this.getLocToWorldVector(this.angVel);
-    var cross = tmpVec3a.cross(angVel2, ptLoc);
-    return tmpVec3b.add(this.linVel, cross);
+    var cross = tmpVec3b.cross(angVel2, ptLoc);
+    return cross.addSelf(this.linVel);
   };
 
   exports.RigidBody.prototype.tick = function(delta) {
+    // Linear components.
     var linAccel = tmpVec3a.copy(this.accumForce).divideScalar(this.mass);
     linAccel.addSelf(this.sim.gravity);
 
@@ -302,13 +304,27 @@ function(THREE, pubsub, util) {
 
     this.pos.addSelf(tmpVec3a.copy(this.linVel).multiplyScalar(delta));
 
+    // Angular components.
+
+    this.accumTorque.z += 10000 - this.angVel.z * 400;
+
+    // Local space.
     var angAccel = tmpVec3a.multiply(this.accumTorque, this.angMassInv);
     this.angVel.addSelf(angAccel.multiplyScalar(delta));
 
-    var angDelta = tmpVec3a.copy(this.angVel).multiplyScalar(delta);
-    var angDeltaQuat = QuatFromEuler(angDelta);
-    this.ori.multiplySelf(angDeltaQuat);
+    var omega = new Quat(this.angVel.x * 0.5,
+                         this.angVel.y * 0.5,
+                         this.angVel.z * 0.5, 0);
+    var spin = tmpQuat.multiply(this.ori, omega);
 
+    // TODO: Add an add method to Quaternion.
+    this.ori.x += spin.x * delta;
+    this.ori.y += spin.y * delta;
+    this.ori.z += spin.z * delta;
+    this.ori.w += spin.w * delta;
+    //this.ori.normalize();
+
+    // Reset accumulators.
     this.accumForce.x = this.accumForce.y = this.accumForce.z = 0;
     this.accumTorque.x = this.accumTorque.y = this.accumTorque.z = 0;
 

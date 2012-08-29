@@ -151,7 +151,8 @@ define [
 
       if camVel.length() > 0.1 or
          camAngVel.length() > 0.01 or
-         objSpinVel isnt 0
+         objSpinVel isnt 0 or
+         true
         lastTime = time
         requestAnim()
       else
