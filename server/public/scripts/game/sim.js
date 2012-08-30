@@ -21,11 +21,8 @@ function(THREE, pubsub, util) {
 
   exports.Sim = function(timeStep) {
     this.gravity = new Vec3(0, 0, -9.81);
-    //this.gravity = new Vec3(0, -1, 0);
     this.objects = [];
     this.staticObjects = [];  // Just used for clipping.
-    this.cylinders = [];
-    this.cylLists = {};
     this.time = 0;
     this.timeAccumulator = 0;
     this.timeStep = timeStep;
@@ -180,10 +177,10 @@ function(THREE, pubsub, util) {
     // Linear and angular velocity.
     this.linVel = new Vec3();
     this.angVel = new Vec3();
+    this.angMom = new Vec3();  // angVel is derived from this.
 
-    // World space force accumulator, zeroed after each integration step.
+    // World space accumulators, zeroed after each integration step.
     this.accumForce = new Vec3();
-    // Local space torque accumulator, zeroed after each integration step.
     this.accumTorque = new Vec3();
 
     // Used for state recording.
@@ -236,11 +233,14 @@ function(THREE, pubsub, util) {
 
     this.mass = mass;
 
-    // Hacked angular mass because we currently ignore its coordinate system.
-    this.angMass.x = radiusVec.y * radiusVec.z;
-    this.angMass.y = radiusVec.z * radiusVec.x;
-    this.angMass.z = radiusVec.x * radiusVec.y;
-    this.angMass.multiplyScalar(mass);
+    var fudgedMass = mass * 1.5;
+
+    var mx = radiusVec.x * radiusVec.x * fudgedMass / 3;
+    var my = radiusVec.y * radiusVec.y * fudgedMass / 3;
+    var mz = radiusVec.z * radiusVec.z * fudgedMass / 3;
+    this.angMass.x = my + mz;
+    this.angMass.y = mz + mx;
+    this.angMass.z = mx + my;
 
     this.angMassInv.x = 1 / this.angMass.x;
     this.angMassInv.y = 1 / this.angMass.y;
@@ -261,9 +261,8 @@ function(THREE, pubsub, util) {
 
   exports.RigidBody.prototype.addForceAtPoint = function(frc, pt) {
     this.accumForce.addSelf(frc);
-    var ptLoc = this.getWorldToLocPoint(pt);
-    var frcLoc = this.getWorldToLocVector(frc);
-    var torque = new Vec3().cross(ptLoc, frcLoc);
+    var ptOffset = new Vec3().sub(pt, this.pos);
+    var torque = new Vec3().cross(ptOffset, frc);
     this.addTorque(torque);
   };
 
@@ -289,13 +288,15 @@ function(THREE, pubsub, util) {
   };
 
   exports.RigidBody.prototype.getLinearVelAtPoint = function(pt) {
-    var ptLoc = pt.clone().subSelf(this.pos);
-    var angVel2 = this.getLocToWorldVector(this.angVel);
-    var cross = tmpVec3b.cross(angVel2, ptLoc);
+    var ptOffset = pt.clone().subSelf(this.pos);
+    //var angVel2 = this.getLocToWorldVector(this.angVel);
+    var cross = tmpVec3b.cross(this.angVel, ptOffset);
     return cross.addSelf(this.linVel);
   };
 
   exports.RigidBody.prototype.tick = function(delta) {
+    var angVel = this.angVel;
+
     // Linear components.
     var linAccel = tmpVec3a.copy(this.accumForce).divideScalar(this.mass);
     linAccel.addSelf(this.sim.gravity);
@@ -304,31 +305,36 @@ function(THREE, pubsub, util) {
 
     this.pos.addSelf(tmpVec3a.copy(this.linVel).multiplyScalar(delta));
 
-    // Angular components.
+    //this.accumTorque.x = 0;
+    //this.accumTorque.y = 0;
 
-    this.accumTorque.z += 10000 - this.angVel.z * 400;
+    // Integrate angular momentum.
+    this.angMom.addSelf(this.accumTorque.multiplyScalar(delta));
 
-    // Local space.
-    var angAccel = tmpVec3a.multiply(this.accumTorque, this.angMassInv);
-    this.angVel.addSelf(angAccel.multiplyScalar(delta));
+    // Calculate ang velocity from ang momentum.
+    angVel.copy(this.angMom);
+    this.oriMatInv.multiplyVector3(angVel);
+    angVel.multiplySelf(this.angMassInv);
+    this.oriMat.multiplyVector3(angVel);
 
-    var omega = new Quat(this.angVel.x * 0.5,
-                         this.angVel.y * 0.5,
-                         this.angVel.z * 0.5, 0);
-    var spin = tmpQuat.multiply(this.ori, omega);
+    // Integrate orientation.
+    var halfDelta = 0.5 * delta;
+    var omega = new Quat(angVel.x * halfDelta,
+                         angVel.y * halfDelta,
+                         angVel.z * halfDelta, 0);
+    var spin = tmpQuat.multiply(omega, this.ori);
 
     // TODO: Add an add method to Quaternion.
-    this.ori.x += spin.x * delta;
-    this.ori.y += spin.y * delta;
-    this.ori.z += spin.z * delta;
-    this.ori.w += spin.w * delta;
+    this.ori.x += spin.x;
+    this.ori.y += spin.y;
+    this.ori.z += spin.z;
+    this.ori.w += spin.w;
     //this.ori.normalize();
+    this.updateMatrices();
 
     // Reset accumulators.
     this.accumForce.x = this.accumForce.y = this.accumForce.z = 0;
     this.accumTorque.x = this.accumTorque.y = this.accumTorque.z = 0;
-
-    this.updateMatrices();
   };
 
   return exports;

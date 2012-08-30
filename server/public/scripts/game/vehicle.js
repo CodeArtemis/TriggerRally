@@ -284,6 +284,7 @@ function(THREE, psim, collision, util) {
     body.ori.w = PULLTOWARD(body.ori.w, state.ori.w, pull);
     body.linVel.set(0, 0, 0);
     body.angVel.set(0, 0, 0);
+    body.angMom.set(0, 0, 0);
 
     if (this.recoverTimer >= this.cfg.recover.releaseTime) {
       this.recoverTimer = 0;
