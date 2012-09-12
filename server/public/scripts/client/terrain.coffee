@@ -46,6 +46,8 @@ define [
       diffuseDirtTex = THREE.ImageUtils.loadTexture('/a/textures/dirt.jpg')
       diffuseDirtTex.wrapS = THREE.RepeatWrapping
       diffuseDirtTex.wrapT = THREE.RepeatWrapping
+      if @glAniso then diffuseDirtTex.onUpdate = =>
+        @gl.texParameteri @gl.TEXTURE_2D, @glAniso.TEXTURE_MAX_ANISOTROPY_EXT, 4
 
       diffuseRockTex = THREE.ImageUtils.loadTexture('/a/textures/rock.jpg')
       diffuseRockTex.wrapS = THREE.RepeatWrapping
@@ -127,6 +129,8 @@ define [
           varying vec4 eyePosition;
           varying vec3 worldPosition;
 
+          const float RING_WIDTH = 31.0;
+
           vec2 worldToMapSpace(vec2 coord, vec2 size, vec2 scale) {
             return (coord / scale + 0.5) / size;
           }
@@ -187,7 +191,7 @@ define [
 
             vec3 manhattan = abs(worldPosition - cameraPosition);
             float morphDist = max(manhattan.x, manhattan.y) / layerScale;
-            float morph = min(1.0, max(0.0, morphDist / (31.0 / 2.0) - 3.0));
+            float morph = min(1.0, max(0.0, morphDist / (RING_WIDTH / 2.0) - 3.0));
             vec2 scaledPosition = worldPosition.xy / layerScale;
             vec3 morphTargetPosition = vec3(worldPosition.xy + layerScale *
               mod(scaledPosition.xy, 2.0) *
@@ -512,6 +516,7 @@ define [
                   idx.push start0 + 0, start1 + 1, start0 + 1
         scale *= 2
 
+      #console.log 'Terrain has ' + (idx.length / 3) + ' triangles.'
       geom.updateOffsets()
       geom.createBuffers @gl
       return geom
