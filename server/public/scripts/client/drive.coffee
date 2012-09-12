@@ -93,14 +93,16 @@ define [
       return
 
     game.setTrackConfig TRIGGER.TRACK.CONFIG, ->
-      quiver.connect game.track.terrain.source.maps.height,
-        node = (ins, outs, callback) ->
-          unless started
-            $('.loading').addClass 'loaded'
-            requestAnimationFrame update
-            started = true
-          callback()
-      quiver.pull node
+      started = false
+      onLoaded = (ins, outs, callback) ->
+        unless started
+          $('.loading').addClass 'loaded'
+          requestAnimationFrame update
+          started = true
+        callback()
+      quiver.connect game.track.terrain.source.maps.surface, onLoaded
+      quiver.connect game.track.terrain.source.maps.detail, onLoaded
+      quiver.pull onLoaded
 
     game.addCarConfig TRIGGER.CAR.CONFIG, (progress) ->
       followProgress = progress
