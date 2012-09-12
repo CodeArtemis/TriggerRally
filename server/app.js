@@ -214,6 +214,17 @@ app.configure(function() {
     dest: __dirname + '/public'
   }));
   app.use(routes.defaultParams);
+  /*
+  // We can delay certain resources for debugging purposes.
+  app.use(function(req, res, next) {
+    var delay = 0;
+    if (req.path.match('nice.png')) delay = 200;
+    if (req.path.match('heightdetail1.jpg')) delay = 6000;
+    setTimeout(function() {
+      next();
+    }, delay);
+  });
+  */
   app.use(app.router);
   app.use(express.static(__dirname + '/public'));
 });
