@@ -36,6 +36,9 @@ function(THREE) {
   exports.CLAMP = function(a, min, max) {
     return Math.min(Math.max(a, min), max);
   };
+  exports.MAP_RANGE = function(value, premin, premax, postmin, postmax) {
+    return (value - premin) * (postmax - postmin) / (premax - premin) + postmin;
+  };
   exports.Vec3FromArray = function(arr) {
     return new Vec3(arr[0], arr[1], arr[2]);
   };

@@ -18,6 +18,7 @@ define [
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
   PULLTOWARD = util.PULLTOWARD
+  MAP_RANGE = util.MAP_RANGE
 
   projector = new THREE.Projector
 
@@ -158,6 +159,22 @@ define [
       controls.left = if keyDown[KEYCODE['LEFT']] or keyDown[KEYCODE['A']] then 1 else 0
       controls.right = if keyDown[KEYCODE['RIGHT']] or keyDown[KEYCODE['D']] then 1 else 0
       controls.handbrake = if keyDown[KEYCODE['SPACE']] then 1 else 0
+
+      # Override controls with gamepad if connected.
+      nav = navigator
+      gamepads =
+        nav.getGamepads and nav.getGamepads() or nav.gamepads or
+        nav.mozGetGamepads and nav.mozGetGamepads() or nav.mozGamepads or
+        nav.webkitGetGamepads and nav.webkitGetGamepads() or nav.webkitGamepads
+      for gamepad in gamepads
+        if gamepad
+          axes = gamepad.axes
+          buttons = gamepad.buttons
+          controls.left = MAP_RANGE axes[0], 0, -1, 0, 1
+          controls.right = MAP_RANGE axes[0], 0, 1, 0, 1
+          controls.forward = buttons[0] or buttons[5] or buttons[7]
+          controls.back = buttons[1] or buttons[4] or buttons[6]
+          controls.handbrake = buttons[2]
       return
 
   class SunLight
