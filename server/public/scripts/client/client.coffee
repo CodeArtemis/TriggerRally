@@ -81,16 +81,6 @@ define [
       # not the one passed into update().
       @mode = 0
 
-      pullQuat = (cam, car, delta) ->
-        cam.useQuaternion = true
-        pull = delta * 20
-        cam.quaternion.x = PULLTOWARD(cam.quaternion.x, -car.root.quaternion.z, pull)
-        cam.quaternion.y = PULLTOWARD(cam.quaternion.y, car.root.quaternion.w, pull)
-        cam.quaternion.z = PULLTOWARD(cam.quaternion.z, car.root.quaternion.x, pull)
-        cam.quaternion.w = PULLTOWARD(cam.quaternion.w, -car.root.quaternion.y, pull)
-        camera.quaternion.normalize()
-        cam.updateMatrix()
-
       @modes = [
         (cam, car, delta) ->
           targetPos = car.root.position.clone()
@@ -109,14 +99,16 @@ define [
           cam.lookAt(lookPos)
           return
         (cam, car, delta) ->
-          pullQuat cam, car, delta
+          cam.useQuaternion = true
+          cam.updateMatrix()
           cam.position.copy car.root.position
           cam.position.addSelf cam.matrix.getColumnY().multiplyScalar 0.7
           cam.position.addSelf cam.matrix.getColumnZ().multiplyScalar -0.5
           cam.matrix.setPosition cam.position
           return
         (cam, car, delta) ->
-          pullQuat cam, car, delta
+          cam.useQuaternion = true
+          cam.updateMatrix()
           cam.position.copy car.root.position
           cam.position.addSelf cam.matrix.getColumnX().multiplyScalar 1.0
           cam.position.addSelf cam.matrix.getColumnZ().multiplyScalar -0.4
@@ -126,7 +118,16 @@ define [
       return
 
     update: (camera, delta) ->
+      pullQuat = (cam, car, delta) ->
+        pull = delta * 20
+        cam.quaternion.x = PULLTOWARD(cam.quaternion.x, -car.root.quaternion.z, pull)
+        cam.quaternion.y = PULLTOWARD(cam.quaternion.y, car.root.quaternion.w, pull)
+        cam.quaternion.z = PULLTOWARD(cam.quaternion.z, car.root.quaternion.x, pull)
+        cam.quaternion.w = PULLTOWARD(cam.quaternion.w, -car.root.quaternion.y, pull)
+        camera.quaternion.normalize()
+
       if @car.root?
+        pullQuat @camera, @car, delta
         @modes[@mode] @camera, @car, delta
       return
 
