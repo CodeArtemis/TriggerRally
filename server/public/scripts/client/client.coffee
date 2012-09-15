@@ -77,27 +77,61 @@ define [
 
   class CamControl
     constructor: (@camera, @car) ->
-      # Note that CamControl controls the camera given at construction,
+      # Note that CamControl controls the camera it's given at construction,
       # not the one passed into update().
+      @mode = 0
+
+      pullQuat = (cam, car, delta) ->
+        cam.useQuaternion = true
+        pull = delta * 20
+        cam.quaternion.x = PULLTOWARD(cam.quaternion.x, -car.root.quaternion.z, pull)
+        cam.quaternion.y = PULLTOWARD(cam.quaternion.y, car.root.quaternion.w, pull)
+        cam.quaternion.z = PULLTOWARD(cam.quaternion.z, car.root.quaternion.x, pull)
+        cam.quaternion.w = PULLTOWARD(cam.quaternion.w, -car.root.quaternion.y, pull)
+        camera.quaternion.normalize()
+        cam.updateMatrix()
+
+      @modes = [
+        (cam, car, delta) ->
+          targetPos = car.root.position.clone()
+          targetPos.addSelf(car.vehic.body.linVel.clone().multiplyScalar(.17))
+          targetPos.addSelf(car.root.matrix.getColumnX().clone().multiplyScalar(0))
+          targetPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(1.2))
+          targetPos.addSelf(car.root.matrix.getColumnZ().clone().multiplyScalar(-2.9))
+          camDelta = delta * 5
+          cam.position.x = PULLTOWARD(cam.position.x, targetPos.x, camDelta)
+          cam.position.y = PULLTOWARD(cam.position.y, targetPos.y, camDelta)
+          cam.position.z = PULLTOWARD(cam.position.z, targetPos.z, camDelta)
+
+          cam.useQuaternion = false
+          lookPos = car.root.position.clone()
+          lookPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(0.7))
+          cam.lookAt(lookPos)
+          return
+        (cam, car, delta) ->
+          pullQuat cam, car, delta
+          cam.position.copy car.root.position
+          cam.position.addSelf cam.matrix.getColumnY().multiplyScalar 0.7
+          cam.position.addSelf cam.matrix.getColumnZ().multiplyScalar -0.5
+          cam.matrix.setPosition cam.position
+          return
+        (cam, car, delta) ->
+          pullQuat cam, car, delta
+          cam.position.copy car.root.position
+          cam.position.addSelf cam.matrix.getColumnX().multiplyScalar 1.0
+          cam.position.addSelf cam.matrix.getColumnZ().multiplyScalar -0.4
+          cam.matrix.setPosition cam.position
+          return
+      ]
       return
 
     update: (camera, delta) ->
       if @car.root?
-        targetPos = @car.root.position.clone()
-        targetPos.addSelf(@car.vehic.body.linVel.clone().multiplyScalar(.17))
-        targetPos.addSelf(@car.root.matrix.getColumnX().clone().multiplyScalar(0))
-        targetPos.addSelf(@car.root.matrix.getColumnY().clone().multiplyScalar(1.2))
-        targetPos.addSelf(@car.root.matrix.getColumnZ().clone().multiplyScalar(-2.9))
-        camDelta = delta * 5
-        @camera.position.x = PULLTOWARD(@camera.position.x, targetPos.x, camDelta)
-        @camera.position.y = PULLTOWARD(@camera.position.y, targetPos.y, camDelta)
-        @camera.position.z = PULLTOWARD(@camera.position.z, targetPos.z, camDelta)
-
-        @camera.useQuaternion = false
-        lookPos = @car.root.position.clone()
-        lookPos.addSelf(@car.root.matrix.getColumnY().clone().multiplyScalar(0.7))
-        @camera.lookAt(lookPos)
+        @modes[@mode] @camera, @car, delta
       return
+
+    nextMode: ->
+      @mode = (@mode + 1) % @modes.length
 
   class CamTerrainClipping
     constructor: (@camera, @terrain) ->
@@ -107,7 +141,7 @@ define [
       camPos = @camera.position
       contact = @terrain.getContactRayZ camPos.x, camPos.y
       terrainHeight = contact.surfacePos.z
-      camPos.z = Math.max camPos.z, terrainHeight + 1
+      camPos.z = Math.max camPos.z, terrainHeight + 0.2
       return
 
   class CarControl
@@ -177,6 +211,7 @@ define [
       @camera = new THREE.PerspectiveCamera 75, 1, 0.1, 10000000
       @camera.up.set 0, 0, 1
       @camera.position.set 110, 2530, 500
+      @camControl = null
       @scene.add @camera
       @scene.fog = new THREE.FogExp2 0xdddddd, 0.0003
 
@@ -220,7 +255,7 @@ define [
         progress._renderCar = renderCar
         @add renderCar
         unless car.cfg.isRemote
-          @add new CamControl @camera, renderCar
+          @add @camControl = new CamControl @camera, renderCar
           @add new CarControl car, this
         if @track
           onTrackCar @track, car, progress

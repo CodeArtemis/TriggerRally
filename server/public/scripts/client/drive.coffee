@@ -124,5 +124,9 @@ define [
 
     $(document).on 'keydown', (event) -> client.onKeyDown event
     $(document).on 'keyup', (event) -> client.onKeyUp event
+    client.on 'keydown', (event) ->
+      switch event.keyCode
+        when KEYCODE['C']
+          client.camControl?.nextMode()
 
     return
