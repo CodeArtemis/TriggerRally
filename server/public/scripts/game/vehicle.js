@@ -427,7 +427,9 @@ function(THREE, psim, collision, util) {
     }).call(this);
 
     var wheelTurnVelTarget =
-        (controls.desiredTurnPos - this.wheelTurnPos) * 300 + wheelLateralForce * -0.005;
+        (controls.desiredTurnPos - this.wheelTurnPos) * 300 +
+        this.wheelTurnVel * -10.0 +
+        wheelLateralForce * -0.005;
     wheelTurnVelTarget = CLAMP(wheelTurnVelTarget, -8, 8);
     this.wheelTurnVel = PULLTOWARD(this.wheelTurnVel,
                                    wheelTurnVelTarget,
