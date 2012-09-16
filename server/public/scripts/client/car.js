@@ -133,9 +133,9 @@ function(THREE, util) {
       // body
 
       this.bodyMesh = new THREE.Mesh(this.bodyGeometry, this.bodyGeometry.materials[0]);
-      this.bodyMesh.material.ambient = this.bodyMesh.material.color;
+      this.bodyMesh.material.ambient.copy(this.bodyMesh.material.color);
       this.bodyMesh.position.subSelf(center);
-      this.bodyMesh.scale.set( s, s, s );
+      this.bodyMesh.scale.set(s, s, s);
       this.bodyMesh.castShadow = true;
       this.bodyMesh.receiveShadow = true;
 

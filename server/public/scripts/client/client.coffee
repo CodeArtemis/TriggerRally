@@ -171,11 +171,16 @@ define [
         if gamepad
           axes = gamepad.axes
           buttons = gamepad.buttons
-          controls.left = Math.max(0, MAP_RANGE(axes[0], 0, -1, 0, 1))
-          controls.right = Math.max(0, MAP_RANGE(axes[0], 0, 1, 0, 1))
-          controls.forward = buttons[0] or buttons[5] or buttons[7]
-          controls.back = buttons[1] or buttons[4] or buttons[6]
-          controls.handbrake = buttons[2]
+          controls.left += Math.max 0, -axes[0]
+          controls.right += Math.max 0, axes[0]
+          controls.forward += buttons[0] or buttons[5] or buttons[7]
+          controls.back += buttons[1] or buttons[4] or buttons[6]
+          controls.handbrake += buttons[2]
+      controls.forward = Math.min 1, controls.forward
+      controls.back = Math.min 1, controls.back
+      controls.left = Math.min 1, controls.left
+      controls.right = Math.min 1, controls.right
+      controls.handbrake = Math.min 1, controls.handbrake
       return
 
   class SunLight

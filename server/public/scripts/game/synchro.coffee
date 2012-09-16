@@ -66,7 +66,7 @@ define [
         pos: {x:3,y:3,z:3},
         ori: {x:3,y:3,z:3,w:3},
         linVel: {x:3,y:3,z:3},
-        angVel: {x:3,y:3,z:3}
+        angMom: {x:3,y:3,z:3}
       },
       wheels: [{
         spinVel: 1
