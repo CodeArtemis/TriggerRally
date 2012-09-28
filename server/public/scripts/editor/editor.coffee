@@ -227,6 +227,7 @@ define [
     # TODO: encapsulate mouse event handling
     mouseX = 0
     mouseY = 0
+    mouseDistance = 0
     buttons = 0
 
     view3d.on 'mousedown', (event) ->
@@ -234,8 +235,11 @@ define [
       mouseY = event.layerY
       isect = client.findObject mouseX, mouseY
       isect.sort (a, b) -> a.distance > b.distance
+      firstHit = isect[0]
       clearSelection()
-      addSelection isect[0] if isect[0]?
+      if firstHit?
+        mouseDistance = firstHit.distance
+        addSelection firstHit if firstHit.type is 'scenery'
       requestAnim()
       buttons |= Math.pow(2, event.button)
       return
@@ -245,35 +249,51 @@ define [
       return
 
     view3d.on 'mousemove', (event) ->
-      if buttons & 1 and selected.length > 0
+      if buttons & 3
         right = client.camera.matrixWorld.getColumnX()
         forward = (new Vec3).cross client.camera.up, right
-        eye = client.viewToEyeRel new Vec2 event.layerX - mouseX, event.layerY - mouseY
-        dist = 0
-        dist += sel.distance for sel in selected
-        dist /= selected.length
-        eye.multiplyScalar dist
+        motionX = event.layerX - mouseX
+        motionY = event.layerY - mouseY
         mouseX = event.layerX
         mouseY = event.layerY
+        eye = client.viewToEyeRel new Vec2 motionX, motionY
+        eye.multiplyScalar mouseDistance
         tmp = new Vec3
-        layers = {}
-        for sel in selected when sel.type is 'scenery'
-          layers[sel.layer] = true
-          pos = sel.object.pos
-          tmp.copy(right).multiplyScalar eye.x
-          pos[0] += tmp.x
-          pos[1] += tmp.y
-          tmp.copy(forward).multiplyScalar eye.y
-          pos[0] += tmp.x
-          pos[1] += tmp.y
-          tmp.set pos[0], pos[1], -Infinity
-          contact = track.terrain.getContact tmp
-          if contact then pos[2] = contact.surfacePos.z
-          sel.mesh.position.set pos[0], pos[1], pos[2]
-        for layer of layers
-          track.scenery.invalidateLayer layer
-        requestSave()
+        motion = new Vec3
+        tmp.copy(right).multiplyScalar eye.x
+        motion.addSelf tmp
+        tmp.copy(forward).multiplyScalar eye.y
+        motion.addSelf tmp
+        if buttons & 1 and selected.length > 0
+          layers = {}
+          for sel in selected when sel.type is 'scenery'
+            layers[sel.layer] = true
+            pos = sel.object.pos
+            pos[0] += motion.x
+            pos[1] += motion.y
+            tmp.set pos[0], pos[1], -Infinity
+            contact = track.terrain.getContact tmp
+            pos[2] = contact.surfacePos.z
+            sel.mesh.position.set pos[0], pos[1], pos[2]
+          for layer of layers
+            track.scenery.invalidateLayer layer
+          requestSave()
+        else
+          if event.shiftKey or buttons & 2
+            camAngVel.z += motionX * -0.1
+            camAngVel.x += motionY * -0.1
+          else
+            motion.multiplyScalar 10
+            camVel.subSelf motion
         requestAnim()
       return
 
+    view3d.on 'mousewheel', (event) ->
+      forward = client.camera.matrixWorld.getColumnZ()
+      tmp = new Vec3
+      tmp.copy(forward).multiplyScalar event.wheelDeltaY * 3
+      camVel.addSelf tmp
+      #client.camera.rotation.z += event.wheelDeltaX * 0.01
+      event.preventDefault()
+      return
     return

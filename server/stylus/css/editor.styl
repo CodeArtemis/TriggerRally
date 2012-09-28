@@ -3,13 +3,11 @@
 
 body
   background #888
-  //color #bbb
   padding 0
   margin 0
   font-family "Ubuntu", sans-serif
   //font-size 0.8em
   overflow hidden
-  text-shadow 0 1px 0 #000
 
 h2
   display inline
@@ -27,19 +25,42 @@ input:checked + label
   width 100%
   z-index 2
 
-#editor-toolbox > div
-  margin 5px
+#editor-toolbox > table
+  border-spacing 0
+  width 100%
 
-// Setting the children to flex shouldn't be necessary, but seems to be.
-#editor-toolbox > div > *
-  display inline-block
+#editor-toolbox > table td
+  width 33.3%
 
-.scroll-horiz
-  overflow-x scroll
-  white-space nowrap
+#editor-toolbox > table td:nth-child(2)
+  text-align center
 
+#editor-toolbox > table td:last-child
+  text-align right
+
+menu
+  background rgba(255,255,255,0.8)
+  cursor pointer
+  margin 0
+  padding 0
+  position relative
+
+menu li
+  list-style none
+  padding 0.5em
+
+menu li:hover
+  background white
+
+menu menu
+  display none
+  position absolute
+
+menu li:hover > menu
+  display block
 
 //.userinfo
+//  float right
 
 
 #view3d

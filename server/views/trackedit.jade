@@ -1,21 +1,28 @@
 
 #editor-toolbox
-  div
-    .scroll-horiz
-      h2
-        a(href="/") Trigger Rally
-      - if (user)
-        !=partial('partial/user', {user:user})
-      span#status Status
-      span lots and lots and lots
-    .userinfo
-      - if (user)
-        !=partial('partial/user', {user:user})
-        span &nbsp;&mdash;&nbsp;
-        a(href='/logout') Log Out
-      - else//- if (login)
-        span
-          a(href="/login")<strong>Log in</strong>
+  table
+    tr
+      td
+        h2
+          a(href="/") Trigger Rally&nbsp;
+      //td
+        menu
+          li Menu
+            menu(type="list")
+              li Hello
+              li Goodbye
+      td
+        span Status:&nbsp;
+        span#status Status
+      td
+        .userinfo
+          - if (user)
+            !=partial('partial/user', {user:user})
+            span &nbsp;&mdash;&nbsp;
+            a(href='/logout') Log Out&nbsp;
+          - else//- if (login)
+            span
+              a(href="/login")<strong>Log in</strong>&nbsp;
 
 
 #view3d

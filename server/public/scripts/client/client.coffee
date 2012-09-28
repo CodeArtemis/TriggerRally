@@ -436,4 +436,12 @@ define [
     intersectRay: (ray) ->
       isect = []
       isect.push @track.scenery.intersectRay ray
+
+      # TODO: Move this to terrain and make it actually ray march.
+      groundLambda = -ray.origin.z / ray.direction.z
+      if groundLambda > 0
+        isect.push
+          distance: groundLambda
+          type: 'terrain'
+
       [].concat.apply [], isect

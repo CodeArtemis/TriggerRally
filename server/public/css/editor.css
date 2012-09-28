@@ -56,7 +56,6 @@ body {
   margin: 0;
   font-family: "Ubuntu", sans-serif;
   overflow: hidden;
-  text-shadow: 0 1px 0 #000;
 }
 h2 {
   display: inline;
@@ -74,15 +73,39 @@ input:checked + label {
   width: 100%;
   z-index: 2;
 }
-#editor-toolbox > div {
-  margin: 5px;
+#editor-toolbox > table {
+  border-spacing: 0;
+  width: 100%;
 }
-#editor-toolbox > div > * {
-  display: inline-block;
+#editor-toolbox > table td {
+  width: 33.3%;
 }
-.scroll-horiz {
-  overflow-x: scroll;
-  white-space: nowrap;
+#editor-toolbox > table td:nth-child(2) {
+  text-align: center;
+}
+#editor-toolbox > table td:last-child {
+  text-align: right;
+}
+menu {
+  background: rgba(255,255,255,0.80);
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+menu li {
+  list-style: none;
+  padding: 0.5em;
+}
+menu li:hover {
+  background: #fff;
+}
+menu menu {
+  display: none;
+  position: absolute;
+}
+menu li:hover > menu {
+  display: block;
 }
 #view3d {
   background: #008000;
