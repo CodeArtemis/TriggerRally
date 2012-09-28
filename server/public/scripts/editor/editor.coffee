@@ -35,13 +35,13 @@ define [
       client.addEditorCheckpoints track
 
     layout = ->
-      [toolbox, view3d].forEach (panel) ->
-        panel.css 'position', 'absolute'
-        panel.height container.height()
-      TOOLBOX_WIDTH = 300
-      toolbox.width TOOLBOX_WIDTH
-      view3d.width container.width() - TOOLBOX_WIDTH
-      view3d.css 'left', TOOLBOX_WIDTH
+      #[toolbox, view3d].forEach (panel) ->
+        #panel.css 'position', 'absolute'
+        #panel.width container.width()
+      TOOLBOX_HEIGHT = toolbox.height()
+      #toolbox.height TOOLBOX_HEIGHT
+      view3d.height container.height() - TOOLBOX_HEIGHT
+      view3d.css 'top', TOOLBOX_HEIGHT
       client.setSize view3d.width(), view3d.height()
       return
 
@@ -276,5 +276,4 @@ define [
         requestAnim()
       return
 
-    toolbox.show()
     return

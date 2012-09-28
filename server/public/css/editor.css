@@ -51,29 +51,15 @@ a.disabled:visited {
   display: none;
 }
 body {
-  background: #333;
-  color: #bbb;
+  background: #888;
   padding: 0;
   margin: 0;
   font-family: "Ubuntu", sans-serif;
-  font-size: 0.8em;
   overflow: hidden;
   text-shadow: 0 1px 0 #000;
 }
-.field {
-  background: rgba(255,255,255,0.10);
-  margin: 0.5em 0;
-}
-.field :nth-child(1) {
-  float: left;
-}
-.field :nth-child(2) {
-  float: right;
-}
-.field .end {
-  background: rgba(0,0,0,0.20);
-  clear: both;
-  height: 1px;
+h2 {
+  display: inline;
 }
 input[type="range"] {
   width: 60%;
@@ -82,32 +68,24 @@ input:checked + label {
   color: #e77;
 }
 #editor-toolbox {
+  background: #fda;
   box-shadow: 0 0 40px #000;
-  display: none;
-  overflow-x: hidden;
-  overflow-y: auto;
+  position: absolute;
+  width: 100%;
   z-index: 2;
 }
-/*
-#editor-toolbox > section
-  //background rgba(255, 255, 255, 0.4)
-  border solid rgba(0,0,0,0.1)
-  border-width 1px 0
-  border-radius 2px
-  box-shadow inset 0 0 10px 2px white
-  margin 2px
-  padding 5px
-
-#editor-toolbox > section > section h4
-  display inline-block
-  margin 0
-*/
-.user img {
-  width: 20px;
-  height: 20px;
-  margin-right: 5px;
-  vertical-align: -20%;
+#editor-toolbox > div {
+  margin: 5px;
+}
+#editor-toolbox > div > * {
+  display: inline-block;
+}
+.scroll-horiz {
+  overflow-x: scroll;
+  white-space: nowrap;
 }
 #view3d {
   background: #008000;
+  position: absolute;
+  width: 100%;
 }

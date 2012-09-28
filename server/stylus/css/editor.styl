@@ -2,30 +2,17 @@
 @import common
 
 body
-  background #333
-  color #bbb
+  background #888
+  //color #bbb
   padding 0
   margin 0
   font-family "Ubuntu", sans-serif
-  font-size 0.8em
+  //font-size 0.8em
   overflow hidden
   text-shadow 0 1px 0 #000
 
-
-.field
-  background rgba(255,255,255,0.1)
-  margin 0.5em 0
-
-.field :nth-child(1)
-  float left
-
-.field :nth-child(2)
-  float right
-
-.field .end
-  background rgba(0,0,0,0.2)
-  clear both
-  height 1px
+h2
+  display inline
 
 input[type="range"]
   width 60%
@@ -34,31 +21,28 @@ input:checked + label
   color #e77
 
 #editor-toolbox
+  background #fda
   box-shadow 0 0 40px black
-  display none  // Hide until JavaScript shows it
-  overflow-x hidden
-  overflow-y auto
+  position absolute
+  width 100%
   z-index 2
 
-/*
-#editor-toolbox > section
-  //background rgba(255, 255, 255, 0.4)
-  border solid rgba(0,0,0,0.1)
-  border-width 1px 0
-  border-radius 2px
-  box-shadow inset 0 0 10px 2px white
-  margin 2px
-  padding 5px
+#editor-toolbox > div
+  margin 5px
 
-#editor-toolbox > section > section h4
+// Setting the children to flex shouldn't be necessary, but seems to be.
+#editor-toolbox > div > *
   display inline-block
-  margin 0
-*/
-.user img
-  width 20px
-  height 20px
-  margin-right 5px
-  vertical-align -20%
+
+.scroll-horiz
+  overflow-x scroll
+  white-space nowrap
+
+
+//.userinfo
+
 
 #view3d
   background green
+  position absolute
+  width 100%

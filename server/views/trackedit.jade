@@ -1,54 +1,22 @@
 
 #editor-toolbox
-  h2 Track Editor
-  p#status Status
-  fieldset
-    legend General
-    div
-      .field
-        span Owner
+  div
+    .scroll-horiz
+      h2
+        a(href="/") Trigger Rally
+      - if (user)
+        !=partial('partial/user', {user:user})
+      span#status Status
+      span lots and lots and lots
+    .userinfo
+      - if (user)
+        !=partial('partial/user', {user:user})
+        span &nbsp;&mdash;&nbsp;
+        a(href='/logout') Log Out
+      - else//- if (login)
         span
-          !=partial('partial/user', {user:urlTrack.user})
-        .end
+          a(href="/login")<strong>Log in</strong>
 
-      .field
-        span Name
-        input(value='#{urlTrack.name}')
-        .end
-
-      .field
-        span ID
-        input(value='#{urlTrack.pub_id}')
-        .end
-
-  fieldset
-    legend Tools
-
-    mixin tool(id, label)
-      input(id=id, type="radio", name="tool")
-      label(for=id)= label
-
-    fieldset
-      legend Course
-      mixin tool("tool-cour-edit", "Edit")
-
-  fieldset
-    legend Tool options
-    div
-      .field
-        span Strength
-        input(type="range")
-        .end
-
-      .field
-        span Radius
-        input(type="range")
-        .end
-
-      .field
-        span Falloff
-        input(type="range")
-        .end
 
 #view3d
 
