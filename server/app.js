@@ -214,6 +214,11 @@ app.configure(function() {
     dest: __dirname + '/public'
   }));
   app.use(routes.defaultParams);
+  app.use(function(req, res, next) {
+    // Enable Chrome Frame if installed.
+    res.setHeader('X-UA-Compatible','chrome=1');
+    next();
+  });
   /*
   // We can delay certain resources for debugging purposes.
   app.use(function(req, res, next) {
