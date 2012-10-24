@@ -176,8 +176,8 @@ define [
           gl.bindBuffer bufferType, buffer
           gl.bufferData bufferType, new dataType(array), gl.STATIC_DRAW
           # TODO: Check if itemSize & numItems are really necessary.
-          @vertexIndexBuffer.itemSize = itemSize
-          @vertexIndexBuffer.numItems = array.length
+          buffer.itemSize = itemSize
+          buffer.numItems = array.length
           buffer
 
       @vertexIndexBuffer = createBuffer @vertexIndexArray, Uint16Array, 1, true
