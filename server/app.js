@@ -43,16 +43,6 @@ var PORT = process.env.PORT || 80;
 var DOMAIN = process.env.DOMAIN || 'triggerrally.com';
 var URL_PREFIX = 'http://' + DOMAIN;
 
-// Not used.
-function multiref(obj) {
-  var parts = Array.prototype.slice.call(arguments, 1)
-  var o = obj;
-  while (o && parts.length > 0) {
-    o = o[parts.shift()];
-  }
-  return o;
-}
-
 // Authentication
 
 var authenticateUser = function(profile, done) {

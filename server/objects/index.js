@@ -12,32 +12,11 @@ var common = require('./common');
 // TODO: Clean up validate so we don't have to require it twice.
 var validate = require('./validate');
 
+_.extend(exports, require('./track'));
 _.extend(exports, require('./user'));
 _.extend(exports, require('./validate'));
 _.extend(exports, require('./verify'));
 
-
-// Track
-
-var Track = new Schema({
-    pub_id    : { type: String, index: { unique: true } }
-  , name      : { type: String, trim: true, validate: [validate.goosify(validate.required), 'name'] }
-  , user      : { type: Schema.ObjectId, ref: 'User' }
-  , config    : Schema.Types.Mixed
-}, { strict: true });
-
-Track.virtual('created')
-  .get(function() {
-    return new Date(parseInt(this._id.toHexString().substring(0, 8), 16) * 1000);
-  });
-
-Track.pre('save', function(next) {
-  if (this.isNew) {
-    this._id = this._id || new mongodb.ObjectID();
-    this.pub_id = common.makePubId(this.id);
-  }
-  next();
-});
 
 // Car
 
@@ -123,7 +102,6 @@ var MetricsRecord = new Schema({
 
 
 
-mongoose.model('Track', Track);
 mongoose.model('Car', Car);
 mongoose.model('Run', Run);
 mongoose.model('MetricsRecord', MetricsRecord);

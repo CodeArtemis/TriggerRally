@@ -168,42 +168,26 @@ define [
       return
 
     createBuffers: (gl) ->
-      # Indices.
-      if @vertexIndexArray? and @vertexIndexArray.length > 0
-        @vertexIndexBuffer = gl.createBuffer()
-        gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @vertexIndexBuffer
-        gl.bufferData gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(@vertexIndexArray), gl.STATIC_DRAW
-        @vertexIndexBuffer.itemSize = 1
-        @vertexIndexBuffer.numItems = @vertexIndexArray.length
-        # delete @vertexIndexArray
 
-      @vertexPositionBuffer = gl.createBuffer()
-      gl.bindBuffer gl.ARRAY_BUFFER, @vertexPositionBuffer
-      gl.bufferData gl.ARRAY_BUFFER, new Float32Array(@vertexPositionArray), gl.STATIC_DRAW
-      # Are these itemSize, numItems values really necessary?
-      @vertexPositionBuffer.itemSize = 3
-      @vertexPositionBuffer.numItems = @vertexPositionArray.length
+      createBuffer = (array, dataType, itemSize, opt_isElementBuffer) ->
+        if array? and array.length > 0
+          buffer = gl.createBuffer()
+          bufferType = if opt_isElementBuffer then gl.ELEMENT_ARRAY_BUFFER else gl.ARRAY_BUFFER
+          gl.bindBuffer bufferType, buffer
+          gl.bufferData bufferType, new dataType(array), gl.STATIC_DRAW
+          # TODO: Check if itemSize & numItems are really necessary.
+          @vertexIndexBuffer.itemSize = itemSize
+          @vertexIndexBuffer.numItems = array.length
+          buffer
 
-      if @vertexNormalArray? and @vertexNormalArray.length > 0
-        @vertexNormalBuffer = gl.createBuffer()
-        gl.bindBuffer gl.ARRAY_BUFFER, @vertexNormalBuffer
-        gl.bufferData gl.ARRAY_BUFFER, new Float32Array(@vertexNormalArray), gl.STATIC_DRAW
-        @vertexNormalBuffer.itemSize = 3
-        @vertexNormalBuffer.numItems = @vertexNormalArray.length
-
-      if @vertexUvArray? and @vertexUvArray.length > 0
-        @vertexUvBuffer = gl.createBuffer()
-        gl.bindBuffer gl.ARRAY_BUFFER, @vertexUvBuffer
-        gl.bufferData gl.ARRAY_BUFFER, new Float32Array(@vertexUvArray), gl.STATIC_DRAW
-        @vertexUvBuffer.itemSize = 2
-        @vertexUvBuffer.numItems = @vertexUvArray.length
+      @vertexIndexBuffer = createBuffer @vertexIndexArray, Uint16Array, 1, true
+      @vertexPositionBuffer = createBuffer @vertexPositionArray, Float32Array, 3
+      @vertexNormalBuffer = createBuffer @vertexNormalArray, Float32Array, 3
+      @vertexUvBuffer = createBuffer @vertexUvArray, Float32Array, 2
+      @vertexPositionBuffer = createBuffer @vertexPositionArray, Float32Array, 3
 
       for name, attrib of @customAttribs
-        attrib.buffer = gl.createBuffer()
-        gl.bindBuffer gl.ARRAY_BUFFER, attrib.buffer
-        gl.bufferData gl.ARRAY_BUFFER, new Float32Array(attrib.array), gl.STATIC_DRAW
-        attrib.buffer.itemSize = attrib.size
-        attrib.buffer.numItems = attrib.array.length
+        attrib.buffer = createBuffer attrib.array, Float32Array, attrib.size
       return
 
     render: (program, gl) ->

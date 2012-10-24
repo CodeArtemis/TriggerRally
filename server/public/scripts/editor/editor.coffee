@@ -205,8 +205,16 @@ define [
                 pos: [pos[0], pos[1], pos[2]]
                 rot: [rot[0], rot[1], rot[2]]
                 scale: sel.object.scale
-              sel.mesh.position.z = pos[2] += 2
+              sel.mesh.position.z = pos[2] += 5
               track.scenery.invalidateLayer sel.layer
+          when KEYCODE.BACKSPACE
+            remaining = []
+            for sel in selected
+              if sel.type is 'scenery'
+                layer = track.scenery.getLayer sel.layer
+              else
+                remaining.push sel
+            selected = remaining
       requestAnim()
       return
 
@@ -288,12 +296,16 @@ define [
         requestAnim()
       return
 
-    view3d.on 'mousewheel', (event) ->
+    scroll = (scrollY) ->
       forward = client.camera.matrixWorld.getColumnZ()
       tmp = new Vec3
-      tmp.copy(forward).multiplyScalar event.wheelDeltaY * 3
+      tmp.copy(forward).multiplyScalar scrollY * -3
       camVel.addSelf tmp
       #client.camera.rotation.z += event.wheelDeltaX * 0.01
       event.preventDefault()
       return
+
+    view3d.on 'mousewheel', (event) ->
+      scroll event.wheelDeltaY or event.deltaY
+
     return
