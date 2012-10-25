@@ -310,7 +310,7 @@ define [
             """
 
             float fDepth;
-            vec3 shadowColor = vec3( 1.0 );
+            vec3 shadowColor = vec3(1.0);
             for( int i = 0; i < MAX_SHADOWS; i ++ ) {
               vec3 shadowCoord = vShadowCoord[ i ].xyz / vShadowCoord[ i ].w;
               bvec4 inFrustumVec = bvec4 ( shadowCoord.x >= 0.0, shadowCoord.x <= 1.0, shadowCoord.y >= 0.0, shadowCoord.y <= 1.0 );
@@ -344,10 +344,18 @@ define [
                 fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( dx1, dy1 ) ) );
                 if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
                 //shadowColor = shadowColor * vec3( ( 1.0 - shadowDarkness[ i ] * shadow ) );
-                shadowColor = shadowColor * vec3( ( 1.0 - shadow ) );
+
+                // Fade out the edges of the shadow.
+                const float edgeSize = 0.05;
+                float falloff =
+                    smoothstep(0.0, edgeSize, shadowCoord.x) *
+                    smoothstep(-1.0, edgeSize - 1.0, -shadowCoord.x) *
+                    smoothstep(0.0, edgeSize, shadowCoord.y) *
+                    smoothstep(-1.0, edgeSize - 1.0, -shadowCoord.y);
+                shadow *= falloff;
+                shadowColor = shadowColor * vec3((1.0 - shadow));
               }
             }
-            //gl_FragColor.xyz = gl_FragColor.xyz * shadowColor;
 
             vec3 directIllum = vec3(0.0);
             vec3 specularIllum = vec3(0.0);
