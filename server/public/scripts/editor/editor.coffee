@@ -17,7 +17,6 @@ define [
   Vec3 = THREE.Vector3
 
   run: ->
-
     container = $(window)
     toolbox = $('#editor-toolbox')
     view3d = $('#view3d')
