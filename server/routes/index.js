@@ -105,9 +105,35 @@ exports.track = function(req, res) {
   res.render('track', req.jadeParams);
 };
 
+function sanitizeUser(user) {
+  return {
+    id: user.pub_id,
+    name: user.name
+  };
+}
+
+function sanitizeEnv(env) {
+  return {
+    id: env.pub_id,
+    name: env.name,
+    desc: env.desc,
+    scenery: env.scenery,
+    terrain: env.terrain
+  };
+}
+
+function sanitizeTrack(track) {
+  return {
+    id: track.pub_id,
+    name: track.name,
+    env: sanitizeEnv(track.env),
+    config: track.config
+  };
+}
+
 exports.trackEdit = function(req, res) {
   req.jadeParams.title = 'Editing ' + req.urlTrack.name;
-  req.jadeParams.urlTrack = req.urlTrack;
+  req.jadeParams.trackData = sanitizeTrack(req.urlTrack.toJSON());
   req.jadeParams.layout = 'layout-editor';
   res.render('trackedit', req.jadeParams);
 };

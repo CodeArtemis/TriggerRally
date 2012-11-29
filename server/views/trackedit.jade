@@ -31,12 +31,7 @@ script(src="/socket.io/socket.io.js")
 
 script
   var TRIGGER = {
-    TRACK: {
-      ID: '#{urlTrack.pub_id}',
-      NAME: '#{urlTrack.name}',
-      CONFIG: !{JSON.stringify(urlTrack.config)}
-    },
-    METRICS: #{'production' === process.env.NODE_ENV}
+    TRACK: !{JSON.stringify(trackData)}
   };
 
 script(data-main="/scripts/editor/editor-main", src="/js/require.js")

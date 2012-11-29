@@ -28,8 +28,12 @@ define [
     game = new gameGame.Game()
     client = new clientClient.TriggerClient view3d[0], game
 
+    # HACK: Pack the terrain config directly into the track.
+    TRIGGER.TRACK.config.scenery = TRIGGER.TRACK.env.scenery
+    TRIGGER.TRACK.config.terrain = TRIGGER.TRACK.env.terrain
+
     track = null
-    game.setTrackConfig TRIGGER.TRACK.CONFIG, (err, theTrack) ->
+    game.setTrackConfig TRIGGER.TRACK.config, (err, theTrack) ->
       track = theTrack
       client.addEditorCheckpoints track
 

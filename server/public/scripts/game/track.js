@@ -48,7 +48,8 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
 
       source.load(terrainConfig, function() {
         var course = config.course;
-        if (config.gameversion <= 1) course.coordscale[1] *= -1;
+        var coordscale = course.coordscale || [1, 1];
+        if (config.gameversion <= 1) coordscale[1] *= -1;
 
         var maps = this.terrain.source.maps;
 
@@ -62,15 +63,14 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
           dst.height = src.height;
           dst.data = new src.data.constructor(src.data);
 
-          //uImg.ensureDims(surf, src.width, src.height, 4, Uint8Array);
           uImg.createBuffer(surf, src.width, src.height, 4, Uint8Array);
 
           checkpoints.length = 0;
           var numCheckpoints = checkpointsXY.length;
           for (var i = 0; i < numCheckpoints; ++i) {
             checkpoints.push(
-                new Vec3(checkpointsXY[i].pos[0] * course.coordscale[0],
-                         checkpointsXY[i].pos[1] * course.coordscale[1],
+                new Vec3(checkpointsXY[i].pos[0] * coordscale[0],
+                         checkpointsXY[i].pos[1] * coordscale[1],
                          0));
           }
           quiver.push(checkpoints);

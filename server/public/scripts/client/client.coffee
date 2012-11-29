@@ -237,7 +237,7 @@ define [
       @camera.position.set 110, 2530, 500
       @camControl = null
       @scene.add @camera
-      @scene.fog = new THREE.FogExp2 0xdddddd, 0.0003
+      @scene.fog = new THREE.FogExp2 0xdddddd, 0.00003
 
       @scene.add new THREE.AmbientLight 0x446680
       @scene.add @cubeMesh()
@@ -406,12 +406,13 @@ define [
             gl_FragColor.rgb = mix(fogColor, gl_FragColor.rgb, smoothstep(0.05, 0.15, wPos.z));
           }
           """
-      #cubeMaterial.transparent = 1  # Force draw at end.
+      cubeMaterial.transparent = yes
       cubeMesh = new THREE.Mesh(
           new THREE.CubeGeometry(5000000, 5000000, 5000000), cubeMaterial)
       cubeMesh.geometry.faces.splice(5, 1)
-      cubeMesh.flipSided = true
+      cubeMesh.flipSided = yes
       cubeMesh.position.set(0, 0, 20000)
+      cubeMesh.renderDepth = 1000000  # Force draw at end.
       cubeMesh
 
     viewToEye: (vec) ->

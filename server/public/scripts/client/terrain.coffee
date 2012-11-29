@@ -396,6 +396,7 @@ define [
             float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );
             fogFactor = clamp( 1.0 - fogFactor, 0.0, 1.0 );
             gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor, fogFactor);
+            gl_FragColor.a = 1.0;
           }
           """
       obj.material = @material

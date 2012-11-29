@@ -254,6 +254,7 @@ var loadUrlTrack = function(req, res, next) {
   Track
     .findOne({ pub_id: req.params.idTrack })
     .populate('user')
+    .populate('env')
     .run(function(error, urlTrack) {
     if (error) next(error);
     else {
