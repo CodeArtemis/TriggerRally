@@ -295,7 +295,8 @@ define [
             float rockMix = 1.0 - smoothstep(1.5*0.71, 1.5*0.74,
                 normalRegion.z + normalDetail.z * 0.5 + (noiseSample - 0.5) * 0.3 - height * 0.0002);
 
-            float trackMix = 1.0 - smoothstep(0.02, 0.04, surfaceType);
+            float trackMix = 1.0 - smoothstep(0.02, 0.04,
+                surfaceType + (diffRockSample.b - 0.5) * 0.15);
 
             gl_FragColor.rgb = veggieColor;
             gl_FragColor.rgb = mix(gl_FragColor.rgb, diffRockSample, rockMix);

@@ -237,7 +237,7 @@ define [
       @camera.position.set 110, 2530, 500
       @camControl = null
       @scene.add @camera
-      @scene.fog = new THREE.FogExp2 0xdddddd, 0.00003
+      @scene.fog = new THREE.FogExp2 0xdddddd, 0.0002
 
       @scene.add new THREE.AmbientLight 0x446680
       @scene.add @cubeMesh()
