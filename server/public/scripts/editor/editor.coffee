@@ -29,7 +29,7 @@ define [
     client = new clientClient.TriggerClient view3d[0], game
 
     # HACK: Pack the terrain config directly into the track.
-    TRIGGER.TRACK.config.scenery = TRIGGER.TRACK.env.scenery
+    TRIGGER.TRACK.config.envScenery = TRIGGER.TRACK.env.scenery
     TRIGGER.TRACK.config.terrain = TRIGGER.TRACK.env.terrain
 
     track = null
@@ -53,7 +53,7 @@ define [
       layout()
 
     client.camera.eulerOrder = 'ZYX'
-    camPos = client.camera.position.set 0, 0, 2000
+    camPos = client.camera.position.set 0, 0, 1000
     camAng = client.camera.rotation.set 0.6, 0, 0
     camVel = new Vec3
     camVelTarget = new Vec3

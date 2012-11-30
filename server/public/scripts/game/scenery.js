@@ -18,13 +18,16 @@ function(LFIB4, collision, hash2d, util, THREE) {
 
   var COLLISION_HASH_SIZE = 5;
 
-  exports.Scenery = function(config, track) {
+  exports.Scenery = function(config, envConfig, track) {
     this.config = config;
+    this.envConfig = envConfig;
     this.track = track;
     this.layers = [];
     this.layersById = {};
-    for (var i = 0; i < config.layers.length; ++i) {
-      var layer = new exports.Layer(config.layers[i], this);
+    for (var i = 0; i < envConfig.layers.length; ++i) {
+      var layerId = envConfig.layers[i].id;
+      var trackScenery = config[layerId];
+      var layer = new exports.Layer(envConfig.layers[i], this, trackScenery);
       this.layers.push(layer);
       this.layersById[layer.config.id] = i;
     }
@@ -57,15 +60,19 @@ function(LFIB4, collision, hash2d, util, THREE) {
     }
   };
 
-  exports.Layer = function(config, scenery) {
+  exports.Layer = function(config, scenery, trackScenery) {
     this.config = config;
     this.scenery = scenery;
+    this.trackScenery = trackScenery;
     this.cache = new hash2d.Hash2D(config['tileSize']);
     this.add = null;
     this.sub = null;
-    if (config.density.add) {
+    var addObjects = [];
+    if (config.density.add) addObjects = addObjects.concat(config.density.add);
+    if (trackScenery && trackScenery.add) addObjects = addObjects.concat(trackScenery.add);
+    if (addObjects.length > 0) {
       this.add = new hash2d.Hash2D(config['tileSize']);
-      config.density.add.forEach(function(obj) {
+      addObjects.forEach(function(obj) {
         var object = {
           position: new Vec3(obj.pos[0], obj.pos[1], obj.pos[2]),
           rotation: new Vec3(obj.rot[0], obj.rot[1], obj.rot[2]),
