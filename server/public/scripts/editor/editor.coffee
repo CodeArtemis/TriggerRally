@@ -29,6 +29,7 @@ define [
     client = new clientClient.TriggerClient view3d[0], game
 
     # HACK: Pack the terrain config directly into the track.
+    # These are stripped out again during save. FIXME.
     TRIGGER.TRACK.config.envScenery = TRIGGER.TRACK.env.scenery
     TRIGGER.TRACK.config.terrain = TRIGGER.TRACK.env.terrain
 
@@ -64,14 +65,17 @@ define [
 
     doSave = _.debounce ->
       formData = new FormData()
-      formData.append 'name', TRIGGER.TRACK.NAME
-      formData.append 'pub_id', TRIGGER.TRACK.ID
-      formData.append 'config', JSON.stringify track.config
+      formData.append 'name', track.name
+      stripped = _.omit track.config, ['envScenery', 'terrain']
+      formData.append 'config', JSON.stringify stripped
       request = new XMLHttpRequest()
-      url = '/track/' + TRIGGER.TRACK.ID + '/json/save'
+      url = '/track/' + TRIGGER.TRACK.id + '/json/save'
       request.open 'POST', url, true
       request.onload = ->
-        setStatus 'OK'
+        if request.status is 200
+          setStatus 'OK'
+        else
+          setStatus request.status
       request.onerror = ->
         setStatus 'ERROR'
       request.send formData
@@ -277,6 +281,7 @@ define [
         motion.addSelf tmp
         if buttons & 1 and selected.length > 0
           layers = {}
+          #for sel in selected when sel.type is 'checkpoint'
           for sel in selected when sel.type is 'scenery'
             layers[sel.layer] = true
             pos = sel.object.pos

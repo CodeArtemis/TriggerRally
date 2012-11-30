@@ -56,7 +56,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
   exports.Scenery.prototype.invalidateLayer = function(id) {
     if (id in this.layersById) {
       var i = this.layersById[id];
-      this.layers[i] = new exports.Layer(this.config.layers[i], this);
+      this.layers[i] = new exports.Layer(this.envConfig.layers[i], this, this.config[id]);
     }
   };
 
@@ -129,7 +129,8 @@ function(LFIB4, collision, hash2d, util, THREE) {
     // We currently only intersect with allocated tiles.
     var radiusSq = 4;
     var isect = [];
-    var add = this.config.density.add;
+    if (!this.trackScenery) return isect;
+    var add = this.trackScenery.add;
     add && add.forEach(function(obj, idx) {
       var vec = new Vec3(obj.pos[0], obj.pos[1], obj.pos[2]);
       vec.subSelf(ray.origin);

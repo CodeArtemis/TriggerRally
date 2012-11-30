@@ -92,7 +92,12 @@ define [
       lastTime = time
       return
 
-    game.setTrackConfig TRIGGER.TRACK.CONFIG, ->
+    # HACK, FIXME: Pack the terrain config directly into the track.
+    # These are stripped out again during save. FIXME.
+    TRIGGER.TRACK.config.envScenery = TRIGGER.TRACK.env.scenery
+    TRIGGER.TRACK.config.terrain = TRIGGER.TRACK.env.terrain
+
+    game.setTrackConfig TRIGGER.TRACK.config, ->
       started = false
       onLoaded = (ins, outs, callback) ->
         unless started

@@ -153,8 +153,6 @@ exports.trackJson = function(req, res) {
 
 exports.trackJsonSave = function(req, res) {
   var track = req.urlTrack;
-  track.name = req.body.name;
-  track.pub_id = req.body.pub_id;
   track.config = JSON.parse(req.body.config);
   track.save(function(error) {
     if (error) {
@@ -214,7 +212,8 @@ exports.drive = function(req, res) {
   topRuns(req.urlTrack.id, req.urlCar.id, 1, function(error, runs) {
     if (error) runs = [];
     req.jadeParams.title = 'Drive';
-    req.jadeParams.urlTrack = req.urlTrack;
+    req.jadeParams.trackData = sanitizeTrack(req.urlTrack.toJSON());
+    req.jadeParams.urlTrack = req.urlTrack;  // For older versions.
     req.jadeParams.urlCar = req.urlCar;
     req.jadeParams.runs = runs;
     res.render('drive', req.jadeParams);
