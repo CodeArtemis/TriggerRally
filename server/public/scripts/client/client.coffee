@@ -437,6 +437,7 @@ define [
     intersectRay: (ray) ->
       isect = []
       isect.push @track.scenery.intersectRay ray
+      isect.push @intersectCheckpoints ray
 
       # TODO: Move this to terrain and make it actually ray march.
       groundLambda = -ray.origin.z / ray.direction.z
@@ -446,3 +447,24 @@ define [
           type: 'terrain'
 
       [].concat.apply [], isect
+
+    intersectSphere: (ray, center, radius) ->
+      center.subSelf ray.origin
+      # We assume unit length ray direction.
+      a = 1  # ray.direction.dot(ray.direction)
+      along = ray.direction.dot vec
+      b = -2 * along
+      c = vec.dot(vec) - radiusSq
+      discrim = b * b - 4 * a * c
+      return null unless discrim >= 0
+      distance: along
+
+    intersectCheckpoints: (ray) ->
+      radius = 4
+      isect = []
+      for cp in @track.config.course.checkpoints
+        hit = intersectSphere ray, new Vec3(cp.pos[0], cp.pos[1], cp.pos[2]), radius
+        if hit
+          hit.type = 'checkpoint'
+          isect.push hit
+      isect

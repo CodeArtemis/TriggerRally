@@ -255,6 +255,8 @@ define [
       if firstHit?
         mouseDistance = firstHit.distance
         addSelection firstHit if firstHit.type is 'scenery'
+      else
+        mouseDistance = 0
       requestAnim()
       buttons |= Math.pow(2, event.button)
       return
@@ -264,7 +266,7 @@ define [
       return
 
     view3d.on 'mousemove', (event) ->
-      if buttons & 3
+      if buttons & 3 and mouseDistance > 0
         right = client.camera.matrixWorld.getColumnX()
         forward = (new Vec3).cross client.camera.up, right
         motionX = event.layerX - mouseX

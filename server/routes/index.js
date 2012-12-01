@@ -105,6 +105,7 @@ exports.track = function(req, res) {
   res.render('track', req.jadeParams);
 };
 
+// TODO: Move these to Schema toObject?
 function sanitizeUser(user) {
   return {
     id: user.pub_id,
@@ -113,13 +114,14 @@ function sanitizeUser(user) {
 }
 
 function sanitizeEnv(env) {
-  return {
+  if (env) return {
     id: env.pub_id,
     name: env.name,
     desc: env.desc,
     scenery: env.scenery,
-    terrain: env.terrain
-  };
+    terrain: env.terrain,
+    cars: env.populatedCars
+  }; else return null;
 }
 
 function sanitizeTrack(track) {

@@ -261,7 +261,22 @@ var loadUrlTrack = function(req, res, next) {
       if (urlTrack) {
         urlTrack.isAuthenticated = req.user && req.user.user && req.user.user.id == urlTrack.user.id;
         req.urlTrack = urlTrack;
-        next();
+        if (urlTrack.env) {
+          Car
+            .find()
+            .where('_id')
+            .in(urlTrack.env.cars)
+            .run(function(error, cars) {
+              if (error) next(error);
+              else {
+                // Horrible workaround because we can't populate env.cars directly.
+                req.urlTrack.env.populatedCars = cars;
+                next();
+              }
+            });
+        } else {
+          next();
+        }
       } else {
         res.send(404);
       }
