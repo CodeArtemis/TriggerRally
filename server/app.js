@@ -270,6 +270,7 @@ var loadUrlTrack = function(req, res, next) {
               if (error) next(error);
               else {
                 // Horrible workaround because we can't populate env.cars directly.
+                // See Environment model for the rest of the hack.
                 req.urlTrack.env.populatedCars = cars;
                 next();
               }

@@ -71,7 +71,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
             checkpoints.push(
                 new Vec3(checkpointsXY[i].pos[0] * coordscale[0],
                          checkpointsXY[i].pos[1] * coordscale[1],
-                         0));
+                         checkpointsXY[i].pos[2] || 0));
           }
           quiver.push(checkpoints);
 
@@ -81,7 +81,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
               cpWithZ.z = contact.surfacePos.z;
             }, this);
           }.bind(this);
-          adjustCheckpointHeights();
+          //adjustCheckpointHeights();
 
           // Cut course into terrain.
           // TODO: Move this to terrain module.
@@ -173,7 +173,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
               calls[i]();
             }
           }*/
-          adjustCheckpointHeights();
+          //adjustCheckpointHeights();
           callback();
         };
 

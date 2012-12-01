@@ -120,7 +120,7 @@ function sanitizeEnv(env) {
     desc: env.desc,
     scenery: env.scenery,
     terrain: env.terrain,
-    cars: env.populatedCars
+    cars: env.cars
   }; else return null;
 }
 
@@ -135,7 +135,7 @@ function sanitizeTrack(track) {
 
 exports.trackEdit = function(req, res) {
   req.jadeParams.title = 'Editing ' + req.urlTrack.name;
-  req.jadeParams.trackData = sanitizeTrack(req.urlTrack.toJSON());
+  req.jadeParams.trackData = sanitizeTrack(req.urlTrack.toObject({ getters:true }));
   req.jadeParams.layout = 'layout-editor';
   res.render('trackedit', req.jadeParams);
 };

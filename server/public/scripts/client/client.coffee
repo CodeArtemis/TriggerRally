@@ -448,23 +448,25 @@ define [
 
       [].concat.apply [], isect
 
-    intersectSphere: (ray, center, radius) ->
+    intersectSphere: (ray, center, radiusSq) ->
+      # Destructive to center.
       center.subSelf ray.origin
       # We assume unit length ray direction.
       a = 1  # ray.direction.dot(ray.direction)
-      along = ray.direction.dot vec
+      along = ray.direction.dot center
       b = -2 * along
-      c = vec.dot(vec) - radiusSq
+      c = center.dot(center) - radiusSq
       discrim = b * b - 4 * a * c
       return null unless discrim >= 0
       distance: along
 
     intersectCheckpoints: (ray) ->
-      radius = 4
+      radiusSq = 16
       isect = []
       for cp in @track.config.course.checkpoints
-        hit = intersectSphere ray, new Vec3(cp.pos[0], cp.pos[1], cp.pos[2]), radius
+        hit = @intersectSphere ray, new Vec3(cp.pos[0], cp.pos[1], cp.pos[2]), radiusSq
         if hit
           hit.type = 'checkpoint'
+          hit.object = cp
           isect.push hit
       isect

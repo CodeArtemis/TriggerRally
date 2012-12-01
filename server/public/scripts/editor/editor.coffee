@@ -234,6 +234,9 @@ define [
     addSelection = (sel) ->
       sel.mesh = clientMisc.selectionMesh()
       pos = sel.object.pos
+      switch sel.type
+        when 'checkpoint'
+          sel.mesh.scale.multiplyScalar 4
       sel.mesh.position.set pos[0], pos[1], pos[2]
       client.scene.add sel.mesh
       selected.push sel
@@ -254,7 +257,7 @@ define [
       clearSelection()
       if firstHit?
         mouseDistance = firstHit.distance
-        addSelection firstHit if firstHit.type is 'scenery'
+        addSelection firstHit unless firstHit.type is 'terrain'
       else
         mouseDistance = 0
       requestAnim()
@@ -282,8 +285,12 @@ define [
         tmp.copy(forward).multiplyScalar eye.y
         motion.addSelf tmp
         if buttons & 1 and selected.length > 0
+          for sel in selected when sel.type is 'checkpoint'
+            pos = sel.object.pos
+            pos[0] += motion.x
+            pos[1] += motion.y
+            sel.mesh.position.set pos[0], pos[1], pos[2]
           layers = {}
-          #for sel in selected when sel.type is 'checkpoint'
           for sel in selected when sel.type is 'scenery'
             layers[sel.layer] = true
             pos = sel.object.pos
@@ -298,8 +305,8 @@ define [
           requestSave()
         else
           if event.shiftKey or buttons & 2
-            camAngVel.z += motionX * -0.1
-            camAngVel.x += motionY * -0.1
+            camAngVel.z += motionX * 0.1
+            camAngVel.x += motionY * 0.1
           else
             motion.multiplyScalar 10
             camVel.subSelf motion
