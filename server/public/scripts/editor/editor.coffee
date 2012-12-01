@@ -285,11 +285,14 @@ define [
         tmp.copy(forward).multiplyScalar eye.y
         motion.addSelf tmp
         if buttons & 1 and selected.length > 0
+          updateCheckpoints = no
           for sel in selected when sel.type is 'checkpoint'
             pos = sel.object.pos
             pos[0] += motion.x
             pos[1] += motion.y
             sel.mesh.position.set pos[0], pos[1], pos[2]
+            updateCheckpoints = yes
+          quiver.
           layers = {}
           for sel in selected when sel.type is 'scenery'
             layers[sel.layer] = true
