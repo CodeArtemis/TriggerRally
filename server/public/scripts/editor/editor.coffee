@@ -292,10 +292,11 @@ define [
             pos[1] += motion.y
             sel.mesh.position.set pos[0], pos[1], pos[2]
             updateCheckpoints = yes
-          quiver.
-          layers = {}
+          courseConfig = track.config.course
+          quiver.push courseConfig.checkpoints if updateCheckpoints
+          updateLayers = {}
           for sel in selected when sel.type is 'scenery'
-            layers[sel.layer] = true
+            updateLayers[sel.layer] = yes
             pos = sel.object.pos
             pos[0] += motion.x
             pos[1] += motion.y
@@ -303,7 +304,7 @@ define [
             contact = track.terrain.getContact tmp
             pos[2] = contact.surfacePos.z
             sel.mesh.position.set pos[0], pos[1], pos[2]
-          for layer of layers
+          for layer of updateLayers
             track.scenery.invalidateLayer layer
           requestSave()
         else
