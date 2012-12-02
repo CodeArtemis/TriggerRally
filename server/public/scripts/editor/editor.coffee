@@ -20,28 +20,35 @@ define [
   InspectorController = (selected, track) ->
     $inspector = $('#editor-inspector')
     $inspectorAttribs = $inspector.find('.attrib')
-    $selType = $inspector.find('#sel-type')
-    $selTypeContent = $selType.find('.content1')
-    $selTitle = $inspector.find('#title')
-    $selTitleContent = $selTitle.find('.content1')
+
+    attrib = (selector) ->
+      $el = $inspector.find selector
+      $root: $el
+      $content: $el.find '.content'
+
+    selType = attrib '#sel-type'
+    selTitle = attrib '#title'
+    selSurfRadius = attrib '#surf-radius'
 
     @onSelectionChange = ->
       $inspectorAttribs.removeClass 'visible'
 
-      $selTypeContent.text switch selected.length
+      selType.$content.text switch selected.length
         when 0 then 'track'
         when 1 then selected[0].type
         else '[multiple]'
-      $selType.addClass 'visible'
+      selType.$root.addClass 'visible'
 
       if selected.length is 1
         sel = selected[0]
-        #switch sel.type
-        #  when 'checkpoint'
+        switch sel.type
+          when 'checkpoint'
+            selSurfRadius.$content.val sel.object.surf.radius
+            selSurfRadius.$root.addClass 'visible'
       else
         # If no selection, we inspect the track properties.
-        $selTitle.addClass 'visible'
-        $selTitleContent.text track.name
+        selTitle.$content.text track.name
+        selTitle.$root.addClass 'visible'
       return
 
     @onSelectionChange()

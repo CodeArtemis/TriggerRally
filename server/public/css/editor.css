@@ -109,9 +109,10 @@ input:checked + label {
 #editor-inspector .attrib .label {
   position: relative;
 }
-#editor-inspector .attrib .content1 {
+#editor-inspector .attrib .content {
   position: absolute;
   left: 100px;
+  width: 150px;
 }
 menu {
   background: rgba(255,255,255,0.80);

@@ -145,6 +145,10 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
             totalLength += chordLength;
           }
 
+          var catmullRomAttrib = function(cp, attrib, u) {
+            return catmullRom(cp[0][attrib], cp[1][attrib], cp[2][attrib], cp[3][attrib], u);
+          }
+
           var radius = 30;
           var calls = [];
           var tStep = radius / 3;
@@ -153,9 +157,14 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
           var halfY = surf.scale.y / 2;
           for (i = 0; i < numChords; ++i) {
             // TODO: try different start point positions?
-            var cp = [ pts[i-1] || pts[i], pts[i], pts[i+1], pts[i+2] || pts[i+1] ];
+            var ix = [ Math.max(0, i-1), i, i+1, Math.min(i+2, numChords-1) ];
+            var cp = [ pts[ix[0]], pts[ix[1]], pts[ix[2]], pts[ix[3]] ];
             for (; t < chords[i]; t += tStep) {
               var u = t / chords[i];
+              radius = Math.exp(catmullRom(Math.log(checkpointsXY[ix[0]].surf.radius),
+                                           Math.log(checkpointsXY[ix[1]].surf.radius),
+                                           Math.log(checkpointsXY[ix[2]].surf.radius),
+                                           Math.log(checkpointsXY[ix[3]].surf.radius), u));
               var pX = catmullRom(cp[0].x, cp[1].x, cp[2].x, cp[3].x, u);
               var pY = catmullRom(cp[0].y, cp[1].y, cp[2].y, cp[3].y, u);
               var pZ = catmullRom(cp[0].z, cp[1].z, cp[2].z, cp[3].z, u);
