@@ -22,7 +22,7 @@ define [
     ringMesh.rotation.z = Math.PI * 4 / 3
     THREE.GeometryUtils.merge checkpointGeom, ringMesh
 
-  selectionGeom = new THREE.IcosahedronGeometry 2, 2
+  selectionGeom = new THREE.IcosahedronGeometry 1, 2
   selectionMat = new THREE.MeshBasicMaterial
     color: 0x101070
     blending: THREE.AdditiveBlending

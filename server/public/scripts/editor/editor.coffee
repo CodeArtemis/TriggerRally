@@ -8,10 +8,11 @@ define [
   'util/util'
   'cs!client/client'
   'cs!client/misc'
+  'client/car'
   'game/game'
   'game/track'
   'cs!util/quiver'
-], ($, THREE, util, clientClient, clientMisc, gameGame, gameTrack, quiver) ->
+], ($, THREE, util, clientClient, clientMisc, clientCar, gameGame, gameTrack, quiver) ->
   KEYCODE = util.KEYCODE
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
@@ -38,6 +39,26 @@ define [
       track = theTrack
       client.addEditorCheckpoints track
 
+    class MockVehicle
+      constructor: (@cfg) ->
+
+    startPos = new THREE.Object3D()
+    startPosConfig = TRIGGER.TRACK.config.course.startposition
+    startPos.updateFromConfig = ->
+      startPos.position.set.apply startPos.position, startPosConfig.pos
+      startPos.rotation.set.apply startPos.rotation, startPosConfig.rot
+    startPos.updateFromConfig()
+    client.scene.add startPos
+
+    carConfig = TRIGGER.TRACK.env.cars[0].config
+    mockVehicle = new MockVehicle carConfig
+    mockVehicle.body =
+      interp:
+        pos: new Vec3(0,0,0)
+        ori: (new THREE.Quaternion(1,1,1,1)).normalize()
+    @renderCar = new clientCar.RenderCar startPos, mockVehicle, null
+    @renderCar.update()
+
     layout = ->
       #[toolbox, view3d].forEach (panel) ->
         #panel.css 'position', 'absolute'
@@ -54,7 +75,9 @@ define [
       layout()
 
     client.camera.eulerOrder = 'ZYX'
-    camPos = client.camera.position.set 0, 0, 1000
+    camPos = client.camera.position.copy startPos.position
+    camPos.z += 50
+    camPos.y -= 50
     camAng = client.camera.rotation.set 0.6, 0, 0
     camVel = new Vec3
     camVelTarget = new Vec3
@@ -66,6 +89,7 @@ define [
     doSave = _.debounce ->
       formData = new FormData()
       formData.append 'name', track.name
+      # HACK: Strip out the data we packed in earlier.
       stripped = _.omit track.config, ['envScenery', 'terrain']
       formData.append 'config', JSON.stringify stripped
       request = new XMLHttpRequest()
@@ -87,6 +111,7 @@ define [
 
     requestId = 0
 
+    objSpinVel = 0
     lastTime = 0
     tmpVec3 = new THREE.Vector3
     update = (time) ->
@@ -99,7 +124,7 @@ define [
       terrainHeight = 0
       if track?
         terrainHeight = (track.terrain.getContactRayZ camPos.x, camPos.y).surfacePos.z
-      SPEED = 80 + 0.8 * Math.max 0, camPos.z - terrainHeight
+      SPEED = 30 + 0.8 * Math.max 0, camPos.z - terrainHeight
       ANG_SPEED = 2
       VISCOSITY = 20
       camVelTarget.set 0, 0, 0
@@ -117,20 +142,30 @@ define [
       if keyDown[KEYCODE.A] then camAngVelTarget.z += ANG_SPEED
       if keyDown[KEYCODE.D] then camAngVelTarget.z -= ANG_SPEED
 
-      objSpinVel = 0
-      if keyDown[188] then objSpinVel += 1
-      if keyDown[190] then objSpinVel -= 1
+      if keyDown[188]
+        objSpinVel += 5 * delta
+      else if keyDown[190]
+        objSpinVel -= 5 * delta
+      else
+        objSpinVel = 0
 
       if objSpinVel isnt 0
-        layers = {}
-        for sel in selected when sel.type is 'scenery'
-          rot = sel.object.rot[2] + objSpinVel * delta
-          rot -= Math.floor(rot / Math.PI / 2) * Math.PI * 2
-          sel.object.rot[2] = rot
-          layers[sel.layer] = true
-        for layer of layers
+        updateLayers = {}
+        updateStartPos = no
+        for sel in selected
+          rot = sel.object.rot
+          continue unless rot?
+          rot[2] += objSpinVel * delta
+          rot[2] -= Math.floor(rot[2] / Math.PI / 2) * Math.PI * 2
+          switch sel.type
+            when 'startpos'
+              startPos.updateFromConfig()
+              updateStartPos = yes
+            when 'scenery'
+              updateLayers[sel.layer] = yes
+        for layer of updateLayers
           track.scenery.invalidateLayer layer
-        requestSave()
+        requestSave() if updateLayers or updateStartPos
 
       camVelTarget.set(
           camVelTarget.x * Math.cos(camAng.z) - camVelTarget.y * Math.sin(camAng.z),
@@ -171,8 +206,6 @@ define [
 
     setInterval requestAnim, 1000
 
-    selectedCp = 0
-
     $(document).on 'keyup', (event) -> client.onKeyUp event
     $(document).on 'keydown', (event) -> client.onKeyDown event
     client.on 'keydown', (event) ->
@@ -181,28 +214,6 @@ define [
         moveAmt = 1
         if client.keyDown[KEYCODE.SHIFT] then moveAmt *= 5
         switch event.keyCode
-          when KEYCODE['J']
-            checkpoints[selectedCp]?.pos[0] += moveAmt
-            quiver.push checkpoints
-            requestSave()
-          when KEYCODE['G']
-            checkpoints[selectedCp]?.pos[0] -= moveAmt
-            quiver.push checkpoints
-            requestSave()
-          when KEYCODE['Y']
-            checkpoints[selectedCp]?.pos[1] += moveAmt
-            quiver.push checkpoints
-            requestSave()
-          when KEYCODE['H']
-            checkpoints[selectedCp]?.pos[1] -= moveAmt
-            quiver.push checkpoints
-            requestSave()
-          when KEYCODE['U']
-            selectedCp = (selectedCp + checkpoints.length - 1) % checkpoints.length
-            client.renderCheckpoints.highlightCheckpoint selectedCp
-          when KEYCODE['I']
-            selectedCp = (selectedCp + 1) % checkpoints.length
-            client.renderCheckpoints.highlightCheckpoint selectedCp
           when KEYCODE['P']
             for sel in selected when sel.type is 'scenery'
               pos = sel.object.pos
@@ -234,9 +245,11 @@ define [
     addSelection = (sel) ->
       sel.mesh = clientMisc.selectionMesh()
       pos = sel.object.pos
+      radius = 2
       switch sel.type
         when 'checkpoint'
-          sel.mesh.scale.multiplyScalar 4
+          radius = 4
+      sel.mesh.scale.multiplyScalar radius
       sel.mesh.position.set pos[0], pos[1], pos[2]
       client.scene.add sel.mesh
       selected.push sel
@@ -282,31 +295,39 @@ define [
         motion = new Vec3
         tmp.copy(right).multiplyScalar eye.x
         motion.addSelf tmp
-        tmp.copy(forward).multiplyScalar eye.y
-        motion.addSelf tmp
+        if event.shiftKey
+          motion.z = eye.y
+        else
+          tmp.copy(forward).multiplyScalar eye.y
+          motion.addSelf tmp
         if buttons & 1 and selected.length > 0
+          updateStartPos = no
           updateCheckpoints = no
-          for sel in selected when sel.type is 'checkpoint'
+          updateLayers = {}
+
+          for sel in selected
             pos = sel.object.pos
             pos[0] += motion.x
             pos[1] += motion.y
+            pos[2] += motion.z
+            switch sel.type
+              when 'startpos'
+                updateStartPos = yes
+                startPos.updateFromConfig()
+              when 'checkpoint'
+                updateCheckpoints = yes
+              when 'scenery'
+                updateLayers[sel.layer] = yes
+                tmp.set pos[0], pos[1], -Infinity
+                contact = track.terrain.getContact tmp
+                pos[2] = contact.surfacePos.z
             sel.mesh.position.set pos[0], pos[1], pos[2]
-            updateCheckpoints = yes
+
           courseConfig = track.config.course
           quiver.push courseConfig.checkpoints if updateCheckpoints
-          updateLayers = {}
-          for sel in selected when sel.type is 'scenery'
-            updateLayers[sel.layer] = yes
-            pos = sel.object.pos
-            pos[0] += motion.x
-            pos[1] += motion.y
-            tmp.set pos[0], pos[1], -Infinity
-            contact = track.terrain.getContact tmp
-            pos[2] = contact.surfacePos.z
-            sel.mesh.position.set pos[0], pos[1], pos[2]
           for layer of updateLayers
             track.scenery.invalidateLayer layer
-          requestSave()
+          requestSave() if updateCheckpoints or updateLayers or updateStartPos
         else
           if event.shiftKey or buttons & 2
             camAngVel.z += motionX * 0.1
@@ -320,7 +341,7 @@ define [
     scroll = (scrollY) ->
       forward = client.camera.matrixWorld.getColumnZ()
       tmp = new Vec3
-      tmp.copy(forward).multiplyScalar scrollY * -3
+      tmp.copy(forward).multiplyScalar scrollY * -2
       camVel.addSelf tmp
       #client.camera.rotation.z += event.wheelDeltaX * 0.01
       event.preventDefault()

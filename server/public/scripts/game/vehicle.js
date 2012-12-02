@@ -236,6 +236,7 @@ function(THREE, psim, collision, util) {
     this.crashLevelPrev = 0;
     this.skidLevel = 0;
     this.disabled = false;
+    this.hasContact = false;
   };
 
   exports.Vehicle.prototype.recordState = function() {
@@ -316,8 +317,9 @@ function(THREE, psim, collision, util) {
     this.crashLevel = PULLTOWARD(this.crashLevel, 0, delta * 5);
     this.skidLevel = 0;
 
-    if (this.body.oriMat.elements[6] <= 0.1 ||
-        this.recoverTimer >= this.cfg.recover.triggerTime) {
+    if (this.hasContact && (
+          this.body.oriMat.elements[6] <= 0.1 ||
+          this.recoverTimer >= this.cfg.recover.triggerTime)) {
       this.recoverTimer += delta;
 
       if (this.recoverTimer >= this.cfg.recover.triggerTime) {
@@ -393,6 +395,7 @@ function(THREE, psim, collision, util) {
       }
     }
 
+    this.hasContact = false;
     for (c = 0; c < this.wheels.length; ++c) {
       var wheel = this.wheels[c];
       var wheelTorque = wheel.frictionForce.y * 0.3;
@@ -423,6 +426,7 @@ function(THREE, psim, collision, util) {
       }, this);
       var list = new collision.SphereList(worldPts);
       var contacts = this.sim.collideSphereList(list);
+      if (contacts) this.hasContact = true;
       contacts.forEach(this.contactResponse, this);
     }).call(this);
 
@@ -521,6 +525,7 @@ function(THREE, psim, collision, util) {
     clipPos.z += wheel.ridePos - wheel.cfg.radius;
     var contactVel = this.body.getLinearVelAtPoint(clipPos);
     var contacts = this.sim.collidePoint(clipPos);
+    if (contacts) this.hasContact = true;
     for (var c = 0; c < contacts.length; ++c) {
       var contact = contacts[c];
       var surf = getSurfaceBasis(contact.normal,

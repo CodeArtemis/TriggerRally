@@ -421,7 +421,7 @@ define [
       vec
 
     viewToEyeRel: (vec) ->
-      vec.x = (vec.x / @width) * 2
+      vec.x = (vec.x / @height) * 2
       vec.y = - (vec.y / @height) * 2
       vec
 
@@ -433,11 +433,12 @@ define [
                           vec.subSelf(@camera.position).normalize()
       @intersectRay ray
 
-    # TODO: Does this belong in client?
+    # TODO: Does this intersection stuff belong in client?
     intersectRay: (ray) ->
       isect = []
-      isect.push @track.scenery.intersectRay ray
-      isect.push @intersectCheckpoints ray
+      isect = isect.concat @track.scenery.intersectRay ray
+      isect = isect.concat @intersectCheckpoints ray
+      isect = isect.concat @intersectStartPosition ray
 
       # TODO: Move this to terrain and make it actually ray march.
       groundLambda = -ray.origin.z / ray.direction.z
@@ -447,6 +448,16 @@ define [
           type: 'terrain'
 
       [].concat.apply [], isect
+
+    intersectStartPosition: (ray) ->
+      pos = @track.config.course.startposition.pos
+      hit = @intersectSphere ray, new Vec3(pos[0], pos[1], pos[2]), 4
+      if hit
+        hit.type = 'startpos'
+        hit.object = @track.config.course.startposition
+        [hit]
+      else
+        []
 
     intersectSphere: (ray, center, radiusSq) ->
       # Destructive to center.

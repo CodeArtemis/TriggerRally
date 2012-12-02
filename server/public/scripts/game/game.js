@@ -126,7 +126,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
         this.track.config.course.startposition.pos[2]);
     var tmpQuat = new THREE.Quaternion().setFromAxisAngle(
         new Vec3(0,0,1),
-        this.track.config.course.startposition.oridegrees * Math.PI / 180);
+        this.track.config.course.startposition.rot[2]);
     vehicle.body.ori = tmpQuat.multiplySelf(vehicle.body.ori);
 
     var progress = new exports.Progress(this.track, vehicle);
