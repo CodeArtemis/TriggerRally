@@ -17,17 +17,46 @@ define [
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
 
-  run: ->
-    container = $(window)
-    toolbox = $('#editor-toolbox')
-    view3d = $('#view3d')
-    status = $('#status')
+  InspectorController = (selected, track) ->
+    $inspector = $('#editor-inspector')
+    $inspectorAttribs = $inspector.find('.attrib')
+    $selType = $inspector.find('#sel-type')
+    $selTypeContent = $selType.find('.content1')
+    $selTitle = $inspector.find('#title')
+    $selTitleContent = $selTitle.find('.content1')
 
-    setStatus = (msg) -> status.html msg
+    @onSelectionChange = ->
+      $inspectorAttribs.removeClass 'visible'
+
+      $selTypeContent.text switch selected.length
+        when 0 then 'track'
+        when 1 then selected[0].type
+        else '[multiple]'
+      $selType.addClass 'visible'
+
+      if selected.length is 1
+        sel = selected[0]
+        #switch sel.type
+        #  when 'checkpoint'
+      else
+        # If no selection, we inspect the track properties.
+        $selTitle.addClass 'visible'
+        $selTitleContent.text track.name
+      return
+
+    @onSelectionChange()
+
+  run: ->
+    $container = $(window)
+    $statusbar = $('#editor-statusbar')
+    $view3d = $('#view3d')
+    $status = $statusbar.find('#status')
+
+    setStatus = (msg) -> $status.text msg
     setStatus 'OK'
 
     game = new gameGame.Game()
-    client = new clientClient.TriggerClient view3d[0], game
+    client = new clientClient.TriggerClient $view3d[0], game
 
     # HACK: Pack the terrain config directly into the track.
     # These are stripped out again during save. FIXME.
@@ -60,18 +89,18 @@ define [
     @renderCar.update()
 
     layout = ->
-      #[toolbox, view3d].forEach (panel) ->
+      #[$statusbar, $view3d].forEach (panel) ->
         #panel.css 'position', 'absolute'
-        #panel.width container.width()
-      TOOLBOX_HEIGHT = toolbox.height()
-      #toolbox.height TOOLBOX_HEIGHT
-      view3d.height container.height() - TOOLBOX_HEIGHT
-      view3d.css 'top', TOOLBOX_HEIGHT
-      client.setSize view3d.width(), view3d.height()
+        #panel.width $container.width()
+      statusbar_HEIGHT = $statusbar.height()
+      #$statusbar.height statusbar_HEIGHT
+      $view3d.height $container.height() - statusbar_HEIGHT
+      $view3d.css 'top', statusbar_HEIGHT
+      client.setSize $view3d.width(), $view3d.height()
       return
 
     layout()
-    container.on 'resize', ->
+    $container.on 'resize', ->
       layout()
 
     client.camera.eulerOrder = 'ZYX'
@@ -85,6 +114,8 @@ define [
     camAngVelTarget = new Vec3
 
     selected = []
+
+    inspectorController = new InspectorController selected, TRIGGER.TRACK
 
     doSave = _.debounce ->
       formData = new FormData()
@@ -239,7 +270,7 @@ define [
     clearSelection = ->
       for sel in selected
         client.scene.remove sel.mesh
-      selected = []
+      selected.length = 0
       return
 
     addSelection = (sel) ->
@@ -261,7 +292,7 @@ define [
     mouseDistance = 0
     buttons = 0
 
-    view3d.on 'mousedown', (event) ->
+    $view3d.on 'mousedown', (event) ->
       mouseX = event.layerX
       mouseY = event.layerY
       isect = client.findObject mouseX, mouseY
@@ -275,13 +306,14 @@ define [
         mouseDistance = 0
       requestAnim()
       buttons |= Math.pow(2, event.button)
+      inspectorController.onSelectionChange()
       return
 
-    view3d.on 'mouseup', (event) ->
+    $view3d.on 'mouseup', (event) ->
       buttons &= ~Math.pow(2, event.button)
       return
 
-    view3d.on 'mousemove', (event) ->
+    $view3d.on 'mousemove', (event) ->
       if buttons & 3 and mouseDistance > 0
         right = client.camera.matrixWorld.getColumnX()
         forward = (new Vec3).cross client.camera.up, right
@@ -347,7 +379,7 @@ define [
       event.preventDefault()
       return
 
-    view3d.on 'mousewheel', (event) ->
+    $view3d.on 'mousewheel', (event) ->
       scroll event.wheelDeltaY or event.deltaY
 
     return

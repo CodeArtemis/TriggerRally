@@ -213,7 +213,7 @@ app.configure(function() {
   // We can delay certain resources for debugging purposes.
   app.use(function(req, res, next) {
     var delay = 0;
-    if (req.path.match('nice.png')) delay = 200;
+    if (req.path.match('nice.png')) delay = 3000;
     if (req.path.match('heightdetail1.jpg')) delay = 6000;
     setTimeout(function() {
       next();

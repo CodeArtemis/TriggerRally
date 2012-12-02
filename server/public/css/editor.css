@@ -66,25 +66,52 @@ input[type="range"] {
 input:checked + label {
   color: #e77;
 }
-#editor-toolbox {
+#editor-statusbar,
+#editor-inspector {
   background: #fda;
-  box-shadow: 0 0 40px #000;
+  box-shadow: 0 0 10px #000;
   position: absolute;
+}
+#editor-statusbar {
   width: 100%;
   z-index: 2;
 }
-#editor-toolbox > table {
+#editor-statusbar > table {
   border-spacing: 0;
   width: 100%;
 }
-#editor-toolbox > table td {
+#editor-statusbar > table td {
   width: 33.3%;
 }
-#editor-toolbox > table td:nth-child(2) {
+#editor-statusbar > table td:nth-child(2) {
   text-align: center;
 }
-#editor-toolbox > table td:last-child {
+#editor-statusbar > table td:last-child {
   text-align: right;
+}
+#editor-inspector {
+  z-index: 3;
+  left: 10px;
+  top: 50px;
+  border-radius: 4px;
+  padding: 10px;
+  width: 250px;
+}
+#editor-inspector h3 {
+  margin: 0;
+}
+#editor-inspector .attrib {
+  display: none;
+}
+#editor-inspector .attrib.visible {
+  display: block;
+}
+#editor-inspector .attrib .label {
+  position: relative;
+}
+#editor-inspector .attrib .content1 {
+  position: absolute;
+  left: 100px;
 }
 menu {
   background: rgba(255,255,255,0.80);
