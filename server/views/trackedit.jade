@@ -25,7 +25,7 @@
               a(href="/login")<strong>Log in</strong>&nbsp;
 
 #editor-inspector
-  h3 Property inspector
+  //-h3 Property inspector
   .attrib#sel-type
     span.label Selection:
     span.content
@@ -33,6 +33,10 @@
   .attrib#title
     span.label Title:
     span.content
+
+  .attrib#disp-radius
+    span.label Disp radius:
+    input.content(type="range", min=10, max=50, step="any")
 
   .attrib#surf-radius
     span.label Surf radius:

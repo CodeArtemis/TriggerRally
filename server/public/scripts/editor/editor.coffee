@@ -28,7 +28,16 @@ define [
 
     selType = attrib '#sel-type'
     selTitle = attrib '#title'
+    selDispRadius = attrib '#disp-radius'
     selSurfRadius = attrib '#surf-radius'
+
+    selDispRadius.$content.on 'change', ->
+      val = selDispRadius.$content.val()
+      updated = no
+      for sel in selected when sel.type is 'checkpoint'
+        sel.object.disp.radius = val
+        updated = yes
+      quiver.push track.config.course.checkpoints if updated
 
     selSurfRadius.$content.on 'change', ->
       val = selSurfRadius.$content.val()
@@ -47,13 +56,14 @@ define [
         else '[multiple]'
       selType.$root.addClass 'visible'
 
-      if selected.length is 1
-        sel = selected[0]
+      for sel in selected
         switch sel.type
           when 'checkpoint'
+            selDispRadius.$content.val sel.object.disp.radius
+            selDispRadius.$root.addClass 'visible'
             selSurfRadius.$content.val sel.object.surf.radius
             selSurfRadius.$root.addClass 'visible'
-      else
+      unless selected
         # If no selection, we inspect the track properties.
         selTitle.$content.text track.name
         selTitle.$root.addClass 'visible'
@@ -301,26 +311,36 @@ define [
       selected.push sel
       return
 
+    inSelection = (query) ->
+      for sel in selected
+        return true if sel.object is query.object
+      false
+
     # TODO: encapsulate mouse event handling
     mouseX = 0
     mouseY = 0
     mouseDistance = 0
     buttons = 0
+    isSecondClick = no  # We only allow dragging on second click to prevent mistakes.
 
     $view3d.on 'mousedown', (event) ->
+      buttons |= Math.pow(2, event.button)
       mouseX = event.layerX
       mouseY = event.layerY
       isect = client.findObject mouseX, mouseY
       isect.sort (a, b) -> a.distance > b.distance
       firstHit = isect[0]
-      clearSelection()
+      #clearSelection()
+      underCursor = null
       if firstHit?
         mouseDistance = firstHit.distance
-        addSelection firstHit unless firstHit.type is 'terrain'
+        underCursor = firstHit unless firstHit.type is 'terrain'
       else
         mouseDistance = 0
+      isSecondClick = if underCursor then inSelection(underCursor) else no
+      clearSelection() unless event.shiftKey or isSecondClick
+      addSelection underCursor if underCursor unless isSecondClick
       requestAnim()
-      buttons |= Math.pow(2, event.button)
       inspectorController.onSelectionChange()
       return
 
@@ -347,7 +367,7 @@ define [
         else
           tmp.copy(forward).multiplyScalar eye.y
           motion.addSelf tmp
-        if buttons & 1 and selected.length > 0
+        if buttons & 1 and selected.length > 0 and isSecondClick
           updateStartPos = no
           updateCheckpoints = no
           updateLayers = {}

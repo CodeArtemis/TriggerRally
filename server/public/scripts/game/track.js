@@ -265,6 +265,13 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
 
         this.scenery = new gameScenery.Scenery(config.scenery, config.envScenery, this);
 
+        var invalidateScenery = function(ins, outs, next) {
+          outs[0].invalidate();
+          next();
+        };
+        quiver.connect(maps.surface, invalidateScenery, this.scenery);
+        quiver.connect(maps.height, invalidateScenery);
+
         if (callback) callback();
       }.bind(this));
     }

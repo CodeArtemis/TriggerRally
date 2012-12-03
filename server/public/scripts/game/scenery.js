@@ -22,15 +22,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
     this.config = config;
     this.envConfig = envConfig;
     this.track = track;
-    this.layers = [];
-    this.layersById = {};
-    for (var i = 0; i < envConfig.layers.length; ++i) {
-      var layerId = envConfig.layers[i].id;
-      var trackScenery = config[layerId];
-      var layer = new exports.Layer(envConfig.layers[i], this, trackScenery);
-      this.layers.push(layer);
-      this.layersById[layer.config.id] = i;
-    }
+    this.invalidate();
   };
 
   exports.Scenery.prototype.getLayer = function(id) {
@@ -51,6 +43,19 @@ function(LFIB4, collision, hash2d, util, THREE) {
       isect.push(this.layers[i].intersectRay(ray));
     }
     return [].concat.apply([], isect);
+  };
+
+  exports.Scenery.prototype.invalidate = function() {
+    var layers = this.envConfig.layers;
+    this.layers = [];
+    this.layersById = {};
+    for (var i = 0; i < layers.length; ++i) {
+      var layerId = layers[i].id;
+      var trackScenery = this.config[layerId];
+      var layer = new exports.Layer(layers[i], this, trackScenery);
+      this.layers.push(layer);
+      this.layersById[layer.config.id] = i;
+    }
   };
 
   exports.Scenery.prototype.invalidateLayer = function(id) {
