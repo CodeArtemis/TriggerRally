@@ -30,6 +30,14 @@ define [
     selTitle = attrib '#title'
     selSurfRadius = attrib '#surf-radius'
 
+    selSurfRadius.$content.on 'change', ->
+      val = selSurfRadius.$content.val()
+      updated = no
+      for sel in selected when sel.type is 'checkpoint'
+        sel.object.surf.radius = val
+        updated = yes
+      quiver.push track.config.course.checkpoints if updated
+
     @onSelectionChange = ->
       $inspectorAttribs.removeClass 'visible'
 
@@ -113,8 +121,8 @@ define [
     client.camera.eulerOrder = 'ZYX'
     camPos = client.camera.position.copy startPos.position
     camPos.z += 50
-    camPos.y -= 50
-    camAng = client.camera.rotation.set 0.6, 0, 0
+    camPos.y -= 20
+    camAng = client.camera.rotation.set 0.3, 0, 0
     camVel = new Vec3
     camVelTarget = new Vec3
     camAngVel = new Vec3

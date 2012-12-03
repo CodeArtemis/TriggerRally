@@ -149,29 +149,49 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
             return catmullRom(cp[0][attrib], cp[1][attrib], cp[2][attrib], cp[3][attrib], u);
           }
 
-          var radius = 30;
-          var calls = [];
-          var tStep = radius / 3;
-          var t = 0;
+          var radius, tStep, u, pX, pY, pZ, t, ix, cp;
           var halfX = surf.scale.x / 2;
           var halfY = surf.scale.y / 2;
+          //var calls = [];
+          t = 0;
           for (i = 0; i < numChords; ++i) {
             // TODO: try different start point positions?
-            var ix = [ Math.max(0, i-1), i, i+1, Math.min(i+2, numChords-1) ];
-            var cp = [ pts[ix[0]], pts[ix[1]], pts[ix[2]], pts[ix[3]] ];
+            ix = [ Math.max(0, i-1), i, i+1, Math.min(i+2, numChords-1) ];
+            cp = [ pts[ix[0]], pts[ix[1]], pts[ix[2]], pts[ix[3]] ];
             for (; t < chords[i]; t += tStep) {
-              var u = t / chords[i];
+              u = t / chords[i];
               radius = Math.exp(catmullRom(Math.log(checkpointsXY[ix[0]].surf.radius),
                                            Math.log(checkpointsXY[ix[1]].surf.radius),
                                            Math.log(checkpointsXY[ix[2]].surf.radius),
                                            Math.log(checkpointsXY[ix[3]].surf.radius), u));
-              var pX = catmullRom(cp[0].x, cp[1].x, cp[2].x, cp[3].x, u);
-              var pY = catmullRom(cp[0].y, cp[1].y, cp[2].y, cp[3].y, u);
-              var pZ = catmullRom(cp[0].z, cp[1].z, cp[2].z, cp[3].z, u);
+              tStep = radius / 3 + 3;
 
-              drawCircleDisplacement(dst, pX, pY, pZ, radius, 0, 0.6);
+              pX = catmullRom(cp[0].x, cp[1].x, cp[2].x, cp[3].x, u);
+              pY = catmullRom(cp[0].y, cp[1].y, cp[2].y, cp[3].y, u);
+
               drawCircle(surf, 2, pX - halfX, pY - halfY, 255 * 0, radius * 0.5, 0.8, 1);
               //drawCircle(maps.surface, maps.surface.packed, 4, 2, pX, pY, 255, 100, 0.4, 1);
+            }
+            t -= chords[i];
+          }
+          t = 0;
+          for (i = 0; i < numChords; ++i) {
+            // TODO: try different start point positions?
+            ix = [ Math.max(0, i-1), i, i+1, Math.min(i+2, numChords-1) ];
+            cp = [ pts[ix[0]], pts[ix[1]], pts[ix[2]], pts[ix[3]] ];
+            for (; t < chords[i]; t += tStep) {
+              u = t / chords[i];
+              radius = Math.exp(catmullRom(Math.log(checkpointsXY[ix[0]].disp.radius),
+                                           Math.log(checkpointsXY[ix[1]].disp.radius),
+                                           Math.log(checkpointsXY[ix[2]].disp.radius),
+                                           Math.log(checkpointsXY[ix[3]].disp.radius), u));
+              tStep = radius / 3 + 3;
+
+              pX = catmullRom(cp[0].x, cp[1].x, cp[2].x, cp[3].x, u);
+              pY = catmullRom(cp[0].y, cp[1].y, cp[2].y, cp[3].y, u);
+              pZ = catmullRom(cp[0].z, cp[1].z, cp[2].z, cp[3].z, u);
+
+              drawCircleDisplacement(dst, pX, pY, pZ, radius, 0, 0.6);
             }
             t -= chords[i];
           }
