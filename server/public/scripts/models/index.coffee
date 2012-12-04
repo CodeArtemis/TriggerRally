@@ -57,6 +57,7 @@ define [
       key: 'env'
       relatedModel: models.Env
     ]
+    url: -> '/track/' + @id + '/json/save'
     buildProperties @
 
   model.setup() for model in models

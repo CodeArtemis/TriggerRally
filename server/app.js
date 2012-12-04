@@ -361,6 +361,7 @@ app.get('/track/:idTrack/edit', loadUrlTrack, editTrack, routes.trackEdit);
 app.get('/track/:idTrack/json', loadUrlTrack, routes.trackJson);
 app.get('/track/:idTrack/json/edit', loadUrlTrack, editTrack, routes.trackJson);
 app.post('/track/:idTrack/json/save', loadUrlTrack, editTrack, routes.trackJsonSave);
+app.put('/track/:idTrack/json/save', loadUrlTrack, editTrack, routes.trackJsonSave);
 app.get('/car/:idCar', loadUrlCar, routes.car);
 app.get('/car/:idCar/json', loadUrlCar, routes.carJson);
 app.get('/car/:idCar/json/edit', loadUrlCar, editCar, routes.carJson);

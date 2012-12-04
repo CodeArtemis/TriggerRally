@@ -155,7 +155,9 @@ exports.trackJson = function(req, res) {
 
 exports.trackJsonSave = function(req, res) {
   var track = req.urlTrack;
-  track.config = JSON.parse(req.body.config);
+  // TODO: Validate config.
+  // TODO: Verify that env, etc matches.
+  track.config = req.body.config;
   track.save(function(error) {
     if (error) {
       console.log('Error updating track:');
@@ -165,6 +167,7 @@ exports.trackJsonSave = function(req, res) {
       if (req.header('referer').match('/json/edit$')) {
         res.redirect('/track/' + track.pub_id + '/json/edit');
       } else {
+        res.type('text/plain');
         res.send(200);
       }
     }

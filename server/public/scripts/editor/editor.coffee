@@ -21,7 +21,8 @@ define [
 
   # Utility for manipulating objects in models.
   manipulate = (model, attrib, fn) ->
-    model.set attrib, fn model.get(attrib)
+    fn obj = _.clone model.get(attrib)
+    model.set attrib, obj
 
   InspectorController = (selected, track) ->
     $inspector = $('#editor-inspector')
@@ -45,24 +46,15 @@ define [
       $content = slider.$content
       $content.on 'change', ->
         val = parseFloat $content.val()
-        course = track.get('config').get('course')
-        #checkpoints = course.toJSON().checkpoints
         for sel in selected when sel.type is 'checkpoint'
           eachSel sel, val
-        #course.set 'checkpoints', checkpoints
-        #quiver.push track.track.config.course.checkpoints
-        #track.markModified()
 
-    checkpointSlider selDispRadius,   (sel, val) -> sel.object.disp.radius   = val
-    checkpointSlider selDispRadius,   (sel, val) -> sel.object.disp.radius   = val
-    checkpointSlider selDispHardness, (sel, val) -> sel.object.disp.hardness = val
-    checkpointSlider selDispStrength, (sel, val) -> sel.object.disp.strength = val
-    checkpointSlider selSurfRadius,   (sel, val) ->
-      tmp = _.clone sel.object.surf
-      tmp.radius = val
-      sel.object.surf = tmp
-    checkpointSlider selSurfHardness, (sel, val) -> sel.object.surf.hardness = val
-    checkpointSlider selSurfStrength, (sel, val) -> sel.object.surf.strength = val
+    checkpointSlider selDispRadius,   (sel, val) -> manipulate sel.object, 'disp', (o) -> o.radius   = val
+    checkpointSlider selDispHardness, (sel, val) -> manipulate sel.object, 'disp', (o) -> o.hardness = val
+    checkpointSlider selDispStrength, (sel, val) -> manipulate sel.object, 'disp', (o) -> o.strength = val
+    checkpointSlider selSurfRadius,   (sel, val) -> manipulate sel.object, 'surf', (o) -> o.radius   = val
+    checkpointSlider selSurfHardness, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.hardness = val
+    checkpointSlider selSurfStrength, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.strength = val
 
     checkpointSliderSet = (slider, val) ->
       slider.$content.val val
@@ -164,25 +156,12 @@ define [
     inspectorController = new InspectorController selected, trackModel
 
     doSave = _.debounce ->
-      setStatus 'save disabled'
-      return
-      # TODO: Save using trackModel.save()
-      formData = new FormData()
-      formData.append 'name', track.name
-      # HACK: Strip out the data we packed in earlier.
-      stripped = _.omit track.config, ['envScenery', 'terrain']
-      formData.append 'config', JSON.stringify stripped
-      request = new XMLHttpRequest()
-      url = '/track/' + TRIGGER.TRACK.id + '/json/save'
-      request.open 'POST', url, true
-      request.onload = ->
-        if request.status is 200
-          setStatus 'OK'
-        else
-          setStatus request.status
-      request.onerror = ->
-        setStatus 'ERROR'
-      request.send formData
+      trackModel.save null,
+        success: -> setStatus 'OK'
+        error: ->
+          setStatus 'ERROR'
+          console.log 'error details:'
+          console.log arguments
     , 1000
 
     requestSave = ->
