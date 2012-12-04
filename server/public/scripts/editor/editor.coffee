@@ -13,68 +13,11 @@ define [
   'game/game'
   'game/track'
   'cs!util/quiver'
-], ($, Backbone, THREE, util, clientClient, clientMisc, clientCar, gameGame, gameTrack, quiver) ->
+  'cs!models/index'
+], ($, Backbone, THREE, util, clientClient, clientMisc, clientCar, gameGame, gameTrack, quiver, models) ->
   KEYCODE = util.KEYCODE
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
-
-
-  # http://www.narrativescience.com/blog/automatically-creating-getterssetters-for-backbone-models/
-  buildProperties = (func) ->
-    buildGetter = (name) ->
-      -> @get name
-    buildSetter = (name) ->
-      (value) -> @set name, value
-    for attr in func.prototype.attributeNames
-      Object.defineProperty func.prototype, attr,
-        get: buildGetter attr
-        set: buildSetter attr
-
-  Models = {}
-
-  class Models.Checkpoint extends Backbone.RelationalModel
-    attributeNames: [ 'disp', 'pos', 'surf' ]
-    buildProperties @
-
-  class Models.Course extends Backbone.RelationalModel
-    attributeNames: [ 'checkpoints', 'startposition' ]
-    relations: [
-      type: Backbone.HasMany
-      key: 'checkpoints'
-      relatedModel: Models.Checkpoint
-    ]
-    buildProperties @
-
-  class Models.TrackConfig extends Backbone.RelationalModel
-    attributeNames: [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
-    relations: [
-      type: Backbone.HasOne
-      key: 'course'
-      relatedModel: Models.Course
-    ]
-    buildProperties @
-
-  class Models.Env extends Backbone.RelationalModel
-    attributeNames: [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
-    buildProperties @
-
-  class Models.Track extends Backbone.RelationalModel
-    attributeNames: [ 'config', 'env', 'name', 'user' ]
-    relations: [
-      type: Backbone.HasOne
-      key: 'config'
-      relatedModel: Models.TrackConfig
-    ,
-      type: Backbone.HasOne
-      key: 'env'
-      relatedModel: Models.Env
-    ]
-    buildProperties @
-
-  Model.setup() for Model in Models
-
-
-
 
   # Utility for manipulating objects in models.
   manipulate = (model, attrib, fn) ->
@@ -115,7 +58,7 @@ define [
     checkpointSlider selDispHardness, (sel, val) -> sel.object.disp.hardness = val
     checkpointSlider selDispStrength, (sel, val) -> sel.object.disp.strength = val
     checkpointSlider selSurfRadius,   (sel, val) ->
-      tmp = sel.object.surf
+      tmp = _.clone sel.object.surf
       tmp.radius = val
       sel.object.surf = tmp
     checkpointSlider selSurfHardness, (sel, val) -> sel.object.surf.hardness = val
@@ -164,7 +107,7 @@ define [
     game = new gameGame.Game()
     client = new clientClient.TriggerClient $view3d[0], game
 
-    trackModel = new Models.Track TRIGGER.TRACK
+    trackModel = new models.Track TRIGGER.TRACK
 
     track = null
     game.setTrackConfig trackModel, (err, theTrack) ->
@@ -217,21 +160,6 @@ define [
     camAngVelTarget = new Vec3
 
     selected = []
-
-    #quiver.push track.track.config.course.checkpoints if updated
-    trackModel.config.on 'change', ->
-      console.log 'track config change!'
-    trackModel.config.course.on 'change', ->
-      console.log 'course change!'
-    trackModel.config.course.on 'change:checkpoints', ->
-      console.log 'course change:checkpoints!'
-    trackModel.config.on 'update', ->
-      console.log 'track config update!'
-    trackModel.config.course.on 'update', ->
-      console.log 'course update!'
-    trackModel.config.course.on 'update:checkpoints', ->
-      console.log 'course update:checkpoints!'
-
 
     inspectorController = new InspectorController selected, trackModel
 
