@@ -4,11 +4,11 @@
     dd
       - if (editing)
         - if (typeof focus !== 'undefined' && focus)
-          input(name='#{name}', type='#{fieldtype}', value='#{value}', oninput='onInput("#{name}")', autofocus)
+          input(name='#{field.name}', type='#{field.fieldtype}', value='#{field.value}', oninput='onInput("#{field.name}")', autofocus)
         - else
-          input(name='#{name}', type='#{fieldtype}', value='#{value}', oninput='onInput("#{name}")')
+          input(name='#{field.name}', type='#{field.fieldtype}', value='#{field.value}', oninput='onInput("#{field.name}")')
         //-span.fieldstatusok(id="fieldstatusok=#{name}")&#10003;
         //-span.fieldstatuserror(id="fieldstatuserror=#{name}")&#10007;
-        span.fielderror(id="fielderror-#{name}")
+        span.fielderror(id="fielderror-#{field.name}")
       - else
         =value

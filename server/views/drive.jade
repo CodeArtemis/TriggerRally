@@ -1,82 +1,86 @@
-!=partial('partial/header', { login: 1 })
+extends layout
 
-.content
+block body
+  include partial/header
 
-  - if (runs[0])
-    p Current leader: 
-      span!= partial('partial/user', {user: runs[0].user})
-      | 
-      a(href="/run/#{runs[0].pub_id}") #{runs[0].time_readable}
-      |  &mdash;
-      a(href="/run/#{runs[0].pub_id}/replay") watch replay
+  .content
 
-  .frame3d
-    .loading
-      div(style="height: 6em")
-      h1 Trigger Rally
-      div(style="height: 3em")
-      h2.loading Loading&hellip;
+    - if (runs[0])
+      p Current leader: 
+        user = runs[0].user
+        include partial/user
+        | 
+        a(href="/run/#{runs[0].pub_id}") #{runs[0].time_readable}
+        |  &mdash;
+        a(href="/run/#{runs[0].pub_id}/replay") watch replay
 
-    <div id="checkpoints"></div>
-    <div id="timer" class="running"></div>
-    <div id="countdown"></div>
-    <a id="twitterlink" href="#">Share your time on Twitter</a>
+    .frame3d
+      .loading
+        div(style="height: 6em")
+        h1 Trigger Rally
+        div(style="height: 3em")
+        h2.loading Loading&hellip;
 
-  p
-    a(href="#")#fullscreenlink Full screen
+      <div id="checkpoints"></div>
+      <div id="timer" class="running"></div>
+      <div id="countdown"></div>
+      <a id="twitterlink" href="#">Share your time on Twitter</a>
+
+    p
+      a(href="#")#fullscreenlink Full screen
+
+    - if (user)
+      p#replays
+
+    p.note Controls: arrow keys or W/S/A/D to drive, space for handbrake, C for camera.
+
+    p.note
+      span Game code version #{urlTrack.config.gameversion}
+
+    include partial/footer
+
+  - if (urlTrack.config.gameversion === 1)
+    script(src="/js/Three.js")
+  script(src="/js/Detector.js")
+  //script(src="/js/Stats.js")
+  - if (urlTrack.config.gameversion >= 2)
+    script(src="/socket.io/socket.io.js")
+
+  - if (urlTrack.config.gameversion === 3)
+    script
+      TRIGGER = {
+        TRACK: !{JSON.stringify(trackData)},
+        CAR: {
+          ID: '#{urlCar.pub_id}',
+          NAME: '#{urlCar.name}',
+          CONFIG: !{JSON.stringify(urlCar.config)}
+        }
+      };
+  - else
+    script
+      TRIGGER = {
+        TRACK: {
+          ID: '#{urlTrack.pub_id}',
+          NAME: '#{urlTrack.name}',
+          CONFIG: !{JSON.stringify(urlTrack.config)}
+        },
+        CAR: {
+          ID: '#{urlCar.pub_id}',
+          NAME: '#{urlCar.name}',
+          CONFIG: !{JSON.stringify(urlCar.config)}
+        },
+        METRICS: false
+      };
 
   - if (user)
-    p#replays
+    script TRIGGER.USER_LOGGED_IN = '#{user.pub_id}';
 
-  p.note Controls: arrow keys or W/S/A/D to drive, space for handbrake, C for camera.
-
-  p.note
-    span Game code version #{urlTrack.config.gameversion}
-
-  !=partial('partial/footer')
-
-- if (urlTrack.config.gameversion === 1)
-  script(src="/js/Three.js")
-script(src="/js/Detector.js")
-//script(src="/js/Stats.js")
-- if (urlTrack.config.gameversion >= 2)
-  script(src="/socket.io/socket.io.js")
-
-- if (urlTrack.config.gameversion === 3)
-  script
-    TRIGGER = {
-      TRACK: !{JSON.stringify(trackData)},
-      CAR: {
-        ID: '#{urlCar.pub_id}',
-        NAME: '#{urlCar.name}',
-        CONFIG: !{JSON.stringify(urlCar.config)}
-      }
-    };
-- else
-  script
-    TRIGGER = {
-      TRACK: {
-        ID: '#{urlTrack.pub_id}',
-        NAME: '#{urlTrack.name}',
-        CONFIG: !{JSON.stringify(urlTrack.config)}
-      },
-      CAR: {
-        ID: '#{urlCar.pub_id}',
-        NAME: '#{urlCar.name}',
-        CONFIG: !{JSON.stringify(urlCar.config)}
-      },
-      METRICS: false
-    };
-
-- if (user)
-  script TRIGGER.USER_LOGGED_IN = '#{user.pub_id}';
-
-- if (urlTrack.config.gameversion === 1)
-  script(src="/build-v1/trigger.js")
-- if (urlTrack.config.gameversion === 2)
-  script(data-main="/build-v2/drive-main", src="/js/require.js")
-- else
-  - if ('production' === process.env.NODE_ENV)
-    script(data-main="/build-v3/drive-main", src="/js/require.js")
+  - if (urlTrack.config.gameversion === 1)
+    script(src="/build-v1/trigger.js")
+  - if (urlTrack.config.gameversion === 2)
+    script(data-main="/build-v2/drive-main", src="/js/require.js")
   - else
-    script(data-main="/scripts/drive-main", src="/js/require.js")
+    - if ('production' === process.env.NODE_ENV)
+      script(data-main="/build-v3/drive-main", src="/js/require.js")
+    - else
+      script(data-main="/scripts/drive-main", src="/js/require.js")

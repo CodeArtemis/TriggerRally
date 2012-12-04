@@ -1,32 +1,38 @@
-!=partial('partial/header', { login: 1 })
+extends layout
 
-.content
+block body
+  include partial/header
 
-  .editprofile
-    a.button(href="#", onclick="this.classList.contains('disabled') ? evt.preventDefault() : document.theform.submit()", id="submitbutton") Save changes
+  .content
 
-  h1= urlTrack.name
+    .editprofile
+      a.button(href="#", onclick="this.classList.contains('disabled') ? evt.preventDefault() : document.theform.submit()", id="submitbutton") Save changes
 
-  .section Information
+    h1= urlTrack.name
 
-  form(name="theform", action="save", method="post")
+    .section Information
 
-    p(style="color:red")
-      | Be careful, there's currently no history or undo in the database.
-      | The ID is in the URL: changing it will break existing web links.
+    form(name="theform", action="save", method="post")
 
-    !=partial('partial/formfield', { title:'Name', name:'name', value:urlTrack.name })
-    !=partial('partial/formfield', { title:'ID', name:'pub_id', value:urlTrack.pub_id })
+      p(style="color:red")
+        | Be careful, there's currently no history or undo in the database.
+        | The ID is in the URL: changing it will break existing web links.
 
-    dl
-      dt Created by
-      dd
-        !=partial('partial/user', {user:urlTrack.user})
+      field = { title:'Name', name:'name', value:urlTrack.name }
+      include partial/formfield
+      field = { title:'ID', name:'pub_id', value:urlTrack.pub_id }
+      include partial/formfield
+
+      dl
+        dt Created by
+        dd
+          user = urlTrack.user
+          include partial/user
 
 
-    textarea(name='config', rows=20, cols=80, autofocus)
-      =JSON.stringify(urlTrack.config, null, 2)
+      textarea(name='config', rows=20, cols=80, autofocus)
+        =JSON.stringify(urlTrack.config, null, 2)
 
-  !=partial('partial/footer')
+    include partial/footer
 
-!=partial('partial/formvalidate')
+  include partial/formvalidate

@@ -1,41 +1,45 @@
-!=partial('partial/header', { login: 1 })
+extends layout
 
-.content
+block body
+  include partial/header
 
-  h1 Top runs
+  .content
 
-  p 
-    | For track 
-    a(href="/track/#{urlTrack.pub_id}")
-      =urlTrack.name
-    |  with car
-    a(href="/car/#{urlCar.pub_id}")
-      =urlCar.name
-    | .
+    h1 Top runs
 
-  p
-    a.button.special(href="/x/#{urlTrack.pub_id}/#{urlCar.pub_id}/drive") Drive!
+    p 
+      | For track 
+      a(href="/track/#{urlTrack.pub_id}")
+        =urlTrack.name
+      |  with car
+      a(href="/car/#{urlCar.pub_id}")
+        =urlCar.name
+      | .
 
-  .section Runs
+    p
+      a.button.special(href="/x/#{urlTrack.pub_id}/#{urlCar.pub_id}/drive") Drive!
 
-  table
-    tr
-      td
-      td Driver
-      td Time
-      td
-      td
-      td Recorded
-    each run, rank in runs
+    .section Runs
+
+    table
       tr
-        td= rank + 1
         td
-          !=partial('partial/user', {user: run.user})
-        td= run.time_readable
+        td Driver
+        td Time
         td
-          a(href="/run/#{run.pub_id}/replay") Watch replay
         td
-          a(href="/run/#{run.pub_id}") Details
-        td= run.created_ago
+        td Recorded
+      each run, rank in runs
+        tr
+          td= rank + 1
+          td
+            user = run.user
+            include partial/user
+          td= run.time_readable
+          td
+            a(href="/run/#{run.pub_id}/replay") Watch replay
+          td
+            a(href="/run/#{run.pub_id}") Details
+          td= run.created_ago
 
-  !=partial('partial/footer')
+    include partial/footer

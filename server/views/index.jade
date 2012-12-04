@@ -1,49 +1,52 @@
-!=partial('partial/header', { login: 1 })
+extends layout
 
-.content
+block body
+  include partial/header
 
-  p Fast arcade rally racing action!
+  .content
 
-  div
-    a.button.special(href="/x/Alpina/ArbusuG/drive") Play Version 2 (development)
-  a(href="/x/Alpina/ArbusuG/drive")
-    img(width="300", height="169", src="/images/screen3.jpg", alt="Screenshot of Trigger Rally v2")
+    p Fast arcade rally racing action!
 
-  div
-    a.button.special(href="/x/Preview/Arbusu/drive") Play Version 1
-  a(href="/x/Preview/Arbusu/drive")
-    img(width="300", height="210", src="/images/screen1.jpg", alt="Screenshot of v1")
+    div
+      a.button.special(href="/x/Alpina/ArbusuG/drive") Play Version 2 (development)
+    a(href="/x/Alpina/ArbusuG/drive")
+      img(width="300", height="169", src="/images/screen3.jpg", alt="Screenshot of Trigger Rally v2")
 
-  .section News
-  .twitterfeeds
-    <script charset="utf-8" src="http://widgets.twimg.com/j/2/widget.js"></script>
-    script
-      new TWTR.Widget({
-        version: 2,
-        type: 'search',
-        search: 'TriggerRally',
-        interval: 10000,
-        title: 'What people are saying about',
-        subject: 'TriggerRally',
-        width: 940,
-        height: 310,
-        theme: {
-          shell: {
-            background: '#496b35',
-            color: '#ffffff'
+    div
+      a.button.special(href="/x/Preview/Arbusu/drive") Play Version 1
+    a(href="/x/Preview/Arbusu/drive")
+      img(width="300", height="210", src="/images/screen1.jpg", alt="Screenshot of v1")
+
+    .section News
+    .twitterfeeds
+      <script charset="utf-8" src="http://widgets.twimg.com/j/2/widget.js"></script>
+      script
+        new TWTR.Widget({
+          version: 2,
+          type: 'search',
+          search: 'TriggerRally',
+          interval: 10000,
+          title: 'What people are saying about',
+          subject: 'TriggerRally',
+          width: 940,
+          height: 310,
+          theme: {
+            shell: {
+              background: '#496b35',
+              color: '#ffffff'
+            },
+            tweets: {
+              background: '#000000',
+              color: '#ffffff',
+              links: '#4aed05'
+            }
           },
-          tweets: {
-            background: '#000000',
-            color: '#ffffff',
-            links: '#4aed05'
+          features: {
+            scrollbar: true,
+            loop: false,
+            live: true,
+            behavior: 'default'
           }
-        },
-        features: {
-          scrollbar: true,
-          loop: false,
-          live: true,
-          behavior: 'default'
-        }
-      }).render().start();
+        }).render().start();
 
-  !=partial('partial/footer')
+    include partial/footer

@@ -1,18 +1,22 @@
-!=partial('partial/header', { login: 1 })
+extends layout
 
-.content
+block body
+  include partial/header
 
-  h1= urlTrack.name
+  .content
 
-  .section Information
+    h1= urlTrack.name
 
-  dl
-    dt Name
-    dd= urlTrack.name
+    .section Information
 
-  dl
-    dt Created by
-    dd
-      !=partial('partial/user', {user:urlTrack.user})
+    dl
+      dt Name
+      dd= urlTrack.name
 
-  !=partial('partial/footer')
+    dl
+      dt Created by
+      dd
+        user = urlTrack.user
+        inlude partial/user
+
+    include partial/footer

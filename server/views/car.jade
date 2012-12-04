@@ -1,18 +1,22 @@
-!=partial('partial/header', { login: 1 })
+extends layout
 
-.content
+block body
+  include partial/header
 
-  h1= urlCar.name
+  .content
 
-  .section Information
+    h1= urlCar.name
 
-  dl
-    dt Name
-    dd= urlCar.name
+    .section Information
 
-  dl
-    dt Created by
-    dd
-      !=partial('partial/user', {user:urlCar.user})
+    dl
+      dt Name
+      dd= urlCar.name
 
-  !=partial('partial/footer')
+    dl
+      dt Created by
+      dd
+        user = urlCar.user
+        include partial/user
+
+    include partial/footer

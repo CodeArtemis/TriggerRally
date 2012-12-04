@@ -74,10 +74,10 @@ exports.user = function(req, res) {
   else Run
     .find({ user: req.urlUser.id })
     .limit(500)
-    .desc('_id')
-    .populate('track', ['pub_id', 'name'])
-    .populate('car', ['pub_id', 'name'])
-    .run(next);
+    .sort({_id: 'desc'})
+    .populate('track', {'pub_id':1, 'name':1})
+    .populate('car', {'pub_id':1, 'name':1})
+    .exec(next);
 };
 
 exports.userSave = function(req, res) {
@@ -231,9 +231,9 @@ function topRuns(track, car, limit, callback) {
     .where('car', car)
     .where('time', { $not: { $type: 10 } })  // Exclude null times.
     .limit(limit)
-    .asc('time')
-    .populate('user', ['pub_id', 'name', 'email'])
-    .run(callback);
+    .sort({time: 'asc'})
+    .populate('user', {'pub_id':1, 'name':1, 'email':1})
+    .exec(callback);
 };
 
 exports.top = function(req, res) {

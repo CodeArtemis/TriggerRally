@@ -59,7 +59,7 @@ a.disabled:visited {
 }
 .header {
   background: #fda;
-  box-shadow: 0 0 25px rgba(0,0,0,0.47);
+  box-shadow: 0 0 25px rgba(0,0,0,0.467);
   padding: 5px;
   position: relative;
   height: 40px;
@@ -88,7 +88,7 @@ h1 img {
 }
 .section {
   background: #dec;
-  color: rgba(0,0,0,0.50);
+  color: rgba(0,0,0,0.5);
   font-style: italic;
   margin: 30px 0px 20px;
   padding: 10px 5px 7px 10px;

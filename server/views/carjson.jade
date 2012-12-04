@@ -1,32 +1,37 @@
-!=partial('partial/header', { login: 1 })
+extends layout
 
-.content
+block body
+  include partial/header
 
-  .editprofile
-    a.button(href="#", onclick="this.classList.contains('disabled') ? evt.preventDefault() : document.theform.submit()", id="submitbutton") Save changes
+  .content
 
-  h1= urlCar.name
+    .editprofile
+      a.button(href="#", onclick="this.classList.contains('disabled') ? evt.preventDefault() : document.theform.submit()", id="submitbutton") Save changes
 
-  .section Information
+    h1= urlCar.name
 
-  form(name="theform", action="save", method="post")
+    .section Information
 
-    p(style="color:red")
-      | Be careful, there's currently no history or undo in the database.
-      | The ID is in the URL: changing it will break existing web links.
+    form(name="theform", action="save", method="post")
 
-    !=partial('partial/formfield', { title:'Name', name:'name', value:urlCar.name })
-    !=partial('partial/formfield', { title:'ID', name:'pub_id', value:urlCar.pub_id })
+      p(style="color:red")
+        | Be careful, there's currently no history or undo in the database.
+        | The ID is in the URL: changing it will break existing web links.
 
-    dl
-      dt Created by
-      dd
-        !=partial('partial/user', {user:urlCar.user})
+      field = { title:'Name', name:'name', value:urlCar.name }
+      include partial/formfield
+      field = { title:'ID', name:'pub_id', value:urlCar.pub_id }
+      include partial/formfield
 
+      dl
+        dt Created by
+        dd
+          user = urlCar.user
+          include partial/user
 
-    textarea(name='config', rows=20, cols=80, autofocus)
-      =JSON.stringify(urlCar.config, null, 2)
+      textarea(name='config', rows=20, cols=80, autofocus)
+        =JSON.stringify(urlCar.config, null, 2)
 
-  !=partial('partial/footer')
+    include partial/footer
 
-!=partial('partial/formvalidate')
+  include partial/formvalidate

@@ -54,7 +54,7 @@ var authenticateUser = function(profile, done) {
   UserPassport
     .findOne({passport_id: passport_id})
     .populate('user')
-    .run(function(error, userPassport) {
+    .exec(function(error, userPassport) {
     if (error) done(error);
     else {
       var user = userPassport && userPassport.user || null;
@@ -290,7 +290,7 @@ var loadUrlCar = function(req, res, next) {
   Car
     .findOne({ pub_id: req.params.idCar })
     .populate('user')
-    .run(function(error, urlCar) {
+    .exec(function(error, urlCar) {
     if (error) next(error);
     else {
       if (urlCar) {
@@ -310,7 +310,7 @@ var loadUrlRun = function(req, res, next) {
     .populate('user')
     .populate('car')
     .populate('track')
-    .run(function(error, urlRun) {
+    .exec(function(error, urlRun) {
     if (error) next(error);
     else {
       if (urlRun) {
