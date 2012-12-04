@@ -103,10 +103,10 @@ define [
       $content.on 'change', ->
         val = parseFloat $content.val()
         course = track.get('config').get('course')
-        checkpoints = course.toJSON().checkpoints
+        #checkpoints = course.toJSON().checkpoints
         for sel in selected when sel.type is 'checkpoint'
           eachSel sel, val
-        course.set 'checkpoints', {a:'b'}
+        #course.set 'checkpoints', checkpoints
         #quiver.push track.track.config.course.checkpoints
         #track.markModified()
 
@@ -114,7 +114,10 @@ define [
     checkpointSlider selDispRadius,   (sel, val) -> sel.object.disp.radius   = val
     checkpointSlider selDispHardness, (sel, val) -> sel.object.disp.hardness = val
     checkpointSlider selDispStrength, (sel, val) -> sel.object.disp.strength = val
-    checkpointSlider selSurfRadius,   (sel, val) -> sel.object.surf.radius   = val
+    checkpointSlider selSurfRadius,   (sel, val) ->
+      tmp = sel.object.surf
+      tmp.radius = val
+      sel.object.surf = tmp
     checkpointSlider selSurfHardness, (sel, val) -> sel.object.surf.hardness = val
     checkpointSlider selSurfStrength, (sel, val) -> sel.object.surf.strength = val
 
@@ -161,11 +164,6 @@ define [
     game = new gameGame.Game()
     client = new clientClient.TriggerClient $view3d[0], game
 
-    # HACK: Pack the terrain config directly into the track.
-    # These are stripped out again during save. FIXME.
-    #TRIGGER.TRACK.config.envScenery = TRIGGER.TRACK.env.scenery
-    #TRIGGER.TRACK.config.terrain = TRIGGER.TRACK.env.terrain
-
     trackModel = new Models.Track TRIGGER.TRACK
 
     track = null
@@ -177,14 +175,14 @@ define [
       constructor: (@cfg) ->
 
     startPos = new THREE.Object3D()
-    startPosConfig = TRIGGER.TRACK.config.course.startposition
+    startPosConfig = trackModel.config.course.startposition
     startPos.updateFromConfig = ->
       startPos.position.set.apply startPos.position, startPosConfig.pos
       startPos.rotation.set.apply startPos.rotation, startPosConfig.rot
     startPos.updateFromConfig()
     client.scene.add startPos
 
-    carConfig = TRIGGER.TRACK.env.cars[0].config
+    carConfig = trackModel.env.cars[0].config
     mockVehicle = new MockVehicle carConfig
     mockVehicle.body =
       interp:
@@ -221,24 +219,26 @@ define [
     selected = []
 
     #quiver.push track.track.config.course.checkpoints if updated
-    trackModel.get('config').on 'change', ->
+    trackModel.config.on 'change', ->
       console.log 'track config change!'
-    trackModel.get('config').get('course').on 'change', ->
+    trackModel.config.course.on 'change', ->
       console.log 'course change!'
-    trackModel.get('config').get('course').on 'change:checkpoints', ->
+    trackModel.config.course.on 'change:checkpoints', ->
       console.log 'course change:checkpoints!'
-    trackModel.get('config').on 'update', ->
+    trackModel.config.on 'update', ->
       console.log 'track config update!'
-    trackModel.get('config').get('course').on 'update', ->
+    trackModel.config.course.on 'update', ->
       console.log 'course update!'
-    trackModel.get('config').get('course').on 'update:checkpoints', ->
+    trackModel.config.course.on 'update:checkpoints', ->
       console.log 'course update:checkpoints!'
+
 
     inspectorController = new InspectorController selected, trackModel
 
     doSave = _.debounce ->
       setStatus 'save disabled'
       return
+      # TODO: Save using trackModel.save()
       formData = new FormData()
       formData.append 'name', track.name
       # HACK: Strip out the data we packed in earlier.

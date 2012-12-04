@@ -474,7 +474,7 @@ define [
     intersectCheckpoints: (ray) ->
       radiusSq = 16
       isect = []
-      for cp in @track.config.course.checkpoints
+      for cp in @track.config.course.checkpoints.models
         hit = @intersectSphere ray, new Vec3(cp.pos[0], cp.pos[1], cp.pos[2]), radiusSq
         if hit
           hit.type = 'checkpoint'
