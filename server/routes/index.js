@@ -167,8 +167,7 @@ exports.trackJsonSave = function(req, res) {
       if (req.header('referer').match('/json/edit$')) {
         res.redirect('/track/' + track.pub_id + '/json/edit');
       } else {
-        res.type('text/plain');
-        res.send(200);
+        res.send(200, null);
       }
     }
   });
