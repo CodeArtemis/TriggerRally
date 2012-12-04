@@ -56,6 +56,9 @@ body {
   margin: 0;
   font-family: "Ubuntu", sans-serif;
   overflow: hidden;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 h2 {
   display: inline;

@@ -4,6 +4,7 @@
 
 define [
   'zepto'
+  'backbone-full'
   'THREE'
   'util/util'
   'cs!client/client'
@@ -12,10 +13,16 @@ define [
   'game/game'
   'game/track'
   'cs!util/quiver'
-], ($, THREE, util, clientClient, clientMisc, clientCar, gameGame, gameTrack, quiver) ->
+], ($, Backbone, THREE, util, clientClient, clientMisc, clientCar, gameGame, gameTrack, quiver) ->
   KEYCODE = util.KEYCODE
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
+
+  class TrackModel
+    constructor: (@track) ->
+      _.extend @, Backbone.Events
+    markModified: ->
+      @trigger 'change'
 
   InspectorController = (selected, track) ->
     $inspector = $('#editor-inspector')
@@ -26,28 +33,39 @@ define [
       $root: $el
       $content: $el.find '.content'
 
-    selType = attrib '#sel-type'
-    selTitle = attrib '#title'
-    selDispRadius = attrib '#disp-radius'
-    selSurfRadius = attrib '#surf-radius'
+    selType         = attrib '#sel-type'
+    selTitle        = attrib '#title'
+    selDispRadius   = attrib '#disp-radius'
+    selDispHardness = attrib '#disp-hardness'
+    selDispStrength = attrib '#disp-strength'
+    selSurfRadius   = attrib '#surf-radius'
+    selSurfHardness = attrib '#surf-hardness'
+    selSurfStrength = attrib '#surf-strength'
 
-    selDispRadius.$content.on 'change', ->
-      val = selDispRadius.$content.val()
-      updated = no
-      for sel in selected when sel.type is 'checkpoint'
-        sel.object.disp.radius = val
-        updated = yes
-      quiver.push track.config.course.checkpoints if updated
+    checkpointSlider = (slider, eachSel) ->
+      $content = slider.$content
+      $content.on 'change', ->
+        val = parseFloat $content.val()
+        updated = no
+        for sel in selected when sel.type is 'checkpoint'
+          eachSel sel, val
+          updated = yes
+        quiver.push track.track.config.course.checkpoints if updated
+        track.markModified()
 
-    selSurfRadius.$content.on 'change', ->
-      val = selSurfRadius.$content.val()
-      updated = no
-      for sel in selected when sel.type is 'checkpoint'
-        sel.object.surf.radius = val
-        updated = yes
-      quiver.push track.config.course.checkpoints if updated
+    checkpointSlider selDispRadius,   (sel, val) -> sel.object.disp.radius   = val
+    checkpointSlider selDispHardness, (sel, val) -> sel.object.disp.hardness = val
+    checkpointSlider selDispStrength, (sel, val) -> sel.object.disp.strength = val
+    checkpointSlider selSurfRadius,   (sel, val) -> sel.object.surf.radius   = val
+    checkpointSlider selSurfHardness, (sel, val) -> sel.object.surf.hardness = val
+    checkpointSlider selSurfStrength, (sel, val) -> sel.object.surf.strength = val
+
+    checkpointSliderSet = (slider, val) ->
+      slider.$content.val val
+      slider.$root.addClass 'visible'
 
     @onSelectionChange = ->
+      # Hide all controls, then re-enable relevant ones.
       $inspectorAttribs.removeClass 'visible'
 
       selType.$content.text switch selected.length
@@ -56,17 +74,19 @@ define [
         else '[multiple]'
       selType.$root.addClass 'visible'
 
-      for sel in selected
+      if selected.length is 0
+        # If no selection, we inspect the track properties.
+        selTitle.$content.text track.track.name
+        selTitle.$root.addClass 'visible'
+      else for sel in selected
         switch sel.type
           when 'checkpoint'
-            selDispRadius.$content.val sel.object.disp.radius
-            selDispRadius.$root.addClass 'visible'
-            selSurfRadius.$content.val sel.object.surf.radius
-            selSurfRadius.$root.addClass 'visible'
-      unless selected
-        # If no selection, we inspect the track properties.
-        selTitle.$content.text track.name
-        selTitle.$root.addClass 'visible'
+            checkpointSliderSet selDispRadius,   sel.object.disp.radius
+            checkpointSliderSet selDispHardness, sel.object.disp.hardness
+            checkpointSliderSet selDispStrength, sel.object.disp.strength
+            checkpointSliderSet selSurfRadius,   sel.object.surf.radius
+            checkpointSliderSet selSurfHardness, sel.object.surf.hardness
+            checkpointSliderSet selSurfStrength, sel.object.surf.strength
       return
 
     @onSelectionChange()
@@ -131,8 +151,8 @@ define [
     client.camera.eulerOrder = 'ZYX'
     camPos = client.camera.position.copy startPos.position
     camPos.z += 50
-    camPos.y -= 20
-    camAng = client.camera.rotation.set 0.3, 0, 0
+    camPos.y -= 30
+    camAng = client.camera.rotation.set 0.6, 0, 0
     camVel = new Vec3
     camVelTarget = new Vec3
     camAngVel = new Vec3
@@ -140,7 +160,8 @@ define [
 
     selected = []
 
-    inspectorController = new InspectorController selected, TRIGGER.TRACK
+    trackModel = new TrackModel TRIGGER.TRACK
+    inspectorController = new InspectorController selected, trackModel
 
     doSave = _.debounce ->
       formData = new FormData()
@@ -164,6 +185,8 @@ define [
     requestSave = ->
       setStatus 'Saving...'
       doSave()
+
+    trackModel.on 'change', requestSave
 
     requestId = 0
 

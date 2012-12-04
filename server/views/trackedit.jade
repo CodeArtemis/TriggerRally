@@ -31,16 +31,33 @@
     span.content
 
   .attrib#title
-    span.label Title:
+    span.label Name:
     span.content
 
   .attrib#disp-radius
-    span.label Disp radius:
-    input.content(type="range", min=10, max=50, step="any")
+    span.label D radius:
+    input.content(type="range", min=0, max=80, step="any")
+
+  .attrib#disp-hardness
+    span.label D hardness:
+    input.content(type="range", min=0, max=1, step="any")
+
+  .attrib#disp-strength
+    span.label D strength:
+    input.content(type="range", min=0, max=1, step="any")
 
   .attrib#surf-radius
-    span.label Surf radius:
-    input.content(type="range", min=10, max=50, step="any")
+    span.label S radius:
+    input.content(type="range", min=0, max=80, step="any")
+
+  .attrib#surf-hardness
+    span.label S hardness:
+    input.content(type="range", min=0, max=1, step="any")
+
+  .attrib#surf-strength
+    span.label S strength:
+    input.content(type="range", min=0, max=1, step="any")
+
 
 #view3d
 
