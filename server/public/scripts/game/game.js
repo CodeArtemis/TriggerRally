@@ -92,8 +92,8 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     }.bind(this));
   };
 
-  exports.Game.prototype.setTrackConfig = function(trackConfig, callback) {
-    this.track.loadWithConfig(trackConfig, function() {
+  exports.Game.prototype.setTrackConfig = function(trackModel, callback) {
+    this.track.loadWithConfig(trackModel, function() {
       this.sim.addStaticObject(this.track.terrain);
 
       this.track.scenery && this.track.scenery.addToSim(this.sim);

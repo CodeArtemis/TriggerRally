@@ -18,44 +18,63 @@ define [
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
 
-  ###
-  class TrackModel
-    constructor: (@track) ->
-      _.extend @, Backbone.Events
-    markModified: ->
-      @trigger 'change'
-  ###
 
-  class TrackCourseModel extends Backbone.RelationalModel
-  TrackCourseModel.setup()
+  # http://www.narrativescience.com/blog/automatically-creating-getterssetters-for-backbone-models/
+  buildProperties = (func) ->
+    buildGetter = (name) ->
+      -> @get name
+    buildSetter = (name) ->
+      (value) -> @set name, value
+    for attr in func.prototype.attributeNames
+      Object.defineProperty func.prototype, attr,
+        get: buildGetter attr
+        set: buildSetter attr
 
-  class TrackCourseModel extends Backbone.RelationalModel
-  TrackCourseModel.setup()
+  Models = {}
 
-  class TrackSceneryModel extends Backbone.RelationalModel
-  TrackSceneryModel.setup()
+  class Models.Checkpoint extends Backbone.RelationalModel
+    attributeNames: [ 'disp', 'pos', 'surf' ]
+    buildProperties @
 
-  class TrackConfigModel extends Backbone.RelationalModel
-    # course, gameversion, scenery
+  class Models.Course extends Backbone.RelationalModel
+    attributeNames: [ 'checkpoints', 'startposition' ]
+    relations: [
+      type: Backbone.HasMany
+      key: 'checkpoints'
+      relatedModel: Models.Checkpoint
+    ]
+    buildProperties @
+
+  class Models.TrackConfig extends Backbone.RelationalModel
+    attributeNames: [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
     relations: [
       type: Backbone.HasOne
       key: 'course'
-      relatedModel: TrackCourseModel
-    ,
-      type: Backbone.HasOne
-      key: 'scenery'
-      relatedModel: TrackSceneryModel
+      relatedModel: Models.Course
     ]
-  TrackConfigModel.setup()
+    buildProperties @
 
-  class TrackModel extends Backbone.RelationalModel
-    # config, env, id, name, user
+  class Models.Env extends Backbone.RelationalModel
+    attributeNames: [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
+    buildProperties @
+
+  class Models.Track extends Backbone.RelationalModel
+    attributeNames: [ 'config', 'env', 'name', 'user' ]
     relations: [
       type: Backbone.HasOne
       key: 'config'
-      relatedModel: TrackConfigModel
+      relatedModel: Models.TrackConfig
+    ,
+      type: Backbone.HasOne
+      key: 'env'
+      relatedModel: Models.Env
     ]
-  TrackModel.setup()
+    buildProperties @
+
+  Model.setup() for Model in Models
+
+
+
 
   # Utility for manipulating objects in models.
   manipulate = (model, attrib, fn) ->
@@ -144,11 +163,13 @@ define [
 
     # HACK: Pack the terrain config directly into the track.
     # These are stripped out again during save. FIXME.
-    TRIGGER.TRACK.config.envScenery = TRIGGER.TRACK.env.scenery
-    TRIGGER.TRACK.config.terrain = TRIGGER.TRACK.env.terrain
+    #TRIGGER.TRACK.config.envScenery = TRIGGER.TRACK.env.scenery
+    #TRIGGER.TRACK.config.terrain = TRIGGER.TRACK.env.terrain
+
+    trackModel = new Models.Track TRIGGER.TRACK
 
     track = null
-    game.setTrackConfig TRIGGER.TRACK.config, (err, theTrack) ->
+    game.setTrackConfig trackModel, (err, theTrack) ->
       track = theTrack
       client.addEditorCheckpoints track
 
@@ -199,8 +220,6 @@ define [
 
     selected = []
 
-    trackModel = new TrackModel TRIGGER.TRACK
-    console.log trackModel.toJSON()
     #quiver.push track.track.config.course.checkpoints if updated
     trackModel.get('config').on 'change', ->
       console.log 'track config change!'
@@ -218,6 +237,8 @@ define [
     inspectorController = new InspectorController selected, trackModel
 
     doSave = _.debounce ->
+      setStatus 'save disabled'
+      return
       formData = new FormData()
       formData.append 'name', track.name
       # HACK: Strip out the data we packed in earlier.
