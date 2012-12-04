@@ -10,6 +10,7 @@ var fs = require('fs')
   , basename = path.basename
   , dirname = path.dirname
   , resolve = path.resolve
+  , exists = fs.existsSync || path.existsSync
   , join = path.join
   , mkdirp = require('mkdirp')
   , jade = require('../');
@@ -27,8 +28,9 @@ program
   .option('-O, --out <dir>', 'output the compiled html to <dir>')
   .option('-p, --path <path>', 'filename used to resolve includes')
   .option('-P, --pretty', 'compile pretty html output')
-  .option('-c, --client', 'compile for client-side runtime.js')
+  .option('-c, --client', 'compile function for client-side runtime.js')
   .option('-D, --no-debug', 'compile without debugging (smaller functions)')
+  .option('-w, --watch', 'watch files for changes and automatically re-render')
 
 program.on('--help', function(){
   console.log('  Examples:');
@@ -54,7 +56,13 @@ program.parse(process.argv);
 
 // options given, parse them
 
-if (program.obj) options = eval('(' + program.obj + ')');
+if (program.obj) {
+  if (exists(program.obj)) {
+    options = JSON.parse(fs.readFileSync(program.obj));
+  } else {
+    options = eval('(' + program.obj + ')');
+  }
+}
 
 // --filename
 
@@ -72,6 +80,10 @@ options.client = program.client;
 
 options.pretty = program.pretty;
 
+// --watch
+
+options.watch = program.watch;
+
 // left-over args are file paths
 
 var files = program.args;
@@ -81,7 +93,16 @@ var files = program.args;
 if (files.length) {
   console.log();
   files.forEach(renderFile);
-  process.on('exit', console.log);
+  if (options.watch) {
+    files.forEach(function (file) {
+      fs.watchFile(file, {interval: 100}, function (curr, prev) {
+        if (curr.mtime > prev.mtime) renderFile(file);
+      });
+    });
+  }
+  process.on('exit', function () {
+    console.log();
+  });
 // stdio
 } else {
   stdin();

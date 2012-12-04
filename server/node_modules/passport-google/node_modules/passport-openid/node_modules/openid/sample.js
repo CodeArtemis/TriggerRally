@@ -95,7 +95,7 @@ var server = require('http').createServer(
 
             if(error)
             {
-              res.end('Authentication failed: ' + error);
+              res.end('Authentication failed: ' + error.message);
             }
             else
             {

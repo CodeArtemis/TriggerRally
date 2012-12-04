@@ -168,7 +168,7 @@ passport.deserializeUser(function(id, done) {
   UserPassport
     .findOne({ _id: id })
     .populate('user')
-    .run(function (error, userPassport) {
+    .exec(function (error, userPassport) {
     done(error, userPassport);
   });
 });
@@ -256,7 +256,7 @@ var loadUrlTrack = function(req, res, next) {
     .findOne({ pub_id: req.params.idTrack })
     .populate('user')
     .populate('env')
-    .run(function(error, urlTrack) {
+    .exec(function(error, urlTrack) {
     if (error) next(error);
     else {
       if (urlTrack) {
@@ -267,7 +267,7 @@ var loadUrlTrack = function(req, res, next) {
             .find()
             .where('_id')
             .in(urlTrack.env.cars)
-            .run(function(error, cars) {
+            .exec(function(error, cars) {
               if (error) next(error);
               else {
                 // Horrible workaround because we can't populate env.cars directly.

@@ -1,71 +1,73 @@
+extends layout-editor
 
-#editor-statusbar
-  table
-    tr
-      td
-        h2
-          a(href="/") Trigger Rally&nbsp;
-      //td
-        menu
-          li Menu
-            menu(type="list")
-              li Hello
-              li Goodbye
-      td
-        span Status:&nbsp;
-        span#status Loading
-      td
-        .userinfo
-          - if (user)
-            !=partial('partial/user', {user:user})
-            span &nbsp;&mdash;&nbsp;
-            a(href='/logout') Log Out&nbsp;
-          - else//- if (login)
-            span
-              a(href="/login")<strong>Log in</strong>&nbsp;
+block body
+  #editor-statusbar
+    table
+      tr
+        td
+          h2
+            a(href="/") Trigger Rally&nbsp;
+        //td
+          menu
+            li Menu
+              menu(type="list")
+                li Hello
+                li Goodbye
+        td
+          span Status:&nbsp;
+          span#status Loading
+        td
+          .userinfo
+            - if (user)
+              include partial/user
+              span &nbsp;&mdash;&nbsp;
+              a(href='/logout') Log Out&nbsp;
+            - else//- if (login)
+              span
+                a(href="/login")<strong>Log in</strong>&nbsp;
 
-#editor-inspector
-  //-h3 Property inspector
-  .attrib#sel-type
-    span.label Selection:
-    span.content
+  #editor-inspector
+    //-h3 Property inspector
+    .attrib#sel-type
+      span.label Selection:
+      span.content
 
-  .attrib#title
-    span.label Name:
-    span.content
+    .attrib#title
+      span.label Name:
+      span.content
 
-  .attrib#disp-radius
-    span.label D radius:
-    input.content(type="range", min=0, max=80, step="any")
+    .attrib#disp-radius
+      span.label D radius:
+      input.content(type="range", min=0, max=80, step="any")
 
-  .attrib#disp-hardness
-    span.label D hardness:
-    input.content(type="range", min=0, max=1, step="any")
+    .attrib#disp-hardness
+      span.label D hardness:
+      input.content(type="range", min=0, max=1, step="any")
 
-  .attrib#disp-strength
-    span.label D strength:
-    input.content(type="range", min=0, max=1, step="any")
+    .attrib#disp-strength
+      span.label D strength:
+      input.content(type="range", min=0, max=1, step="any")
 
-  .attrib#surf-radius
-    span.label S radius:
-    input.content(type="range", min=0, max=80, step="any")
+    .attrib#surf-radius
+      span.label S radius:
+      input.content(type="range", min=0, max=80, step="any")
 
-  .attrib#surf-hardness
-    span.label S hardness:
-    input.content(type="range", min=0, max=1, step="any")
+    .attrib#surf-hardness
+      span.label S hardness:
+      input.content(type="range", min=0, max=1, step="any")
 
-  .attrib#surf-strength
-    span.label S strength:
-    input.content(type="range", min=0, max=1, step="any")
+    .attrib#surf-strength
+      span.label S strength:
+      input.content(type="range", min=0, max=1, step="any")
 
 
-#view3d
+  #view3d
 
-script(src="/socket.io/socket.io.js")
+  script(src="/socket.io/socket.io.js")
 
-script
-  var TRIGGER = {
-    TRACK: !{JSON.stringify(trackData)}
-  };
+  script
+    var TRIGGER = {
+      TRACK: !{JSON.stringify(trackData)}
+    };
 
-script(data-main="/scripts/editor/editor-main", src="/js/require.js")
+  script(data-main="/scripts/editor/editor-main", src="/js/require.js")

@@ -267,7 +267,7 @@ module.exports = {
     }
     didCatch.should.be.true;
   },
-  "should proceed without mutating arguments if `next(null)` is called in a serial pre, and the last argument of the target method is a callback with node-like signature function (err, obj) {...} or function (err) {...}": function () {
+  "should proceed without mutating arguments if `next(null|undefined)` is called in a serial pre, and the last argument of the target method is a callback with node-like signature function (err, obj) {...} or function (err) {...}": function () {
     var A = function () {};
     _.extend(A, hooks);
     var counter = 0;
@@ -278,6 +278,9 @@ module.exports = {
     A.pre('save', function (next) {
       next(null);
     });
+    A.pre('save', function (next) {
+      next(undefined);
+    });
     var a = new A();
     a.save( function (err) {
       if (err instanceof Error) counter++;
@@ -286,12 +289,15 @@ module.exports = {
     counter.should.equal(-1);
     a.value.should.eql(1);
   },
-  "should proceed with mutating arguments if `next(null)` is callback in a serial pre, and the last argument of the target method is not a function": function () {
+  "should proceed with mutating arguments if `next(null|undefined)` is callback in a serial pre, and the last argument of the target method is not a function": function () {
     var A = function () {};
     _.extend(A, hooks);
     A.prototype.set = function (v) {
       this.value = v;
     };
+    A.pre('set', function (next) {
+      next(undefined);
+    });
     A.pre('set', function (next) {
       next(null);
     });

@@ -14,12 +14,16 @@
  */
 
 var interpolate = exports.interpolate = function(str){
-  return str.replace(/(\\)?([#!]){(.*?)}/g, function(str, escape, flag, code){
+  return str.replace(/(_SLASH_)?([#!]){(.*?)}/g, function(str, escape, flag, code){
+    code = code
+      .replace(/\\'/g, "'")
+      .replace(/_SLASH_/g, '\\');
+
     return escape
-      ? str
+      ? str.slice(7)
       : "' + "
         + ('!' == flag ? '' : 'escape')
-        + "((interp = " + code.replace(/\\'/g, "'")
+        + "((interp = " + code
         + ") == null ? '' : interp) + '";
   });
 };
@@ -47,3 +51,18 @@ var escape = exports.escape = function(str) {
 exports.text = function(str){
   return interpolate(escape(str));
 };
+
+/**
+ * Merge `b` into `a`.
+ *
+ * @param {Object} a
+ * @param {Object} b
+ * @return {Object}
+ * @api public
+ */
+
+exports.merge = function(a, b) {
+  for (var key in b) a[key] = b[key];
+  return a;
+};
+

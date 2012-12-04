@@ -37,7 +37,7 @@ exports.parse  = function(data)
     return services;
   }
 
-  for(var s in serviceMatches)
+  for(var s = 0, len = serviceMatches.length; s < len; ++s)
   {
     var service = serviceMatches[s];
     var svcs = [];
