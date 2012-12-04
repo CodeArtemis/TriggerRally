@@ -6,7 +6,8 @@
 
 var connect = require('connect');
 var express = require('express');
-var io = require('socket.io');
+var http = require('http');
+var socketio = require('socket.io');
 var passport = require('passport');
 var FacebookStrategy = require('passport-facebook').Strategy;
 var GoogleStrategy = require('passport-google').Strategy;
@@ -37,7 +38,7 @@ var Run = mongoose.model('Run');
 console.log('Base directory: ' + __dirname);
 
 // Global app object is accessible from other modules.
-var app = module.exports = express.createServer();
+var app = module.exports = express();
 
 var PORT = process.env.PORT || 80;
 var DOMAIN = process.env.DOMAIN || 'triggerrally.com';
@@ -407,9 +408,10 @@ app.get('/drive', function(req, res) {
   res.redirect('/x/Preview/Arbusu/drive', 301);
 });
 
-app.listen(PORT);
-var sio = io.listen(app);
-console.log("Server listening on port %d in %s mode", app.address().port, app.settings.env);
+var server = http.createServer(app);
+var sio = socketio.listen(server);
+server.listen(PORT);
+console.log("Server listening on port %d in %s mode", PORT, app.settings.env);
 
 if ('production' === process.env.NODE_ENV) {
   sio.set('log level', 1);
