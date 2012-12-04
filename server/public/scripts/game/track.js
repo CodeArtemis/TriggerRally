@@ -34,17 +34,14 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
 
     source.load(this.env.terrain, function() {
       var course = config.course;
-      var coordscale = course.coordscale || [1, 1];
 
       var maps = this.terrain.source.maps;
 
       var drawTrack = function(ins, outs, callback) {
         var src = ins[0], dst = outs[0];
         var surf = outs[1];
-        var checkpointsSource = ins[1];
+        var checkpointsCfg = ins[1].toJSON();
         var checkpoints = outs[2];
-
-        var checkpointsXY = checkpointsSource.toJSON();
 
         dst.width = src.width;
         dst.height = src.height;
@@ -53,13 +50,15 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
         uImg.createBuffer(surf, src.width, src.height, 4, Uint8Array);
 
         checkpoints.length = 0;
-        var numCheckpoints = checkpointsXY.length;
+        var numCheckpoints = checkpointsCfg.length;
         for (var i = 0; i < numCheckpoints; ++i) {
           checkpoints.push(
-              new Vec3(checkpointsXY[i].pos[0] * coordscale[0],
-                       checkpointsXY[i].pos[1] * coordscale[1],
-                       checkpointsXY[i].pos[2] || 0));
+              new Vec3(checkpointsCfg[i].pos[0],
+                       checkpointsCfg[i].pos[1],
+                       checkpointsCfg[i].pos[2]));
         }
+        // Doing a quiver push inside a worker function seems like a Really Bad Idea,
+        // but we're doing it because we've modified checkpoints.
         quiver.push(checkpoints);
 
         var adjustCheckpointHeights = function() {
@@ -147,14 +146,14 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
           cp = [ pts[ix[0]], pts[ix[1]], pts[ix[2]], pts[ix[3]] ];
           for (; t < chords[i]; t += tStep) {
             u = t / chords[i];
-            radius   = linearInterp(  //checkpointsXY[ix[0]].surf.radius,
-                                    //checkpointsXY[ix[1]].surf.radius,
-                                    checkpointsXY[ix[1]].surf.radius,
-                                    checkpointsXY[ix[2]].surf.radius, u);
-            hardness = linearInterp(checkpointsXY[ix[1]].surf.hardness,
-                                    checkpointsXY[ix[2]].surf.hardness, u)
-            alpha    = linearInterp(checkpointsXY[ix[1]].surf.strength,
-                                    checkpointsXY[ix[2]].surf.strength, u)
+            radius   = linearInterp(  //checkpointsCfg[ix[0]].surf.radius,
+                                    //checkpointsCfg[ix[1]].surf.radius,
+                                    checkpointsCfg[ix[1]].surf.radius,
+                                    checkpointsCfg[ix[2]].surf.radius, u);
+            hardness = linearInterp(checkpointsCfg[ix[1]].surf.hardness,
+                                    checkpointsCfg[ix[2]].surf.hardness, u)
+            alpha    = linearInterp(checkpointsCfg[ix[1]].surf.strength,
+                                    checkpointsCfg[ix[2]].surf.strength, u)
             radius = Math.max(0, radius);
             tStep = radius / 3 + 3;
 
@@ -175,14 +174,14 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
           cp = [ pts[ix[0]], pts[ix[1]], pts[ix[2]], pts[ix[3]] ];
           for (; t < chords[i]; t += tStep) {
             u = t / chords[i];
-            radius   = linearInterp(  //checkpointsXY[ix[0]].disp.radius,
-                                    //checkpointsXY[ix[1]].disp.radius,
-                                    checkpointsXY[ix[1]].disp.radius,
-                                    checkpointsXY[ix[2]].disp.radius, u);
-            hardness = linearInterp(checkpointsXY[ix[1]].disp.hardness,
-                                    checkpointsXY[ix[2]].disp.hardness, u)
-            alpha    = linearInterp(checkpointsXY[ix[1]].disp.strength,
-                                    checkpointsXY[ix[2]].disp.strength, u)
+            radius   = linearInterp(  //checkpointsCfg[ix[0]].disp.radius,
+                                    //checkpointsCfg[ix[1]].disp.radius,
+                                    checkpointsCfg[ix[1]].disp.radius,
+                                    checkpointsCfg[ix[2]].disp.radius, u);
+            hardness = linearInterp(checkpointsCfg[ix[1]].disp.hardness,
+                                    checkpointsCfg[ix[2]].disp.hardness, u)
+            alpha    = linearInterp(checkpointsCfg[ix[1]].disp.strength,
+                                    checkpointsCfg[ix[2]].disp.strength, u)
             radius = Math.max(0, radius);
             tStep = radius / 3 + 3;
 
@@ -271,12 +270,20 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
 
       this.scenery = new gameScenery.Scenery(trackModel.config.scenery, trackModel.env.scenery, this);
 
-      var invalidateScenery = function(ins, outs, next) {
+      var invalidateSceneryQuiver = function(ins, outs, next) {
         outs[0].invalidate();
         next();
       };
-      quiver.connect(maps.surface, invalidateScenery, this.scenery);
-      quiver.connect(maps.height, invalidateScenery);
+      quiver.connect(invalidateSceneryQuiver, this.scenery);
+      quiver.connect(maps.surface, invalidateSceneryQuiver);
+      quiver.connect(maps.height, invalidateSceneryQuiver);
+
+      // TODO: Invalidate scenery by layer, instead of this scatter-shot.
+      var invalidateScenery = function() {
+        this.scenery.invalidate();
+      }.bind(this);
+      trackModel.config.on('change:scenery', invalidateScenery);
+      trackModel.env.on('change:scenery', invalidateScenery);
 
       if (callback) callback();
     }.bind(this));

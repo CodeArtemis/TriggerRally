@@ -24,9 +24,17 @@ define [
     attributeNames: [ 'disp', 'pos', 'surf' ]
     buildProperties @
 
+  class models.StartPos extends Backbone.RelationalModel
+    attributeNames: [ 'pos', 'rot' ]
+    buildProperties @
+
   class models.Course extends Backbone.RelationalModel
     attributeNames: [ 'checkpoints', 'startposition' ]
     relations: [
+      type: Backbone.HasOne
+      key: 'startposition'
+      relatedModel: models.StartPos
+    ,
       type: Backbone.HasMany
       key: 'checkpoints'
       relatedModel: models.Checkpoint

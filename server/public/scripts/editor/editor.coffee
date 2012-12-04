@@ -99,12 +99,15 @@ define [
     game = new gameGame.Game()
     client = new clientClient.TriggerClient $view3d[0], game
 
-    trackModel = new models.Track TRIGGER.TRACK
+    trackModel = new models.Track
 
     track = null
-    game.setTrackConfig trackModel, (err, theTrack) ->
-      track = theTrack
-      client.addEditorCheckpoints track
+    trackModel.on 'change', ->
+      game.setTrackConfig trackModel, (err, theTrack) ->
+        track = theTrack
+        client.addEditorCheckpoints track
+
+    trackModel.set TRIGGER.TRACK
 
     class MockVehicle
       constructor: (@cfg) ->
@@ -224,9 +227,10 @@ define [
               updateStartPos = yes
             when 'scenery'
               updateLayers[sel.layer] = yes
+        #track.scenery.invalidate()
         for layer of updateLayers
           track.scenery.invalidateLayer layer
-        requestSave() if updateLayers or updateStartPos
+        #requestSave() if updateLayers or updateStartPos
 
       camVelTarget.set(
           camVelTarget.x * Math.cos(camAng.z) - camVelTarget.y * Math.sin(camAng.z),
@@ -298,6 +302,7 @@ define [
       return
 
     clearSelection = ->
+      # TODO: fully dispose meshes.
       for sel in selected
         client.scene.remove sel.mesh
       selected.length = 0
@@ -378,7 +383,7 @@ define [
           updateLayers = {}
 
           for sel in selected
-            pos = sel.object.pos
+            pos = _.clone sel.object.pos
             pos[0] += motion.x
             pos[1] += motion.y
             pos[2] += motion.z
@@ -393,13 +398,14 @@ define [
                 tmp.set pos[0], pos[1], -Infinity
                 contact = track.terrain.getContact tmp
                 pos[2] = contact.surfacePos.z
+            sel.object.pos = pos
             sel.mesh.position.set pos[0], pos[1], pos[2]
 
           courseConfig = track.config.course
-          quiver.push courseConfig.checkpoints if updateCheckpoints
-          for layer of updateLayers
-            track.scenery.invalidateLayer layer
-          requestSave() if updateCheckpoints or updateLayers or updateStartPos
+          #quiver.push courseConfig.checkpoints if updateCheckpoints
+          #for layer of updateLayers
+          #  track.scenery.invalidateLayer layer
+          #requestSave() if updateCheckpoints or updateLayers or updateStartPos
         else
           if event.shiftKey or buttons & 2
             camAngVel.z += motionX * 0.1
@@ -415,7 +421,6 @@ define [
       tmp = new Vec3
       tmp.copy(forward).multiplyScalar scrollY * -2
       camVel.addSelf tmp
-      #client.camera.rotation.z += event.wheelDeltaX * 0.01
       event.preventDefault()
       return
 
