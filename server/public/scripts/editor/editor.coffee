@@ -18,11 +18,48 @@ define [
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
 
+  ###
   class TrackModel
     constructor: (@track) ->
       _.extend @, Backbone.Events
     markModified: ->
       @trigger 'change'
+  ###
+
+  class TrackCourseModel extends Backbone.RelationalModel
+  TrackCourseModel.setup()
+
+  class TrackCourseModel extends Backbone.RelationalModel
+  TrackCourseModel.setup()
+
+  class TrackSceneryModel extends Backbone.RelationalModel
+  TrackSceneryModel.setup()
+
+  class TrackConfigModel extends Backbone.RelationalModel
+    # course, gameversion, scenery
+    relations: [
+      type: Backbone.HasOne
+      key: 'course'
+      relatedModel: TrackCourseModel
+    ,
+      type: Backbone.HasOne
+      key: 'scenery'
+      relatedModel: TrackSceneryModel
+    ]
+  TrackConfigModel.setup()
+
+  class TrackModel extends Backbone.RelationalModel
+    # config, env, id, name, user
+    relations: [
+      type: Backbone.HasOne
+      key: 'config'
+      relatedModel: TrackConfigModel
+    ]
+  TrackModel.setup()
+
+  # Utility for manipulating objects in models.
+  manipulate = (model, attrib, fn) ->
+    model.set attrib, fn model.get(attrib)
 
   InspectorController = (selected, track) ->
     $inspector = $('#editor-inspector')
@@ -46,13 +83,15 @@ define [
       $content = slider.$content
       $content.on 'change', ->
         val = parseFloat $content.val()
-        updated = no
+        course = track.get('config').get('course')
+        checkpoints = course.toJSON().checkpoints
         for sel in selected when sel.type is 'checkpoint'
           eachSel sel, val
-          updated = yes
-        quiver.push track.track.config.course.checkpoints if updated
-        track.markModified()
+        course.set 'checkpoints', {a:'b'}
+        #quiver.push track.track.config.course.checkpoints
+        #track.markModified()
 
+    checkpointSlider selDispRadius,   (sel, val) -> sel.object.disp.radius   = val
     checkpointSlider selDispRadius,   (sel, val) -> sel.object.disp.radius   = val
     checkpointSlider selDispHardness, (sel, val) -> sel.object.disp.hardness = val
     checkpointSlider selDispStrength, (sel, val) -> sel.object.disp.strength = val
@@ -76,7 +115,7 @@ define [
 
       if selected.length is 0
         # If no selection, we inspect the track properties.
-        selTitle.$content.text track.track.name
+        selTitle.$content.text track.get('name')
         selTitle.$root.addClass 'visible'
       else for sel in selected
         switch sel.type
@@ -161,6 +200,21 @@ define [
     selected = []
 
     trackModel = new TrackModel TRIGGER.TRACK
+    console.log trackModel.toJSON()
+    #quiver.push track.track.config.course.checkpoints if updated
+    trackModel.get('config').on 'change', ->
+      console.log 'track config change!'
+    trackModel.get('config').get('course').on 'change', ->
+      console.log 'course change!'
+    trackModel.get('config').get('course').on 'change:checkpoints', ->
+      console.log 'course change:checkpoints!'
+    trackModel.get('config').on 'update', ->
+      console.log 'track config update!'
+    trackModel.get('config').get('course').on 'update', ->
+      console.log 'course update!'
+    trackModel.get('config').get('course').on 'update:checkpoints', ->
+      console.log 'course update:checkpoints!'
+
     inspectorController = new InspectorController selected, trackModel
 
     doSave = _.debounce ->

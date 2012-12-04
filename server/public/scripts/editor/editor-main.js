@@ -43,8 +43,8 @@ require(
       , 'async': '../js/async'
       , 'cs': '../js/cs'
       , 'coffee-script': '../js/coffee-script'
-      , 'underscore': '../js/underscore-min'
-      , 'backbone': '../js/backbone-min'
+      , 'underscore': '../js/underscore'  // -min
+      , 'backbone': '../js/backbone'  // -min
       , 'backbone-relational': '../js/backbone-relational'
       , 'zepto': '../js/zepto'
     }
