@@ -1,9 +1,9 @@
 
-ADDON = build/default/canvas.node
+ADDON = build/Release/canvas.node
 REPORTER = dot
 
 $(ADDON): src/*.cc
-	node-waf configure build
+	npm install
 
 test: $(ADDON)
 	@./node_modules/.bin/mocha \
@@ -19,6 +19,6 @@ benchmark:
 	@node benchmarks/run.js
 
 clean:
-	node-waf distclean
+	rm -fr build
 
 .PHONY: test test-server benchmark clean

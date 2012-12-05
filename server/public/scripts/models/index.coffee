@@ -30,6 +30,8 @@ define [
 
   class models.Course extends Backbone.RelationalModel
     attributeNames: [ 'checkpoints', 'startposition' ]
+    defaults:
+      startposition: new models.StartPos
     relations: [
       type: Backbone.HasOne
       key: 'startposition'
@@ -43,6 +45,8 @@ define [
 
   class models.TrackConfig extends Backbone.RelationalModel
     attributeNames: [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
+    defaults:
+      course: new models.Course
     relations: [
       type: Backbone.HasOne
       key: 'course'
@@ -56,6 +60,8 @@ define [
 
   class models.Track extends Backbone.RelationalModel
     attributeNames: [ 'config', 'env', 'name', 'user' ]
+    defaults:
+      config: new models.TrackConfig
     relations: [
       type: Backbone.HasOne
       key: 'config'

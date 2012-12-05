@@ -3,13 +3,19 @@
   , "version": "0.0.1"
   , "private": true
   , "dependencies": {
-      "express": ">= 3"
-    , "jade": ">= 0.0.1"
-    , "mongodb": ">= 0.9.6-7"
-    , "mongoose": ">= 0.2.5"
-    , "http-proxy": ">= 0.8.2"
-    , "passport": ">= 0.1.8"
-    , "passport-google": ">= 0.1.1"
-    , "stylus": ">= 0.0.1"
+      "async": "*"
+    , "express": ">= 3"
+    , "jade": "*"
+    , "mongodb": "*"
+    , "mongoose": "*"
+    , "http-proxy": "*"
+    , "passport": "*"
+    , "passport-facebook": "*"
+    , "passport-google": "*"
+    , "passport-local": "*"
+    , "passport-twitter": "*"
+    , "session-mongoose": "*"
+    , "stylus": "*"
+    , "canvas": "*"
   }
 }

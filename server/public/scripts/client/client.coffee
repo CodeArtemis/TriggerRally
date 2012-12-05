@@ -223,7 +223,7 @@ define [
     event.ctrlKey or event.altKey or event.metaKey
 
   TriggerClient: class TriggerClient
-    constructor: (@containerEl, @game) ->
+    constructor: (@containerEl, @game, options = {}) ->
       # TODO: Add Detector support.
       @objects = {}
       @pubsub = new pubsub.PubSub()
@@ -244,9 +244,9 @@ define [
 
       @add new SunLight @scene
 
-      @audio = new clientAudio.WebkitAudio()
+      @audio = new clientAudio.WebkitAudio() unless options.quiet
       checkpointBuffer = null
-      @audio.loadBuffer '/a/sounds/checkpoint.wav', (buffer) ->
+      @audio?.loadBuffer '/a/sounds/checkpoint.wav', (buffer) ->
         checkpointBuffer = buffer
 
       @sync = new synchro.Synchro @game
@@ -257,7 +257,7 @@ define [
           progress.on 'advance', =>
             renderCheckpoints.highlightCheckpoint progress.nextCpIndex
             if checkpointBuffer?
-              @audio.playSound checkpointBuffer, false, 1, 1
+              @audio?.playSound checkpointBuffer, false, 1, 1
 
       deferredCars = []
 
@@ -343,8 +343,9 @@ define [
     , 500)
 
     muteAudioIfStopped: ->
-      @audio.setGain 1
-      @debouncedMuteAudio @audio
+      if @audio?
+        @audio.setGain 1
+        @debouncedMuteAudio @audio
       return
 
     update: (delta) ->

@@ -97,7 +97,7 @@ define [
     setStatus 'OK'
 
     game = new gameGame.Game()
-    client = new clientClient.TriggerClient $view3d[0], game
+    client = new clientClient.TriggerClient $view3d[0], game, quiet: yes
 
     trackModel = new models.Track
 
@@ -107,18 +107,23 @@ define [
         track = theTrack
         client.addEditorCheckpoints track
 
-    trackModel.set TRIGGER.TRACK
-
     class MockVehicle
       constructor: (@cfg) ->
 
     startPos = new THREE.Object3D()
-    startPosConfig = trackModel.config.course.startposition
-    startPos.updateFromConfig = ->
-      startPos.position.set.apply startPos.position, startPosConfig.pos
-      startPos.rotation.set.apply startPos.rotation, startPosConfig.rot
-    startPos.updateFromConfig()
     client.scene.add startPos
+    trackModel.on 'change:config', ->
+      do update = ->
+        do update = ->
+          console.log 'updating startpos'
+          startposition = trackModel.config.course.startposition
+          Vec3::set.apply startPos.position, startposition.pos
+          Vec3::set.apply startPos.rotation, startposition.rot
+        trackModel.config.course.on 'change:startposition', update
+        trackModel.config.course.startposition.on 'change', update
+      trackModel.config.on 'change:course', update
+
+    trackModel.set TRIGGER.TRACK
 
     carConfig = trackModel.env.cars[0].config
     mockVehicle = new MockVehicle carConfig
@@ -215,16 +220,16 @@ define [
 
       if objSpinVel isnt 0
         updateLayers = {}
-        updateStartPos = no
+        #updateStartPos = no
         for sel in selected
           rot = sel.object.rot
           continue unless rot?
           rot[2] += objSpinVel * delta
           rot[2] -= Math.floor(rot[2] / Math.PI / 2) * Math.PI * 2
           switch sel.type
-            when 'startpos'
-              startPos.updateFromConfig()
-              updateStartPos = yes
+            #when 'startpos'
+            #  startPos.updateFromConfig()
+            #  updateStartPos = yes
             when 'scenery'
               updateLayers[sel.layer] = yes
         #track.scenery.invalidate()
@@ -378,7 +383,7 @@ define [
           tmp.copy(forward).multiplyScalar eye.y
           motion.addSelf tmp
         if buttons & 1 and selected.length > 0 and isSecondClick
-          updateStartPos = no
+          #updateStartPos = no
           updateCheckpoints = no
           updateLayers = {}
 
@@ -388,9 +393,9 @@ define [
             pos[1] += motion.y
             pos[2] += motion.z
             switch sel.type
-              when 'startpos'
-                updateStartPos = yes
-                startPos.updateFromConfig()
+              #when 'startpos'
+              #  updateStartPos = yes
+              #  startPos.updateFromConfig()
               when 'checkpoint'
                 updateCheckpoints = yes
               when 'scenery'

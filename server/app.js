@@ -5,9 +5,11 @@
 // Module dependencies.
 
 var connect = require('connect');
+var cookie = require('cookie');
 var express = require('express');
 var http = require('http');
 var socketio = require('socket.io');
+var stylus = require('stylus');
 var passport = require('passport');
 var FacebookStrategy = require('passport-facebook').Strategy;
 var GoogleStrategy = require('passport-google').Strategy;
@@ -200,7 +202,7 @@ app.configure(function() {
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(express.methodOverride());
-  app.use(require('stylus').middleware({
+  app.use(stylus.middleware({
     src: __dirname + '/stylus',
     dest: __dirname + '/public'
   }));
@@ -422,15 +424,16 @@ if ('production' === process.env.NODE_ENV) {
 sio.set('authorization', function (data, accept) {
   // http://www.danielbaulig.de/socket-ioexpress/
   if (data.headers.cookie) {
-    var cookie = require('cookie');
     data.cookie = cookie.parse(decodeURIComponent(data.headers.cookie));
     data.sessionID = data.cookie['connect.sid'];
     // save the session store to the data object
     // (as required by the Session constructor)
     data.sessionStore = sessionStore;
     sessionStore.get(data.sessionID, function (err, session) {
-      if (err || !session) {
-        accept('Error', false);
+      if (err) {
+        accept(err, false);
+      } else if (!session) {
+        accept('No session', false);
       } else {
         // create a session object, passing data as request and our
         // just acquired session data
