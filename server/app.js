@@ -21,12 +21,12 @@ var routes = require('./routes');
 var objects = require('./objects');
 
 var mongoose = require('mongoose');
-var SessionMongoose = require("session-mongoose");
 
-var sessionStore = new SessionMongoose({
-  url: "mongodb://localhost/trigger-prod",
-  // Expiration check worker run interval in millisec (default: 60000)
-  interval: 120000
+var SessionStore = require("session-mongoose")(connect);
+var sessionStore = new SessionStore({
+    url: "mongodb://localhost/trigger-prod",
+    // Expiration check worker run interval in millisec (default: 60000)
+    interval: 120000
 });
 
 var User = mongoose.model('User');

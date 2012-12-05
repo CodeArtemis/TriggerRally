@@ -15,6 +15,7 @@
     , "passport-local": "*"
     , "passport-twitter": "*"
     , "session-mongoose": "*"
+    , "socket.io": "*"
     , "stylus": "*"
     , "canvas": "*"
   }
