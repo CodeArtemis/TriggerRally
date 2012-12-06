@@ -24,7 +24,7 @@ var mongoose = require('mongoose');
 
 var SessionStore = require("session-mongoose")(connect);
 var sessionStore = new SessionStore({
-    url: "mongodb://localhost/trigger-prod",
+    url: "mongodb://localhost/sessions",
     // Expiration check worker run interval in millisec (default: 60000)
     interval: 120000
 });
@@ -175,57 +175,51 @@ passport.deserializeUser(function(id, done) {
   });
 });
 
-app.configure(function() {
-  express.logger.format('isodate', function(req, res) {
-    return new Date().toISOString();
-  });
-  app.use(express.logger({
-    format: '[:isodate] :status :response-time ms :method :url :referrer'
-  }));
-  /*
-  app.use(function (req, res, next) {
-    res.removeHeader("X-Powered-By");
-    next();
-  });
-  */
-  app.set('views', __dirname + '/views');
-  app.set('view engine', 'jade');
-  app.use(express.bodyParser());
-  app.use(express.cookieParser());
-  app.use(express.session({
-    secret: config.SESSION_SECRET,
-    cookie: {
-      maxAge:  4 * 7 * 24 * 60 * 60 * 1000
-    },
-    store: sessionStore
-  }));
-  app.use(passport.initialize());
-  app.use(passport.session());
-  app.use(express.methodOverride());
-  app.use(stylus.middleware({
-    src: __dirname + '/stylus',
-    dest: __dirname + '/public'
-  }));
-  app.use(routes.defaultParams);
-  app.use(function(req, res, next) {
-    // Enable Chrome Frame if installed.
-    res.setHeader('X-UA-Compatible','chrome=1');
-    next();
-  });
-  /*
-  // We can delay certain resources for debugging purposes.
-  app.use(function(req, res, next) {
-    var delay = 0;
-    if (req.path.match('nice.png')) delay = 3000;
-    if (req.path.match('heightdetail1.jpg')) delay = 6000;
-    setTimeout(function() {
-      next();
-    }, delay);
-  });
-  */
-  app.use(app.router);
-  app.use(express.static(__dirname + '/public'));
+express.logger.format('isodate', function(req, res) {
+  return new Date().toISOString();
 });
+app.use(express.logger({
+  format: '[:isodate] :status :response-time ms :method :url :referrer'
+}));
+app.disable('x-powered-by');
+app.set('views', __dirname + '/views');
+app.set('view engine', 'jade');
+app.use(express.bodyParser());
+app.use(express.cookieParser(config.SESSION_SECRET));
+app.use(express.session({
+  //secret: config.SESSION_SECRET,
+  cookie: {
+    maxAge:  4 * 7 * 24 * 60 * 60 * 1000
+  },
+  store: sessionStore
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(express.methodOverride());
+app.use(stylus.middleware({
+  src: __dirname + '/stylus',
+  dest: __dirname + '/public'
+}));
+app.use(routes.defaultParams);
+app.use(function(req, res, next) {
+  // Enable Chrome Frame if installed.
+  res.setHeader('X-UA-Compatible','chrome=1');
+  next();
+});
+/*
+// We can delay certain resources for debugging purposes.
+app.use(function(req, res, next) {
+  var delay = 0;
+  if (req.path.match('nice.png')) delay = 3000;
+  if (req.path.match('heightdetail1.jpg')) delay = 6000;
+  setTimeout(function() {
+    next();
+  }, delay);
+});
+*/
+app.use(app.router);
+app.use(express.static(__dirname + '/public'));
+
 app.configure('development', function() {
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
   // TODO: use a dev instance.
@@ -411,58 +405,62 @@ app.get('/drive', function(req, res) {
 });
 
 var server = http.createServer(app);
-var sio = socketio.listen(server);
+var io = socketio.listen(server);
 server.listen(PORT);
 console.log("Server listening on port %d in %s mode", PORT, app.settings.env);
 
 if ('production' === process.env.NODE_ENV) {
-  sio.set('log level', 1);
+  io.set('log level', 1);
 } else {
-  sio.set('log level', 2);
+  io.set('log level', 2);
 }
 
-sio.set('authorization', function (data, accept) {
+io.set('authorization', function (data, accept) {
   // http://www.danielbaulig.de/socket-ioexpress/
-  if (data.headers.cookie) {
-    data.cookie = cookie.parse(decodeURIComponent(data.headers.cookie));
-    data.sessionID = data.cookie['connect.sid'];
-    // save the session store to the data object
-    // (as required by the Session constructor)
-    data.sessionStore = sessionStore;
-    sessionStore.get(data.sessionID, function (err, session) {
-      if (err) {
-        accept(err, false);
-      } else if (!session) {
-        accept('No session', false);
-      } else {
-        // create a session object, passing data as request and our
-        // just acquired session data
-        var Session = connect.middleware.session.Session;
-        data.session = new Session(data, session);
-        // TODO: accept fast, before deserialization?
-        passport.deserializeUser(data.session.passport.user, function(err, userPassport) {
-          if (err) accept('passport error: ' + err, false);
-          else {
-            data.session.user = userPassport.user;
-            data.session.userPassport = userPassport;
-            accept(null, true);
-          }
-        });
-      }
-    });
-  } else {
-   return accept('No cookie transmitted.', false);
+  if (!data.headers.cookie) {
+    return accept('No cookie transmitted.', false);
   }
+  //data.cookie = cookie.parse(decodeURIComponent(data.headers.cookie));
+  data.cookie = cookie.parse(data.headers.cookie);
+  //data.cookie = cookie.parseSignedCookies(data.cookie, config.SESSION_SECRET);
+  console.log(data.cookie['connect.sid']);
+  data.sessionID = data.cookie['connect.sid'].substring(2,26);
+  console.log(data.sessionID);
+  // save the session store to the data object
+  // (as required by the Session constructor)
+  data.sessionStore = sessionStore;
+  console.log(sessionStore);
+  sessionStore.get(data.sessionID, function (err, session) {
+    if (err) {
+      accept(err, false);
+    } else if (!session) {
+      accept('No session', false);
+    } else {
+      // create a session object, passing data as request and our
+      // just acquired session data
+      var Session = connect.middleware.session.Session;
+      data.session = new Session(data, session);
+      // TODO: accept fast, before deserialization?
+      passport.deserializeUser(data.session.passport.user, function(err, userPassport) {
+        if (err) accept('passport error: ' + err, false);
+        else {
+          data.session.user = userPassport.user;
+          data.session.userPassport = userPassport;
+          accept(null, true);
+        }
+      });
+    }
+  });
 });
 
 function showNumberConnected() {
-  var clients = sio.sockets.clients();
+  var clients = io.sockets.clients();
   var numConnected = clients.length;
   console.log('[' + (new Date).toISOString() + ']' +
       ' Connected sockets: ' + numConnected);
 }
 
-sio.sockets.on('connection', function (socket) {
+io.sockets.on('connection', function (socket) {
   var session = socket.handshake.session;
   var wireId = socket.id;
   var tag = session.user ? ' (' + session.user.pub_id + ')' : '';
@@ -478,7 +476,7 @@ sio.sockets.on('connection', function (socket) {
       socket.hackyStore['config'] = data.config;
     }
     if (data.carstate) {
-      var clients = sio.sockets.clients();
+      var clients = io.sockets.clients();
       clients.forEach(function(client) {
         if (client.id !== wireId) {
           var seen = client.hackyStore['seen'] || (client.hackyStore['seen'] = {});
@@ -500,7 +498,7 @@ sio.sockets.on('connection', function (socket) {
   socket.on('disconnect', function () {
     showNumberConnected();
     console.log(wireId + ' disconnected' + tag);
-    var clients = sio.sockets.clients();
+    var clients = io.sockets.clients();
     clients.forEach(function(client) {
       if (client.id !== wireId) {
         var seen = client.hackyStore['seen'] || (client.hackyStore['seen'] = {});
