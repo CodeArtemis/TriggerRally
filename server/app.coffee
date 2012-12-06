@@ -128,7 +128,7 @@ passport.deserializeUser (id, done) ->
     .findOne(_id: id)
     .populate('user')
     .exec (error, userPassport) ->
-    done error, userPassport
+      done error, userPassport
 
 
 express.logger.format 'isodate', (req, res) ->
@@ -188,14 +188,14 @@ loadUrlUser = (req, res, next) ->
   User
     .findOne(pub_id: req.params.idUser)
     .exec (error, urlUser) ->
-    if error then done error
-    else
-      if urlUser
-        urlUser.isAuthenticated = req.user and req.user.user and req.user.user.id is urlUser.id
-        req.urlUser = urlUser
-        next()
+      if error then done error
       else
-        res.send 404
+        if urlUser
+          urlUser.isAuthenticated = req.user and req.user.user and req.user.user.id is urlUser.id
+          req.urlUser = urlUser
+          next()
+        else
+          res.send 404
 
 loadUrlTrack = (req, res, next) ->
   Track
@@ -203,42 +203,32 @@ loadUrlTrack = (req, res, next) ->
     .populate('user')
     .populate('env')
     .exec (error, urlTrack) ->
-    if error then done error
-    else
-      if urlTrack
-        urlTrack.isAuthenticated = req.user and req.user.user and req.user.user.id is urlTrack.user.id
-        req.urlTrack = urlTrack
-        if urlTrack.env
-          Car
-            .find()
-            .where('_id')
-            .in(urlTrack.env.cars)
-            .exec (error, cars) ->
-          if error then done error
-          else
-              # Horrible workaround because we can't populate env.cars directly.
-              # See Environment model for the rest of the hack.
-              req.urlTrack.env.populatedCars = cars
-              next()
-
-        else
+      if error then return next error
+      unless urlTrack then return res.send 404
+      urlTrack.isAuthenticated = req.user?.user?.id is urlTrack.user.id
+      req.urlTrack = urlTrack
+      unless urlTrack.env then return next()
+      Car
+        .find()
+        .where('_id')
+        .in(urlTrack.env.cars)
+        .exec (error, cars) ->
+          if error then return next error
+          # Horrible workaround because we can't populate env.cars directly.
+          # See Environment model for the rest of the hack.
+          req.urlTrack.env.populatedCars = cars
           next()
-      else
-        res.send 404
 
 loadUrlCar = (req, res, next) ->
   Car
     .findOne(pub_id: req.params.idCar)
     .populate('user')
     .exec (error, urlCar) ->
-    if error then done error
-    else
-      if urlCar
-        urlCar.isAuthenticated = req.user and req.user.user and req.user.user.id is urlCar.user.id
-        req.urlCar = urlCar
-        next()
-      else
-        res.send 404
+      if error then return next error
+      unless urlCar then return res.send 404
+      urlCar.isAuthenticated = req.user and req.user.user and req.user.user.id is urlCar.user.id
+      req.urlCar = urlCar
+      next()
 
 loadUrlRun = (req, res, next) ->
   Run
@@ -247,29 +237,30 @@ loadUrlRun = (req, res, next) ->
     .populate('car')
     .populate('track')
     .exec (error, urlRun) ->
-    if error then done error
-    else
-      if urlRun
-        urlRun.isAuthenticated = req.user and req.user.user and req.user.user.id is urlRun.user.id
-        req.urlRun = urlRun
-        next()
-      else
-        res.send 404
+      if error then return next error
+      unless urlRun then return res.send 404
+      urlRun.isAuthenticated = req.user and req.user.user and req.user.user.id is urlRun.user.id
+      req.urlRun = urlRun
+      next()
 
 editTrack = (req, res, next) ->
-  if req.urlTrack.isAuthenticated
-    req.editing = true
-    next()
+  unless req.urlTrack.isAuthenticated
+    return next 'Unauthorized'
+  # TODO: mark just the track as editable, not the whole request.
+  req.editing = true
+  next()
 
 editCar = (req, res, next) ->
-  if req.urlCar.isAuthenticated
-    req.editing = true
-    next()
+  unless req.urlCar.isAuthenticated
+    return next 'Unauthorized'
+  req.editing = true
+  next()
 
 editUser = (req, res, next) ->
-  if req.urlUser.isAuthenticated
-    req.editing = true
-    next()
+  unless req.urlUser.isAuthenticated
+    return next 'Unauthorized'
+  req.editing = true
+  next()
 
 app.get '/', routes.index
 app.get '/about', routes.about
