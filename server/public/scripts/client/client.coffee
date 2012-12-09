@@ -249,7 +249,7 @@ define [
       @audio?.loadBuffer '/a/sounds/checkpoint.wav', (buffer) ->
         checkpointBuffer = buffer
 
-      @sync = new synchro.Synchro @game
+      #@sync = new synchro.Synchro @game
 
       onTrackCar = (track, car, progress) =>
         unless car.cfg.isRemote

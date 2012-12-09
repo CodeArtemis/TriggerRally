@@ -14,7 +14,7 @@ define [
   'game/track'
   'cs!util/quiver'
   'cs!models/index'
-], ($, Backbone, THREE, util, clientClient, clientMisc, clientCar, gameGame, gameTrack, quiver, models) ->
+], ($, Backbone, THREE, util, clientClient, clientMisc, clientCar, gameGame, gameTrack, quiver, modelsModule) ->
   KEYCODE = util.KEYCODE
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
@@ -23,6 +23,27 @@ define [
   manipulate = (model, attrib, fn) ->
     fn obj = _.clone model.get(attrib)
     model.set attrib, obj
+
+  hasChanged = (model, attrs) ->
+    for attr in attrs
+      return yes if model.hasChanged attr
+    no
+
+  syncSocket = (socket) ->
+    (method, model, options) ->
+      socket.emit 'sync',
+        method: method
+        url: _.result(model, 'url')  # remove?
+        urlRoot: _.result(model, 'urlRoot')
+        id: model.id
+        model: model.toJSON()  # remove?
+      , (err, response) ->
+        if err
+          options.error? model, null, options
+        else
+          options.success? response
+        return
+      return
 
   InspectorController = (selected, track) ->
     $inspector = $('#editor-inspector')
@@ -94,45 +115,105 @@ define [
     $status = $statusbar.find('#status')
 
     setStatus = (msg) -> $status.text msg
-    setStatus 'OK'
 
     game = new gameGame.Game()
     client = new clientClient.TriggerClient $view3d[0], game, quiet: yes
 
+    client.camera.eulerOrder = 'ZYX'
+    camPos = client.camera.position
+    camAng = client.camera.rotation
+    camVel = new Vec3
+    camVelTarget = new Vec3
+    camAngVel = new Vec3
+    camAngVelTarget = new Vec3
+
+    selected = []
+
+    socket = io.connect '/api'
+    models = modelsModule.genModels()
+    models.BaseModel::sync = syncSocket socket
+
     trackModel = new models.Track
+      id: TRIGGER.TRACK.id
+
+    #trackModel.on 'all', -> console.log arguments
 
     track = null
-    trackModel.on 'change', ->
-      game.setTrackConfig trackModel, (err, theTrack) ->
-        track = theTrack
-        client.addEditorCheckpoints track
 
-    class MockVehicle
-      constructor: (@cfg) ->
+    doSave = _.debounce ->
+      setStatus 'Saving...'
+      trackModel.save null,
+        success: (model, response, options) ->
+          setStatus 'OK'
+        error: (model, xhr, options) ->
+          setStatus 'ERROR'
+          console.log 'error details: ' + xhr
+    , 1000
+
+    requestSave = ->
+      setStatus 'Changed'
+      doSave()
+
+    trackModel.on 'change', (model, options) ->
+      if hasChanged trackModel, ['config', 'env']
+        game.setTrackConfig trackModel, (err, theTrack) ->
+          track = theTrack
+          client.addEditorCheckpoints track
+
+      requestSave() unless options.fromServer
+
+    trackModel.on 'childchange', ->
+      requestSave()# unless options.fromServer
+
+    trackModel.on 'sync', ->
+      setStatus 'sync'
 
     startPos = new THREE.Object3D()
     client.scene.add startPos
     trackModel.on 'change:config', ->
       do update = ->
         do update = ->
-          console.log 'updating startpos'
           startposition = trackModel.config.course.startposition
           Vec3::set.apply startPos.position, startposition.pos
           Vec3::set.apply startPos.rotation, startposition.rot
         trackModel.config.course.on 'change:startposition', update
         trackModel.config.course.startposition.on 'change', update
       trackModel.config.on 'change:course', update
+      trackModel.config.course.on 'change', update
 
-    trackModel.set TRIGGER.TRACK
+    #trackModel.set TRIGGER.TRACK
+    trackModel.on 'change', ->
+      trackModel.off null, null, this  # No 'once' :(
+      startposition = trackModel.config.course.startposition
+      Vec3::set.apply camPos, startposition.pos
+      camAng.x = 0.9
+      camAng.z = startposition.rot[2] - Math.PI / 2
+      camPos.x -= 20 * Math.cos(startposition.rot[2])
+      camPos.y -= 20 * Math.sin(startposition.rot[2])
+      camPos.z += 40
 
-    carConfig = trackModel.env.cars[0].config
-    mockVehicle = new MockVehicle carConfig
-    mockVehicle.body =
-      interp:
-        pos: new Vec3(0,0,0)
-        ori: (new THREE.Quaternion(1,1,1,1)).normalize()
-    @renderCar = new clientCar.RenderCar startPos, mockVehicle, null
-    @renderCar.update()
+    trackModel.fetch
+      fromServer: yes
+      success: -> setStatus 'OK'
+      error: ->
+        setStatus 'ERROR'
+        console.log 'error details:'
+        console.log arguments
+
+    mockVehicle =
+      cfg: null
+      body:
+        interp:
+          pos: new Vec3(0,0,0)
+          ori: (new THREE.Quaternion(1,1,1,1)).normalize()
+    renderCar = null
+
+    trackModel.on 'change:env', ->
+      mockVehicle.cfg = trackModel.env.cars[0].config
+      # TODO: Deallocate renderCar.
+      startPos.remove renderCar if renderCar
+      renderCar = new clientCar.RenderCar startPos, mockVehicle, null
+      renderCar.update()
 
     layout = ->
       #[$statusbar, $view3d].forEach (panel) ->
@@ -149,34 +230,7 @@ define [
     $container.on 'resize', ->
       layout()
 
-    client.camera.eulerOrder = 'ZYX'
-    camPos = client.camera.position.copy startPos.position
-    camPos.z += 50
-    camPos.y -= 30
-    camAng = client.camera.rotation.set 0.6, 0, 0
-    camVel = new Vec3
-    camVelTarget = new Vec3
-    camAngVel = new Vec3
-    camAngVelTarget = new Vec3
-
-    selected = []
-
     inspectorController = new InspectorController selected, trackModel
-
-    doSave = _.debounce ->
-      trackModel.save null,
-        success: -> setStatus 'OK'
-        error: ->
-          setStatus 'ERROR'
-          console.log 'error details:'
-          console.log arguments
-    , 1000
-
-    requestSave = ->
-      setStatus 'Saving...'
-      doSave()
-
-    trackModel.on 'change', requestSave
 
     requestId = 0
 
@@ -307,7 +361,7 @@ define [
       return
 
     clearSelection = ->
-      # TODO: fully dispose meshes.
+      # TODO: fully deallocate meshes.
       for sel in selected
         client.scene.remove sel.mesh
       selected.length = 0

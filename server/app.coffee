@@ -7,6 +7,7 @@ cookie = require('cookie')
 express = require('express')
 http = require('http')
 mongoose = require('mongoose')
+mongoskin = require('mongoskin')
 session_mongoose = require('session-mongoose')
 socketio = require('socket.io')
 stylus = require('stylus')
@@ -32,6 +33,12 @@ Car = mongoose.model('Car')
 Track = mongoose.model('Track')
 Run = mongoose.model('Run')
 
+
+# Alternate DB connection
+dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
+db = mongoskin.db dbUrl, { safe: true }
+
+
 console.log 'Base directory: ' + __dirname
 app = module.exports = express()
 
@@ -47,22 +54,22 @@ authenticateUser = (profile, done) ->
     .findOne(passport_id: passport_id)
     .populate('user')
     .exec (error, userPassport) ->
-    if error then done error
-    else
-      user = userPassport and userPassport.user or null
-      unless user
-        userPassport = new UserPassport() unless userPassport
-        # Create new user from passport profile.
-        user = new User(name: profile.displayName or profile.username)
-        user.email = profile.emails[0].value if profile.emails and profile.emails[0]
-        user.save (error) ->
-        if error then done error
-        else
-            userPassport.profile = profile
-            userPassport.user = user._id
-            userPassport.save (error) ->
-              done error, userPassport
-              #res.redirect('/user/' + user.pub_id + '/edit');
+      if error then done error
+      else
+        user = userPassport and userPassport.user or null
+        unless user
+          userPassport = new UserPassport() unless userPassport
+          # Create new user from passport profile.
+          user = new User(name: profile.displayName or profile.username)
+          user.email = profile.emails[0].value if profile.emails and profile.emails[0]
+          user.save (error) ->
+          if error then done error
+          else
+              userPassport.profile = profile
+              userPassport.user = user._id
+              userPassport.save (error) ->
+                done error, userPassport
+                #res.redirect('/user/' + user.pub_id + '/edit');
 
 authenticationSuccessful = (req, res) ->
   user = req.user
@@ -318,6 +325,19 @@ io = socketio.listen(server)
 server.listen PORT
 console.log 'Server listening on port %d in %s mode', PORT, app.settings.env
 
+
+
+modelsModule = require './public/scripts/models'
+models = modelsModule.genModels()
+
+
+
+models.BaseModel::sync = (method, model, options) ->
+  console.log 'server syncing!'
+  console.log arguments
+
+
+
 if 'production' is process.env.NODE_ENV
   io.set 'log level', 1
 else
@@ -354,13 +374,82 @@ io.set 'authorization', (data, accept) ->
           data.session.userPassport = userPassport
           accept null, true
 
-io.sockets.on 'connection', (socket) ->
+findDoc = (collection, query, cb) ->
+  db.collection(collection).findOne query, (err, doc) ->
+    throw err if err
+    cb doc
+
+findDocs = (collection, query, cb) ->
+  db.collection(collection).find(query).toArray (err, docs) ->
+    throw err if err
+    cb docs
+
+getEnv = (_id, cb) ->
+  findDoc 'environments', { _id }, cb
+
+makePublicCar = (car) ->
+  id: car.pub_id
+  name: car.name
+  config: car.config
+
+getEnvPublic = (_id, cb) ->
+  getEnv _id, (env) ->
+    findDocs 'cars', { _id: { $in: env.cars } }, (cars) ->
+      cb
+        id: env.pub_id
+        name: env.name
+        cars: (makePublicCar(car) for car in cars)
+        scenery: env.scenery
+        terrain: env.terrain
+
+getTrackPubId = (pub_id, cb) ->
+  findDoc 'tracks', { pub_id }, cb
+
+getUser = (_id, cb) ->
+  findDoc 'users', { _id }, cb
+
+getUserBasic = (_id, cb) ->
+  getUser _id, (user) ->
+    cb
+      id: user.pub_id
+      name: user.name
+
+getPublicTrackPubId = (pub_id, cb) ->
+  getTrackPubId pub_id, (track) ->
+    getEnvPublic track.env, (env) ->
+      getUserBasic track.user, (user) ->
+        cb
+          id: track.pub_id
+          name: track.name
+          config: track.config
+          env: env
+          user: user
+
+io.of('/api').on 'connection', (socket) ->
   session = socket.handshake.session
   wireId = socket.id
   tag = (if session.user then ' (' + session.user.pub_id + ')' else '')
   console.log wireId + ' connected' + tag
-  showNumberConnected()
+  #showNumberConnected()
 
+  socket.on 'sync', (data, callback) ->
+    switch data.method
+      when 'create'
+        callback 'create not implemented'
+      when 'read'
+        switch data.urlRoot
+          when 'track'
+            getPublicTrackPubId data.model.id, (track) ->
+              console.log 'sending:'
+              console.log track
+              callback null, track
+      when 'update'
+        callback 'update not implemented'
+      when 'delete'
+        callback 'delete not implemented'
+
+
+  ###
   # Stuff a custom storage object into the socket.
   socket.hackyStore = {}
   socket.on 'c2s', (data) ->
@@ -398,6 +487,7 @@ io.sockets.on 'connection', (socket) ->
 
           client.emit 'deletecar',
             wireId: wireId
+  ###
 
   socket.on 'error', (data) ->
     console.log 'Error from ' + wireId + ': ' + data.msg

@@ -1,22 +1,24 @@
 {
-    "name": "trigger-server"
-  , "version": "0.0.1"
-  , "private": true
-  , "dependencies": {
-      "async": "*"
-    , "express": ">= 3"
-    , "jade": "*"
-    , "mongodb": "*"
-    , "mongoose": "*"
-    , "http-proxy": "*"
-    , "passport": "*"
-    , "passport-facebook": "*"
-    , "passport-google": "*"
-    , "passport-local": "*"
-    , "passport-twitter": "*"
-    , "session-mongoose": "*"
-    , "socket.io": "*"
-    , "stylus": "*"
-    , "canvas": "*"
+  "name": "trigger-server",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "async": "*",
+    "express": ">= 3",
+    "jade": "*",
+    "mongodb": "*",
+    "mongoose": "*",
+    "http-proxy": "*",
+    "passport": "*",
+    "passport-facebook": "*",
+    "passport-google": "*",
+    "passport-local": "*",
+    "passport-twitter": "*",
+    "session-mongoose": "*",
+    "socket.io": "*",
+    "stylus": "*",
+    "canvas": "*",
+    "backbone-relational": "~0.6.0",
+    "mongoskin": "~0.4.4"
   }
 }
