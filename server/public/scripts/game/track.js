@@ -270,20 +270,22 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
 
       this.scenery = new gameScenery.Scenery(trackModel.config.scenery, trackModel.env.scenery, this);
 
+      // TODO: Invalidate scenery by layer, instead of this scatter-shot.
+      trackModel.config.on('change:scenery', function() {
+        this.scenery.setConfig(trackModel.config.scenery);
+      }.bind(this));
+
+      //trackModel.env.on('change:scenery', function() {
+      //  this.scenery.setEnvConfig(trackModel.env.scenery);
+      //}.bind(this));
+
       var invalidateSceneryQuiver = function(ins, outs, next) {
-        outs[0].invalidate();
+        outs[0].setConfig();
         next();
       };
       quiver.connect(invalidateSceneryQuiver, this.scenery);
       quiver.connect(maps.surface, invalidateSceneryQuiver);
       quiver.connect(maps.height, invalidateSceneryQuiver);
-
-      // TODO: Invalidate scenery by layer, instead of this scatter-shot.
-      var invalidateScenery = function() {
-        this.scenery.invalidate();
-      }.bind(this);
-      trackModel.config.on('change:scenery', invalidateScenery);
-      trackModel.env.on('change:scenery', invalidateScenery);
 
       if (callback) callback();
     }.bind(this));

@@ -244,7 +244,7 @@ define [
 
       @add new SunLight @scene
 
-      @audio = new clientAudio.WebkitAudio() unless options.quiet
+      @audio = new clientAudio.WebkitAudio() unless options.noAudio
       checkpointBuffer = null
       @audio?.loadBuffer '/a/sounds/checkpoint.wav', (buffer) ->
         checkpointBuffer = buffer

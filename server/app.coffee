@@ -33,13 +33,20 @@ Car = mongoose.model('Car')
 Track = mongoose.model('Track')
 Run = mongoose.model('Run')
 
+getIsodate = -> new Date().toISOString()
+express.logger.format 'isodate', (req, res) -> getIsodate()
+
+
 
 # Alternate DB connection
 dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
 db = mongoskin.db dbUrl, { safe: true }
 
 
-console.log 'Base directory: ' + __dirname
+do ->
+  isodate = getIsodate()
+  console.log "[#{isodate}] Base directory: #{__dirname}"
+
 app = module.exports = express()
 
 PORT = process.env.PORT or 80
@@ -48,8 +55,6 @@ URL_PREFIX = 'http://' + DOMAIN
 
 authenticateUser = (profile, done) ->
   passport_id = profile.identifier or (profile.provider + profile.id)
-  console.log 'authenticateUser: ' + JSON.stringify(profile)
-  console.log 'authenticateUser: ' + passport_id
   UserPassport
     .findOne(passport_id: passport_id)
     .populate('user')
@@ -137,10 +142,6 @@ passport.deserializeUser (id, done) ->
     .exec (error, userPassport) ->
       done error, userPassport
 
-
-express.logger.format 'isodate', (req, res) ->
-  new Date().toISOString()
-
 app.use express.logger(format: '[:isodate] :status :response-time ms :method :url :referrer')
 app.disable 'x-powered-by'
 app.set 'views', __dirname + '/views'
@@ -198,7 +199,7 @@ loadUrlUser = (req, res, next) ->
       if error then done error
       else
         if urlUser
-          urlUser.isAuthenticated = req.user and req.user.user and req.user.user.id is urlUser.id
+          urlUser.isAuthenticated = req.user?.user?.id is urlUser.id
           req.urlUser = urlUser
           next()
         else
@@ -233,7 +234,7 @@ loadUrlCar = (req, res, next) ->
     .exec (error, urlCar) ->
       if error then return next error
       unless urlCar then return res.send 404
-      urlCar.isAuthenticated = req.user and req.user.user and req.user.user.id is urlCar.user.id
+      urlCar.isAuthenticated = req.user?.user?.id is urlCar.user.id
       req.urlCar = urlCar
       next()
 
@@ -246,7 +247,7 @@ loadUrlRun = (req, res, next) ->
     .exec (error, urlRun) ->
       if error then return next error
       unless urlRun then return res.send 404
-      urlRun.isAuthenticated = req.user and req.user.user and req.user.user.id is urlRun.user.id
+      urlRun.isAuthenticated = req.user?.user?.id is urlRun.user.id
       req.urlRun = urlRun
       next()
 
@@ -323,7 +324,9 @@ app.get '/drive', (req, res) ->
 server = http.createServer(app)
 io = socketio.listen(server)
 server.listen PORT
-console.log 'Server listening on port %d in %s mode', PORT, app.settings.env
+do ->
+  isodate = getIsodate()
+  console.log "[#{isodate}] Server listening on port #{PORT} in #{app.settings.env} mode"
 
 
 
@@ -346,7 +349,8 @@ else
 showNumberConnected = ->
   clients = io.sockets.clients()
   numConnected = clients.length
-  console.log '[' + (new Date).toISOString() + ']' + ' Connected sockets: ' + numConnected
+  isodate = getIsodate()
+  console.log "[#{isodate}] Connected sockets: #{numConnected}"
 
 io.set 'authorization', (data, accept) ->
   # http://www.danielbaulig.de/socket-ioexpress/
@@ -374,62 +378,53 @@ io.set 'authorization', (data, accept) ->
           data.session.userPassport = userPassport
           accept null, true
 
-findDoc = (collection, query, cb) ->
-  db.collection(collection).findOne query, (err, doc) ->
-    throw err if err
-    cb doc
+db.bind 'cars'
+db.bind 'environments'
+db.bind 'tracks'
+db.bind 'users'
 
-findDocs = (collection, query, cb) ->
-  db.collection(collection).find(query).toArray (err, docs) ->
-    throw err if err
-    cb docs
-
-getEnv = (_id, cb) ->
-  findDoc 'environments', { _id }, cb
-
-makePublicCar = (car) ->
+publicCar = (car) ->
   id: car.pub_id
   name: car.name
   config: car.config
 
-getEnvPublic = (_id, cb) ->
-  getEnv _id, (env) ->
-    findDocs 'cars', { _id: { $in: env.cars } }, (cars) ->
-      cb
+publicUserBasic = (user) ->
+  id: user.pub_id
+  name: user.name
+
+getPublicEnv = (_id, cb) ->
+  db.environments.findOne {_id}, (err, env) ->
+    return cb err if err?
+    db.cars.find({ _id: { $in: env.cars } }).toArray (err, cars) ->
+      return cb err if err?
+      cb null
         id: env.pub_id
         name: env.name
-        cars: (makePublicCar(car) for car in cars)
+        cars: (publicCar(car) for car in cars)
         scenery: env.scenery
         terrain: env.terrain
 
-getTrackPubId = (pub_id, cb) ->
-  findDoc 'tracks', { pub_id }, cb
-
-getUser = (_id, cb) ->
-  findDoc 'users', { _id }, cb
-
-getUserBasic = (_id, cb) ->
-  getUser _id, (user) ->
-    cb
-      id: user.pub_id
-      name: user.name
-
 getPublicTrackPubId = (pub_id, cb) ->
-  getTrackPubId pub_id, (track) ->
-    getEnvPublic track.env, (env) ->
-      getUserBasic track.user, (user) ->
-        cb
+  db.tracks.findOne {pub_id}, (err, track) ->
+    return cb err if err?
+    getPublicEnv track.env, (err, env) ->
+      return cb err if err?
+      db.users.findOne track.user, (err, user) ->
+        return cb err if err?
+        cb null
           id: track.pub_id
           name: track.name
           config: track.config
           env: env
-          user: user
+          user: publicUserBasic user
 
 io.of('/api').on 'connection', (socket) ->
   session = socket.handshake.session
   wireId = socket.id
-  tag = (if session.user then ' (' + session.user.pub_id + ')' else '')
-  console.log wireId + ' connected' + tag
+  tag = (if session.user then " #{session.user.pub_id}" else "")
+  do ->
+    isodate = getIsodate()
+    console.log "[#{isodate}] #{wireId} connected" + tag
   #showNumberConnected()
 
   socket.on 'sync', (data, callback) ->
@@ -439,15 +434,25 @@ io.of('/api').on 'connection', (socket) ->
       when 'read'
         switch data.urlRoot
           when 'track'
-            getPublicTrackPubId data.model.id, (track) ->
-              console.log 'sending:'
-              console.log track
+            getPublicTrackPubId data.model.id, (err, track) ->
+              return callback err if err?
               callback null, track
       when 'update'
-        callback 'update not implemented'
+        switch data.urlRoot
+          when 'track'
+            db.tracks.findOne { pub_id: data.model.id }, (err, track) ->
+              return callback err if err?
+              unless track.user.equals session.user._id
+                return callback '403'
+              track.config = data.model.config
+              track.name = data.model.name
+              db.tracks.save track, (err) ->
+                callback err, {}
+                isodate = getIsodate()
+                console.log "[#{isodate}] Track #{track.pub_id} saved by #{session.user.pub_id}"
       when 'delete'
         callback 'delete not implemented'
-
+    return
 
   ###
   # Stuff a custom storage object into the socket.
@@ -490,4 +495,5 @@ io.of('/api').on 'connection', (socket) ->
   ###
 
   socket.on 'error', (data) ->
-    console.log 'Error from ' + wireId + ': ' + data.msg
+    isodate = getIsodate()
+    console.log "[#{isodate}] Error from #{wireId}: #{data.msg}"

@@ -10,7 +10,17 @@ define [
   'game/game'
   'game/track'
   'cs!util/quiver'
-], ($, THREE, util, clientClient, gameGame, gameTrack, quiver) ->
+  'cs!models/index'
+], (
+  $
+  THREE
+  util
+  clientClient
+  gameGame
+  gameTrack
+  quiver
+  modelsModule
+) ->
   KEYCODE = util.KEYCODE
   Vec3 = THREE.Vector3
 
@@ -36,7 +46,6 @@ define [
     updateTimer = true
 
     game = new gameGame.Game()
-
     client = new clientClient.TriggerClient view3d[0], game
 
     onWindowResize = ->

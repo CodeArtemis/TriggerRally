@@ -23,11 +23,11 @@
         set: buildSetter attr
 
   childChange = (parent, mdl) ->
-      return unless mdl?
-      mdl.on 'change', ->
-        parent.trigger 'childchange', []
-      mdl.on 'childchange', (stack) ->
-        parent.trigger 'childchange', stack.concat mdl
+    return unless mdl?
+    mdl.on 'change', ->
+      parent.trigger 'childchange', []
+    mdl.on 'childchange', (stack) ->
+      parent.trigger 'childchange', stack.concat mdl
 
   # We use a generator so that we can create multiple layers
   # of backbone models within the app.

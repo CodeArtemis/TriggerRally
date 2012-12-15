@@ -14,7 +14,19 @@ define [
   'game/track'
   'cs!util/quiver'
   'cs!models/index'
-], ($, Backbone, THREE, util, clientClient, clientMisc, clientCar, gameGame, gameTrack, quiver, modelsModule) ->
+], (
+  $
+  Backbone
+  THREE
+  util
+  clientClient
+  clientMisc
+  clientCar
+  gameGame
+  gameTrack
+  quiver
+  modelsModule
+) ->
   KEYCODE = util.KEYCODE
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
@@ -39,11 +51,14 @@ define [
         model: model.toJSON()  # remove?
       , (err, response) ->
         if err
-          options.error? model, null, options
+          options.error? model, err, options
         else
           options.success? response
         return
       return
+
+  deepClone = (obj) ->
+    JSON.parse JSON.stringify obj
 
   InspectorController = (selected, track) ->
     $inspector = $('#editor-inspector')
@@ -117,7 +132,7 @@ define [
     setStatus = (msg) -> $status.text msg
 
     game = new gameGame.Game()
-    client = new clientClient.TriggerClient $view3d[0], game, quiet: yes
+    client = new clientClient.TriggerClient $view3d[0], game, noAudio: yes
 
     client.camera.eulerOrder = 'ZYX'
     camPos = client.camera.position
@@ -134,9 +149,10 @@ define [
     models.BaseModel::sync = syncSocket socket
 
     trackModel = new models.Track
-      id: TRIGGER.TRACK.id
+    #  id: TRIGGER.TRACK.id
 
-    #trackModel.on 'all', -> console.log arguments
+    #trackModel.on 'all', ->
+    #  console.log arguments
 
     track = null
 
@@ -146,9 +162,8 @@ define [
         success: (model, response, options) ->
           setStatus 'OK'
         error: (model, xhr, options) ->
-          setStatus 'ERROR'
-          console.log 'error details: ' + xhr
-    , 1000
+          setStatus 'ERROR: ' + xhr
+    , 200
 
     requestSave = ->
       setStatus 'Changed'
@@ -160,7 +175,10 @@ define [
           track = theTrack
           client.addEditorCheckpoints track
 
-      requestSave() unless options.fromServer
+      if options.fromServer
+        setStatus 'OK'
+      else
+        requestSave()
 
     trackModel.on 'childchange', ->
       requestSave()# unless options.fromServer
@@ -171,17 +189,17 @@ define [
     startPos = new THREE.Object3D()
     client.scene.add startPos
     trackModel.on 'change:config', ->
-      do update = ->
-        do update = ->
+      do changeCourse = ->
+        do changeStartPos = ->
           startposition = trackModel.config.course.startposition
           Vec3::set.apply startPos.position, startposition.pos
           Vec3::set.apply startPos.rotation, startposition.rot
-        trackModel.config.course.on 'change:startposition', update
-        trackModel.config.course.startposition.on 'change', update
-      trackModel.config.on 'change:course', update
-      trackModel.config.course.on 'change', update
+        trackModel.config.course.on 'change:startposition', changeStartPos
+        trackModel.config.course.startposition.on 'change', changeStartPos
+      trackModel.config.on 'change:course', changeCourse
+      trackModel.config.course.on 'change', changeCourse
 
-    #trackModel.set TRIGGER.TRACK
+
     trackModel.on 'change', ->
       trackModel.off null, null, this  # No 'once' :(
       startposition = trackModel.config.course.startposition
@@ -191,14 +209,6 @@ define [
       camPos.x -= 20 * Math.cos(startposition.rot[2])
       camPos.y -= 20 * Math.sin(startposition.rot[2])
       camPos.z += 40
-
-    trackModel.fetch
-      fromServer: yes
-      success: -> setStatus 'OK'
-      error: ->
-        setStatus 'ERROR'
-        console.log 'error details:'
-        console.log arguments
 
     mockVehicle =
       cfg: null
@@ -214,6 +224,17 @@ define [
       startPos.remove renderCar if renderCar
       renderCar = new clientCar.RenderCar startPos, mockVehicle, null
       renderCar.update()
+
+    trackModel.set TRIGGER.TRACK, fromServer: yes
+    ###
+    trackModel.fetch
+      fromServer: yes
+      success: -> setStatus 'OK'
+      error: ->
+        setStatus 'ERROR'
+        console.log 'error details:'
+        console.log arguments
+    ###
 
     layout = ->
       #[$statusbar, $view3d].forEach (panel) ->
@@ -273,23 +294,12 @@ define [
         objSpinVel = 0
 
       if objSpinVel isnt 0
-        updateLayers = {}
-        #updateStartPos = no
         for sel in selected
-          rot = sel.object.rot
-          continue unless rot?
+          continue unless sel.object.rot?
+          rot = _.clone sel.object.rot
           rot[2] += objSpinVel * delta
           rot[2] -= Math.floor(rot[2] / Math.PI / 2) * Math.PI * 2
-          switch sel.type
-            #when 'startpos'
-            #  startPos.updateFromConfig()
-            #  updateStartPos = yes
-            when 'scenery'
-              updateLayers[sel.layer] = yes
-        #track.scenery.invalidate()
-        for layer of updateLayers
-          track.scenery.invalidateLayer layer
-        #requestSave() if updateLayers or updateStartPos
+          sel.object.rot = rot
 
       camVelTarget.set(
           camVelTarget.x * Math.cos(camAng.z) - camVelTarget.y * Math.sin(camAng.z),
@@ -437,34 +447,25 @@ define [
           tmp.copy(forward).multiplyScalar eye.y
           motion.addSelf tmp
         if buttons & 1 and selected.length > 0 and isSecondClick
-          #updateStartPos = no
-          updateCheckpoints = no
-          updateLayers = {}
-
           for sel in selected
-            pos = _.clone sel.object.pos
+            pos = deepClone sel.object.pos
             pos[0] += motion.x
             pos[1] += motion.y
             pos[2] += motion.z
             switch sel.type
-              #when 'startpos'
-              #  updateStartPos = yes
-              #  startPos.updateFromConfig()
-              when 'checkpoint'
-                updateCheckpoints = yes
               when 'scenery'
-                updateLayers[sel.layer] = yes
+                # TODO: Make ground aligment optional.
                 tmp.set pos[0], pos[1], -Infinity
                 contact = track.terrain.getContact tmp
                 pos[2] = contact.surfacePos.z
-            sel.object.pos = pos
+                scenery = deepClone trackModel.config.scenery
+                obj = scenery[sel.layer].add[sel.idx]
+                obj.pos = pos
+                trackModel.config.scenery = scenery
+                sel.object = obj
+              else
+                sel.object.pos = pos
             sel.mesh.position.set pos[0], pos[1], pos[2]
-
-          courseConfig = track.config.course
-          #quiver.push courseConfig.checkpoints if updateCheckpoints
-          #for layer of updateLayers
-          #  track.scenery.invalidateLayer layer
-          #requestSave() if updateCheckpoints or updateLayers or updateStartPos
         else
           if event.shiftKey or buttons & 2
             camAngVel.z += motionX * 0.1

@@ -19,10 +19,9 @@ function(LFIB4, collision, hash2d, util, THREE) {
   var COLLISION_HASH_SIZE = 5;
 
   exports.Scenery = function(config, envConfig, track) {
-    this.config = config;
     this.envConfig = envConfig;
     this.track = track;
-    this.invalidate();
+    this.setConfig(config);
   };
 
   exports.Scenery.prototype.getLayer = function(id) {
@@ -45,7 +44,8 @@ function(LFIB4, collision, hash2d, util, THREE) {
     return [].concat.apply([], isect);
   };
 
-  exports.Scenery.prototype.invalidate = function() {
+  exports.Scenery.prototype.setConfig = function(config) {
+    if (config) this.config = config;
     var layers = this.envConfig.layers;
     this.layers = [];
     this.layersById = {};
@@ -149,7 +149,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
           distance: along,
           type: 'scenery',
           layer: this.config.id,
-          object: obj,
+          object: this.scenery.config[this.config.id].add[idx],
           idx: idx
         });
       }
