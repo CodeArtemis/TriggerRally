@@ -4,6 +4,7 @@
 
 define [
   'zepto'
+  'backbone-full'
   'THREE'
   'util/util'
   'cs!client/client'
@@ -16,6 +17,7 @@ define [
   'cs!models/sync'
 ], (
   $
+  Backbone
   THREE
   util
   clientClient
@@ -30,6 +32,7 @@ define [
   KEYCODE = util.KEYCODE
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
+  TWOPI = Math.PI * 2
 
   # Utility for manipulating objects in models.
   manipulate = (model, attrib, fn) ->
@@ -43,7 +46,13 @@ define [
 
   deepClone = (obj) ->
     JSON.parse JSON.stringify obj
- InspectorController = (selected, track) ->
+
+  Sel = Backbone.Model.extend {}
+  Selection = Backbone.Collection.extend
+    model: Sel
+
+  InspectorController = (selection, track) ->
+    selected = selection.models
     $inspector = $('#editor-inspector')
     $inspectorAttribs = $inspector.find('.attrib')
 
@@ -60,10 +69,15 @@ define [
     selSurfRadius   = attrib '#surf-radius'
     selSurfHardness = attrib '#surf-hardness'
     selSurfStrength = attrib '#surf-strength'
+    selCmdCopy      = attrib '#cmd-copy'
+    selCmdDelete    = attrib '#cmd-delete'
+
+    selTitle.$content.on 'input', ->
+      track.name = selTitle.$content.val()
 
     checkpointSlider = (slider, eachSel) ->
       $content = slider.$content
-      $content.on 'change', ->
+      $content.change ->
         val = parseFloat $content.val()
         for sel in selected when sel.type is 'checkpoint'
           eachSel sel, val
@@ -75,11 +89,25 @@ define [
     checkpointSlider selSurfHardness, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.hardness = val
     checkpointSlider selSurfStrength, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.strength = val
 
+    selCmdDelete.$content.click ->
+      checkpoints = track.config.course.checkpoints
+      cps = (sel.object for sel in selected when (
+             sel.type is 'checkpoint' and
+             sel.idx > 0 and
+             sel.idx < checkpoints.length - 1))
+      checkpoints.remove cps
+
+    selCmdCopy.$content.click ->
+      console.assert selected.length is 1
+      checkpoints = track.config.course.checkpoints
+      sel = selected[0]
+      selection.reset()
+
     checkpointSliderSet = (slider, val) ->
       slider.$content.val val
       slider.$root.addClass 'visible'
 
-    @onSelectionChange = ->
+    onChange = ->
       # Hide all controls, then re-enable relevant ones.
       $inspectorAttribs.removeClass 'visible'
 
@@ -91,8 +119,10 @@ define [
 
       if selected.length is 0
         # If no selection, we inspect the track properties.
-        selTitle.$content.text track.get('name')
+        selTitle.$content.val track.name
         selTitle.$root.addClass 'visible'
+        selCmdCopy.$root.addClass 'visible'
+        selCmdCopy.$content.prop 'disabled', no
       else for sel in selected
         switch sel.type
           when 'checkpoint'
@@ -102,9 +132,12 @@ define [
             checkpointSliderSet selSurfRadius,   sel.object.surf.radius
             checkpointSliderSet selSurfHardness, sel.object.surf.hardness
             checkpointSliderSet selSurfStrength, sel.object.surf.strength
+            selCmdDelete.$root.addClass 'visible'
+            selCmdCopy.$root.addClass 'visible'
+            selCmdCopy.$content.prop 'disabled', selected.length isnt 1
       return
 
-    @onSelectionChange()
+    selection.on 'change', onChange
 
   run: ->
     $container = $(window)
@@ -125,7 +158,7 @@ define [
     camAngVel = new Vec3
     camAngVelTarget = new Vec3
 
-    selected = []
+    selection = new Selection()
 
     socket = io.connect '/api'
     models = modelsModule.genModels()
@@ -146,7 +179,7 @@ define [
           setStatus 'OK'
         error: (model, xhr, options) ->
           setStatus 'ERROR: ' + xhr
-    , 200
+    , 1500
 
     requestSave = ->
       setStatus 'Changed'
@@ -234,7 +267,7 @@ define [
     $container.on 'resize', ->
       layout()
 
-    inspectorController = new InspectorController selected, trackModel
+    inspectorController = new InspectorController selection, trackModel
 
     requestId = 0
 
@@ -277,12 +310,20 @@ define [
         objSpinVel = 0
 
       if objSpinVel isnt 0
-        for sel in selected
+        for sel in selection.models
           continue unless sel.object.rot?
-          rot = _.clone sel.object.rot
+          rot = deepClone sel.object.rot
           rot[2] += objSpinVel * delta
-          rot[2] -= Math.floor(rot[2] / Math.PI / 2) * Math.PI * 2
-          sel.object.rot = rot
+          rot[2] -= Math.floor(rot[2] / TWOPI) * TWOPI
+          switch sel.type
+            when 'scenery'
+              scenery = deepClone trackModel.config.scenery
+              obj = scenery[sel.layer].add[sel.idx]
+              obj.rot = rot
+              trackModel.config.scenery = scenery
+              sel.object = obj
+            else
+              sel.object.rot = rot
 
       camVelTarget.set(
           camVelTarget.x * Math.cos(camAng.z) - camVelTarget.y * Math.sin(camAng.z),

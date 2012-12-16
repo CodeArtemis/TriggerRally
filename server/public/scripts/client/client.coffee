@@ -19,6 +19,7 @@ define [
   Vec3 = THREE.Vector3
   PULLTOWARD = util.PULLTOWARD
   MAP_RANGE = util.MAP_RANGE
+  KEYCODE = util.KEYCODE
 
   projector = new THREE.Projector
 
@@ -153,7 +154,6 @@ define [
     update: (camera, delta) ->
       controls = @vehic.controller.input;
       keyDown = @input.keyDown
-      KEYCODE = util.KEYCODE
       controls.forward = if keyDown[KEYCODE['UP']] or keyDown[KEYCODE['W']] then 1 else 0
       controls.back = if keyDown[KEYCODE['DOWN']] or keyDown[KEYCODE['S']] then 1 else 0
       controls.left = if keyDown[KEYCODE['LEFT']] or keyDown[KEYCODE['A']] then 1 else 0
@@ -223,7 +223,7 @@ define [
     event.ctrlKey or event.altKey or event.metaKey
 
   TriggerClient: class TriggerClient
-    constructor: (@containerEl, @game, options = {}) ->
+    constructor: (@containerEl, @game, @options = {}) ->
       # TODO: Add Detector support.
       @objects = {}
       @pubsub = new pubsub.PubSub()
@@ -301,13 +301,19 @@ define [
     onKeyDown: (event) ->
       if keyWeCareAbout(event) and not isModifierKey(event)
         @keyDown[event.keyCode] = true
-        event.preventDefault()
         @pubsub.publish 'keydown', event
+        event.preventDefault() if @options.blockKeys and event.keyCode in [
+          KEYCODE.UP
+          KEYCODE.DOWN
+          KEYCODE.LEFT
+          KEYCODE.RIGHT
+          KEYCODE.SPACE
+        ]
       return
     onKeyUp: (event) ->
       if keyWeCareAbout(event)
         @keyDown[event.keyCode] = false
-        event.preventDefault()
+        #event.preventDefault()
       return
 
     on: (event, handler) -> @pubsub.subscribe event, handler
@@ -475,10 +481,11 @@ define [
     intersectCheckpoints: (ray) ->
       radiusSq = 16
       isect = []
-      for cp in @track.config.course.checkpoints.models
+      for cp, idx in @track.config.course.checkpoints.models
         hit = @intersectSphere ray, new Vec3(cp.pos[0], cp.pos[1], cp.pos[2]), radiusSq
         if hit
           hit.type = 'checkpoint'
           hit.object = cp
+          hit.idx = idx
           isect.push hit
       isect

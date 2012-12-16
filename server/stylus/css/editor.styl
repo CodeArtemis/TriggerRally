@@ -69,6 +69,28 @@ input:checked + label
   left 100px
   width 150px
 
+.tooltip
+  border-bottom 1px dotted #333
+  position relative
+
+.tooltip .tooltip-text
+  display none
+  position absolute
+  opacity 0.95
+  left 2em
+  top 1em
+  background #ee9
+  font-size 80%
+  padding 0 12px
+  border 1px solid #440
+  color black
+  border-radius 4px
+  width 300px
+  z-index 3
+
+.tooltip:hover .tooltip-text
+  display inline-block
+
 
 menu
   background rgba(255,255,255,0.8)
