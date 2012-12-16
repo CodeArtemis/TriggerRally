@@ -390,8 +390,8 @@ define [
     selection.on 'add', handleSelAdd
     selection.on 'remove', handleSelRemove
     selection.on 'reset', (collection, options) ->
-      handleSelRemove for selModel in options.previousModels if options.previousModels?
-      handleSelAdd for selModel in selection.models
+      handleSelRemove selModel for selModel in options.previousModels if options.previousModels?
+      handleSelAdd selModel for selModel in selection.models
 
     # TODO: encapsulate mouse event handling
     mouseX = 0
