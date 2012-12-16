@@ -51,7 +51,7 @@ define [
   Selection = Backbone.Collection.extend
     model: Sel
     contains: (sel) ->
-      @some (element) -> element.get('sel') is sel
+      @some (element) -> element.get('sel').object is sel.object
 
   InspectorController = (selection, track) ->
     selected = selection.models
@@ -390,7 +390,7 @@ define [
     selection.on 'add', handleSelAdd
     selection.on 'remove', handleSelRemove
     selection.on 'reset', (collection, options) ->
-      handleSelRemove selModel for selModel in options.previousModels if options.previousModels?
+      handleSelRemove selModel for selModel in options.previousModels
       handleSelAdd selModel for selModel in selection.models
 
     # TODO: encapsulate mouse event handling
