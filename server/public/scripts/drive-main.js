@@ -3,28 +3,26 @@
 requirejs.config({
   baseUrl: '/scripts',
   shim: {
-    /*'backbone': {
-      //These script dependencies should be loaded before loading
-      //backbone.js
-      deps: ['underscore', 'jquery'],
-      //Once loaded, use the global 'Backbone' as the
-      //module value.
+    'underscore': {
+      exports: '_',
+      init: function() {
+        return this._.noConflict();
+      }
+    },
+    'backbone': {
+      deps: ['underscore'],
       exports: 'Backbone'
-    },*/
+    },
+    'backbone-relational': {
+      deps: ['underscore', 'backbone']
+    },
     'THREE': {
-      deps: [],
       exports: 'THREE'
     },
     'async': {
-      deps: [],
       exports: 'async'
     },
-    'underscore': {
-      deps: [],
-      exports: 'underscore'
-    },
     'zepto': {
-      deps: [],
       exports: '$'
     }
   }
@@ -34,6 +32,10 @@ requirejs.config({
 define('canvas', function() {});
 define('fs', function() {});
 
+define('backbone-full',
+       [ 'backbone', 'backbone-relational' ],
+       function(Backbone) { return Backbone; });
+
 require(
   {
     paths: {
@@ -41,7 +43,9 @@ require(
       , 'async': '../js/async'
       , 'cs': '../js/cs'
       , 'coffee-script': '../js/coffee-script'
-      , 'underscore': '../js/underscore-min'
+      , 'underscore': '../js/underscore'  // -min
+      , 'backbone': '../js/backbone'  // -min
+      , 'backbone-relational': '../js/backbone-relational'
       , 'zepto': '../js/zepto'
     }
   },

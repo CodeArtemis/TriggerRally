@@ -4,7 +4,6 @@
 
 define [
   'zepto'
-  'backbone-full'
   'THREE'
   'util/util'
   'cs!client/client'
@@ -14,9 +13,9 @@ define [
   'game/track'
   'cs!util/quiver'
   'cs!models/index'
+  'cs!models/sync'
 ], (
   $
-  Backbone
   THREE
   util
   clientClient
@@ -26,6 +25,7 @@ define [
   gameTrack
   quiver
   modelsModule
+  sync
 ) ->
   KEYCODE = util.KEYCODE
   Vec2 = THREE.Vector2
@@ -41,26 +41,9 @@ define [
       return yes if model.hasChanged attr
     no
 
-  syncSocket = (socket) ->
-    (method, model, options) ->
-      socket.emit 'sync',
-        method: method
-        url: _.result(model, 'url')  # remove?
-        urlRoot: _.result(model, 'urlRoot')
-        id: model.id
-        model: model.toJSON()  # remove?
-      , (err, response) ->
-        if err
-          options.error? model, err, options
-        else
-          options.success? response
-        return
-      return
-
   deepClone = (obj) ->
     JSON.parse JSON.stringify obj
-
-  InspectorController = (selected, track) ->
+ InspectorController = (selected, track) ->
     $inspector = $('#editor-inspector')
     $inspectorAttribs = $inspector.find('.attrib')
 
@@ -146,7 +129,7 @@ define [
 
     socket = io.connect '/api'
     models = modelsModule.genModels()
-    models.BaseModel::sync = syncSocket socket
+    models.BaseModel::sync = sync.syncSocket socket
 
     trackModel = new models.Track
     #  id: TRIGGER.TRACK.id

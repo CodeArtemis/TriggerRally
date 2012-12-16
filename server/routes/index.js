@@ -216,7 +216,8 @@ exports.drive = function(req, res) {
   topRuns(req.urlTrack.id, req.urlCar.id, 1, function(error, runs) {
     if (error) runs = [];
     req.jadeParams.title = 'Drive';
-    req.jadeParams.trackData = sanitizeTrack(req.urlTrack.toJSON());
+    //req.jadeParams.trackData = sanitizeTrack(req.urlTrack.toJSON());
+    req.jadeParams.trackData = sanitizeTrack(req.urlTrack.toObject({ getters:true }));
     req.jadeParams.urlTrack = req.urlTrack;  // For older versions.
     req.jadeParams.urlCar = req.urlCar;
     req.jadeParams.runs = runs;

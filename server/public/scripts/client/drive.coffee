@@ -11,6 +11,7 @@ define [
   'game/track'
   'cs!util/quiver'
   'cs!models/index'
+  'cs!models/sync'
 ], (
   $
   THREE
@@ -20,6 +21,7 @@ define [
   gameTrack
   quiver
   modelsModule
+  sync
 ) ->
   KEYCODE = util.KEYCODE
   Vec3 = THREE.Vector3
@@ -103,10 +105,20 @@ define [
 
     # HACK, FIXME: Pack the terrain config directly into the track.
     # These are stripped out again during save. FIXME.
-    TRIGGER.TRACK.config.envScenery = TRIGGER.TRACK.env.scenery
-    TRIGGER.TRACK.config.terrain = TRIGGER.TRACK.env.terrain
+    #TRIGGER.TRACK.config.envScenery = TRIGGER.TRACK.env.scenery
+    #TRIGGER.TRACK.config.terrain = TRIGGER.TRACK.env.terrain
 
-    game.setTrackConfig TRIGGER.TRACK.config, ->
+    #socket = io.connect '/api'
+    models = modelsModule.genModels()
+    #models.BaseModel::sync = sync.syncSocket socket
+
+    trackModel = new models.Track TRIGGER.TRACK
+
+    Vec3::set.apply client.camera.position, trackModel.config.course.startposition.pos
+    client.camera.position.z += 1000
+
+    game.setTrackConfig trackModel, (err, theTrack) ->
+      throw err if err
       started = false
       onLoaded = (ins, outs, callback) ->
         unless started

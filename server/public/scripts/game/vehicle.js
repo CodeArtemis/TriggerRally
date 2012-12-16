@@ -471,10 +471,6 @@ function(THREE, psim, collision, util) {
         contactVel.dot(surf.v),
         contactVel.dot(surf.w));
 
-    // Disabled because it sounds a bit glitchy.
-//    this.skidLevel += Math.sqrt(contactVelSurf.x * contactVelSurf.x +
-//                                contactVelSurf.y * contactVelSurf.y);
-
     // Damped spring model for perpendicular contact force.
     var perpForce = contact.depth * CLIP_CONSTANT -
                     contactVelSurf.z * CLIP_DAMPING;
@@ -490,8 +486,11 @@ function(THREE, psim, collision, util) {
 
       var leng = friction.length();
 
-      if (leng > testFriction)
+      this.skidLevel += Math.min(1, Math.max(0, leng / maxFriction - 0.75)) * perpForce;
+
+      if (leng > testFriction) {
         friction.multiplyScalar(maxFriction / leng);
+      }
 
       // Not bothering to clone at this point.
       var force = surf.w.multiplyScalar(perpForce);
@@ -539,9 +538,6 @@ function(THREE, psim, collision, util) {
 
       contactVelSurf.y += wheel.spinVel * wheel.cfg.radius;
 
-      this.skidLevel += Math.sqrt(contactVelSurf.x * contactVelSurf.x +
-                                  contactVelSurf.y * contactVelSurf.y);
-
       // Damped spring model for perpendicular contact force.
       var perpForce = suspensionForce - contactVelSurf.z * CLIP_DAMPING;
       wheel.ridePos += contact.depth;
@@ -571,8 +567,11 @@ function(THREE, psim, collision, util) {
 
         var leng = friction.length();
 
-        if (leng > testFriction)
+        this.skidLevel += Math.min(1, Math.max(0, leng / maxFriction - 0.75)) * perpForce;
+
+        if (leng > testFriction) {
           friction.multiplyScalar(maxFriction / leng);
+        }
 
         wheel.frictionForce.addSelf(friction);
 

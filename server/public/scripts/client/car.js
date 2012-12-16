@@ -108,7 +108,9 @@ function(THREE, util) {
           this.sourceWind.playbackRate.value = windRate + 0.5;
         }
         if (this.sourceSkid) {
-          this.sourceSkid.gain.value = Math.log(1 + this.vehic.skidLevel * 0.05);
+          var skidLev = this.vehic.skidLevel * 0.0001;
+          this.sourceSkid.gain.value = Math.log(1 + skidLev) * 0.6;
+          this.sourceSkid.playbackRate.value = Math.log(1 + skidLev) * 0.2 + 0.7;
         }
 
         var cnl = this.vehic.getCrashNoiseLevel() * 0.000005;

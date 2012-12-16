@@ -24,7 +24,7 @@
         "position"  : [ 0.000000, 0.000000, 0.000000 ],
         "rotation"  : [ 0, -0.000000, 0.000000 ],
         "quaternion": [ 1, 0, 0.000000, 0.000000 ],
-        "scale"     : [ 2, 1.1, 1 ],
+        "scale"     : [ 3, 1.7, 1.5 ],
         "visible"       : true,
         "castShadow"    : false,
         "receiveShadow" : true,

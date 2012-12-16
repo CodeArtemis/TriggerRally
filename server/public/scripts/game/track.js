@@ -221,7 +221,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
             derivY = srcData[srcPtr + 1] / 127.5 - 1;
             type = srcData[srcPtr + 2];
             gradient = Math.sqrt(derivX * derivX + derivY * derivY);
-            roughness = gradient * 0.1 * type + 0.02;
+            roughness = (gradient * 0.1 + 0.001) * type + 0.01;
             dstData[dstPtr + 3] = Math.min(255, roughness * 256);
             srcPtr += srcChannels;
             dstPtr += dstChannels;
@@ -254,9 +254,9 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
                        this.checkpoints);
 
         // TOOD: Listen for individual checkpoint changes, update just relevant region.
-        this.config.course.checkpoints.on('change', function() {
+        this.config.course.checkpoints.on('change', _.debounce(function() {
           quiver.push(this.config.course.checkpoints);
-        }.bind(this));
+        }.bind(this), 200));
       }).call(this);
 
       (function() {
@@ -271,9 +271,9 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
       this.scenery = new gameScenery.Scenery(trackModel.config.scenery, trackModel.env.scenery, this);
 
       // TODO: Invalidate scenery by layer, instead of this scatter-shot.
-      trackModel.config.on('change:scenery', function() {
+      trackModel.config.on('change:scenery', _.debounce(function() {
         this.scenery.setConfig(trackModel.config.scenery);
-      }.bind(this));
+      }.bind(this), 200));
 
       //trackModel.env.on('change:scenery', function() {
       //  this.scenery.setEnvConfig(trackModel.env.scenery);
