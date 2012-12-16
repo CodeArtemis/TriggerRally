@@ -13,13 +13,10 @@
 	 * CommonJS shim
 	 **/
 	var _, Backbone, exports;
-	// Support loading requirements using `require` compatible implementations.
-	// In server environments, `window` is not defined; in browser environments, check for the presence of `require`.
-	if ( typeof window === 'undefined' || typeof require !== 'undefined' ) {
+	if ( typeof window === 'undefined' ) {
 		_ = require( 'underscore' );
 		Backbone = require( 'backbone' );
-		//exports = module.exports = Backbone;
-		exports = Backbone;
+		exports = module.exports = Backbone;
 	}
 	else {
 		_ = window._;
@@ -410,7 +407,7 @@
 		}
 
 		if ( !this.checkPreconditions() ) {
-			return false;
+			return;
 		}
 
 		if ( instance ) {
@@ -544,7 +541,7 @@
 
 		/**
 		 * Set the related model(s) for this relation
-		 * @param {Backbone.Mode|Backbone.Collection} related
+		 * @param {Backbone.Model|Backbone.Collection} related
 		 * @param {Object} [options]
 		 */
 		setRelated: function( related, options ) {
@@ -865,7 +862,7 @@
 								model = this.relatedModel.findOrCreate( item, { create: this.options.createModels } );
 							}
 
-							if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
+							if ( model && !this.related.get( model ) ) {
 								models.push( model );
 							}
 						}, this );
@@ -900,7 +897,7 @@
 				if (!_.isArray( attr ) && attr !== undefined) {
 					attr = [ attr ];
 				}
-				var oldIds;
+
 				_.each( attr, function( attributes ) {
 					newIds[ attributes.id ] = true;
 				});
@@ -939,7 +936,7 @@
 		
 		tryAddRelated: function( model, options ) {
 			options = this.sanitizeOptions( options );
-			if ( !this.related.getByCid( model ) && !this.related.get( model ) ) {
+			if ( !this.related.get( model ) ) {
 				// Check if this new model was specified in 'this.keyContents'
 				var item = _.any( this.keyContents || [], function( item ) {
 						var id = Backbone.Relational.store.resolveIdForItem( this.relatedModel, item );
@@ -1012,7 +1009,7 @@
 			var dit = this;
 			options = this.unsanitizeOptions( options );
 			model.queue( function() { // Queued to avoid errors for adding 'model' to the 'this.related' set twice
-				if ( dit.related && !dit.related.getByCid( model ) && !dit.related.get( model ) ) {
+				if ( dit.related && !dit.related.get( model ) ) {
 					dit.related.add( model, options );
 				}
 			});
@@ -1020,7 +1017,7 @@
 		
 		removeRelated: function( model, options ) {
 			options = this.unsanitizeOptions( options );
-			if ( this.related.getByCid( model ) || this.related.get( model ) ) {
+			if ( this.related.get( model ) ) {
 				this.related.remove( model, options );
 			}
 		}
@@ -1602,7 +1599,7 @@
 				model = Backbone.Collection.prototype._prepareModel.call( this, model, options );
 			}
 
-			if ( model instanceof Backbone.Model && !this.get( model ) && !this.getByCid( model ) ) {
+			if ( model instanceof Backbone.Model && !this.get( model ) ) {
 				modelsToAdd.push( model );
 			}
 		}, this );
@@ -1634,7 +1631,7 @@
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
 		_.each( models || [], function( model ) {
-				model = this.getByCid( model ) || this.get( model );
+				model = this.get( model );
 
 				if ( model instanceof Backbone.Model ) {
 					remove.call( this, model, options );
@@ -1677,11 +1674,11 @@
 			var dit = this, args = arguments;
 			
 			if (eventName === 'add') {
-				args = _.toArray(args);
+				args = _.toArray( args );
 				// the fourth argument in case of a regular add is the option object.
 				// we need to clone it, as it could be modified while we wait on the eventQueue to be unblocked
-				if (_.isObject(args[3])) {
-					args[3] = _.clone(args[3]);
+				if (_.isObject( args[3] ) ) {
+					args[3] = _.clone( args[3] );
 				}
 			}
 			
