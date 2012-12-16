@@ -50,6 +50,8 @@ define [
   Sel = Backbone.Model.extend {}
   Selection = Backbone.Collection.extend
     model: Sel
+    contains: (sel) ->
+      @some (element) -> element.get('sel') is sel
 
   InspectorController = (selection, track) ->
     selected = selection.models
@@ -310,7 +312,8 @@ define [
         objSpinVel = 0
 
       if objSpinVel isnt 0
-        for sel in selection.models
+        for selModel in selection.models
+          sel = selModel.get 'sel'
           continue unless sel.object.rot?
           rot = deepClone sel.object.rot
           rot[2] += objSpinVel * delta
@@ -366,42 +369,11 @@ define [
 
     $(document).on 'keyup', (event) -> client.onKeyUp event
     $(document).on 'keydown', (event) -> client.onKeyDown event
-    client.on 'keydown', (event) ->
-      if track?
-        checkpoints = track.config.course.checkpoints
-        moveAmt = 1
-        if client.keyDown[KEYCODE.SHIFT] then moveAmt *= 5
-        switch event.keyCode
-          when KEYCODE['P']
-            for sel in selected when sel.type is 'scenery'
-              pos = sel.object.pos
-              rot = sel.object.rot
-              layer = track.scenery.getLayer sel.layer
-              layer.config.density.add.push
-                pos: [pos[0], pos[1], pos[2]]
-                rot: [rot[0], rot[1], rot[2]]
-                scale: sel.object.scale
-              sel.mesh.position.z = pos[2] += 5
-              track.scenery.invalidateLayer sel.layer
-          when KEYCODE.BACKSPACE
-            remaining = []
-            for sel in selected
-              if sel.type is 'scenery'
-                layer = track.scenery.getLayer sel.layer
-              else
-                remaining.push sel
-            selected = remaining
-      requestAnim()
-      return
 
-    clearSelection = ->
-      # TODO: fully deallocate meshes.
-      for sel in selected
-        client.scene.remove sel.mesh
-      selected.length = 0
-      return
+    addSelection = (sel) -> selection.add {sel}
 
-    addSelection = (sel) ->
+    handleSelAdd = (selModel) ->
+      sel = selModel.get 'sel'
       sel.mesh = clientMisc.selectionMesh()
       pos = sel.object.pos
       radius = 2
@@ -411,13 +383,15 @@ define [
       sel.mesh.scale.multiplyScalar radius
       sel.mesh.position.set pos[0], pos[1], pos[2]
       client.scene.add sel.mesh
-      selected.push sel
-      return
 
-    inSelection = (query) ->
-      for sel in selected
-        return true if sel.object is query.object
-      false
+    handleSelRemove = (selModel) ->
+      client.scene.remove selModel.get('sel').mesh
+
+    selection.on 'add', handleSelAdd
+    selection.on 'remove', handleSelRemove
+    selection.on 'reset', (collection, options) ->
+      handleSelRemove for selModel in options.previousModels if options.previousModels?
+      handleSelAdd for selModel in selection.models
 
     # TODO: encapsulate mouse event handling
     mouseX = 0
@@ -433,18 +407,16 @@ define [
       isect = client.findObject mouseX, mouseY
       isect.sort (a, b) -> a.distance > b.distance
       firstHit = isect[0]
-      #clearSelection()
       underCursor = null
       if firstHit?
         mouseDistance = firstHit.distance
         underCursor = firstHit unless firstHit.type is 'terrain'
       else
         mouseDistance = 0
-      isSecondClick = if underCursor then inSelection(underCursor) else no
-      clearSelection() unless event.shiftKey or isSecondClick
+      isSecondClick = if underCursor then selection.contains(underCursor) else no
+      selection.reset() unless event.shiftKey or isSecondClick
       addSelection underCursor if underCursor unless isSecondClick
       requestAnim()
-      inspectorController.onSelectionChange()
       return
 
     $view3d.on 'mouseup', (event) ->
@@ -470,8 +442,9 @@ define [
         else
           tmp.copy(forward).multiplyScalar eye.y
           motion.addSelf tmp
-        if buttons & 1 and selected.length > 0 and isSecondClick
-          for sel in selected
+        if buttons & 1 and selection.length > 0 and isSecondClick
+          for selModel in selection.models
+            sel = selModel.get 'sel'
             pos = deepClone sel.object.pos
             pos[0] += motion.x
             pos[1] += motion.y
