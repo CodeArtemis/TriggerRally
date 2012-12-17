@@ -450,17 +450,19 @@ define [
       mouseX = event.layerX
       mouseY = event.layerY
       isect = client.findObject mouseX, mouseY
+      obj.distance += 10 for obj in isect when obj.type is 'terrain'
       isect.sort (a, b) -> a.distance > b.distance
       firstHit = isect[0]
-      underCursor = null
+      underCursor = firstHit
       if firstHit?
         mouseDistance = firstHit.distance
-        underCursor = firstHit unless firstHit.type is 'terrain'
+      #  underCursor = firstHit unless firstHit.type is 'terrain'
       else
         mouseDistance = 0
       isSecondClick = if underCursor then selection.contains(underCursor) else no
-      selection.reset() unless event.shiftKey or isSecondClick
-      addSelection underCursor if underCursor unless isSecondClick
+      unless isSecondClick
+        selection.reset() unless event.shiftKey
+        addSelection underCursor if underCursor
       requestAnim()
       return
 
@@ -477,7 +479,7 @@ define [
         mouseX = event.layerX
         mouseY = event.layerY
         eye = client.viewToEyeRel new Vec2 motionX, motionY
-        eye.multiplyScalar mouseDistance
+        eye.multiplyScalar mouseDistance * 1.3
         tmp = new Vec3
         motion = new Vec3
         tmp.copy(right).multiplyScalar eye.x
@@ -487,34 +489,35 @@ define [
         else
           tmp.copy(forward).multiplyScalar eye.y
           motion.addSelf tmp
-        if buttons & 1 and selection.length > 0 and isSecondClick
+        if buttons & 1 and isSecondClick
           for selModel in selection.models
             sel = selModel.get 'sel'
-            pos = deepClone sel.object.pos
-            pos[0] += motion.x
-            pos[1] += motion.y
-            pos[2] += motion.z
-            switch sel.type
-              when 'scenery'
-                # TODO: Make ground aligment optional.
-                tmp.set pos[0], pos[1], -Infinity
-                contact = track.terrain.getContact tmp
-                pos[2] = contact.surfacePos.z
-                scenery = deepClone trackModel.config.scenery
-                obj = scenery[sel.layer].add[sel.idx]
-                obj.pos = pos
-                trackModel.config.scenery = scenery
-                sel.object = obj
+            if sel.type is 'terrain'
+              if event.shiftKey or buttons & 2
+                camAngVel.z += motionX * 0.1
+                camAngVel.x += motionY * 0.1
               else
-                sel.object.pos = pos
-            sel.mesh.position.set pos[0], pos[1], pos[2]
-        else
-          if event.shiftKey or buttons & 2
-            camAngVel.z += motionX * 0.1
-            camAngVel.x += motionY * 0.1
-          else
-            motion.multiplyScalar 10
-            camVel.subSelf motion
+                motion.multiplyScalar 10
+                camVel.subSelf motion
+            else
+              pos = deepClone sel.object.pos
+              pos[0] += motion.x
+              pos[1] += motion.y
+              pos[2] += motion.z
+              switch sel.type
+                when 'scenery'
+                  # TODO: Make ground aligment optional.
+                  tmp.set pos[0], pos[1], -Infinity
+                  contact = track.terrain.getContact tmp
+                  pos[2] = contact.surfacePos.z
+                  scenery = deepClone trackModel.config.scenery
+                  obj = scenery[sel.layer].add[sel.idx]
+                  obj.pos = pos
+                  trackModel.config.scenery = scenery
+                  sel.object = obj
+                else
+                  sel.object.pos = pos
+              sel.mesh.position.set pos[0], pos[1], pos[2]
         requestAnim()
       return
 

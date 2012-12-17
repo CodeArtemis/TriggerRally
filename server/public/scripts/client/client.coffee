@@ -450,21 +450,55 @@ define [
       [].concat.apply [], isect
 
     intersectTerrain: (ray) ->
+
+      zeroCrossing = (fn, lower, upper, iterations = 4) ->
+        fnLower = fn lower
+        fnUpper = fn upper
+        # Approximate the function as a line.
+        gradient = (fnUpper - fnLower) / (upper - lower)
+        constant = fnLower - gradient * lower
+        crossing = -constant / gradient
+        return crossing if iterations <= 1
+        fnCrossing = fn crossing
+        if fnCrossing < 0
+          zeroCrossing fn, crossing, upper, iterations - 1
+        else
+          zeroCrossing fn, lower, crossing, iterations - 1
+
+      terrainContact = (lambda) =>
+        test = ray.direction.clone().multiplyScalar lambda
+        test.addSelf ray.origin
+        {
+          test
+          contact: @track.terrain.getContact test
+        }
+
+      terrainFunc = (lambda) =>
+        tc = terrainContact lambda
+        tc.contact.surfacePos.z - tc.test.z
+
       return [] if ray.direction.z >= 0
       lambda = 0
-      step = 1
-      # TODO: Binary search final step for more accurate result.
+      step = 0.2
+      count = 0
       while true
         nextLambda = lambda + step
-        test = ray.direction.clone().multiplyScalar nextLambda
-        test.addSelf ray.origin
-        contact = @track.terrain.getContact test
-        if contact.surfacePos.z >= test.z then return [
-          type: 'terrain'
-          distance: lambda
-        ]
+        if terrainFunc(nextLambda) > 0
+          lambda = zeroCrossing terrainFunc, lambda, nextLambda
+          contact = terrainContact(lambda).contact
+          return [
+            type: 'terrain'
+            distance: lambda
+            object:
+              pos: [
+                contact.surfacePos.x
+                contact.surfacePos.y
+                contact.surfacePos.z
+              ]
+          ]
         lambda = nextLambda
-        step *= 1.2
+        step *= 1.1
+        count++
 
     intersectStartPosition: (ray) ->
       pos = @track.config.course.startposition.pos
