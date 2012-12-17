@@ -93,15 +93,25 @@ define [
 
     selCmdDelete.$content.click ->
       checkpoints = track.config.course.checkpoints
-      toRemove = []
+      scenery = deepClone track.config.scenery
+      checkpointsToRemove = []
+      sceneryToRemove = []
       for selModel in selection.models
         sel = selModel.get 'sel'
-        toRemove.push sel.object if (
-            sel.type is 'checkpoint' and
-            sel.idx > 0 and
-            sel.idx < checkpoints.length - 1)
+        switch sel.type
+          when 'checkpoint'
+            checkpointsToRemove.push sel.object if (
+                sel.type is 'checkpoint' and
+                sel.idx > 0 and
+                sel.idx < checkpoints.length - 1)
+          when 'scenery'
+            sceneryToRemove.push scenery[sel.layer].add[sel.idx]
       selection.reset()
-      checkpoints.remove toRemove
+      checkpoints.remove checkpointsToRemove
+      for name, layer of scenery
+        layer.add = _.difference layer.add, sceneryToRemove
+      track.config.scenery = scenery
+      return
 
     selCmdCopy.$content.click ->
       doneCheckpoint = no
@@ -128,7 +138,7 @@ define [
             checkpoints.add newCp, at: idx + 1
           when 'scenery'
             newObj = deepClone track.config.scenery[sel.layer].add[sel.idx]
-            newObj.pos[2] += 10
+            newObj.pos[2] += 5 + 10 * Math.random()
             scenery[sel.layer].add.push newObj
       track.config.scenery = scenery
       return

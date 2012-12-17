@@ -231,7 +231,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
         probability *= Math.min(typeProb, 1);
       }
 
-      object.scale = (random() * 0.06 * probability + 0.3);
+      object.scale = (random() * 0.18 * probability + 0.9);
 
       /*
       // Enforce minimum distance between objects.
