@@ -254,9 +254,13 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
                        this.checkpoints);
 
         // TOOD: Listen for individual checkpoint changes, update just relevant region.
-        this.config.course.checkpoints.on('change', _.debounce(function() {
+        var updateCheckpoints = _.debounce(function() {
           quiver.push(this.config.course.checkpoints);
-        }.bind(this), 200));
+        }.bind(this), 200);
+        this.config.course.checkpoints.on('change', updateCheckpoints);
+        this.config.course.checkpoints.on('add', updateCheckpoints);
+        this.config.course.checkpoints.on('remove', updateCheckpoints);
+        this.config.course.checkpoints.on('reset', updateCheckpoints);
       }).call(this);
 
       (function() {

@@ -54,7 +54,6 @@ define [
       @some (element) -> element.get('sel').object is sel.object
 
   InspectorController = (selection, track) ->
-    selected = selection.models
     $inspector = $('#editor-inspector')
     $inspectorAttribs = $inspector.find('.attrib')
 
@@ -81,8 +80,9 @@ define [
       $content = slider.$content
       $content.change ->
         val = parseFloat $content.val()
-        for sel in selected when sel.type is 'checkpoint'
-          eachSel sel, val
+        for selModel in selection.models
+          sel = selModel.get 'sel'
+          eachSel sel, val if sel.type is 'checkpoint'
 
     checkpointSlider selDispRadius,   (sel, val) -> manipulate sel.object, 'disp', (o) -> o.radius   = val
     checkpointSlider selDispHardness, (sel, val) -> manipulate sel.object, 'disp', (o) -> o.hardness = val
@@ -93,39 +93,68 @@ define [
 
     selCmdDelete.$content.click ->
       checkpoints = track.config.course.checkpoints
-      cps = (sel.object for sel in selected when (
-             sel.type is 'checkpoint' and
-             sel.idx > 0 and
-             sel.idx < checkpoints.length - 1))
-      checkpoints.remove cps
+      toRemove = []
+      for selModel in selection.models
+        sel = selModel.get 'sel'
+        toRemove.push sel.object if (
+            sel.type is 'checkpoint' and
+            sel.idx > 0 and
+            sel.idx < checkpoints.length - 1)
+      selection.reset()
+      checkpoints.remove toRemove
 
     selCmdCopy.$content.click ->
-      console.assert selected.length is 1
-      checkpoints = track.config.course.checkpoints
-      sel = selected[0]
-      selection.reset()
+      doneCheckpoint = no
+      scenery = deepClone track.config.scenery
+      for selModel in selection.models
+        sel = selModel.get 'sel'
+        switch sel.type
+          when 'checkpoint'
+            continue if doneCheckpoint
+            doneCheckpoint = yes
+            checkpoints = track.config.course.checkpoints
+            sel = selection.first().get 'sel'
+            idx = sel.idx
+            selCp = checkpoints.at idx
+            otherCp = checkpoints.at (if idx < checkpoints.length - 1 then idx + 1 else idx - 1)
+            interpPos = [
+              (selCp.pos[0] + otherCp.pos[0]) * 0.5
+              (selCp.pos[1] + otherCp.pos[1]) * 0.5
+              (selCp.pos[2] + otherCp.pos[2]) * 0.5
+            ]
+            newCp = selCp.clone()
+            newCp.pos = interpPos
+            selection.reset()
+            checkpoints.add newCp, at: idx + 1
+          when 'scenery'
+            newObj = deepClone track.config.scenery[sel.layer].add[sel.idx]
+            newObj.pos[2] += 10
+            scenery[sel.layer].add.push newObj
+      track.config.scenery = scenery
+      return
 
     checkpointSliderSet = (slider, val) ->
       slider.$content.val val
       slider.$root.addClass 'visible'
 
     onChange = ->
-      # Hide all controls, then re-enable relevant ones.
+      # Hide and reset all controls first.
       $inspectorAttribs.removeClass 'visible'
+      selCmdCopy.$content.prop 'disabled', no
 
-      selType.$content.text switch selected.length
+      selType.$content.text switch selection.length
         when 0 then 'track'
-        when 1 then selected[0].type
+        when 1 then selection.first().get('sel').type
         else '[multiple]'
       selType.$root.addClass 'visible'
 
-      if selected.length is 0
+      if selection.length is 0
         # If no selection, we inspect the track properties.
         selTitle.$content.val track.name
         selTitle.$root.addClass 'visible'
         selCmdCopy.$root.addClass 'visible'
-        selCmdCopy.$content.prop 'disabled', no
-      else for sel in selected
+      else for selModel in selection.models
+        sel = selModel.get 'sel'
         switch sel.type
           when 'checkpoint'
             checkpointSliderSet selDispRadius,   sel.object.disp.radius
@@ -136,10 +165,16 @@ define [
             checkpointSliderSet selSurfStrength, sel.object.surf.strength
             selCmdDelete.$root.addClass 'visible'
             selCmdCopy.$root.addClass 'visible'
-            selCmdCopy.$content.prop 'disabled', selected.length isnt 1
+            selCmdCopy.$content.prop 'disabled', yes if selection.length isnt 1
+          when 'scenery'
+            selCmdDelete.$root.addClass 'visible'
+            selCmdCopy.$root.addClass 'visible'
       return
 
-    selection.on 'change', onChange
+    onChange()
+    selection.on 'add', onChange
+    selection.on 'remove', onChange
+    selection.on 'reset', onChange
 
   run: ->
     $container = $(window)

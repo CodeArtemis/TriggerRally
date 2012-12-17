@@ -24,13 +24,13 @@ define [
             return
       return
 
-    createTile: (layer, tx, ty) ->
+    createTile: (layer, tx, ty, skipFadeIn) ->
       entities = layer.src.getTile(tx, ty)
       renderConfig = layer.src.config.render
       tile = new THREE.Object3D
       tile.position.x = (tx + 0.5) * layer.src.cache.gridSize
       tile.position.y = (ty + 0.5) * layer.src.cache.gridSize
-      tile.opacity = 0
+      tile.opacity = if skipFadeIn then 1 else 0
       if layer.meshes.length > 0 and entities.length > 0
         for object in layer.meshes
           # We merge copies of each object into a single mesh.
@@ -51,7 +51,7 @@ define [
           material.color = object.material.color
           material.ambient = object.material.ambient
           material.emissive = object.material.emissive
-          material.opacity = 0
+          material.opacity = tile.opacity
           mesh = new THREE.Mesh mergedGeom, material
           mesh.doubleSided = object.doubleSided
           mesh.castShadow = object.castShadow
@@ -91,7 +91,7 @@ define [
             tile = layer.tiles[key]
             if not tile and (addAll or not added)
               added = true
-              tile = layer.tiles[key] = @createTile layer, tx, ty
+              tile = layer.tiles[key] = @createTile layer, tx, ty, addAll
               @scene.add tile
             if tile and tile.opacity < 1
                 tile.opacity = Math.min 1, tile.opacity + fadeAmount
