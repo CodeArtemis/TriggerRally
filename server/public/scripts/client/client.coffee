@@ -446,15 +446,25 @@ define [
       isect = isect.concat @track.scenery.intersectRay ray
       isect = isect.concat @intersectCheckpoints ray
       isect = isect.concat @intersectStartPosition ray
-
-      # TODO: Move this to terrain and make it actually ray march.
-      groundLambda = -ray.origin.z / ray.direction.z
-      if groundLambda > 0
-        isect.push
-          distance: groundLambda
-          type: 'terrain'
-
+      isect = isect.concat @intersectTerrain ray
       [].concat.apply [], isect
+
+    intersectTerrain: (ray) ->
+      return [] if ray.direction.z >= 0
+      lambda = 0
+      step = 1
+      # TODO: Binary search final step for more accurate result.
+      while true
+        nextLambda = lambda + step
+        test = ray.direction.clone().multiplyScalar nextLambda
+        test.addSelf ray.origin
+        contact = @track.terrain.getContact test
+        if contact.surfacePos.z >= test.z then return [
+          type: 'terrain'
+          distance: lambda
+        ]
+        lambda = nextLambda
+        step *= 1.2
 
     intersectStartPosition: (ray) ->
       pos = @track.config.course.startposition.pos
