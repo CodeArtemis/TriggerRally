@@ -477,11 +477,10 @@ define [
         tc = terrainContact lambda
         tc.contact.surfacePos.z - tc.test.z
 
-      return [] if ray.direction.z >= 0
       lambda = 0
       step = 0.2
       count = 0
-      while true
+      while lambda < 20000
         nextLambda = lambda + step
         if terrainFunc(nextLambda) > 0
           lambda = zeroCrossing terrainFunc, lambda, nextLambda
@@ -499,6 +498,7 @@ define [
         lambda = nextLambda
         step *= 1.1
         count++
+      []
 
     intersectStartPosition: (ray) ->
       pos = @track.config.course.startposition.pos

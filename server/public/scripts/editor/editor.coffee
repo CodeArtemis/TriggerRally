@@ -3,7 +3,7 @@
 ###
 
 define [
-  'zepto'
+  'jquery'
   'backbone-full'
   'THREE'
   'util/util'
@@ -70,8 +70,13 @@ define [
     selSurfRadius   = attrib '#surf-radius'
     selSurfHardness = attrib '#surf-hardness'
     selSurfStrength = attrib '#surf-strength'
-    selCmdCopy      = attrib '#cmd-copy'
-    selCmdDelete    = attrib '#cmd-delete'
+    sceneryType     = attrib '#scenery-type'
+    cmdAdd          = attrib '#cmd-add'
+    cmdCopy         = attrib '#cmd-copy'
+    cmdDelete       = attrib '#cmd-delete'
+
+    for layer, idx in track.env.scenery.layers
+      sceneryType.$content.append new Option layer.id, idx
 
     selTitle.$content.on 'input', ->
       track.name = selTitle.$content.val()
@@ -91,29 +96,33 @@ define [
     checkpointSlider selSurfHardness, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.hardness = val
     checkpointSlider selSurfStrength, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.strength = val
 
-    selCmdDelete.$content.click ->
-      checkpoints = track.config.course.checkpoints
+    cmdAdd.$content.click ->
       scenery = deepClone track.config.scenery
-      checkpointsToRemove = []
-      sceneryToRemove = []
+      newSel = []
+      $sceneryType = sceneryType.$content.find(":selected")
+      layerIdx = $sceneryType.val()
+      layer = $sceneryType.text()
       for selModel in selection.models
         sel = selModel.get 'sel'
-        switch sel.type
-          when 'checkpoint'
-            checkpointsToRemove.push sel.object if (
-                sel.type is 'checkpoint' and
-                sel.idx > 0 and
-                sel.idx < checkpoints.length - 1)
-          when 'scenery'
-            sceneryToRemove.push scenery[sel.layer].add[sel.idx]
-      selection.reset()
-      checkpoints.remove checkpointsToRemove
-      for name, layer of scenery
-        layer.add = _.difference layer.add, sceneryToRemove
+        continue unless sel.type is 'terrain'
+        newScenery =
+          scale: 1
+          rot: [ 0, 0, Math.random() * TWOPI ]
+          pos: sel.object.pos
+        scenery[layer] ?= { add: [] }
+        idx = scenery[layer].add.length
+        scenery[layer].add.push newScenery
+        newSel.push
+          sel:
+            type: 'scenery'
+            distance: sel.distance
+            layer: layer
+            idx: idx
+            object: newScenery
       track.config.scenery = scenery
-      return
+      selection.reset newSel
 
-    selCmdCopy.$content.click ->
+    cmdCopy.$content.click ->
       doneCheckpoint = no
       scenery = deepClone track.config.scenery
       for selModel in selection.models
@@ -143,6 +152,28 @@ define [
       track.config.scenery = scenery
       return
 
+    cmdDelete.$content.click ->
+      checkpoints = track.config.course.checkpoints
+      scenery = deepClone track.config.scenery
+      checkpointsToRemove = []
+      sceneryToRemove = []
+      for selModel in selection.models
+        sel = selModel.get 'sel'
+        switch sel.type
+          when 'checkpoint'
+            checkpointsToRemove.push sel.object if (
+                sel.type is 'checkpoint' and
+                sel.idx > 0 and
+                sel.idx < checkpoints.length - 1)
+          when 'scenery'
+            sceneryToRemove.push scenery[sel.layer].add[sel.idx]
+      selection.reset()
+      checkpoints.remove checkpointsToRemove
+      for name, layer of scenery
+        layer.add = _.difference layer.add, sceneryToRemove
+      track.config.scenery = scenery
+      return
+
     checkpointSliderSet = (slider, val) ->
       slider.$content.val val
       slider.$root.addClass 'visible'
@@ -150,20 +181,20 @@ define [
     onChange = ->
       # Hide and reset all controls first.
       $inspectorAttribs.removeClass 'visible'
-      selCmdCopy.$content.prop 'disabled', no
+      cmdCopy.$content.prop 'disabled', no
 
       selType.$content.text switch selection.length
-        when 0 then 'track'
+        when 0 then 'none'
         when 1 then selection.first().get('sel').type
         else '[multiple]'
       selType.$root.addClass 'visible'
 
-      if selection.length is 0
-        # If no selection, we inspect the track properties.
-        selTitle.$content.val track.name
-        selTitle.$root.addClass 'visible'
-        selCmdCopy.$root.addClass 'visible'
-      else for selModel in selection.models
+      # Always show track attributes.
+      selTitle.$content.val track.name
+      selTitle.$root.addClass 'visible'
+      cmdCopy.$root.addClass 'visible'
+
+      for selModel in selection.models
         sel = selModel.get 'sel'
         switch sel.type
           when 'checkpoint'
@@ -173,12 +204,15 @@ define [
             checkpointSliderSet selSurfRadius,   sel.object.surf.radius
             checkpointSliderSet selSurfHardness, sel.object.surf.hardness
             checkpointSliderSet selSurfStrength, sel.object.surf.strength
-            selCmdDelete.$root.addClass 'visible'
-            selCmdCopy.$root.addClass 'visible'
-            selCmdCopy.$content.prop 'disabled', yes if selection.length isnt 1
+            cmdDelete.$root.addClass 'visible'
+            #cmdCopy.$root.removeClass 'visible' if selection.length isnt 1
           when 'scenery'
-            selCmdDelete.$root.addClass 'visible'
-            selCmdCopy.$root.addClass 'visible'
+            cmdDelete.$root.addClass 'visible'
+            cmdCopy.$root.addClass 'visible'
+          when 'terrain'
+            # Terrain selection acts as marker for adding scenery.
+            sceneryType.$root.addClass 'visible'
+            cmdAdd.$root.addClass 'visible'
       return
 
     onChange()
@@ -445,10 +479,10 @@ define [
     buttons = 0
     isSecondClick = no  # We only allow dragging on second click to prevent mistakes.
 
-    $view3d.on 'mousedown', (event) ->
+    $view3d.mousedown (event) ->
       buttons |= Math.pow(2, event.button)
-      mouseX = event.layerX
-      mouseY = event.layerY
+      mouseX = event.offsetX
+      mouseY = event.offsetY
       isect = client.findObject mouseX, mouseY
       obj.distance += 10 for obj in isect when obj.type is 'terrain'
       isect.sort (a, b) -> a.distance > b.distance
@@ -466,18 +500,18 @@ define [
       requestAnim()
       return
 
-    $view3d.on 'mouseup', (event) ->
+    $view3d.mouseup (event) ->
       buttons &= ~Math.pow(2, event.button)
       return
 
-    $view3d.on 'mousemove', (event) ->
+    $view3d.mousemove (event) ->
       if buttons & 3 and mouseDistance > 0
         right = client.camera.matrixWorld.getColumnX()
         forward = (new Vec3).cross client.camera.up, right
-        motionX = event.layerX - mouseX
-        motionY = event.layerY - mouseY
-        mouseX = event.layerX
-        mouseY = event.layerY
+        motionX = event.offsetX - mouseX
+        motionY = event.offsetY - mouseY
+        mouseX = event.offsetX
+        mouseY = event.offsetY
         eye = client.viewToEyeRel new Vec2 motionX, motionY
         eye.multiplyScalar mouseDistance * 1.3
         tmp = new Vec3
@@ -492,32 +526,32 @@ define [
         if buttons & 1 and isSecondClick
           for selModel in selection.models
             sel = selModel.get 'sel'
-            if sel.type is 'terrain'
-              if event.shiftKey or buttons & 2
-                camAngVel.z += motionX * 0.1
-                camAngVel.x += motionY * 0.1
+            continue if sel.type is 'terrain'
+            pos = deepClone sel.object.pos
+            pos[0] += motion.x
+            pos[1] += motion.y
+            pos[2] += motion.z
+            switch sel.type
+              when 'scenery'
+                # TODO: Make ground aligment optional.
+                tmp.set pos[0], pos[1], -Infinity
+                contact = track.terrain.getContact tmp
+                pos[2] = contact.surfacePos.z
+                scenery = deepClone trackModel.config.scenery
+                obj = scenery[sel.layer].add[sel.idx]
+                obj.pos = pos
+                trackModel.config.scenery = scenery
+                sel.object = obj
               else
-                motion.multiplyScalar 10
-                camVel.subSelf motion
-            else
-              pos = deepClone sel.object.pos
-              pos[0] += motion.x
-              pos[1] += motion.y
-              pos[2] += motion.z
-              switch sel.type
-                when 'scenery'
-                  # TODO: Make ground aligment optional.
-                  tmp.set pos[0], pos[1], -Infinity
-                  contact = track.terrain.getContact tmp
-                  pos[2] = contact.surfacePos.z
-                  scenery = deepClone trackModel.config.scenery
-                  obj = scenery[sel.layer].add[sel.idx]
-                  obj.pos = pos
-                  trackModel.config.scenery = scenery
-                  sel.object = obj
-                else
-                  sel.object.pos = pos
-              sel.mesh.position.set pos[0], pos[1], pos[2]
+                sel.object.pos = pos
+            sel.mesh.position.set pos[0], pos[1], pos[2]
+        else
+          if event.shiftKey or buttons & 2
+            camAngVel.z += motionX * 0.1
+            camAngVel.x += motionY * 0.1
+          else
+            motion.multiplyScalar 10
+            camVel.subSelf motion
         requestAnim()
       return
 
@@ -530,6 +564,7 @@ define [
       return
 
     $view3d.on 'mousewheel', (event) ->
-      scroll event.wheelDeltaY or event.deltaY
+      origEvent = event.originalEvent
+      scroll origEvent.wheelDeltaY or origEvent.deltaY
 
     return

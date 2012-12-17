@@ -21,9 +21,6 @@ requirejs.config({
     },
     'async': {
       exports: 'async'
-    },
-    'zepto': {
-      exports: '$'
     }
   }
 });
@@ -46,7 +43,8 @@ require(
       , 'underscore': '../js/underscore'  // -min
       , 'backbone': '../js/backbone'  // -min
       , 'backbone-relational': '../js/backbone-relational'
-      , 'zepto': '../js/zepto'
+      //, 'zepto': '../js/zepto'
+      , 'jquery': '../js/jquery-1.8.3.min'
     }
   },
   [

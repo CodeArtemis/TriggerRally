@@ -28,13 +28,16 @@ block body
 
   #editor-inspector
     //-h3 Property inspector
+
+    .attrib#title
+      span.label Track name:
+      input.content(type="text")
+
+    hr
+
     .attrib#sel-type
       span.label Selection:
       span.content
-
-    .attrib#title
-      span.label Name:
-      input.content(type="text")
 
     .attrib#disp-radius
       span.tooltip T width:
@@ -85,6 +88,15 @@ block body
           h4 Dirt amount
           p Controls the quantity of dirt on the track.
       input.content(type="range", min=0, max=1, step="any")
+
+    .attrib#scenery-type
+      span.label Scenery
+      select.content
+
+    .attrib#cmd-add
+      hr
+      span.label Action
+      button.content Add
 
     .attrib#cmd-copy
       hr
