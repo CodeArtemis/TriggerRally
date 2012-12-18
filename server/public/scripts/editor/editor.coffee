@@ -74,6 +74,7 @@ define [
     cmdAdd          = attrib '#cmd-add'
     cmdCopy         = attrib '#cmd-copy'
     cmdDelete       = attrib '#cmd-delete'
+    cmdCopyTrack    = attrib '#cmd-copy-track'
 
     for layer, idx in track.env.scenery.layers
       sceneryType.$content.append new Option layer.id, idx
@@ -174,6 +175,10 @@ define [
       track.config.scenery = scenery
       return
 
+    cmdCopyTrack.$content.click ->
+      return unless window.confirm "Are you sure you want to create a copy of the entire track?"
+      window.location.pathname = "/track/#{track.id}/copy"
+
     checkpointSliderSet = (slider, val) ->
       slider.$content.val val
       slider.$root.addClass 'visible'
@@ -185,14 +190,19 @@ define [
 
       selType.$content.text switch selection.length
         when 0 then 'none'
-        when 1 then selection.first().get('sel').type
+        when 1
+          sel = selection.first().get('sel')
+          if sel.type is 'scenery'
+            sel.layer
+          else
+            sel.type
         else '[multiple]'
       selType.$root.addClass 'visible'
 
       # Always show track attributes.
       selTitle.$content.val track.name
       selTitle.$root.addClass 'visible'
-      cmdCopy.$root.addClass 'visible'
+      cmdCopyTrack.$root.addClass 'visible'
 
       for selModel in selection.models
         sel = selModel.get 'sel'
@@ -205,7 +215,7 @@ define [
             checkpointSliderSet selSurfHardness, sel.object.surf.hardness
             checkpointSliderSet selSurfStrength, sel.object.surf.strength
             cmdDelete.$root.addClass 'visible'
-            #cmdCopy.$root.removeClass 'visible' if selection.length isnt 1
+            cmdCopy.$root.addClass 'visible'
           when 'scenery'
             cmdDelete.$root.addClass 'visible'
             cmdCopy.$root.addClass 'visible'

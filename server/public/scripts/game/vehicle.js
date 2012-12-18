@@ -44,9 +44,11 @@ function(THREE, psim, collision, util) {
   var FRICTION_STATIC_WHEEL = 1.2 * 1.2;
 
   var tmpVec3a = new Vec3();
+  var tmpVec3b = new Vec3();
   var tmpVec2a = new Vec2();
   var plusXVec3 = new Vec3(1, 0, 0);
   var plusYVec3 = new Vec3(0, 1, 0);
+  var plusZVec3 = new Vec3(0, 0, 1);
 
   var RPM_TO_RPS = function (r) { return r * TWOPI / 60; };
 
@@ -521,7 +523,11 @@ function(THREE, psim, collision, util) {
     var clipPos = this.body.getLocToWorldPoint(wheel.pos);
 
     // TODO: Try moving along radius instead of straight down?
-    clipPos.z += wheel.ridePos - wheel.cfg.radius;
+    var sideways = this.body.oriMat.getColumnX();
+    tmpVec3a.cross(sideways, plusZVec3);
+    tmpVec3b.cross(tmpVec3a, sideways);
+    tmpVec3b.multiplyScalar(wheel.ridePos - wheel.cfg.radius);
+    clipPos.addSelf(tmpVec3b);
     var contactVel = this.body.getLinearVelAtPoint(clipPos);
     var contacts = this.sim.collidePoint(clipPos);
     if (contacts) this.hasContact = true;
