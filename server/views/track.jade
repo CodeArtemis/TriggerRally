@@ -14,9 +14,23 @@ block body
       dd= urlTrack.name
 
     dl
-      dt Created by
+      dt Owner
       dd
         user = urlTrack.user
-        inlude partial/user
+        include partial/user
+
+    dl
+      dt Created
+      dd= urlTrack.created_ago
+
+    dl
+      dt Modified
+      dd= urlTrack.modified_ago
+
+    if urlTrack.parent
+      dl
+        dt Parent track
+        dd
+          a(href="/track/#{urlTrack.parent.pub_id}")= urlTrack.parent.name
 
     include partial/footer

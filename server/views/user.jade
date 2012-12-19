@@ -27,13 +27,13 @@ block body
         .section Public information
       - else
         .section User information
-      field = { title:'Name', name:'name', value:urlUser.name, focus:1 }
+      field = { title:'Name', name:'name', value:urlUser.name, focus:1, editing:editing }
       include partial/formfield
-      field = { title:'Location', name:'location', value:urlUser.location }
+      field = { title:'Location', name:'location', value:urlUser.location, editing:editing }
       include partial/formfield
-      field = { title:'Website', name:'website', value:urlUser.website }
+      field = { title:'Website', name:'website', value:urlUser.website, editing:editing }
       include partial/formfield
-      field = { title:'About me', name:'bio', value:urlUser.bio }
+      field = { title:'About me', name:'bio', value:urlUser.bio, editing:editing }
       include partial/formfield
       //- TODO: Move this date computation out of view?
       - var created = urlUser.created.toISOString().substr(0, 10)
@@ -44,12 +44,36 @@ block body
         .section Private information, visible only to you
         div Email is used for your <a href="http://gravatar.com">Gravatar</a> profile picture.
           |  It will not be shared with anyone.
-        field = { title: 'Email', name:'email', value:urlUser.email }
+        field = { title: 'Email', name:'email', value:urlUser.email, editing:editing }
         include partial/formfield
         field = { title: 'Identity Provider', name:'idp', value:urlUser.id_prov, editing:false }
         include partial/formfield
 
-    .section Recorded runs
+    .section Tracks
+    - if (tracks && tracks.length > 0)
+      table
+        tr
+          td Name
+          td Created
+          td Modified
+          td
+          td
+        each track in tracks
+          tr
+            td
+              a(href="/track/#{track.pub_id}")= track.name
+            td= track.created_ago
+            td= track.modified_ago
+            td
+              a(href="/x/#{track.pub_id}/ArbusuG/drive") Drive
+            td
+              a(href="/track/#{track.pub_id}/edit") Edit
+    - else
+      span You haven't recorded any runs yet. 
+      a(href='/x/Preview/Arbusu/drive') Drive!
+
+
+    .section Recorded runs (v1 only for now)
     - if (runs && runs.length > 0)
       table
         tr
@@ -58,7 +82,7 @@ block body
           td Time
           td Recorded
           td
-          td 
+          td
         each run, rank in runs
           tr
             td

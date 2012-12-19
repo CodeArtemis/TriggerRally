@@ -56,19 +56,14 @@ exports.userconfirm = function(req, res) {
 };
 
 exports.user = function(req, res) {
-  function next(error, runs) {
-    if (error) {
-      console.log('Error fetching runs:');
-      console.log(error);
-      res.send(500);
-    } else {
-      req.jadeParams.title = req.urlUser.name;
-      req.jadeParams.urlUser = req.urlUser;
-      req.jadeParams.editing = req.editing || false;
-      req.jadeParams.validate = objects.validation.User.profileValidator;
-      req.jadeParams.runs = runs;
-      res.render('user', req.jadeParams);
-    }
+  function next(runs, tracks) {
+    req.jadeParams.title = req.urlUser.name;
+    req.jadeParams.urlUser = req.urlUser;
+    req.jadeParams.editing = req.editing || false;
+    req.jadeParams.validate = objects.validation.User.profileValidator;
+    req.jadeParams.runs = runs;
+    req.jadeParams.tracks = tracks;
+    res.render('user', req.jadeParams);
   }
   if (req.editing) next()
   else Run
@@ -77,7 +72,28 @@ exports.user = function(req, res) {
     .sort({_id: 'desc'})
     .populate('track', {'pub_id':1, 'name':1})
     .populate('car', {'pub_id':1, 'name':1})
-    .exec(next);
+    .exec(function(error, runs) {
+      if (error) {
+        console.log('Error fetching runs:');
+        console.log(error);
+        return res.send(500);
+      }
+      Track
+        .find({ user: req.urlUser.id })
+        .limit(500)
+        .sort({_id: 'desc'})
+        //.populate('track', {'pub_id':1, 'name':1})
+        //.populate('car', {'pub_id':1, 'name':1})
+        .populate('parent', {'pub_id':1, 'name':1})
+        .exec(function(error, tracks) {
+          if (error) {
+            console.log('Error fetching tracks:');
+            console.log(error);
+            return res.send(500);
+          }
+          next(runs, tracks);
+        });
+    });
 };
 
 exports.userSave = function(req, res) {
@@ -138,6 +154,26 @@ exports.trackEdit = function(req, res) {
   req.jadeParams.trackData = sanitizeTrack(req.urlTrack.toObject({ getters:true }));
   req.jadeParams.layout = 'layout-editor';
   res.render('trackedit', req.jadeParams);
+};
+
+exports.trackCopy = function(req, res) {
+  var track = req.urlTrack;
+  track.parent = track._id;
+  track._id = undefined;
+  track.pub_id = undefined;
+  track.name += ' copy';
+  var newTrack = new Track(track);
+  console.log('trackCopy');
+  console.log(newTrack);
+  newTrack.save(function(err, newTrack) {
+    if (err) {
+      console.log('Error saving copied track:');
+      console.log(err);
+      res.send(500);
+    } else {
+      res.redirect('/track/' + newTrack.pub_id + '/edit');
+    }
+  });
 };
 
 exports.trackJson = function(req, res) {

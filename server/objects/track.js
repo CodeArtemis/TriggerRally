@@ -36,6 +36,8 @@ var Track = new Schema({
   , env       : { type: Schema.ObjectId, ref: 'Environment' }
   , user      : { type: Schema.ObjectId, ref: 'User' }
   , config    : Schema.Types.Mixed
+  , modified  : { type: Date }
+  , parent    : { type: Schema.ObjectId, ref: 'Track' }
 }, { strict: true });
 
 Track.virtual('created')
@@ -43,11 +45,23 @@ Track.virtual('created')
     return new Date(parseInt(this._id.toHexString().substring(0, 8), 16) * 1000);
   });
 
+Track.virtual('created_ago')
+  .get(function() {
+    return common.formatDateAgo(this.created);
+  });
+
+Track.virtual('modified_ago')
+  .get(function() {
+    var modified = this.modified || this.created;
+    return common.formatDateAgo(modified);
+  });
+
 Track.pre('save', function(next) {
   if (this.isNew) {
     this._id = this._id || new mongodb.ObjectID();
     this.pub_id = common.makePubId(this.id);
   }
+  this.modified = new Date();
   next();
 });
 

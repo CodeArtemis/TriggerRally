@@ -210,9 +210,11 @@ loadUrlTrack = (req, res, next) ->
     .findOne(pub_id: req.params.idTrack)
     .populate('user')
     .populate('env')
+    .populate('parent', {'pub_id':1, 'name':1})
     .exec (error, urlTrack) ->
       if error then return next error
       unless urlTrack then return res.send 404
+      console.log urlTrack
       urlTrack.isAuthenticated = req.user?.user?.id is urlTrack.user.id
       req.urlTrack = urlTrack
       unless urlTrack.env then return next()
@@ -279,6 +281,7 @@ app.get '/user/:idUser/edit', loadUrlUser, editUser, routes.user
 app.post '/user/:idUser/save', loadUrlUser, editUser, routes.userSave
 app.get '/track/:idTrack', loadUrlTrack, routes.track
 app.get '/track/:idTrack/edit', loadUrlTrack, editTrack, routes.trackEdit
+app.post '/track/:idTrack/copy', loadUrlTrack, routes.trackCopy
 app.get '/track/:idTrack/json', loadUrlTrack, routes.trackJson
 app.get '/track/:idTrack/json/edit', loadUrlTrack, editTrack, routes.trackJson
 app.post '/track/:idTrack/json/save', loadUrlTrack, editTrack, routes.trackJsonSave
@@ -446,6 +449,7 @@ io.of('/api').on 'connection', (socket) ->
                 return callback '403'
               track.config = data.model.config
               track.name = data.model.name
+              track.modified = new Date()
               db.tracks.save track, (err) ->
                 callback err, {}
                 isodate = getIsodate()

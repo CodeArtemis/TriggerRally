@@ -52,7 +52,7 @@ exports.formatDateAgo = function(date) {
   function pl(c) { return c == 1 ? '' : 's'; }
   var c = Date.now() - date.getTime();
   c = Math.floor(c / 1000);
-  if (c < 60) return c + ' second' + pl(c) + ' ago';
+  if (c < 60) return 'just now';
   c = Math.floor(c / 60);
   if (c < 60) return c + ' minute' + pl(c) + ' ago';
   c = Math.floor(c / 60);

@@ -1,9 +1,9 @@
-- if (value || editing)
+- if (field.value || field.editing)
   dl
-    dt= title
+    dt= field.title
     dd
-      - if (editing)
-        - if (typeof focus !== 'undefined' && focus)
+      - if (field.editing)
+        - if (field.focus)
           input(name='#{field.name}', type='#{field.fieldtype}', value='#{field.value}', oninput='onInput("#{field.name}")', autofocus)
         - else
           input(name='#{field.name}', type='#{field.fieldtype}', value='#{field.value}', oninput='onInput("#{field.name}")')
@@ -11,4 +11,4 @@
         //-span.fieldstatuserror(id="fieldstatuserror=#{name}")&#10007;
         span.fielderror(id="fielderror-#{field.name}")
       - else
-        =value
+        =field.value

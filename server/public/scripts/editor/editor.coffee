@@ -177,7 +177,10 @@ define [
 
     cmdCopyTrack.$content.click ->
       return unless window.confirm "Are you sure you want to create a copy of the entire track?"
-      window.location.pathname = "/track/#{track.id}/copy"
+      form = document.createElement 'form'
+      form.action = 'copy'
+      form.method = 'POST'
+      form.submit()
 
     checkpointSliderSet = (slider, val) ->
       slider.$content.val val
