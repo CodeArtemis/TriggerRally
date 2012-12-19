@@ -27,6 +27,11 @@ block body
       dt Modified
       dd= urlTrack.modified_ago
 
+    dl
+      dt &nbsp;
+      dd
+        a(href="/track/#{urlTrack.pub_id}/edit") Open in editor
+
     if urlTrack.parent
       dl
         dt Parent track
