@@ -210,7 +210,7 @@ exports.trackJsonSave = function(req, res) {
   var track = req.urlTrack;
   // TODO: Validate config.
   // TODO: Verify that env, etc matches.
-  track.config = req.body.config;
+  track.config = JSON.parse(req.body.config);
   track.save(function(error) {
     if (error) {
       console.log('Error updating track:');

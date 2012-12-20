@@ -69,11 +69,10 @@ block body
             td
               a(href="/track/#{track.pub_id}/edit") Open in editor
     - else
-      span You haven't recorded any runs yet. 
-      a(href='/x/Preview/Arbusu/drive') Drive!
+      span No tracks.
 
-
-    .section Recorded runs (v1 only for now)
+    .section Recorded runs 
+      a(href="https://github.com/jareiko/TriggerRallyOE/issues/16") (v1 only for now)
     - if (runs && runs.length > 0)
       table
         tr
@@ -97,8 +96,7 @@ block body
             td
               a(href="/run/#{run.pub_id}") Details
     - else
-      span You haven't recorded any runs yet. 
-      a(href='/x/Preview/Arbusu/drive') Drive!
+      span No recorded runs.
 
     include partial/footer
 

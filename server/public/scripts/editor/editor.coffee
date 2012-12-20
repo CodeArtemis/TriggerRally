@@ -30,6 +30,7 @@ define [
   sync
 ) ->
   KEYCODE = util.KEYCODE
+  Vec3FromArray = util.Vec3FromArray
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
   TWOPI = Math.PI * 2
@@ -495,7 +496,7 @@ define [
     # TODO: encapsulate mouse event handling
     mouseX = 0
     mouseY = 0
-    mouseDistance = 0
+    lockObject = null
     buttons = 0
     isSecondClick = no  # We only allow dragging on second click to prevent mistakes.
 
@@ -509,10 +510,9 @@ define [
       firstHit = isect[0]
       underCursor = firstHit
       if firstHit?
-        mouseDistance = firstHit.distance
-      #  underCursor = firstHit unless firstHit.type is 'terrain'
+        lockObject = firstHit.object
       else
-        mouseDistance = 0
+        lockObject = null
       isSecondClick = if underCursor then selection.contains(underCursor) else no
       unless isSecondClick
         selection.reset() unless event.shiftKey
@@ -524,39 +524,54 @@ define [
       buttons &= ~Math.pow(2, event.button)
       return
 
+    intersectZPlane = (ray, pos) ->
+      return null if Math.abs(ray.direction.z) < 1e-10
+      lambda = (pos.z - ray.origin.z) / ray.direction.z
+      return null if lambda < ray.near
+      z = pos.z
+      pos.copy ray.direction
+      pos.multiplyScalar(lambda).addSelf(ray.origin)
+      pos.z = z  # Make sure no arithmetic error creeps in.
+      pos: pos
+      distance: lambda
+
+    intersectZLine = (ray, pos) ->
+      return null if Math.abs(ray.direction.z) < 1e-10
+      lambda = (pos.z - ray.origin.z) / ray.direction.z
+      return null if lambda < ray.near
+      z = pos.z
+      pos.copy ray.direction
+      pos.multiplyScalar(lambda).addSelf(ray.origin)
+      pos.z = z  # Make sure no arithmetic error creeps in.
+      pos: pos
+      distance: lambda
+
     $view3d.mousemove (event) ->
-      if buttons & 3 and mouseDistance > 0
-        right = client.camera.matrixWorld.getColumnX()
-        forward = (new Vec3).cross client.camera.up, right
+      if buttons & 3 and lockObject
         motionX = event.offsetX - mouseX
         motionY = event.offsetY - mouseY
         mouseX = event.offsetX
         mouseY = event.offsetY
-        eye = client.viewToEyeRel new Vec2 motionX, motionY
-        eye.multiplyScalar mouseDistance * 1.3
-        tmp = new Vec3
-        motion = new Vec3
-        tmp.copy(right).multiplyScalar eye.x
-        motion.addSelf tmp
-        if event.shiftKey
-          motion.z = eye.y
+        viewRay = client.viewRay mouseX, mouseY
+        lockObjectPos = Vec3FromArray lockObject.pos
+        planeHit = if event.shiftKey
+          intersectZLine viewRay, lockObjectPos
         else
-          tmp.copy(forward).multiplyScalar eye.y
-          motion.addSelf tmp
+          intersectZPlane viewRay, lockObjectPos
         if buttons & 1 and isSecondClick
           for selModel in selection.models
             sel = selModel.get 'sel'
             continue if sel.type is 'terrain'
             pos = deepClone sel.object.pos
-            pos[0] += motion.x
-            pos[1] += motion.y
-            pos[2] += motion.z
+            pos[0] = planeHit.pos.x
+            pos[1] = planeHit.pos.y
+            pos[2] = planeHit.pos.z
             switch sel.type
               when 'scenery'
                 # TODO: Make ground aligment optional.
-                tmp.set pos[0], pos[1], -Infinity
-                contact = track.terrain.getContact tmp
-                pos[2] = contact.surfacePos.z
+                #tmp = new Vec3 pos[0], pos[1], -Infinity
+                #contact = track.terrain.getContact tmp
+                #pos[2] = contact.surfacePos.z
                 scenery = deepClone trackModel.config.scenery
                 obj = scenery[sel.layer].add[sel.idx]
                 obj.pos = pos
@@ -576,10 +591,11 @@ define [
       return
 
     scroll = (scrollY) ->
-      forward = client.camera.matrixWorld.getColumnZ()
-      tmp = new Vec3
-      tmp.copy(forward).multiplyScalar scrollY * -2
-      camVel.addSelf tmp
+      return unless lockObject
+      vec = Vec3FromArray lockObject.pos
+      vec.subSelf camPos
+      vec.multiplyScalar Math.exp(scrollY * -0.002) - 1
+      camPos.subSelf vec
       event.preventDefault()
       return
 

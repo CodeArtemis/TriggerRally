@@ -432,13 +432,15 @@ define [
       vec.y = - (vec.y / @height) * 2
       vec
 
-    findObject: (viewX, viewY) ->
+    viewRay: (viewX, viewY) ->
       eye = @viewToEye new Vec2 viewX, viewY
       vec = new Vec3 eye.x, eye.y, 0.9
       projector.unprojectVector vec, @camera
-      ray = new THREE.Ray @camera.position,
-                          vec.subSelf(@camera.position).normalize()
-      @intersectRay ray
+      new THREE.Ray @camera.position,
+                    vec.subSelf(@camera.position).normalize()
+
+    findObject: (viewX, viewY) ->
+      @intersectRay @viewRay viewX, viewY
 
     # TODO: Does this intersection stuff belong in client?
     intersectRay: (ray) ->

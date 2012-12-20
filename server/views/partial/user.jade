@@ -1,4 +1,4 @@
 span.user
-  a(href="/user/#{user.pub_id}")
+  a(href="/user/#{user.pub_id || user.id}")
     img(src="https://secure.gravatar.com/avatar/#{user.gravatar_hash}?s=40")
     span.username #{user.name}
