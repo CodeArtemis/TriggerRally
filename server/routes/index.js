@@ -165,6 +165,15 @@ function sanitizeTrack(track) {
   };
 }
 
+exports.trackDrive = function(req, res) {
+  // TODO: Fix this!! Hack alert!!!
+  var car = 'ArbusuG';
+  if (req.urlTrack.pub_id === 'Preview') {
+    car = 'Arbusu';
+  }
+  res.redirect('/x/' + req.urlTrack.pub_id + '/' + car + '/drive');
+};
+
 exports.trackEdit = function(req, res) {
   req.jadeParams.title = 'Editing ' + req.urlTrack.name;
   req.jadeParams.trackData = sanitizeTrack(req.urlTrack.toObject({ getters:true }));
