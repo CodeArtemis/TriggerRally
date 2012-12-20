@@ -35,6 +35,10 @@ define [
   Vec3 = THREE.Vector3
   TWOPI = Math.PI * 2
 
+  tmpVec3 = new THREE.Vector3
+  tmpVec3b = new THREE.Vector3
+  plusZVec3 = new Vec3 0, 0, 1
+
   # Utility for manipulating objects in models.
   manipulate = (model, attrib, fn) ->
     fn obj = deepClone model.get(attrib)
@@ -51,14 +55,8 @@ define [
   Sel = Backbone.Model.extend {}
   Selection = Backbone.Collection.extend
     model: Sel
-  ,
     contains: (sel) ->
       @some (element) -> element.get('sel').object is sel.object
-    countNonTerrain: () ->
-      count = 0
-      for model in @models
-        count++ unless model.type is 'terrain'
-      count
 
   InspectorController = (selection, track) ->
     $inspector = $('#editor-inspector')
@@ -381,7 +379,6 @@ define [
 
     objSpinVel = 0
     lastTime = 0
-    tmpVec3 = new THREE.Vector3
     update = (time) ->
       requestId = 0
       if lastTime
@@ -545,13 +542,18 @@ define [
       distance: lambda
 
     intersectZLine = (ray, pos) ->
-      return null
-      return null if Math.abs(ray.direction.z) < 1e-10
-      lambda = (pos.z - ray.origin.z) / ray.direction.z
+      sideways = tmpVec3.cross ray.direction, plusZVec3
+      normal = tmpVec3b.cross tmpVec3, plusZVec3
+      normal.normalize()
+      dot = normal.dot ray.direction
+      return null if Math.abs(dot) < 1e-10
+      tmpVec3.sub pos, ray.origin
+      lambda = tmpVec3.dot(normal) / dot
       return null if lambda < ray.near
       isect = ray.direction.clone()
       isect.multiplyScalar(lambda).addSelf(ray.origin)
-      isect.z = pos.z  # Make sure no arithmetic error creeps in.
+      isect.x = pos.x
+      isect.y = pos.y
       pos: isect
       distance: lambda
 
@@ -569,47 +571,48 @@ define [
         else
           intersectZPlane viewRay, cursorPos
         return unless planeHit
-        if buttons & 1
-          # First we update the cursor object and find its relative motion.
-          relMotion = planeHit.pos.clone().subSelf cursorPos
-          if selection.contains cursor
-            cursorPos.copy planeHit.pos
-            for selModel in selection.models
-              sel = selModel.get 'sel'
-              continue if sel.type is 'terrain'
-              pos = deepClone sel.object.pos
-              pos[0] += relMotion.x
-              pos[1] += relMotion.y
-              pos[2] += relMotion.z
-              switch sel.type
-                when 'scenery'
-                  # TODO: Make ground aligment optional.
-                  #tmp = new Vec3 pos[0], pos[1], -Infinity
-                  #contact = track.terrain.getContact tmp
-                  #pos[2] = contact.surfacePos.z
-                  scenery = deepClone trackModel.config.scenery
-                  obj = scenery[sel.layer].add[sel.idx]
-                  obj.pos = pos
-                  trackModel.config.scenery = scenery
-                  sel.object = obj
-                else
-                  sel.object.pos = pos
-              sel.mesh.position.set pos[0], pos[1], pos[2]
-          else
-            relMotion.multiplyScalar -1
-            camPos.addSelf relMotion
-        else if event.shiftKey or buttons & 2
-          angX = -motionY * 0.01
-          angZ = -motionX * 0.01
-          rot = new THREE.Matrix4()
-          rot.rotateZ angZ + camAng.z + Math.PI
-          rot.rotateX -angX
-          rot.rotateZ -camAng.z - Math.PI
-          camPos.subSelf cursorPos
-          rot.multiplyVector3 camPos
-          camPos.addSelf cursorPos
-          camAng.x += angX
-          camAng.z += angZ
+        relMotion = planeHit.pos.clone().subSelf cursorPos
+        if selection.contains cursor
+          cursorPos.copy planeHit.pos
+          for selModel in selection.models
+            sel = selModel.get 'sel'
+            continue if sel.type is 'terrain'
+            pos = deepClone sel.object.pos
+            pos[0] += relMotion.x
+            pos[1] += relMotion.y
+            pos[2] += relMotion.z
+            switch sel.type
+              when 'scenery'
+                # TODO: Make ground aligment optional.
+                #tmp = new Vec3 pos[0], pos[1], -Infinity
+                #contact = track.terrain.getContact tmp
+                #pos[2] = contact.surfacePos.z
+                scenery = deepClone trackModel.config.scenery
+                obj = scenery[sel.layer].add[sel.idx]
+                obj.pos = pos
+                trackModel.config.scenery = scenery
+                cursor.object = obj if cursor.object is sel.object
+                sel.object = obj
+              else
+                sel.object.pos = pos
+            sel.mesh.position.set pos[0], pos[1], pos[2]
+        else
+          if (event.shiftKey and buttons & 1) or buttons & 2
+            # Rotate camera.
+            angX = -motionY * 0.01
+            angZ = -motionX * 0.01
+            rot = new THREE.Matrix4()
+            rot.rotateZ angZ + camAng.z + Math.PI
+            rot.rotateX -angX
+            rot.rotateZ -camAng.z - Math.PI
+            camPos.subSelf cursorPos
+            rot.multiplyVector3 camPos
+            camPos.addSelf cursorPos
+            camAng.x += angX
+            camAng.z += angZ
+          else if buttons & 1
+            # Translate camera.
+            camPos.subSelf relMotion
       else
         updateCursor findObject mouseX, mouseY
       return
