@@ -128,6 +128,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
         new Vec3(0,0,1),
         this.track.config.course.startposition.rot[2]);
     vehicle.body.ori = tmpQuat.multiplySelf(vehicle.body.ori);
+    vehicle.body.updateMatrices();
 
     var progress = new exports.Progress(this.track, vehicle);
     this.progs.push(progress);

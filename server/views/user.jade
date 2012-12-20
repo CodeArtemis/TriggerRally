@@ -65,9 +65,10 @@ block body
             td= track.created_ago
             td= track.modified_ago
             td
-              a(href="/x/#{track.pub_id}/ArbusuG/drive") Drive
-            td
-              a(href="/track/#{track.pub_id}/edit") Open in editor
+              a(href="/track/#{track.pub_id}/drive") Drive
+            if track.env
+              td
+                a(href="/track/#{track.pub_id}/edit") Open in editor
     - else
       span No tracks.
 

@@ -37,7 +37,6 @@ getIsodate = -> new Date().toISOString()
 express.logger.format 'isodate', (req, res) -> getIsodate()
 
 
-
 # Alternate DB connection
 dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
 db = mongoskin.db dbUrl, { safe: true }
@@ -54,27 +53,29 @@ DOMAIN = process.env.DOMAIN or 'triggerrally.com'
 URL_PREFIX = 'http://' + DOMAIN
 
 authenticateUser = (profile, done) ->
+  console.log 'a'
   passport_id = profile.identifier or (profile.provider + profile.id)
   UserPassport
     .findOne(passport_id: passport_id)
     .populate('user')
     .exec (error, userPassport) ->
-      if error then done error
-      else
-        user = userPassport and userPassport.user or null
-        unless user
-          userPassport = new UserPassport() unless userPassport
-          # Create new user from passport profile.
-          user = new User(name: profile.displayName or profile.username)
-          user.email = profile.emails[0].value if profile.emails and profile.emails[0]
-          user.save (error) ->
-          if error then done error
-          else
-              userPassport.profile = profile
-              userPassport.user = user._id
-              userPassport.save (error) ->
-                done error, userPassport
-                #res.redirect('/user/' + user.pub_id + '/edit');
+      console.log 'b'
+      return done error if error
+      user = userPassport?.user
+      return done null, userPassport if user
+      userPassport ?= new UserPassport()
+      # Create new user from passport profile.
+      user = new User
+        name: profile.displayName or profile.username
+      user.email = profile.emails[0].value if profile.emails?[0]
+      user.save (error) ->
+        console.log 'c'
+        return done error if error
+        userPassport.profile = profile
+        userPassport.user = user._id
+        userPassport.save (error) ->
+          done error, userPassport
+          #res.redirect('/user/' + user.pub_id + '/edit');
 
 authenticationSuccessful = (req, res) ->
   user = req.user

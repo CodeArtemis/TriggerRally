@@ -253,6 +253,7 @@ function(THREE, psim, collision, util) {
   exports.Vehicle.prototype.recover = function(delta) {
     var state = this.recoverState;
     var body = this.body;
+
     if (!state) {
       // Work out which way vehicle is facing.
       var angleY = Math.atan2(body.oriMat.elements[8], body.oriMat.elements[0]);

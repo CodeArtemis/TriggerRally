@@ -173,6 +173,9 @@ exports.trackEdit = function(req, res) {
 };
 
 exports.trackCopy = function(req, res) {
+  if (!req.user) {
+    return res.redirect('/login');
+  }
   var track = req.urlTrack;
   track.parent = track.id;
   track.user = req.user.user.id;

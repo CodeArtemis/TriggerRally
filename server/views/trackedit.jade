@@ -38,9 +38,14 @@ block body
         user = trackData.user
         include partial/user
 
-    if origUser.pub_id !== trackData.user.id
+    div
+      span.label &nbsp;
+      a.content(href="/x/#{trackData.id}/#{trackData.env.cars[0].id}/drive")
+        | Drive this track
+
+    if !origUser || origUser.pub_id !== trackData.user.id
       .warning
-        | If you want to modify this track, you can make your own copy
+        | If you want to modify this track, you must make your own copy
         | using the button below.
 
     hr
@@ -135,7 +140,7 @@ block body
   script
     var TRIGGER = {
       TRACK: !{JSON.stringify(trackData)},
-      READONLY: !{origUser.pub_id !== trackData.user.id}
+      READONLY: !{!origUser || origUser.pub_id !== trackData.user.id}
     };
 
   script(data-main="/scripts/editor/editor-main", src="/js/require.js")
