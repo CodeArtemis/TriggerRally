@@ -1,18 +1,14 @@
 extends layout-editor
 
 block body
+  origUser = user
+
   #editor-statusbar
     table
       tr
         td
           h2
             a(href="/") Trigger Rally&nbsp;
-        //td
-          menu
-            li Menu
-              menu(type="list")
-                li Hello
-                li Goodbye
         td
           span Status:&nbsp;
           span#status Loading
@@ -24,20 +20,44 @@ block body
               a(href='/logout') Log Out&nbsp;
             - else//- if (login)
               span
-                a(href="/login")<strong>Log in</strong>&nbsp;
+                a(href="/login")
+                  strong Log in&nbsp;
 
   #editor-inspector
     //-h3 Property inspector
 
-    .attrib#title
+    #title
       span.label Track name:
       input.content(type="text")
 
     hr
 
-    .attrib#sel-type
+    div
+      span.label Owner
+      span.content
+        user = trackData.user
+        include partial/user
+
+    if origUser.pub_id !== trackData.user.id
+      .warning
+        | If you want to modify this track, you can make your own copy
+        | using the button below.
+
+    hr
+
+    #cmd-copy-track
+      span.label Action
+      button.content Copy Track
+
+    hr
+
+    #sel-type
       span.label Selection:
       span.content
+
+    .attrib#scale
+      span.label Scale:
+      input.content(type="range", min=-1, max=1, step="any")
 
     .attrib#disp-radius
       span.tooltip T width:
@@ -108,18 +128,14 @@ block body
       span.label Action
       button.content Delete
 
-    .attrib#cmd-copy-track
-      hr
-      span.label Action
-      button.content Copy Track
-
   #view3d
 
   script(src="/socket.io/socket.io.js")
 
   script
     var TRIGGER = {
-      TRACK: !{JSON.stringify(trackData)}
+      TRACK: !{JSON.stringify(trackData)},
+      READONLY: !{origUser.pub_id !== trackData.user.id}
     };
 
   script(data-main="/scripts/editor/editor-main", src="/js/require.js")

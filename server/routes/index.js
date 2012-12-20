@@ -125,8 +125,23 @@ exports.track = function(req, res) {
 function sanitizeUser(user) {
   return {
     id: user.pub_id,
-    name: user.name
+    name: user.name,
+    gravatar_hash: user.gravatar_hash
   };
+}
+
+// TODO: Delete this horrible code.
+function sanitizeCars(cars) {
+  var result = [], i, car;
+  for (i = 0; i < cars.length; ++i) {
+    car = cars[i];
+    result.push({
+      id: car.pub_id,
+      name: car.name,
+      config: car.config
+    })
+  }
+  return result;
 }
 
 function sanitizeEnv(env) {
@@ -136,7 +151,7 @@ function sanitizeEnv(env) {
     desc: env.desc,
     scenery: env.scenery,
     terrain: env.terrain,
-    cars: env.cars
+    cars: sanitizeCars(env.cars)
   }; else return null;
 }
 
@@ -145,7 +160,8 @@ function sanitizeTrack(track) {
     id: track.pub_id,
     name: track.name,
     env: sanitizeEnv(track.env),
-    config: track.config
+    config: track.config,
+    user: sanitizeUser(track.user)
   };
 }
 
@@ -158,7 +174,8 @@ exports.trackEdit = function(req, res) {
 
 exports.trackCopy = function(req, res) {
   var track = req.urlTrack;
-  track.parent = track._id;
+  track.parent = track.id;
+  track.user = req.user.user.id;
   track._id = undefined;
   track.pub_id = undefined;
   track.name += ' copy';

@@ -36,7 +36,7 @@ define [
 
   # Utility for manipulating objects in models.
   manipulate = (model, attrib, fn) ->
-    fn obj = _.clone model.get(attrib)
+    fn obj = deepClone model.get(attrib)
     model.set attrib, obj
 
   hasChanged = (model, attrs) ->
@@ -64,6 +64,7 @@ define [
 
     selType         = attrib '#sel-type'
     selTitle        = attrib '#title'
+    selScale        = attrib '#scale'
     selDispRadius   = attrib '#disp-radius'
     selDispHardness = attrib '#disp-hardness'
     selDispStrength = attrib '#disp-strength'
@@ -82,20 +83,25 @@ define [
     selTitle.$content.on 'input', ->
       track.name = selTitle.$content.val()
 
-    checkpointSlider = (slider, eachSel) ->
+    bindSlider = (type, slider, eachSel) ->
       $content = slider.$content
       $content.change ->
         val = parseFloat $content.val()
         for selModel in selection.models
           sel = selModel.get 'sel'
-          eachSel sel, val if sel.type is 'checkpoint'
+          eachSel sel, val if sel.type is type
 
-    checkpointSlider selDispRadius,   (sel, val) -> manipulate sel.object, 'disp', (o) -> o.radius   = val
-    checkpointSlider selDispHardness, (sel, val) -> manipulate sel.object, 'disp', (o) -> o.hardness = val
-    checkpointSlider selDispStrength, (sel, val) -> manipulate sel.object, 'disp', (o) -> o.strength = val
-    checkpointSlider selSurfRadius,   (sel, val) -> manipulate sel.object, 'surf', (o) -> o.radius   = val
-    checkpointSlider selSurfHardness, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.hardness = val
-    checkpointSlider selSurfStrength, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.strength = val
+    bindSlider 'checkpoint', selDispRadius,   (sel, val) -> manipulate sel.object, 'disp', (o) -> o.radius   = val
+    bindSlider 'checkpoint', selDispHardness, (sel, val) -> manipulate sel.object, 'disp', (o) -> o.hardness = val
+    bindSlider 'checkpoint', selDispStrength, (sel, val) -> manipulate sel.object, 'disp', (o) -> o.strength = val
+    bindSlider 'checkpoint', selSurfRadius,   (sel, val) -> manipulate sel.object, 'surf', (o) -> o.radius   = val
+    bindSlider 'checkpoint', selSurfHardness, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.hardness = val
+    bindSlider 'checkpoint', selSurfStrength, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.strength = val
+
+    bindSlider 'scenery', selScale, (sel, val) ->
+      scenery = deepClone track.config.scenery
+      scenery[sel.layer].add[sel.idx].scale = Math.exp(val)
+      track.config.scenery = scenery
 
     cmdAdd.$content.click ->
       scenery = deepClone track.config.scenery
@@ -189,7 +195,6 @@ define [
     onChange = ->
       # Hide and reset all controls first.
       $inspectorAttribs.removeClass 'visible'
-      cmdCopy.$content.prop 'disabled', no
 
       selType.$content.text switch selection.length
         when 0 then 'none'
@@ -200,12 +205,8 @@ define [
           else
             sel.type
         else '[multiple]'
-      selType.$root.addClass 'visible'
 
-      # Always show track attributes.
       selTitle.$content.val track.name
-      selTitle.$root.addClass 'visible'
-      cmdCopyTrack.$root.addClass 'visible'
 
       for selModel in selection.models
         sel = selModel.get 'sel'
@@ -220,6 +221,8 @@ define [
             cmdDelete.$root.addClass 'visible'
             cmdCopy.$root.addClass 'visible'
           when 'scenery'
+            selScale.$content.val Math.log sel.object.scale
+            selScale.$root.addClass 'visible'
             cmdDelete.$root.addClass 'visible'
             cmdCopy.$root.addClass 'visible'
           when 'terrain'
@@ -345,6 +348,10 @@ define [
         console.log 'error details:'
         console.log arguments
     ###
+
+    if TRIGGER.READONLY
+      # Prevent any modification to the model.
+      models.BaseModel::validate = (attrs) -> 'Read only mode'
 
     layout = ->
       #[$statusbar, $view3d].forEach (panel) ->
