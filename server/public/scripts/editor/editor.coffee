@@ -51,8 +51,14 @@ define [
   Sel = Backbone.Model.extend {}
   Selection = Backbone.Collection.extend
     model: Sel
+  ,
     contains: (sel) ->
       @some (element) -> element.get('sel').object is sel.object
+    countNonTerrain: () ->
+      count = 0
+      for model in @models
+        count++ unless model.type is 'terrain'
+      count
 
   InspectorController = (selection, track) ->
     $inspector = $('#editor-inspector')
@@ -496,103 +502,121 @@ define [
     # TODO: encapsulate mouse event handling
     mouseX = 0
     mouseY = 0
-    lockObject = null
+    cursor = null
+    cursorMesh = clientMisc.selectionMesh()
+    client.scene.add cursorMesh
     buttons = 0
+    hasMoved = no
     isSecondClick = no  # We only allow dragging on second click to prevent mistakes.
 
-    $view3d.mousedown (event) ->
-      buttons |= Math.pow(2, event.button)
-      mouseX = event.offsetX
-      mouseY = event.offsetY
+    findObject = (mouseX, mouseY) ->
       isect = client.findObject mouseX, mouseY
       obj.distance += 10 for obj in isect when obj.type is 'terrain'
       isect.sort (a, b) -> a.distance > b.distance
-      firstHit = isect[0]
-      underCursor = firstHit
-      if firstHit?
-        lockObject = firstHit.object
-      else
-        lockObject = null
-      isSecondClick = if underCursor then selection.contains(underCursor) else no
-      unless isSecondClick
-        selection.reset() unless event.shiftKey
-        addSelection underCursor if underCursor
-      requestAnim()
+      isect[0]
+
+    updateCursor = (newCursor) ->
+      cursor = newCursor
+      if cursor?
+        Vec3::set.apply cursorMesh.position, cursor.object.pos
+
+    $view3d.mousedown (event) ->
+      buttons |= Math.pow(2, event.button)
+      hasMoved = no
       return
 
     $view3d.mouseup (event) ->
       buttons &= ~Math.pow(2, event.button)
+      unless hasMoved
+        selection.reset() unless event.shiftKey
+        if cursor
+          unless selection.contains cursor
+            addSelection cursor
       return
 
     intersectZPlane = (ray, pos) ->
       return null if Math.abs(ray.direction.z) < 1e-10
       lambda = (pos.z - ray.origin.z) / ray.direction.z
       return null if lambda < ray.near
-      z = pos.z
-      pos.copy ray.direction
-      pos.multiplyScalar(lambda).addSelf(ray.origin)
-      pos.z = z  # Make sure no arithmetic error creeps in.
-      pos: pos
+      isect = ray.direction.clone()
+      isect.multiplyScalar(lambda).addSelf(ray.origin)
+      isect.z = pos.z  # Make sure no arithmetic error creeps in.
+      pos: isect
       distance: lambda
 
     intersectZLine = (ray, pos) ->
+      return null
       return null if Math.abs(ray.direction.z) < 1e-10
       lambda = (pos.z - ray.origin.z) / ray.direction.z
       return null if lambda < ray.near
-      z = pos.z
-      pos.copy ray.direction
-      pos.multiplyScalar(lambda).addSelf(ray.origin)
-      pos.z = z  # Make sure no arithmetic error creeps in.
-      pos: pos
+      isect = ray.direction.clone()
+      isect.multiplyScalar(lambda).addSelf(ray.origin)
+      isect.z = pos.z  # Make sure no arithmetic error creeps in.
+      pos: isect
       distance: lambda
 
     $view3d.mousemove (event) ->
-      if buttons & 3 and lockObject
-        motionX = event.offsetX - mouseX
-        motionY = event.offsetY - mouseY
-        mouseX = event.offsetX
-        mouseY = event.offsetY
+      hasMoved = yes
+      motionX = event.offsetX - mouseX
+      motionY = event.offsetY - mouseY
+      mouseX = event.offsetX
+      mouseY = event.offsetY
+      if buttons & 3 and cursor
         viewRay = client.viewRay mouseX, mouseY
-        lockObjectPos = Vec3FromArray lockObject.pos
+        cursorPos = cursorMesh.position
         planeHit = if event.shiftKey
-          intersectZLine viewRay, lockObjectPos
+          intersectZLine viewRay, cursorPos
         else
-          intersectZPlane viewRay, lockObjectPos
-        if buttons & 1 and isSecondClick
-          for selModel in selection.models
-            sel = selModel.get 'sel'
-            continue if sel.type is 'terrain'
-            pos = deepClone sel.object.pos
-            pos[0] = planeHit.pos.x
-            pos[1] = planeHit.pos.y
-            pos[2] = planeHit.pos.z
-            switch sel.type
-              when 'scenery'
-                # TODO: Make ground aligment optional.
-                #tmp = new Vec3 pos[0], pos[1], -Infinity
-                #contact = track.terrain.getContact tmp
-                #pos[2] = contact.surfacePos.z
-                scenery = deepClone trackModel.config.scenery
-                obj = scenery[sel.layer].add[sel.idx]
-                obj.pos = pos
-                trackModel.config.scenery = scenery
-                sel.object = obj
-              else
-                sel.object.pos = pos
-            sel.mesh.position.set pos[0], pos[1], pos[2]
-        else
-          if event.shiftKey or buttons & 2
-            camAngVel.z += motionX * 0.1
-            camAngVel.x += motionY * 0.1
+          intersectZPlane viewRay, cursorPos
+        return unless planeHit
+        if buttons & 1
+          # First we update the cursor object and find its relative motion.
+          relMotion = planeHit.pos.clone().subSelf cursorPos
+          if selection.contains cursor
+            cursorPos.copy planeHit.pos
+            for selModel in selection.models
+              sel = selModel.get 'sel'
+              continue if sel.type is 'terrain'
+              pos = deepClone sel.object.pos
+              pos[0] += relMotion.x
+              pos[1] += relMotion.y
+              pos[2] += relMotion.z
+              switch sel.type
+                when 'scenery'
+                  # TODO: Make ground aligment optional.
+                  #tmp = new Vec3 pos[0], pos[1], -Infinity
+                  #contact = track.terrain.getContact tmp
+                  #pos[2] = contact.surfacePos.z
+                  scenery = deepClone trackModel.config.scenery
+                  obj = scenery[sel.layer].add[sel.idx]
+                  obj.pos = pos
+                  trackModel.config.scenery = scenery
+                  sel.object = obj
+                else
+                  sel.object.pos = pos
+              sel.mesh.position.set pos[0], pos[1], pos[2]
           else
-            motion.multiplyScalar 10
-            camVel.subSelf motion
-        requestAnim()
+            relMotion.multiplyScalar -1
+            camPos.addSelf relMotion
+        else if event.shiftKey or buttons & 2
+          angX = -motionY * 0.01
+          angZ = -motionX * 0.01
+          rot = new THREE.Matrix4()
+          rot.rotateZ angZ + camAng.z + Math.PI
+          rot.rotateX -angX
+          rot.rotateZ -camAng.z - Math.PI
+          camPos.subSelf cursorPos
+          rot.multiplyVector3 camPos
+          camPos.addSelf cursorPos
+          camAng.x += angX
+          camAng.z += angZ
+      else
+        updateCursor findObject mouseX, mouseY
       return
 
     scroll = (scrollY) ->
-      return unless lockObject
-      vec = Vec3FromArray lockObject.pos
+      return unless cursor
+      vec = cursorMesh.position.clone()
       vec.subSelf camPos
       vec.multiplyScalar Math.exp(scrollY * -0.002) - 1
       camPos.subSelf vec
