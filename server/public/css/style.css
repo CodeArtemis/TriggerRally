@@ -121,13 +121,13 @@ dt {
   font-size: 80%;
   opacity: 0.6;
 }
-.section table tr {
+table.list tr {
   background: #eee;
 }
-.section table tr:first-child {
+table.list tr:first-child {
   background: #ddd;
 }
-.section td {
+table.list td {
   padding: 0 20px;
 }
 .logo {

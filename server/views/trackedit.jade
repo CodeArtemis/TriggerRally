@@ -93,6 +93,11 @@ block body
       span.label Track name:
       input.content(type="text")
 
+    div
+      span.label &nbsp;
+      a.content(href="drive")
+        | Drive this track
+
     hr
 
     div
@@ -100,11 +105,6 @@ block body
       span.content
         user = trackData.user
         include partial/user
-
-    div
-      span.label &nbsp;
-      a.content(href="drive")
-        | Drive this track
 
     if !origUser || origUser.pub_id !== trackData.user.id
       .warning
