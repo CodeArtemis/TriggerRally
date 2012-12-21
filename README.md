@@ -6,24 +6,21 @@ http://triggerrally.com
 Code structure
 --------------
 
-TROE uses JavaScript on both the client and server.
+Trigger uses JavaScript on both the client and server.
 
-Client-only code is in [src/](https://github.com/CodeArtemis/TriggerRally/tree/master/src)  
-Shared code is in [server/shared/](https://github.com/jareiko/TriggerRallyOE/tree/master/server/shared)  
-Other server code is in [server/](https://github.com/CodeArtemis/TriggerRally/tree/master/server)
+All code now lives under [server/](https://github.com/CodeArtemis/TriggerRally/tree/v3/server).
+Client-only code is in [server/public/scripts/](https://github.com/CodeArtemis/TriggerRally/tree/v3/server/public/scripts)  
+Shared code is in [server/shared/](https://github.com/CodeArtemis/TriggerRally/tree/v3/server/shared)  
 
 
 On the server, we use the node.js module system ('require').  
 On the client, all the code is compiled into a single file with compile-closure.sh.
+Run `server/build/build.sh` to build production-mode JS bundles.
 
 Copyright & License
 -------------------
 
-Code copyright (c) 2012 [jareiko](https://github.com/jareiko)
+Code copyright (c) 2012 [jareiko](https://github.com/jareiko) unless otherwise attributed
 and released under the [GPL v3](http://www.gnu.org/licenses/gpl-3.0.html)
 
-Directories with mixed ownership and licensing:
-
-    server/THREE/code/
-    server/node_modules/
-    server/public/
+Non-code assets have mixed ownership and licensing.
