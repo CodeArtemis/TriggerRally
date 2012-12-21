@@ -188,7 +188,7 @@ define [
       return
 
     cmdCopyTrack.$content.click ->
-      return unless window.confirm "Are you sure you want to create a copy of the entire track?"
+      return unless window.confirm "Are you sure you want to create a copy of this track?"
       form = document.createElement 'form'
       form.action = 'copy'
       form.method = 'POST'
@@ -409,12 +409,6 @@ define [
       if keyDown[KEYCODE.LEFT] then camVelTarget.x -= SPEED
       if keyDown[KEYCODE.UP] then camVelTarget.y += SPEED
       if keyDown[KEYCODE.DOWN] then camVelTarget.y -= SPEED
-      if keyDown[KEYCODE.R] then camVelTarget.z += SPEED
-      if keyDown[KEYCODE.F] then camVelTarget.z -= SPEED
-      if keyDown[KEYCODE.W] then camAngVelTarget.x += ANG_SPEED
-      if keyDown[KEYCODE.S] then camAngVelTarget.x -= ANG_SPEED
-      if keyDown[KEYCODE.A] then camAngVelTarget.z += ANG_SPEED
-      if keyDown[KEYCODE.D] then camAngVelTarget.z -= ANG_SPEED
 
       if keyDown[188]
         objSpinVel += 5 * delta
