@@ -31,6 +31,29 @@ block body
         td
           a.button(href="/x/Preview/Arbusu/drive") Play Version 1
 
+    .section Latest tracks
+
+    table.list
+      tr
+        td Name
+        td By
+        td Modified
+        td
+        td
+      each track in recentTracks
+        tr
+          td
+            a(href="/track/#{track.pub_id}/drive")= track.name
+          td
+            user = track.user
+            include partial/user
+          td= track.modified_ago
+          td
+            a(href="/track/#{track.pub_id}") Details
+          if track.env
+            td
+              a(href="/track/#{track.pub_id}/edit") Open in editor
+
     .section News
     .twitterfeeds
       <script charset="utf-8" src="http://widgets.twimg.com/j/2/widget.js"></script>

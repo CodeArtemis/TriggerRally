@@ -27,7 +27,20 @@ exports.defaultParams = function(req, res, next) {
 };
 
 exports.index = function(req, res) {
-  res.render('index', req.jadeParams);
+  Track
+    .find({})
+    .sort({modified: -1})
+    .limit(10)
+    .populate('user')  // Is this too slow?
+    .exec(function(err, tracks) {
+      if (err) {
+        console.log("Error fetching tracks:");
+        console.log(err);
+        return res.send(500);
+      }
+      req.jadeParams.recentTracks = tracks;
+      res.render('index', req.jadeParams);
+    })
 };
 
 exports.about = function(req, res) {
