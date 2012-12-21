@@ -7,15 +7,29 @@ block body
 
     p Fast arcade rally racing action!
 
-    div
-      a.button.special(href="/x/Alpina/ArbusuG/drive") Play Version 2 (development)
-    a(href="/x/Alpina/ArbusuG/drive")
-      img(width="300", height="169", src="/images/screen3.jpg", alt="Screenshot of Trigger Rally v2")
+    table
+      tr
+        td
+          a(href="/track/v3-base-1/edit")
+            img(width="300", height="169", src="/images/screen4.jpg", alt="Screenshot of Track Editor")
+        td
+          a.button.special(href="/track/v3-base-1/edit") New: try the <b>track editor</b>!
+          if !user
+            a.button(href="/login") (Requires log in)
 
-    div
-      a.button.special(href="/x/Preview/Arbusu/drive") Play Version 1
-    a(href="/x/Preview/Arbusu/drive")
-      img(width="300", height="210", src="/images/screen1.jpg", alt="Screenshot of v1")
+      tr
+        td
+          a(href="/x/Alpina/ArbusuG/drive")
+            img(width="300", height="169", src="/images/screen3.jpg", alt="Screenshot of Trigger Rally v2")
+        td
+          a.button(href="/x/Alpina/ArbusuG/drive") Play Version 2
+
+      tr
+        td
+          a(href="/x/Preview/Arbusu/drive")
+            img(width="300", height="210", src="/images/screen1.jpg", alt="Screenshot of v1")
+        td
+          a.button(href="/x/Preview/Arbusu/drive") Play Version 1
 
     .section News
     .twitterfeeds
