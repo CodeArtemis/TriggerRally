@@ -23,6 +23,67 @@ block body
                 a(href="/login")
                   strong Log in&nbsp;
 
+  #editor-helpbox-wrapper.visible
+    .close-tab Help
+    #editor-helpbox
+      h2 Welcome to the Trigger Rally track editor!
+      if !origUser || origUser.pub_id !== trackData.user.id
+        .warning
+          p You can only edit tracks that you own. Start by clicking Copy Track
+           | to make a copy that you can edit.
+      p Tracks have a series of <b>checkpoints</b>, represented by green circles.
+       | You can select them by left clicking in their center, and move them by
+       | dragging the mouse.
+      p Most <b>scenery</b> is automatically generated (ie. the trees)
+       | but you can create, edit or delete additional scenery.
+      p You can also move the <b>start position</b> indicated by the car.
+      //div Some object properties have 
+        span.tooltip tooltips
+          div.tooltip-text
+            p This is a tooltip!
+        |  with further help.
+      p Click "Help" to hide this box.
+
+      table
+        tr
+          td(colspan=2)
+            h3 Camera Controls
+        tr
+          td Left drag
+          td Pan
+        tr
+          td Middle drag <em>or</em><br>
+            | Left drag + Alt
+          td Rotate
+        tr
+          td Scroll wheel
+          td Zoom
+        tr
+          td(colspan=2)
+            h3 Manipulate selected object(s)
+        tr
+          td Left click
+          td Select object or place marker
+        tr
+          td Left click + Shift
+          td Select multiple objects
+        tr
+          td Left drag
+          td Move object horizontally
+        tr
+          td Left drag + Shift
+          td Move object vertically<br>
+            em (For scenery, turn off ground snapping first.)
+        tr
+          td Middle drag <em>or</em><br>
+            | Left drag + Alt
+          td Rotate object
+
+      p This editor is a work in progress. Have a suggestion or bug to report? Please 
+        a(href="https://github.com/CodeArtemis/TriggerRally/issues") file an issue on GitHub
+        | !
+      p
+
   #editor-inspector
     //-h3 Property inspector
 
@@ -40,7 +101,7 @@ block body
 
     div
       span.label &nbsp;
-      a.content(href="/x/#{trackData.id}/#{trackData.env.cars[0].id}/drive")
+      a.content(href="drive")
         | Drive this track
 
     if !origUser || origUser.pub_id !== trackData.user.id
@@ -132,6 +193,13 @@ block body
       hr
       span.label Action
       button.content Delete
+
+    hr
+
+    #toggle-snap
+      label
+        input(type="checkbox", checked)
+        | Snap objects to ground
 
   #view3d
 

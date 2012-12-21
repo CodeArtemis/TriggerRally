@@ -433,11 +433,11 @@ define [
       vec
 
     viewRay: (viewX, viewY) ->
-      eye = @viewToEye new Vec2 viewX, viewY
-      vec = new Vec3 eye.x, eye.y, 0.9
+      vec = @viewToEye new Vec3 viewX, viewY, 0.9
       projector.unprojectVector vec, @camera
-      new THREE.Ray @camera.position,
-                    vec.subSelf(@camera.position).normalize()
+      vec.subSelf(@camera.position)
+      vec.normalize()
+      new THREE.Ray @camera.position, vec
 
     findObject: (viewX, viewY) ->
       @intersectRay @viewRay viewX, viewY

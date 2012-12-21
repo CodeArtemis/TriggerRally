@@ -22,7 +22,9 @@ input:checked + label
   color #e77
 
 #editor-statusbar,
-#editor-inspector
+#editor-inspector,
+#editor-helpbox,
+.close-tab
   background #fda
   box-shadow 0 0 10px black
   position absolute
@@ -44,12 +46,56 @@ input:checked + label
 #editor-statusbar > table td:last-child
   text-align right
 
+#editor-helpbox-wrapper,
+#editor-inspector
+  top 40px
+
+#editor-helpbox,
+#editor-inspector,
+.close-tab
+  padding 10px
+  border-radius 4px
+  opacity 0.9
+
+#editor-helpbox-wrapper
+  position absolute
+  z-index 4
+  width 600px
+  right -620px
+  -webkit-transition right 1s
+
+#editor-helpbox-wrapper.visible
+  right 10px
+
+#editor-helpbox
+  z-index 4
+  width 580px
+  height 450px
+  overflow-y scroll
+
+#editor-helpbox table
+  border-spacing 0
+
+#editor-helpbox td
+  border-bottom 1px solid rgba(0,0,0,0.3)
+  margin 0
+  vertical-align top
+
+#editor-helpbox td:first-child
+  padding-right 1em
+
+.close-tab
+  z-index -1
+  //width 30px
+  //height 50px
+  padding 5px
+  right 620px
+  top 20px
+  cursor pointer
+
 #editor-inspector
   z-index 3
   left 10px
-  top 50px
-  border-radius 4px
-  padding 10px
   width 250px
 
 #editor-inspector .warning

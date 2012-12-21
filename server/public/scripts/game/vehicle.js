@@ -523,7 +523,6 @@ function(THREE, psim, collision, util) {
 
     var clipPos = this.body.getLocToWorldPoint(wheel.pos);
 
-    // TODO: Compute this once per frame, pass it in to tickWheel function.
     var sideways = this.body.oriMat.getColumnX();
     tmpVec3a.cross(sideways, plusZVec3);
     tmpVec3b.cross(tmpVec3a, sideways);

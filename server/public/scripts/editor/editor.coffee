@@ -81,6 +81,7 @@ define [
     cmdCopy         = attrib '#cmd-copy'
     cmdDelete       = attrib '#cmd-delete'
     cmdCopyTrack    = attrib '#cmd-copy-track'
+    toggleSnap      = $inspector.find '#toggle-snap input'
 
     for layer, idx in track.env.scenery.layers
       sceneryType.$content.append new Option layer.id, idx
@@ -193,6 +194,9 @@ define [
       form.method = 'POST'
       form.submit()
 
+    do updateSnap = => @snapToGround = toggleSnap[0].checked
+    toggleSnap.on 'change', updateSnap
+
     checkpointSliderSet = (slider, val) ->
       slider.$content.val val
       slider.$root.addClass 'visible'
@@ -240,6 +244,7 @@ define [
     selection.on 'add', onChange
     selection.on 'remove', onChange
     selection.on 'reset', onChange
+    null
 
   run: ->
     $container = $(window)
@@ -378,6 +383,9 @@ define [
       layout()
 
     inspectorController = new InspectorController selection, trackModel
+
+    $('#editor-helpbox-wrapper .close-tab').click ->
+      $('#editor-helpbox-wrapper').toggleClass 'visible'
 
     requestId = 0
 
@@ -542,6 +550,9 @@ define [
       isect = ray.direction.clone()
       isect.multiplyScalar(lambda).addSelf(ray.origin)
       isect.z = pos.z  # Make sure no arithmetic error creeps in.
+      diff = isect.clone().subSelf pos
+      #if diff.length() > 20
+      #  debugger
       pos: isect
       distance: lambda
 
@@ -565,9 +576,12 @@ define [
       hasMoved = yes
       motionX = event.offsetX - mouseX
       motionY = event.offsetY - mouseY
+      angX = motionY * 0.01
+      angZ = motionX * 0.01
       mouseX = event.offsetX
       mouseY = event.offsetY
       if buttons & 3 and cursor
+        rotateMode = (event.altKey and buttons & 1) or buttons & 2
         viewRay = client.viewRay mouseX, mouseY
         cursorPos = cursorMesh.position
         planeHit = if event.shiftKey
@@ -581,42 +595,62 @@ define [
           for selModel in selection.models
             sel = selModel.get 'sel'
             continue if sel.type is 'terrain'
-            pos = deepClone sel.object.pos
-            pos[0] += relMotion.x
-            pos[1] += relMotion.y
-            pos[2] += relMotion.z
-            switch sel.type
-              when 'scenery'
-                # TODO: Make ground aligment optional.
-                #tmp = new Vec3 pos[0], pos[1], -Infinity
-                #contact = track.terrain.getContact tmp
-                #pos[2] = contact.surfacePos.z
-                scenery = deepClone trackModel.config.scenery
-                obj = scenery[sel.layer].add[sel.idx]
-                obj.pos = pos
-                trackModel.config.scenery = scenery
-                cursor.object = obj if cursor.object is sel.object
-                sel.object = obj
-              else
-                sel.object.pos = pos
-            sel.mesh.position.set pos[0], pos[1], pos[2]
+            if rotateMode
+              rot = deepClone sel.object.rot
+              rot[2] += angZ
+              rot[2] -= Math.floor(rot[2] / TWOPI) * TWOPI
+              switch sel.type
+                when 'scenery'
+                  # DUPLICATE CODE ALERT
+                  scenery = deepClone trackModel.config.scenery
+                  obj = scenery[sel.layer].add[sel.idx]
+                  obj.rot = rot
+                  trackModel.config.scenery = scenery
+                  cursor.object = obj if cursor.object is sel.object
+                  sel.object = obj
+                else
+                  sel.object.rot = rot
+            else
+              pos = deepClone sel.object.pos
+              pos[0] += relMotion.x
+              pos[1] += relMotion.y
+              pos[2] += relMotion.z
+              if sel.type isnt 'checkpoint'
+                if inspectorController.snapToGround
+                  tmp = new Vec3 pos[0], pos[1], -Infinity
+                  contact = track.terrain.getContact tmp
+                  pos[2] = contact.surfacePos.z
+                  if sel.type is 'startpos'
+                    pos[2] += 1
+              switch sel.type
+                when 'scenery'
+                  # DUPLICATE CODE ALERT
+                  scenery = deepClone trackModel.config.scenery
+                  obj = scenery[sel.layer].add[sel.idx]
+                  obj.pos = pos
+                  trackModel.config.scenery = scenery
+                  cursor.object = obj if cursor.object is sel.object
+                  sel.object = obj
+                else
+                  sel.object.pos = pos
+              sel.mesh.position.set pos[0], pos[1], pos[2]
         else
-          if (event.shiftKey and buttons & 1) or buttons & 2
+          if rotateMode
             # Rotate camera.
-            angX = -motionY * 0.01
-            angZ = -motionX * 0.01
             rot = new THREE.Matrix4()
-            rot.rotateZ angZ + camAng.z + Math.PI
-            rot.rotateX -angX
+            rot.rotateZ -angZ + camAng.z + Math.PI
+            rot.rotateX angX
             rot.rotateZ -camAng.z - Math.PI
             camPos.subSelf cursorPos
             rot.multiplyVector3 camPos
             camPos.addSelf cursorPos
-            camAng.x += angX
-            camAng.z += angZ
-          else if buttons & 1
+            camAng.x -= angX
+            camAng.z -= angZ
+          else
             # Translate camera.
             camPos.subSelf relMotion
+          # This seems to fix occasional glitches in THREE.Projector.
+          client.camera.updateMatrixWorld()
       else
         updateCursor findObject mouseX, mouseY
       return
