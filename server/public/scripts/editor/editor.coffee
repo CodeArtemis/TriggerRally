@@ -299,7 +299,7 @@ define [
           track = theTrack
           client.addEditorCheckpoints track
 
-      if options.fromServer
+      if options?.fromServer
         setStatus 'OK'
       else
         requestSave()
