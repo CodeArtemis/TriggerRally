@@ -8,13 +8,12 @@ Code structure
 
 Trigger uses JavaScript on both the client and server.
 
-All code now lives under [server/](https://github.com/CodeArtemis/TriggerRally/tree/v3/server).
+All code now lives under [server/](https://github.com/CodeArtemis/TriggerRally/tree/v3/server).  
 Client-only code is in [server/public/scripts/](https://github.com/CodeArtemis/TriggerRally/tree/v3/server/public/scripts)  
 Shared code is in [server/shared/](https://github.com/CodeArtemis/TriggerRally/tree/v3/server/shared)  
 
 
 On the server, we use the node.js module system ('require').  
-On the client, all the code is compiled into a single file with compile-closure.sh.
 Run `server/build/build.sh` to build production-mode JS bundles.
 
 Copyright & License
