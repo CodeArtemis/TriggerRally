@@ -79,13 +79,6 @@ a.disabled:visited {
 .editprofile {
   float: right;
 }
-.promo {
-  background: #fcc;
-  display: inline-block;
-  padding: 2em;
-  border: 1px #b00 solid;
-  color: #400;
-}
 h1 img {
   vertical-align: -25%;
   margin-right: 10px;
