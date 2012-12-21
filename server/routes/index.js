@@ -192,8 +192,6 @@ exports.trackCopy = function(req, res) {
   track.pub_id = undefined;
   track.name += ' copy';
   var newTrack = new Track(track);
-  console.log('trackCopy');
-  console.log(newTrack);
   newTrack.save(function(err, newTrack) {
     if (err) {
       console.log('Error saving copied track:');

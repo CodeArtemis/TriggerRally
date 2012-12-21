@@ -53,13 +53,11 @@ DOMAIN = process.env.DOMAIN or 'triggerrally.com'
 URL_PREFIX = 'http://' + DOMAIN
 
 authenticateUser = (profile, done) ->
-  console.log 'a'
   passport_id = profile.identifier or (profile.provider + profile.id)
   UserPassport
     .findOne(passport_id: passport_id)
     .populate('user')
     .exec (error, userPassport) ->
-      console.log 'b'
       return done error if error
       user = userPassport?.user
       return done null, userPassport if user
@@ -69,7 +67,6 @@ authenticateUser = (profile, done) ->
         name: profile.displayName or profile.username
       user.email = profile.emails[0].value if profile.emails?[0]
       user.save (error) ->
-        console.log 'c'
         return done error if error
         userPassport.profile = profile
         userPassport.user = user._id
