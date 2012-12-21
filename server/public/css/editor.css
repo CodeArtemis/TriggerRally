@@ -118,7 +118,7 @@ input:checked + label {
 #editor-helpbox {
   z-index: 4;
   width: 580px;
-  height: 450px;
+  height: 510px;
   overflow-y: scroll;
 }
 #editor-helpbox table {

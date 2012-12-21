@@ -34,6 +34,9 @@ block body
       p Tracks have a series of <b>checkpoints</b>, represented by green circles.
        | You can select them by left clicking in their center, and move them by
        | dragging the mouse.
+      p Each checkpoint has properties that determine the shape and appearance
+       | of the track in their vicinity. When you select one or more checkpoints
+       | you can edit their properties in the panel on the left.
       p Most <b>scenery</b> is automatically generated (ie. the trees)
        | but you can create, edit or delete additional scenery.
       p You can also move the <b>start position</b> indicated by the car.
@@ -211,4 +214,7 @@ block body
       READONLY: !{!origUser || origUser.pub_id !== trackData.user.id}
     };
 
-  script(data-main="/scripts/editor/editor-main", src="/js/require.js")
+  - if ('production' === process.env.NODE_ENV)
+    script(data-main="/build-v3/editor-main", src="/js/require.js")
+  - else
+    script(data-main="/scripts/editor/editor-main", src="/js/require.js")

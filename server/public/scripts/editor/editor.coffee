@@ -269,9 +269,6 @@ define [
 
     socket = io.connect '/api'
 
-    socket.on 'connect', -> setStatus 'connected'
-    socket.on 'disconnect', -> setStatus 'disconnected'
-
     models = modelsModule.genModels()
     models.BaseModel::sync = sync.syncSocket socket
 
