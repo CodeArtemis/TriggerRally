@@ -27,20 +27,25 @@ exports.defaultParams = function(req, res, next) {
 };
 
 exports.index = function(req, res) {
-  Track
-    .find({})
-    .sort({modified: -1})
-    .limit(10)
-    .populate('user')  // Is this too slow?
-    .exec(function(err, tracks) {
-      if (err) {
-        console.log("Error fetching tracks:");
-        console.log(err);
-        return res.send(500);
-      }
-      req.jadeParams.recentTracks = tracks;
-      res.render('index', req.jadeParams);
-    })
+  if (true) {
+    req.jadeParams.recentTracks = null;
+    res.render('index', req.jadeParams);
+  } else {
+    Track
+      .find({})
+      .sort({modified: -1})
+      .limit(10)
+      .populate('user')  // Is this too slow?
+      .exec(function(err, tracks) {
+        if (err) {
+          console.log("Error fetching tracks:");
+          console.log(err);
+          return res.send(500);
+        }
+        req.jadeParams.recentTracks = tracks;
+        res.render('index', req.jadeParams);
+      });
+  }
 };
 
 exports.about = function(req, res) {
@@ -82,14 +87,14 @@ exports.user = function(req, res) {
   else Run
     .find({ user: req.urlUser.id })
     .limit(500)
-    .sort({_id: 'desc'})
+    .sort({_id: -1})
     .populate('track', {'pub_id':1, 'name':1})
     .populate('car', {'pub_id':1, 'name':1})
     .exec(function(error, runs) {
       if (error) {
         console.log('Error fetching runs:');
         console.log(error);
-        return res.send(500);
+        // Continue despite the error.
       }
       Track
         .find({ user: req.urlUser.id })
@@ -102,7 +107,7 @@ exports.user = function(req, res) {
           if (error) {
             console.log('Error fetching tracks:');
             console.log(error);
-            return res.send(500);
+            // Continue despite the error.
           }
           next(runs, tracks);
         });
