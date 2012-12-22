@@ -48,16 +48,18 @@ function(THREE, util) {
       var texturePath = '/a/textures';
       async.parallel({
         body: function(cb) {
-          loader.load(bodyURL, function(geometry) { cb(null, geometry); }, texturePath);
+          loader.load(bodyURL, function() { cb(null, arguments); }, texturePath);
         },
         wheel: function(cb) {
-          loader.load(wheelURL, function(geometry) { cb(null, geometry); }, texturePath);
+          loader.load(wheelURL, function() { cb(null, arguments); }, texturePath);
         }
       }, function(err, data) {
         if (err) throw err;
         else {
-          this.bodyGeometry = data.body;
-          this.wheelGeometry = data.wheel;
+          this.bodyGeometry = data.body[0];
+          this.bodyMaterials = data.body[1];
+          this.wheelGeometry = data.wheel[0];
+          this.wheelMaterials = data.wheel[1];
           this.createCar();
           callback && callback();
         }
@@ -134,8 +136,9 @@ function(THREE, util) {
 
       // body
 
-      this.bodyMesh = new THREE.Mesh(this.bodyGeometry, this.bodyGeometry.materials[0]);
+      this.bodyMesh = new THREE.Mesh(this.bodyGeometry, this.bodyMaterials[0]);
       this.bodyMesh.material.ambient.copy(this.bodyMesh.material.color);
+      this.bodyMesh.material.map.flipY = false;
       this.bodyMesh.position.subSelf(center);
       this.bodyMesh.scale.set(s, s, s);
       this.bodyMesh.castShadow = true;
@@ -147,8 +150,9 @@ function(THREE, util) {
         var cfg = this.config.wheels[i];
         var wheel = {};
         wheel.cfg = cfg;
-        wheel.mesh = new THREE.Mesh(this.wheelGeometry, this.wheelGeometry.materials[0]);
+        wheel.mesh = new THREE.Mesh(this.wheelGeometry, this.wheelMaterials[0]);
         wheel.mesh.material.ambient = wheel.mesh.material.color;
+        wheel.mesh.material.map.flipY = false;
         wheel.mesh.scale.set( s, s, s );
         if (cfg.flip) wheel.mesh.rotation.z = Math.PI;
         wheel.mesh.castShadow = true;

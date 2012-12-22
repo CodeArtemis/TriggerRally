@@ -112,8 +112,9 @@ define [
 
         vertexShader:
           THREE.ShaderChunk.shadowmap_pars_vertex +
-          "\nconst int NUM_LAYERS = " + @numLayers + ";\n" +
           """
+
+          const int NUM_LAYERS = #{@numLayers};
           uniform sampler2D tHeight;
           uniform vec2 tHeightSize;
           uniform vec3 tHeightScale;
@@ -207,7 +208,7 @@ define [
 
             #ifdef USE_SHADOWMAP
             for( int i = 0; i < MAX_SHADOWS; i ++ ) {
-              vShadowCoord[ i ] = shadowMatrix[ i ] * objectMatrix * vec4( worldPosition, 1.0 );
+              vShadowCoord[ i ] = shadowMatrix[ i ] * vec4( worldPosition, 1.0 );
             }
             #endif
           }
@@ -217,7 +218,6 @@ define [
           THREE.ShaderChunk.lights_phong_pars_fragment + '\n' +
           THREE.ShaderChunk.shadowmap_pars_fragment + '\n' +
           """
-
           #extension GL_OES_standard_derivatives : enable
 
           uniform sampler2D tSurface;
@@ -382,14 +382,14 @@ define [
 
             // For debugging.
             //gl_FragColor.rgb = normalDetail2 * 0.5 + 0.5;
-            //gl_FragColor.rgb = normalSq;
+            gl_FragColor.rgb = diffDirtSample;
             //gl_FragColor.rgb = vec3(surfaceSample.a);
             //gl_FragColor.rgb = vec3(detailHeightAmountDerivs, 0.0) * 0.001 + 0.5;
             //gl_FragColor.rgb = vec3(screenToSurfaceSpace[0], 0.0) * 1.0 + 0.5;
             //gl_FragColor.rgb = vec3(0.0, normal.y, 0.0);
             //gl_FragColor.rgb = vec3(detailSample);
             //gl_FragColor.rgb = 1.0 * vec3(normal.x, 0.0, normalDetail.x);
-            //gl_FragColor.rgb = vec3(0.5);
+            //gl_FragColor.rgb = vec3(0.0);
 
             //vec3 fogCol = vec3(0.8, 0.85, 0.9);
             //float clarity = 160.0 / (depth + 160.0);

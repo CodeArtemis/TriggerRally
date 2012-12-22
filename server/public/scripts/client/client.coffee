@@ -393,10 +393,10 @@ define [
         )
         vertexShader:
           """
-          varying vec3 vViewPosition;
+          varying vec3 vWorldPosition;
           void main() {
-            vec4 mPosition = objectMatrix * vec4( position, 1.0 );
-            vViewPosition = cameraPosition - mPosition.xyz;
+            vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
+            vWorldPosition = worldPosition.xyz;
             gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
           }
           """
@@ -406,11 +406,10 @@ define [
 
           uniform samplerCube tCube;
           uniform float tFlip;
-          varying vec3 vViewPosition;
+          varying vec3 vWorldPosition;
           void main() {
-            vec3 wPos = normalize(cameraPosition - vViewPosition);
-            gl_FragColor = textureCube( tCube, vec3( tFlip * wPos.x, wPos.yz ) );
-            gl_FragColor.rgb = mix(fogColor, gl_FragColor.rgb, smoothstep(0.05, 0.15, wPos.z));
+            gl_FragColor = textureCube( tCube, vec3( tFlip * vWorldPosition.x, vWorldPosition.yz ) );
+            gl_FragColor.rgb = mix(fogColor, gl_FragColor.rgb, smoothstep(0.05, 0.15, vWorldPosition.z));
           }
           """
       cubeMaterial.transparent = yes
