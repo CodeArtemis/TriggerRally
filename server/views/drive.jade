@@ -1,6 +1,7 @@
 extends layout
 
 block body
+  userLoggedIn = user
   include partial/header
 
   .content
@@ -29,7 +30,7 @@ block body
     p
       a(href="#")#fullscreenlink Full screen
 
-    - if (user)
+    if userLoggedIn
       p#replays
 
     p.note Controls: arrow keys or W/S/A/D to drive, space for handbrake, C for camera.
@@ -72,14 +73,14 @@ block body
         METRICS: false
       };
 
-  - if (user)
-    script TRIGGER.USER_LOGGED_IN = '#{user.pub_id}';
+  if userLoggedIn
+    script TRIGGER.USER_LOGGED_IN = '#{userLoggedIn.pub_id}';
 
-  - if (urlTrack.config.gameversion === 1)
+  if urlTrack.config.gameversion === 1
     script(src="/build-v1/trigger.js")
-  - if (urlTrack.config.gameversion === 2)
+  if urlTrack.config.gameversion === 2
     script(data-main="/build-v2/drive-main", src="/js/require.js")
-  - else
+  else
     - if ('production' === process.env.NODE_ENV)
       script(data-main="/build-v3/drive-main", src="/js/require.js")
     - else

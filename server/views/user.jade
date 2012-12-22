@@ -49,55 +49,57 @@ block body
         field = { title: 'Identity Provider', name:'idp', value:urlUser.id_prov, editing:false }
         include partial/formfield
 
-    .section Tracks
-    - if (tracks && tracks.length > 0)
-      table.list
-        tr
-          td Name
-          td Created
-          td Modified
-          td
-          td
-        each track in tracks
+    if tracks
+      .section Tracks
+      if tracks.length > 0
+        table.list
           tr
+            td Name
+            td Created
+            td Modified
             td
-              a(href="/track/#{track.pub_id}")= track.name
-            td= track.created_ago
-            td= track.modified_ago
             td
-              a(href="/track/#{track.pub_id}/drive") Drive
-            if track.env
+          each track in tracks
+            tr
               td
-                a(href="/track/#{track.pub_id}/edit") Open in editor
-    - else
-      span No tracks.
+                a(href="/track/#{track.pub_id}")= track.name
+              td= track.created_ago
+              td= track.modified_ago
+              td
+                a(href="/track/#{track.pub_id}/drive") Drive
+              if track.env
+                td
+                  a(href="/track/#{track.pub_id}/edit") Open in editor
+      else
+        span No tracks.
 
-    .section Recorded runs 
-      a(href="https://github.com/CodeArtemis/TriggerRally/issues/16") (v1 only for now, later versions coming soon)
-    - if (runs && runs.length > 0)
-      table.list
-        tr
-          td Track
-          td Car
-          td Time
-          td Recorded
-          td
-          td
-        each run, rank in runs
+    if runs
+      .section Recorded runs 
+        a(href="https://github.com/CodeArtemis/TriggerRally/issues/16") (v1 only for now, later versions coming soon)
+      if runs.length > 0
+        table.list
           tr
+            td Track
+            td Car
+            td Time
+            td Recorded
             td
-              a(href="/track/#{run.track.pub_id}")= run.track.name
             td
-              a(href="/car/#{run.car.pub_id}")= run.car.name
-            td= run.time_readable
-            td
-              a(href="/run/#{run.pub_id}")= run.created_ago
-            td
-              a(href="/run/#{run.pub_id}/replay") Watch replay
-            td
-              a(href="/run/#{run.pub_id}") Details
-    - else
-      span No recorded runs.
+          each run, rank in runs
+            tr
+              td
+                a(href="/track/#{run.track.pub_id}")= run.track.name
+              td
+                a(href="/car/#{run.car.pub_id}")= run.car.name
+              td= run.time_readable
+              td
+                a(href="/run/#{run.pub_id}")= run.created_ago
+              td
+                a(href="/run/#{run.pub_id}/replay") Watch replay
+              td
+                a(href="/run/#{run.pub_id}") Details
+      else
+        span No recorded runs.
 
     include partial/footer
 

@@ -48,6 +48,24 @@ exports.index = function(req, res) {
   }
 };
 
+exports.recentTracks = function(req, res) {
+  Track
+    .find({})
+    .sort({modified: -1})
+    .limit(30)
+    .populate('user')  // Is this too slow?
+    .exec(function(err, tracks) {
+      if (err) {
+        console.log("Error fetching tracks:");
+        console.log(err);
+        return res.send(500);
+      }
+      req.jadeParams.title = 'Recently modified tracks';
+      req.jadeParams.recentTracks = tracks;
+      res.render('recenttracks', req.jadeParams);
+    });
+};
+
 exports.about = function(req, res) {
   req.jadeParams.title = 'About';
   res.render('about', req.jadeParams);

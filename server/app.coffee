@@ -276,6 +276,7 @@ app.get '/user/confirm', routes.userconfirm
 app.get '/user/:idUser', loadUrlUser, routes.user
 app.get '/user/:idUser/edit', loadUrlUser, editUser, routes.user
 app.post '/user/:idUser/save', loadUrlUser, editUser, routes.userSave
+app.get '/track/recent', routes.recentTracks
 app.get '/track/:idTrack', loadUrlTrack, routes.track
 app.get '/track/:idTrack/drive', loadUrlTrack, routes.trackDrive
 app.get '/track/:idTrack/edit', loadUrlTrack, routes.trackEdit
