@@ -66,8 +66,7 @@ define [
           ]),
           tHeight:
             type: 't'
-            value: 0
-            texture: null
+            value: null
           tHeightSize:
             type: 'v2'
             value: new Vec2 1, 1
@@ -76,8 +75,7 @@ define [
             value: new Vec3 1, 1, 1
           tSurface:
             type: 't'
-            value: 1
-            texture: null
+            value: null
           tSurfaceSize:
             type: 'v2'
             value: new Vec2 1, 1
@@ -86,8 +84,7 @@ define [
             value: new Vec3 1, 1, 1
           tDetail:
             type: 't'
-            value: 2
-            texture: null
+            value: null
           tDetailSize:
             type: 'v2'
             value: new Vec2 1, 1
@@ -96,12 +93,10 @@ define [
             value: new Vec3 1, 1, 1
           tDiffuseDirt:
             type: 't'
-            value: 3
-            texture: diffuseDirtTex
+            value: diffuseDirtTex
           tDiffuseRock:
             type: 't'
-            value: 4
-            texture: diffuseRockTex
+            value: diffuseRockTex
           offsets:
             type: 'v2v'
             value: []
@@ -202,6 +197,7 @@ define [
             morphTargetPosition.z = getHeight(morphTargetPosition.xy);
 
             worldPosition = mix(worldPosition, morphTargetPosition, morph);
+            //worldPosition.z = 110.0;
 
             eyePosition = modelViewMatrix * vec4(worldPosition, 1.0);
             gl_Position = projectionMatrix * eyePosition;
@@ -382,7 +378,7 @@ define [
 
             // For debugging.
             //gl_FragColor.rgb = normalDetail2 * 0.5 + 0.5;
-            gl_FragColor.rgb = diffDirtSample;
+            //gl_FragColor.rgb = diffDirtSample;
             //gl_FragColor.rgb = vec3(surfaceSample.a);
             //gl_FragColor.rgb = vec3(detailHeightAmountDerivs, 0.0) * 0.001 + 0.5;
             //gl_FragColor.rgb = vec3(screenToSurfaceSpace[0], 0.0) * 1.0 + 0.5;
@@ -440,6 +436,7 @@ define [
             if mipmap then THREE.LinearMipMapLinearFilter else THREE.LinearFilter)
         tex.generateMipmaps = mipmap
         tex.needsUpdate = true
+        tex.flipY = false
         tex
 
       maps = @terrain.source.maps
@@ -447,7 +444,7 @@ define [
 
       quiver.connect maps.height, node = new quiver.Node (ins, outs, done) ->
         buffer = ins[0]
-        uniforms.tHeight.texture = createTexture buffer, false
+        uniforms.tHeight.value = createTexture buffer, false
         uniforms.tHeightSize.value.set buffer.width, buffer.height
         uniforms.tHeightScale.value.copy maps.height.scale
         uniforms.tHeightScale.value.z *= typeScale buffer.data
@@ -456,7 +453,7 @@ define [
 
       quiver.connect maps.surface, node = new quiver.Node (ins, outs, done) ->
         buffer = ins[0]
-        uniforms.tSurface.texture = createTexture buffer, true
+        uniforms.tSurface.value = createTexture buffer, true
         uniforms.tSurfaceSize.value.set buffer.width, buffer.height
         uniforms.tSurfaceScale.value.copy maps.surface.scale
         #uniforms.tSurfaceScale.value.z *= typeScale buffer.data
@@ -465,8 +462,8 @@ define [
 
       quiver.connect maps.detail, node = new quiver.Node (ins, outs, done) ->
         buffer = ins[0]
-        uniforms.tDetail.texture = createTexture buffer, true
-        #if @glAniso then uniforms.tDetail.texture.onUpdate = =>
+        uniforms.tDetail.value = createTexture buffer, true
+        #if @glAniso then uniforms.tDetail.value.onUpdate = =>
         #  @gl.texParameteri @gl.TEXTURE_2D, @glAniso.TEXTURE_MAX_ANISOTROPY_EXT, 8
         uniforms.tDetailSize.value.set buffer.width, buffer.height
         uniforms.tDetailScale.value.copy maps.detail.scale

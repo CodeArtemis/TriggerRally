@@ -388,8 +388,7 @@ define [
                 value: -1
               tCube:
                 type: 't'
-                value: 0
-                texture: textureCube
+                value: textureCube
         )
         vertexShader:
           """
