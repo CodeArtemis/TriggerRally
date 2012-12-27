@@ -8,27 +8,36 @@ define [
   ArrayGeometry: class ArrayGeometry extends THREE.BufferGeometry
     constructor: ->
       super()
-      @vertexIndexArray = []
-      @vertexPositionArray = []
-      @vertexNormalArray = []
-      @vertexUvArray = []  # Supports only one channel of UVs.
-      @customAttribs = {}
+      @attributes["index"] = { array: [] }
+      @attributes["position"] = { array: [], itemSize: 3 }
+      @attributes["normal"] = { array: [], itemSize: 3 }
+      @attributes["uv"] = { array: [], itemSize: 2 }
       @wireframe = false
 
-    addCustomAttrib: (name, attrib) ->
-      attrib.size ?= 4
-      @customAttribs[name] = attrib
-      return attrib.array ?= []
-
     doubleTriangles: () ->
-      indices = @vertexIndexArray
+      indices = @attributes["index"].array
       newIndices = []
       i = 0
       while i < indices.length - 2
         newIndices.push indices[i+0], indices[i+1], indices[i+1]
         newIndices.push indices[i+2], indices[i+2], indices[i+0]
         i += 3
-      @vertexIndexArray = newIndices
+      @attributes["index"].array = newIndices
+      return
+
+    removeIndices: ->
+      indices = @attributes['index'].array
+      delete @attributes['index']
+
+      for key, attrib of @attributes
+        itemSize = attrib.itemSize
+        oldArray = attrib.array
+        newArray = attrib.array = new Float32Array(indices.length * itemSize)
+        for i in [0...indices.length]
+          for j in [0...itemSize]
+            newArray[i * itemSize + j] = oldArray[indices[i] * itemSize + j]
+
+      @attributes['position'].numItems = indices.length * 3
       return
 
     updateOffsets: ->
@@ -44,7 +53,7 @@ define [
       MAX_INDEX = 65535
       minIndexFound = Infinity
       maxIndexFound = 0
-      indices = @vertexIndexArray
+      indices = @attributes["index"].array
       maxElem = indices.length - PRIMITIVE_SIZE + 1
       while elem < maxElem
         primMinIndex = Infinity
@@ -78,36 +87,40 @@ define [
         @offsets.push offset
       if @offsets.length > 1
         console.log 'ArrayGeometry with ' + indices.length/3 + ' triangles split into ' + @offsets.length + ' DrawElements calls.'
+
+      for key, attrib of @attributes
+        type = if key is "index" then Uint16Array else Float32Array
+        attrib.array = new type(attrib.array)
       return
 
     addGeometry: (geom) ->
       pts = [ 'a', 'b', 'c', 'd' ]
-      offsetPosition = @vertexPositionArray.length
+      offsetPosition = @attributes["position"].array.length
 
       for v in geom.vertices
-        @vertexPositionArray.push v.x, v.y, v.z
+        @attributes["position"].array.push v.x, v.y, v.z
 
       for face, faceIndex in geom.faces
         if face.d?
-          @vertexIndexArray.push face.a, face.b, face.d
-          @vertexIndexArray.push face.b, face.c, face.d
+          @attributes["index"].array.push face.a, face.b, face.d
+          @attributes["index"].array.push face.b, face.c, face.d
         else
-          @vertexIndexArray.push face.a, face.b, face.c
+          @attributes["index"].array.push face.a, face.b, face.c
 
         for norm, pt in face.vertexNormals
-          @vertexNormalArray[face[pts[pt]] * 3 + 0] = norm.x
-          @vertexNormalArray[face[pts[pt]] * 3 + 1] = norm.y
-          @vertexNormalArray[face[pts[pt]] * 3 + 2] = norm.z
+          @attributes["normal"].array[face[pts[pt]] * 3 + 0] = norm.x
+          @attributes["normal"].array[face[pts[pt]] * 3 + 1] = norm.y
+          @attributes["normal"].array[face[pts[pt]] * 3 + 2] = norm.z
 
         # We support only one channel of UVs.
         uvs = geom.faceVertexUvs[0][faceIndex]
         for uv, pt in uvs
-          @vertexUvArray[face[pts[pt]] * 2 + 0] = uv.u
-          @vertexUvArray[face[pts[pt]] * 2 + 1] = uv.v
+          @attributes["uv"].array[face[pts[pt]] * 2 + 0] = uv.x
+          @attributes["uv"].array[face[pts[pt]] * 2 + 1] = uv.y
       return
 
     mergeMesh: (mesh) ->
-      vertexOffset = @vertexPositionArray.length / 3
+      vertexOffset = @attributes["position"].array.length / 3
       geom2 = mesh.geometry
       tmpVec3 = new THREE.Vector3
 
@@ -119,23 +132,23 @@ define [
 
       # Copy vertex data.
       i = 0
-      posns = geom2.vertexPositionArray
-      norms = geom2.vertexNormalArray
+      posns = geom2.attributes["position"].array
+      norms = geom2.attributes["normal"].array
       hasNorms = norms? and norms.length == posns.length
       while i < posns.length
         tmpVec3.set posns[i + 0], posns[i + 1], posns[i + 2]
         matrix.multiplyVector3 tmpVec3
-        @vertexPositionArray.push tmpVec3.x, tmpVec3.y, tmpVec3.z
+        @attributes["position"].array.push tmpVec3.x, tmpVec3.y, tmpVec3.z
         if hasNorms
           tmpVec3.set norms[i + 0], norms[i + 1], norms[i + 2]
           matrixRotation.multiplyVector3 tmpVec3
-          @vertexNormalArray.push tmpVec3.x, tmpVec3.y, tmpVec3.z
+          @attributes["normal"].array.push tmpVec3.x, tmpVec3.y, tmpVec3.z
         i += 3
-      @vertexUvArray = @vertexUvArray.concat geom2.vertexUvArray
+      @attributes["uv"].array = @attributes["uv"].array.concat geom2.attributes["uv"].array
 
       # Copy indices.
-      for idx in geom2.vertexIndexArray
-        @vertexIndexArray.push idx + vertexOffset
+      for idx in geom2.attributes["index"].array
+        @attributes["index"].array.push idx + vertexOffset
       return
 
     computeBoundingSphere: -> @computeBounds()
@@ -146,7 +159,7 @@ define [
         max: new THREE.Vector3(-Infinity, -Infinity, -Infinity)
       maxRadius = 0
       i = 0
-      posns = @vertexPositionArray
+      posns = @attributes["position"].array
       numVerts = posns.length
       while i < numVerts
         x = posns[i + 0]
@@ -167,6 +180,7 @@ define [
         radius: maxRadius
       return
 
+    ###
     createBuffers: (gl) ->
 
       createBuffer = (array, dataType, itemSize, opt_isElementBuffer) ->
@@ -180,43 +194,40 @@ define [
           buffer.numItems = array.length
           buffer
 
-      @vertexIndexBuffer = createBuffer @vertexIndexArray, Uint16Array, 1, true
-      @vertexPositionBuffer = createBuffer @vertexPositionArray, Float32Array, 3
-      @vertexNormalBuffer = createBuffer @vertexNormalArray, Float32Array, 3
-      @vertexUvBuffer = createBuffer @vertexUvArray, Float32Array, 2
-      @vertexPositionBuffer = createBuffer @vertexPositionArray, Float32Array, 3
-
-      for name, attrib of @customAttribs
-        attrib.buffer = createBuffer attrib.array, Float32Array, attrib.size
+      @attributes["index"].buffer = createBuffer @vertexIndexArray, Uint16Array, 1, true
+      @attributes["position"].buffer = createBuffer @vertexPositionArray, Float32Array, 3
+      @attributes["normal"].buffer = createBuffer @vertexNormalArray, Float32Array, 3
+      @attributes["uv"].buffer = createBuffer @vertexUvArray, Float32Array, 2
       return
 
     render: (program, gl) ->
-      if @vertexIndexBuffer? and @vertexIndexBuffer.numItems > 0
-        gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @vertexIndexBuffer
+      if @attributes["index"]?.numItems > 0
+        gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @attributes["index"]
         ELEMENT_TYPE = gl.UNSIGNED_SHORT
         ELEMENT_SIZE = 2
         PRIMITIVE = if @wireframe then gl.LINES else gl.TRIANGLES
         for offset in @offsets
           @setupBuffers program, gl, offset.index
           gl.drawElements PRIMITIVE, offset.count, ELEMENT_TYPE, offset.start * ELEMENT_SIZE
-      else if @vertexPositionBuffer.numItems > 0
+      else if @attributes["position"].numItems > 0
         @setupBuffers program, gl, 0
-        gl.drawArrays gl.TRIANGLES, 0, @vertexPositionBuffer.numItems / 3
+        gl.drawArrays gl.TRIANGLES, 0, @attributes["position"].numItems / 3
       return
 
     setupBuffers: (program, gl, offset) ->
-      gl.bindBuffer gl.ARRAY_BUFFER, @vertexPositionBuffer
+      gl.bindBuffer gl.ARRAY_BUFFER, @attributes["position"]
       gl.vertexAttribPointer program.attributes.position, 3, gl.FLOAT, false, 0, offset * 4 * 3
 
-      if @vertexNormalArray? and @vertexNormalArray.length > 0
-        gl.bindBuffer gl.ARRAY_BUFFER, @vertexNormalBuffer
+      if @attributes["normal"]?.length > 0
+        gl.bindBuffer gl.ARRAY_BUFFER, @attributes["normal"]
         gl.vertexAttribPointer program.attributes.normal, 3, gl.FLOAT, false, 0, offset * 4 * 3
 
-      if @vertexUvArray? and @vertexUvArray.length > 0
-        gl.bindBuffer gl.ARRAY_BUFFER, @vertexUvBuffer
+      if @vertexUvArray?.length > 0
+        gl.bindBuffer gl.ARRAY_BUFFER, @attributes["uv"]
         gl.vertexAttribPointer program.attributes.uv, 2, gl.FLOAT, false, 0, offset * 4 * 2
 
       for name, attrib of @customAttribs
         gl.bindBuffer gl.ARRAY_BUFFER, attrib.buffer
         gl.vertexAttribPointer program.attributes[name], attrib.size, gl.FLOAT, false, 0, offset * 4 * attrib.size
       return
+    ###

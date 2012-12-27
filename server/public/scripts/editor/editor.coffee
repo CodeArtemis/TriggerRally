@@ -657,6 +657,7 @@ define [
 
     $view3d.on 'mousewheel', (event) ->
       origEvent = event.originalEvent
-      scroll origEvent.wheelDeltaY or origEvent.deltaY
+      deltaY = if origEvent.wheelDeltaY? then origEvent.wheelDeltaY else origEvent.deltaY
+      scroll deltaY
 
     return

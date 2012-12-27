@@ -9,12 +9,13 @@ define [
 ], (THREE, array_geometry, quiver) ->
 
   RenderScenery: class RenderScenery
-    constructor: (@scene, @scenery, loadFunc, @renderer) ->
+    constructor: (@scene, @scenery, loadFunc) ->
       @fadeSpeed = 2
       @layers = ({ src: l, tiles: {} } for l in @scenery.layers)
       for layer in @layers
         do (layer) ->
-          loadFunc layer.src.config.render.scene, (result) ->
+          render = layer.src.config.render
+          loadFunc render["scene-r54"], (result) ->
             layer.meshes = for mesh in result.scene.children
               geom = new array_geometry.ArrayGeometry()
               geom.addGeometry mesh.geometry
@@ -31,7 +32,7 @@ define [
       tile.position.x = (tx + 0.5) * layer.src.cache.gridSize
       tile.position.y = (ty + 0.5) * layer.src.cache.gridSize
       tile.opacity = if skipFadeIn then 1 else 0
-      if layer.meshes.length > 0 and entities.length > 0
+      if entities.length > 0
         for object in layer.meshes
           # We merge copies of each object into a single mesh.
           mergedGeom = new array_geometry.ArrayGeometry()
@@ -44,14 +45,11 @@ define [
             mesh.rotation.add object.rotation, entity.rotation
             mergedGeom.mergeMesh mesh
           mergedGeom.updateOffsets()
-          mergedGeom.createBuffers(@renderer.context)
           # Clone the material so that we can adjust opacity per tile.
-          material = new THREE.MeshLambertMaterial(object.material)
-          # Color doesn't get copied correctly.
-          material.color = object.material.color
-          material.ambient = object.material.ambient
-          material.emissive = object.material.emissive
+          material = object.material.clone()
           material.opacity = tile.opacity
+          # Force all objects to be transparent so we can fade them in and out.
+          material.transparent = yes
           mesh = new THREE.Mesh mergedGeom, material
           mesh.doubleSided = object.doubleSided
           mesh.castShadow = object.castShadow
@@ -62,7 +60,7 @@ define [
     removeTile: (layer, key) ->
       @scene.remove layer.tiles[key]
       for mesh in layer.tiles[key]
-        @renderer.deallocateObject mesh
+        mesh.dispose()
       delete layer.tiles[key]
       return
 

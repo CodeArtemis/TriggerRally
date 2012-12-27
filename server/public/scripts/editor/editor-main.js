@@ -36,7 +36,7 @@ define('backbone-full',
 require(
   {
     paths: {
-        'THREE': '../js/Three'
+        'THREE': '../js/three-r54'
       , 'async': '../js/async'
       , 'cs': '../js/cs'
       , 'coffee-script': '../js/coffee-script'

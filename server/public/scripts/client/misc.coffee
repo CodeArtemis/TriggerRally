@@ -11,6 +11,7 @@ define [
     blending: THREE.AdditiveBlending
     transparent: 1
     depthWrite: false
+    side: THREE.DoubleSide
   do ->
     ringGeom = new THREE.CylinderGeometry 16, 16, 1, 32, 1, true
     ringMesh = new THREE.Mesh ringGeom, checkpointMat
@@ -36,7 +37,6 @@ define [
     mesh.position.z = 2
     #mesh.rotation.x = Math.PI / 2
     mesh.castShadow = true
-    mesh.doubleSided = true
     mesh
 
   selectionMesh: ->

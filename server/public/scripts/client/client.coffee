@@ -377,28 +377,13 @@ define [
         path + 'up' + format, path + 'dn' + format
       ]
       textureCube = THREE.ImageUtils.loadTextureCube urls
+      cubeShader = THREE.ShaderUtils.lib["cube"]
+      cubeShader.uniforms["tCube"].value = textureCube
       cubeMaterial = new THREE.ShaderMaterial
-        fog: true
-        uniforms: _.extend(
-            THREE.UniformsUtils.merge([
-              THREE.UniformsLib['fog']
-            ]),
-              tFlip:
-                type: 'f'
-                value: -1
-              tCube:
-                type: 't'
-                value: textureCube
-        )
-        vertexShader:
-          """
-          varying vec3 vWorldPosition;
-          void main() {
-            vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
-            vWorldPosition = worldPosition.xyz;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-          }
-          """
+        fog: yes
+        side: THREE.BackSide
+        uniforms: _.extend THREE.UniformsLib['fog'], cubeShader.uniforms
+        vertexShader: cubeShader.vertexShader
         fragmentShader:
           THREE.ShaderChunk.fog_pars_fragment +
           """
@@ -408,15 +393,17 @@ define [
           varying vec3 vWorldPosition;
           void main() {
             gl_FragColor = textureCube( tCube, vec3( tFlip * vWorldPosition.x, vWorldPosition.yz ) );
-            gl_FragColor.rgb = mix(fogColor, gl_FragColor.rgb, smoothstep(0.05, 0.15, vWorldPosition.z));
+            vec3 worldVec = normalize(vWorldPosition);
+            gl_FragColor.rgb = mix(fogColor, gl_FragColor.rgb, smoothstep(0.05, 0.15, worldVec.z));
           }
           """
       cubeMaterial.transparent = yes
       cubeMesh = new THREE.Mesh(
           new THREE.CubeGeometry(5000000, 5000000, 5000000), cubeMaterial)
       cubeMesh.geometry.faces.splice(5, 1)
-      cubeMesh.flipSided = yes
-      cubeMesh.position.set(0, 0, 20000)
+      cubeMesh.flipSided = no
+      cubeMesh.doubleSided = yes
+      cubeMesh.position.set 0, 0, 20000
       cubeMesh.renderDepth = 1000000  # Force draw at end.
       cubeMesh
 
@@ -480,7 +467,7 @@ define [
       lambda = 0
       step = 0.2
       count = 0
-      while lambda < 20000
+      while lambda < 50000
         nextLambda = lambda + step
         if terrainFunc(nextLambda) > 0
           lambda = zeroCrossing terrainFunc, lambda, nextLambda

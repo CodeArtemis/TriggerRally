@@ -54,10 +54,9 @@ define [
       diffuseRockTex.wrapT = THREE.RepeatWrapping
 
       @geom = @_createGeom()
-      obj = @_createImmediateObject()
       @material = new THREE.ShaderMaterial
-        lights: true
-        fog: true
+        lights: yes
+        fog: yes
 
         uniforms: _.extend( THREE.UniformsUtils.merge( [
             THREE.UniformsLib['lights'],
@@ -238,7 +237,18 @@ define [
             return mat2(m[1][1], -m[1][0], -m[0][1], m[0][0]) / det;
           }
 
+          float bias_fast(float a, float b) {
+            return b / ((1.0/a - 2.0) * (1.0-b) + 1.0);
+          }
+
+          float gain_fast(float a, float b) {
+            return (b < 0.5) ?
+              (bias_fast(1.0 - a, 2.0 * b) / 2.0) :
+              (1.0 - bias_fast(1.0 - a, 2.0 - 2.0 * b) / 2.0);
+          }
+
           void main() {
+            gl_FragColor.a = 1.0;
             float height = worldPosition.z;
             float depth = length(eyePosition.xyz);
             vec2 diffUv = worldPosition.xy / 4.0;
@@ -283,10 +293,14 @@ define [
                             normalDetail2.z * normalDetail;
 
             float noiseSample = texture2D(tDetail, worldPosition.yx / 512.0).b;
-            vec3 veggieColor1 = vec3(0.33, 0.35, 0.15);
-            vec3 veggieColor2 = vec3(0.04, 0.07, 0.03);
+            vec3 veggieColor1 = vec3(0.43, 0.45, 0.25);
+            vec3 veggieColor2 = vec3(0.14, 0.18, 0.05);
             vec3 eyeVec = normalize(cameraPosition - worldPosition);
-            float veggieMix = exp(dot(eyeVec, normalDetail2) - 1.0);
+            //float veggieMix = pow(4.0, dot(eyeVec, normalDetail2) - 1.0);
+            float veggieMix = dot(eyeVec, normalDetail);
+            veggieMix = bias_fast(veggieMix * 0.7 + 0.3, 0.7);
+            //veggieMix = pow(max(0.0, veggieMix), 0.4);
+            //veggieMix = floor(veggieMix * 5.0) / 5.0;
             vec3 veggieColor = mix(veggieColor1, veggieColor2, veggieMix);
             float rockMix = 1.0 - smoothstep(1.5*0.71, 1.5*0.74,
                 normalRegion.z + normalDetail.z * 0.5 + (noiseSample - 0.5) * 0.3 - height * 0.0002);
@@ -385,7 +399,7 @@ define [
             //gl_FragColor.rgb = vec3(0.0, normal.y, 0.0);
             //gl_FragColor.rgb = vec3(detailSample);
             //gl_FragColor.rgb = 1.0 * vec3(normal.x, 0.0, normalDetail.x);
-            //gl_FragColor.rgb = vec3(0.0);
+            //gl_FragColor.rgb = veggieColor;
 
             //vec3 fogCol = vec3(0.8, 0.85, 0.9);
             //float clarity = 160.0 / (depth + 160.0);
@@ -393,10 +407,11 @@ define [
             float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );
             fogFactor = clamp( 1.0 - fogFactor, 0.0, 1.0 );
             gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor, fogFactor);
-            gl_FragColor.a = 1.0;
           }
           """
-      obj.material = @material
+      obj = new THREE.Mesh @geom, @material
+      obj.frustumCulled = no
+      obj.receiveShadow = yes
       @scene.add obj
 
       threeFmt = (channels) ->
@@ -484,8 +499,14 @@ define [
     _createGeom: ->
       geom = new array_geometry.ArrayGeometry()
       geom.wireframe = false
-      idx = geom.vertexIndexArray
-      posn = geom.vertexPositionArray
+      geom.attributes =
+        "index":
+          array: []
+        "position":
+          array: []
+          itemSize: 3
+      idx = geom.attributes["index"].array
+      posn = geom.attributes["position"].array
       RING_WIDTH = 31
       ringSegments = [
         [  1,  0,  0,  1 ],
@@ -523,9 +544,7 @@ define [
                   idx.push start0 + 0, start1 + 1, start0 + 1
         scale *= 2
 
-      #console.log 'Terrain has ' + (idx.length / 3) + ' triangles.'
-      geom.updateOffsets()
-      geom.createBuffers @gl
+      geom.removeIndices()
       return geom
 
     _render: (program, gl, frustum) ->
