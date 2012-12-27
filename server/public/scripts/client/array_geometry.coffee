@@ -8,10 +8,6 @@ define [
   ArrayGeometry: class ArrayGeometry extends THREE.BufferGeometry
     constructor: ->
       super()
-      @attributes["index"] = { array: [] }
-      @attributes["position"] = { array: [], itemSize: 3 }
-      @attributes["normal"] = { array: [], itemSize: 3 }
-      @attributes["uv"] = { array: [], itemSize: 2 }
       @wireframe = false
 
     doubleTriangles: () ->
@@ -94,6 +90,11 @@ define [
       return
 
     addGeometry: (geom) ->
+      @attributes["index"] ?= { array: [] }
+      @attributes["position"] ?= { array: [], itemSize: 3 }
+      @attributes["normal"] ?= { array: [], itemSize: 3 }
+      @attributes["uv"] ?= { array: [], itemSize: 2 }
+
       pts = [ 'a', 'b', 'c', 'd' ]
       offsetPosition = @attributes["position"].array.length
 
@@ -120,6 +121,11 @@ define [
       return
 
     mergeMesh: (mesh) ->
+      @attributes["index"] ?= { array: [] }
+      @attributes["position"] ?= { array: [], itemSize: 3 }
+      @attributes["normal"] ?= { array: [], itemSize: 3 }
+      @attributes["uv"] ?= { array: [], itemSize: 2 }
+
       vertexOffset = @attributes["position"].array.length / 3
       geom2 = mesh.geometry
       tmpVec3 = new THREE.Vector3
