@@ -24,7 +24,7 @@ define [
   projector = new THREE.Projector
 
   class RenderCheckpointsEditor
-    constructor: (@scene, checkpoints) ->
+    constructor: (scene, checkpoints) ->
       @ang = 0
       @meshes = []
 
@@ -36,11 +36,12 @@ define [
 
       quiver.connect checkpoints, (ins, outs, done) =>
         for mesh in @meshes
-          @scene.remove mesh
+          scene.remove mesh
+          mesh.dispose()
         @meshes = for cp in checkpoints
           mesh = clientMisc.checkpointMesh()
           mesh.position.addSelf cp
-          @scene.add mesh
+          scene.add mesh
           mesh
         done()
 
@@ -54,12 +55,12 @@ define [
       return
 
   class RenderCheckpointsDrive
-    constructor: (@scene, @checkpoints) ->
+    constructor: (scene, @checkpoints) ->
       @ang = 0
       @mesh = clientMisc.checkpointMesh()
       @initPos = @mesh.position.clone()
       @current = 0
-      @scene.add @mesh
+      scene.add @mesh
 
     update: (camera, delta) ->
       targetPos = @checkpoints[@current]
@@ -76,6 +77,90 @@ define [
     highlightCheckpoint: (i) ->
       @current = i
       return
+
+  class RenderDials
+    constructor: (scene, @vehic) ->
+      geom = new THREE.Geometry()
+      geom.vertices.push new Vec3(1, 0, 0)
+      geom.vertices.push new Vec3(-0.1, 0.02, 0)
+      geom.vertices.push new Vec3(-0.1, -0.02, 0)
+      geom.faces.push new THREE.Face3(0, 1, 2)
+      geom.computeCentroids()
+      mat = new THREE.MeshBasicMaterial
+        color: 0x206020
+        blending: THREE.AdditiveBlending
+        transparent: 1
+        depthTest: false
+      @revMeter = new THREE.Mesh geom, mat
+      @revMeter.position.x = -1.3
+      @revMeter.position.y = -0.7
+      @revMeter.scale.multiplyScalar 0.4
+      scene.add @revMeter
+      @speedMeter = new THREE.Mesh geom, mat
+      @speedMeter.position.x = -1.3
+      @speedMeter.position.y = -0.2
+      @speedMeter.scale.multiplyScalar 0.4
+      scene.add @speedMeter
+
+    update: (camera, delta) ->
+      @revMeter.rotation.z = -2.5 - 4.5 *
+          ((@vehic.engineAngVelSmoothed - @vehic.engineIdle) /
+              (@vehic.engineRedline - @vehic.engineIdle));
+      @speedMeter.rotation.z = -2.5 - 4.5 *
+          Math.abs(@vehic.differentialAngVel / 200);
+      return
+
+    highlightCheckpoint: (i) ->
+      @current = i
+      return
+
+  class RenderCheckpointArrows
+    constructor: (@scene, @progress) ->
+      mat = new THREE.MeshBasicMaterial
+        color: 0x206020
+        blending: THREE.AdditiveBlending
+        transparent: 1
+        depthWrite: false
+      mat2 = new THREE.MeshBasicMaterial
+        color: 0x051005
+        blending: THREE.AdditiveBlending
+        transparent: 1
+        depthWrite: false
+      # TODO: Use an ArrayGeometry.
+      geom = new THREE.Geometry()
+      geom.vertices.push new Vec3(0, 0, 0.6)
+      geom.vertices.push new Vec3(0.1, 0, 0.3)
+      geom.vertices.push new Vec3(-0.1, 0, 0.3)
+      geom.vertices.push new Vec3(0.1, 0, -0.2)
+      geom.vertices.push new Vec3(-0.1, 0, -0.2)
+      geom.faces.push new THREE.Face3(0, 2, 1)
+      geom.faces.push new THREE.Face4(1, 2, 4, 3)
+      @meshArrow = new THREE.Mesh(geom, mat)
+      @meshArrow.position.set(0, 1, -2)
+      @meshArrow2 = new THREE.Mesh(geom, mat2)
+      @meshArrow2.position.set(0, 0, 0.8)
+      scene.add @meshArrow
+      @meshArrow.add @meshArrow2
+
+    update: (camera, delta) ->
+      nextCp = @progress.nextCheckpoint 0
+      nextCp2 = @progress.nextCheckpoint 1
+      carPos = @progress.vehicle.body.pos
+      camMatrixEl = camera.matrixWorld.elements
+      if nextCp
+        cpVec = new Vec2(nextCp.x - carPos.x,
+                         nextCp.y - carPos.y)
+        cpVecCamSpace = new Vec2(
+            cpVec.x * camMatrixEl[1] + cpVec.y * camMatrixEl[9],
+            cpVec.x * camMatrixEl[0] + cpVec.y * camMatrixEl[8])
+        @meshArrow.rotation.y = Math.atan2(cpVecCamSpace.y, cpVecCamSpace.x)
+      if nextCp2
+        cpVec = new Vec2(nextCp2.x - carPos.x,
+                         nextCp2.y - carPos.y)
+        cpVecCamSpace = new Vec2(
+            cpVec.x * camMatrixEl[1] + cpVec.y * camMatrixEl[9],
+            cpVec.x * camMatrixEl[0] + cpVec.y * camMatrixEl[8])
+        @meshArrow2.rotation.y = Math.atan2(cpVecCamSpace.y, cpVecCamSpace.x) - @meshArrow.rotation.y
 
   class CamControl
     constructor: (@camera, @car) ->
@@ -231,12 +316,15 @@ define [
       @renderer = @createRenderer()
       @containerEl.appendChild @renderer.domElement
 
+      @sceneHUD = new THREE.Scene()
+      @cameraHUD = new THREE.OrthographicCamera -1, 1, 1, -1, 1, -1
+
       @scene = new THREE.Scene()
       @camera = new THREE.PerspectiveCamera 75, 1, 0.1, 10000000
       @camera.up.set 0, 0, 1
       @camera.position.set 110, 2530, 500
-      @camControl = null
       @scene.add @camera
+      @camControl = null
       @scene.fog = new THREE.FogExp2 0xdddddd, 0.0002
 
       @scene.add new THREE.AmbientLight 0x446680
@@ -254,6 +342,7 @@ define [
       onTrackCar = (track, car, progress) =>
         unless car.cfg.isRemote
           @add renderCheckpoints = new RenderCheckpointsDrive @scene, track.checkpoints
+          @add new RenderCheckpointArrows @camera, progress
           progress.on 'advance', =>
             renderCheckpoints.highlightCheckpoint progress.nextCpIndex
             if checkpointBuffer?
@@ -281,6 +370,7 @@ define [
         unless car.cfg.isRemote
           @add @camControl = new CamControl @camera, renderCar
           @add new CarControl car, this
+          @add new RenderDials @sceneHUD, car
         if @track
           onTrackCar @track, car, progress
         else
@@ -336,9 +426,13 @@ define [
 
     setSize: (@width, @height) ->
       @renderer.setSize @width, @height
-      @camera.aspect = if @height > 0 then @width / @height else 1
+      aspect = if @height > 0 then @width / @height else 1
+      @camera.aspect = aspect
       @camera.updateProjectionMatrix()
-      @render()
+      @cameraHUD.left = -aspect
+      @cameraHUD.right = aspect
+      @cameraHUD.updateProjectionMatrix()
+      #@render()
       return
 
     addEditorCheckpoints: (track) ->
@@ -366,6 +460,7 @@ define [
       delta = 0
       @renderer.clear false, true
       @renderer.render @scene, @camera
+      @renderer.render @sceneHUD, @cameraHUD
       return
 
     cubeMesh: ->

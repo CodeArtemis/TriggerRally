@@ -491,7 +491,9 @@ define [
       client.scene.add sel.mesh
 
     handleSelRemove = (selModel) ->
-      client.scene.remove selModel.get('sel').mesh
+      mesh = selModel.get('sel').mesh
+      client.scene.remove mesh
+      mesh.dispose()
 
     selection.on 'add', handleSelAdd
     selection.on 'remove', handleSelRemove

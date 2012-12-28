@@ -51,6 +51,11 @@ define [
       maxIndexFound = 0
       indices = @attributes["index"].array
       maxElem = indices.length - PRIMITIVE_SIZE + 1
+      addOffset = =>
+        offset.index = minIndexFound
+        for i in [offset.start...elem]
+          indices[i] -= minIndexFound
+        @offsets.push offset
       while elem < maxElem
         primMinIndex = Infinity
         primMaxIndex = 0
@@ -61,10 +66,7 @@ define [
         newMaxIndexFound = Math.max maxIndexFound, primMaxIndex
         if newMaxIndexFound - newMinIndexFound > MAX_INDEX
           # New primitive doesn't fit. Save this offset and start a new one.
-          offset.index = minIndexFound
-          for i in [offset.start...elem]
-            indices[i] -= offset.index
-          @offsets.push offset
+          addOffset()
           offset =
             count: 0
             start: elem
@@ -76,11 +78,7 @@ define [
         elem += PRIMITIVE_SIZE
         offset.count += PRIMITIVE_SIZE
       # Save final offset.
-      if offset.count > 0
-        offset.index = minIndexFound
-        for i in [offset.start...elem]
-          indices[i] -= offset.index
-        @offsets.push offset
+      addOffset() if offset.count > 0
       if @offsets.length > 1
         console.log 'ArrayGeometry with ' + indices.length/3 + ' triangles split into ' + @offsets.length + ' DrawElements calls.'
 
@@ -140,21 +138,24 @@ define [
       i = 0
       posns = geom2.attributes["position"].array
       norms = geom2.attributes["normal"].array
+      positionArray = @attributes["position"].array
+      normalArray = @attributes["normal"].array
       hasNorms = norms? and norms.length == posns.length
       while i < posns.length
         tmpVec3.set posns[i + 0], posns[i + 1], posns[i + 2]
         matrix.multiplyVector3 tmpVec3
-        @attributes["position"].array.push tmpVec3.x, tmpVec3.y, tmpVec3.z
+        positionArray.push tmpVec3.x, tmpVec3.y, tmpVec3.z
         if hasNorms
           tmpVec3.set norms[i + 0], norms[i + 1], norms[i + 2]
           matrixRotation.multiplyVector3 tmpVec3
-          @attributes["normal"].array.push tmpVec3.x, tmpVec3.y, tmpVec3.z
+          normalArray.push tmpVec3.x, tmpVec3.y, tmpVec3.z
         i += 3
       @attributes["uv"].array = @attributes["uv"].array.concat geom2.attributes["uv"].array
 
       # Copy indices.
+      indexArray = @attributes["index"].array
       for idx in geom2.attributes["index"].array
-        @attributes["index"].array.push idx + vertexOffset
+        indexArray.push idx + vertexOffset
       return
 
     computeBoundingSphere: -> @computeBounds()

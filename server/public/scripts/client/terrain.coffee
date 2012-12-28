@@ -544,7 +544,8 @@ define [
                   idx.push start0 + 0, start1 + 1, start0 + 1
         scale *= 2
 
-      geom.removeIndices()
+      #geom.removeIndices()
+      geom.updateOffsets()
       return geom
 
     _render: (program, gl, frustum) ->
