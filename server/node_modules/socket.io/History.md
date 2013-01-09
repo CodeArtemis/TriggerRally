@@ -1,4 +1,14 @@
 
+0.9.13 / 2012-12-13
+===================
+
+  * package: fixed `base64id` requirement
+
+0.9.12 / 2012-12-13
+===================
+
+  * manager: fix for latest node which is returning a clone with `listeners` [viirya]
+
 0.9.11 / 2012-11-02
 ===================
 

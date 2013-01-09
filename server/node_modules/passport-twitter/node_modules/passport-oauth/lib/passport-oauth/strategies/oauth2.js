@@ -70,7 +70,7 @@ function OAuth2Strategy(options, verify) {
   //       allowed to use it when making protected resource requests to retrieve
   //       the user profile.
   this._oauth2 = new OAuth2(options.clientID,  options.clientSecret,
-                            '', options.authorizationURL, options.tokenURL);
+      '', options.authorizationURL, options.tokenURL, options.customHeaders);
 
   this._callbackURL = options.callbackURL;
   this._scope = options.scope;

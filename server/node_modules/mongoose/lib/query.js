@@ -299,6 +299,61 @@ Query.prototype.cast = function (model, obj) {
           } else {
             obj[path] = val;
           }
+          continue;
+        }
+
+        if (utils.isObject(val)) {
+          // handle geo schemas that use object notation
+          // { loc: { long: Number, lat: Number }
+
+          var geo = val.$near ? '$near' :
+                    val.$nearSphere ? '$nearSphere' :
+                    val.$within ? '$within' : '';
+
+          if (!geo) {
+            continue;
+          }
+
+          var numbertype = new Types.Number('__QueryCasting__')
+          var value = val[geo];
+
+          if (val.$maxDistance) {
+            val.$maxDistance = numbertype.castForQuery(val.$maxDistance);
+          }
+
+          if ('$within' == geo) {
+            // find $center, $centerSphere, $box, $polygon
+            var withinType = value.$center || value.$centerSphere || value.$box || value.$polygon;
+            if (!withinType) {
+              throw new Error('Bad $within paramater: ' + JSON.stringify(val));
+            }
+
+            value = withinType;
+          }
+
+          ;(function _cast (val) {
+            if (Array.isArray(val)) {
+              val.forEach(function (item, i) {
+                if (Array.isArray(item) || utils.isObject(item)) {
+                  return _cast(item);
+                }
+                val[i] = numbertype.castForQuery(item);
+              });
+            } else {
+              var nearKeys= Object.keys(val);
+              var nearLen = nearKeys.length;
+              while (nearLen--) {
+                var nkey = nearKeys[nearLen];
+                var item = val[nkey];
+                if (Array.isArray(item) || utils.isObject(item)) {
+                  _cast(item);
+                  val[nkey] = item;
+                } else {
+                  val[nkey] = numbertype.castForQuery(item);
+                }
+              }
+            }
+          })(value);
         }
 
       } else if (val === null || val === undefined) {
@@ -1694,7 +1749,7 @@ Query.prototype.update = function update (doc, callback) {
   }
 
   if (!fn) {
-    delete options.safe;
+    options.safe = { w: 0 };
   }
 
   model.collection.update(castedQuery, castedDoc, options, tick(callback));
@@ -2002,7 +2057,7 @@ Query.prototype.remove = function (callback) {
   }
 
   if (!cb) {
-    delete options.safe;
+    options.safe = { w: 0 };
   }
 
   var castQuery = this._conditions;

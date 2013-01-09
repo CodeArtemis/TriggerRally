@@ -23,17 +23,18 @@ var EventEmitter = require('events').EventEmitter
  *
  * ####Options:
  *
- * - [safe](/docs/guide.html#safe): bool - defaults to true.
- * - [read](/docs/guide.html#read): string
- * - [strict](/docs/guide.html#strict): bool - defaults to true
- * - [capped](/docs/guide.html#capped): bool - defaults to false
- * - [versionKey](/docs/guide.html#versionKey): bool - defaults to "__v"
- * - [shardKey](/docs/guide.html#shardKey): bool - defaults to `null`
  * - [autoIndex](/docs/guide.html#autoIndex): bool - defaults to true
- * - [_id](/docs/guide.html#_id): bool - defaults to true
+ * - [capped](/docs/guide.html#capped): bool - defaults to false
+ * - [collection](/docs/guide.html#collection): string - no default
  * - [id](/docs/guide.html#id): bool - defaults to true
- * - [toObject](/docs/guide.html#toObject) - object - no default
+ * - [_id](/docs/guide.html#_id): bool - defaults to true
+ * - [read](/docs/guide.html#read): string
+ * - [safe](/docs/guide.html#safe): bool - defaults to true.
+ * - [shardKey](/docs/guide.html#shardKey): bool - defaults to `null`
+ * - [strict](/docs/guide.html#strict): bool - defaults to true
  * - [toJSON](/docs/guide.html#toJSON) - object - no default
+ * - [toObject](/docs/guide.html#toObject) - object - no default
+ * - [versionKey](/docs/guide.html#versionKey): bool - defaults to "__v"
  * - `minimize`: bool - controls [document#toObject](#document_Document-toObject) behavior when called manually - defaults to true
  *
  * ####Note:
@@ -146,9 +147,12 @@ Schema.prototype.tree;
  */
 
 Schema.prototype.defaultOptions = function (options) {
+  if (options && false === options.safe) {
+    options.safe = { w: 0 };
+  }
+
   options = utils.options({
-      safe: true
-    , strict: true
+      strict: true
     , capped: false // { size, max, autoIndexId }
     , versionKey: '__v'
     , minimize: true
@@ -225,6 +229,7 @@ reserved.errors =
 reserved.schema =
 reserved.options =
 reserved.modelName =
+reserved._pres = reserved._posts = // hooks.js
 reserved.collection = 1;
 
 /**
@@ -494,7 +499,7 @@ Schema.prototype.pre = function(){
  * Post hooks fire `on` the event emitted from document instances of Models compiled from this schema.
  *
  *     var schema = new Schema(..);
- *     schema.post('save', function () {
+ *     schema.post('save', function (doc) {
  *       console.log('this fired after a document was saved');
  *     });
  *
@@ -631,16 +636,37 @@ Schema.prototype.index = function (fields, options) {
  * @api public
  */
 
-Schema.prototype.set = function (key, value, tags) {
-  if (arguments.length == 1)
+Schema.prototype.set = function (key, value, _tags) {
+  if (1 === arguments.length) {
     return this.options[key];
+  }
 
-  this.options[key] = 'read' == key
-    ? utils.readPref(value, tags)
-    : value;
+  switch (key) {
+    case 'read':
+      this.options[key] = utils.readPref(value, _tags)
+      break;
+    case 'safe':
+      this.options[key] = false === value
+        ? { w: 0 }
+        : value
+      break;
+    default:
+      this.options[key] = value;
+  }
 
   return this;
-};
+}
+
+/**
+ * Gets a schema option.
+ *
+ * @param {String} key option name
+ * @api public
+ */
+
+Schema.prototype.get = function (key) {
+  return this.options[key];
+}
 
 /**
  * Compiles indexes from fields and schema-level indexes

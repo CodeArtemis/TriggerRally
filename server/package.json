@@ -14,11 +14,12 @@
     "passport-google": "*",
     "passport-local": "*",
     "passport-twitter": "*",
+    "requirejs": "*",
     "session-mongoose": "*",
     "socket.io": "*",
     "stylus": "*",
     "canvas": "*",
-    "backbone-relational": "~0.6.0",
+    "backbone-relational": "~0.7.0",
     "mongoskin": "~0.4.4"
   }
 }
