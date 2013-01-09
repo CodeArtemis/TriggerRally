@@ -78,7 +78,7 @@ block body
 
   if urlTrack.config.gameversion === 1
     script(src="/build-v1/trigger.js")
-  if urlTrack.config.gameversion === 2
+  else if urlTrack.config.gameversion === 2
     script(data-main="/build-v2/drive-main", src="/js/require.js")
   else
     - if ('production' === process.env.NODE_ENV)
