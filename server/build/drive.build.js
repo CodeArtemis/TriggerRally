@@ -3,36 +3,44 @@
   dir: "../public/build-out",
   optimize: "none",
   modules: [
-      {
-          name: "drive-main",
-          exclude: [ 'coffee-script' ]
-      }
+    {
+      name: "drive-main",
+      exclude: [ 'coffee-script' ]
+    }
   ],
   shim: {
+    'underscore': {
+      exports: '_',
+      init: function() {
+        return this._.noConflict();
+      }
+    },
+    'backbone': {
+      deps: ['underscore'],
+      exports: 'Backbone'
+    },
+    'backbone-relational': {
+      deps: ['underscore', 'backbone']
+    },
     'THREE': {
-      deps: [],
       exports: 'THREE'
     },
     'async': {
-      deps: [],
       exports: 'async'
     },
-    'underscore': {
-      deps: [ 'async' ],
-      exports: 'underscore'
-    },
     'zepto': {
-      deps: [],
       exports: '$'
     }
   },
   paths: {
-      'THREE': '../js/Three'
-    , 'async': '../js/async.min'
+      'THREE': '../js/three-r54.min'  // .min
+    , 'async': '../js/async.min'  // .min
     , 'cs': '../js/cs'
     , 'coffee-script': '../js/coffee-script'
-    , 'underscore': '../js/underscore-min'
-    , 'zepto': '../js/zepto.min'
+    , 'underscore': '../js/underscore-min'  // -min
+    , 'backbone': '../js/backbone-min'  // -min
+    , 'backbone-relational': '../js/backbone-relational'
+    , 'zepto': '../js/zepto.min'  // .min
   },
   stubModules: ['cs']
 })

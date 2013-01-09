@@ -30,14 +30,14 @@
     }
   },
   paths: {
-      'THREE': '../js/Three'
-    , 'async': '../js/async'
+      'THREE': '../js/three-r54.min'  // .min
+    , 'async': '../js/async.min'  // .min
     , 'cs': '../js/cs'
     , 'coffee-script': '../js/coffee-script'
-    , 'underscore': '../js/underscore'  // -min
-    , 'backbone': '../js/backbone'  // -min
+    , 'underscore': '../js/underscore-min'  // -min
+    , 'backbone': '../js/backbone-min'  // -min
     , 'backbone-relational': '../js/backbone-relational'
-    , 'jquery': '../js/jquery-1.8.3.min'
+    , 'jquery': '../js/jquery-1.8.3.min'  // .min
   },
   stubModules: ['cs']
 })
