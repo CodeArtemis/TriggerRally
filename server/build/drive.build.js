@@ -19,9 +19,9 @@
       deps: ['underscore'],
       exports: 'Backbone'
     },
-    'backbone-relational': {
+    /*'backbone-relational': {
       deps: ['underscore', 'backbone']
-    },
+    },*/
     'THREE': {
       exports: 'THREE'
     },
@@ -39,7 +39,7 @@
     , 'coffee-script': '../js/coffee-script'
     , 'underscore': '../js/underscore-min'  // -min
     , 'backbone': '../js/backbone-min'  // -min
-    , 'backbone-relational': '../js/backbone-relational'
+    //, 'backbone-relational': '../js/backbone-relational'  // don't define modules that aren't used
     , 'zepto': '../js/zepto.min'  // .min
   },
   stubModules: ['cs']
