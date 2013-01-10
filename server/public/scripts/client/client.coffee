@@ -37,7 +37,6 @@ define [
       quiver.connect checkpoints, (ins, outs, done) =>
         for mesh in @meshes
           scene.remove mesh
-          mesh.dispose()
         @meshes = for cp in checkpoints
           mesh = clientMisc.checkpointMesh()
           mesh.position.addSelf cp
