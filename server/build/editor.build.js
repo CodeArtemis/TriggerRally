@@ -10,10 +10,7 @@
   ],
   shim: {
     'underscore': {
-      exports: '_',
-      init: function() {
-        return this._.noConflict();
-      }
+      exports: '_'
     },
     'backbone': {
       deps: ['underscore'],
