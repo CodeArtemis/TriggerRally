@@ -27,12 +27,12 @@ exports.defaultParams = function(req, res, next) {
 };
 
 exports.index = function(req, res) {
-  if (true) {
+  if (false) {
     req.jadeParams.recentTracks = null;
     res.render('index', req.jadeParams);
   } else {
     Track
-      .find({})
+      .find({published: true})
       .sort({modified: -1})
       .limit(10)
       .populate('user')  // Is this too slow?
@@ -50,9 +50,9 @@ exports.index = function(req, res) {
 
 exports.recentTracks = function(req, res) {
   Track
-    .find({})
+    .find({published: true})
     .sort({modified: -1})
-    .limit(30)
+    .limit(50)
     .populate('user')  // Is this too slow?
     .exec(function(err, tracks) {
       if (err) {

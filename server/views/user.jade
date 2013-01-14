@@ -65,13 +65,13 @@ block body
               td= track.name
               td
                 a(href="/track/#{track.pub_id}/drive") Drive
-              if track.env
-                td
-                  a(href="/track/#{track.pub_id}/edit") Editor
-              else
-                td
               td
                 a(href="/track/#{track.pub_id}") Details
+              if track.env
+                td
+                  a(href="/track/#{track.pub_id}/edit") Edit
+              else
+                td
               td= track.created_ago
               td= track.modified_ago
       else

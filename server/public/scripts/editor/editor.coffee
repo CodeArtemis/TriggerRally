@@ -46,8 +46,7 @@ define [
       return yes if model.hasChanged attr
     no
 
-  deepClone = (obj) ->
-    JSON.parse JSON.stringify obj
+  deepClone = (obj) -> JSON.parse JSON.stringify obj
 
   Sel = Backbone.Model.extend {}
   Selection = Backbone.Collection.extend

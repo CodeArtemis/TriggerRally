@@ -17,6 +17,20 @@ block body
           if !user
             a.button(href="/login") (Requires log in)
 
+    if recentTracks
+      .section Latest published tracks
+      include partial/recent
+
+      p
+        a(href="/recenttracks") See more tracks
+        span  or 
+        a(href="/track/v3-base-1/edit") make your own!
+
+      p To include your track in this list, click <em>"Publish this track"</em> in the editor.
+
+    .section Previous versions
+
+    table
       tr
         td
           a(href="/x/Alpina/ArbusuG/drive")
@@ -30,30 +44,6 @@ block body
             img(width="300", height="210", src="/images/screen1.jpg", alt="Screenshot of v1")
         td
           a.button(href="/x/Preview/Arbusu/drive") Play Version 1
-
-    if recentTracks
-      .section Latest tracks
-
-      table.list
-        tr
-          td Name
-          td By
-          td Modified
-          td
-          td
-        each track in recentTracks
-          tr
-            td
-              a(href="/track/#{track.pub_id}/drive")= track.name
-            td
-              user = track.user
-              include partial/user
-            td= track.modified_ago
-            td
-              a(href="/track/#{track.pub_id}") Details
-            if track.env
-              td
-                a(href="/track/#{track.pub_id}/edit") Open in editor
 
     .section Blog 
       a(href="//blog.triggerrally.com/") (more here)
