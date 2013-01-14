@@ -20,6 +20,7 @@
     "stylus": "*",
     "canvas": "*",
     "backbone-relational": "~0.7.0",
-    "mongoskin": "~0.4.4"
+    "mongoskin": "~0.4.4",
+    "rethinkdb": "~1.2.6-1"
   }
 }
