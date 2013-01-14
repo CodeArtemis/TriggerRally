@@ -8,14 +8,13 @@ var Schema = mongoose.Schema;
 var LFIB4 = require('../shared/LFIB4').LFIB4;
 
 var PUB_ID_CHARSET = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-var PUB_ID_CHARSET_LENGTH = PUB_ID_CHARSET.length;
 var PUB_ID_LENGTH = 8;
 
 /*
 console.log(
     'objects/common.js pub_id generation: ' + PUB_ID_LENGTH +
-    ' digits of base ' + PUB_ID_CHARSET_LENGTH +
-    ' >= 2^' + Math.floor(Math.log(Math.pow(PUB_ID_CHARSET_LENGTH, PUB_ID_LENGTH)) / Math.LN2));
+    ' digits of base ' + PUB_ID_CHARSET.length +
+    ' >= 2^' + Math.floor(Math.log(Math.pow(PUB_ID_CHARSET.length, PUB_ID_LENGTH)) / Math.LN2));
 */
 
 var pub_id_random = LFIB4([+new Date(), 47529830, 45652389]);  // no new.
@@ -24,7 +23,7 @@ exports.makePubId = function(value, opt_length) {
   var length = opt_length || PUB_ID_LENGTH;
   var chars = [];
   for (var i = 0; i < length; ++i) {
-    chars.push(PUB_ID_CHARSET[Math.floor(pub_id_random() * PUB_ID_CHARSET_LENGTH)]);
+    chars.push(PUB_ID_CHARSET[Math.floor(pub_id_random() * PUB_ID_CHARSET.length)]);
   }
   return chars.join('');
 }
