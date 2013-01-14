@@ -41,11 +41,6 @@ define [
   tmpVec3b = new THREE.Vector3
   plusZVec3 = new Vec3 0, 0, 1
 
-  # Utility for manipulating objects in models.
-  manipulate = (model, attrib, fn) ->
-    fn obj = deepClone model.get(attrib)
-    model.set attrib, obj
-
   hasChanged = (model, attrs) ->
     for attr in attrs
       return yes if model.hasChanged attr
@@ -137,9 +132,7 @@ define [
       trackModel.config.on 'change:course', changeCourse
       trackModel.config.course.on 'change', changeCourse
 
-
-    trackModel.on 'change', ->
-      trackModel.off null, null, this  # No 'once' :(
+    trackModel.once 'change', ->
       startposition = trackModel.config.course.startposition
       Vec3::set.apply camPos, startposition.pos
       camAng.x = 0.9
@@ -461,7 +454,7 @@ define [
         updateCursor findObject mouseX, mouseY
       return
 
-    scroll = (scrollY) ->
+    scroll = (scrollY, event) ->
       return unless cursor
       vec = cursorMesh.position.clone()
       vec.subSelf camPos
@@ -473,6 +466,6 @@ define [
     $view3d.on 'mousewheel', (event) ->
       origEvent = event.originalEvent
       deltaY = if origEvent.wheelDeltaY? then origEvent.wheelDeltaY else origEvent.deltaY
-      scroll deltaY
+      scroll deltaY, event
 
     return

@@ -30,6 +30,10 @@ block body
       dt Modified
       dd= urlTrack.modified_ago
 
+    dl
+      dt Published
+      dd= urlTrack.published ? "yes" : "no"
+
     if urlTrack.parent
       dl
         dt Parent track

@@ -27,10 +27,6 @@ block body
     .close-tab Toggle Help
     #editor-helpbox
       h2 Welcome to the Trigger Rally track editor!
-      //if !origUser || origUser.pub_id !== trackData.user.id
-        .warning
-          p You can only edit tracks that you own. Start by clicking Copy Track
-           | to make a copy that you can edit.
       p Tracks have a series of <b>checkpoints</b>, represented by green circles.
        | You can select them by left clicking in their center, and move them by
        | dragging the mouse.
@@ -40,11 +36,6 @@ block body
       p Most <b>scenery</b> is automatically generated (ie. the trees)
        | but you can create, edit or delete additional scenery.
       p You can also move the <b>start position</b> indicated by the car.
-      //div Some object properties have 
-        span.tooltip tooltips
-          div.tooltip-text
-            p This is a tooltip!
-        |  with further help.
 
       table
         tr
@@ -121,6 +112,11 @@ block body
     #cmd-copy-track
       span.label Action
       button.content Copy Track
+
+    #flag-publish
+      label
+        input(type="checkbox")
+        | Publish this track
 
     hr
 
@@ -203,7 +199,10 @@ block body
 
     hr
 
-    #toggle-snap
+    //- Editor options, not really track properties.
+    //- Could move these to another window?
+
+    #flag-snap
       label
         input(type="checkbox", checked)
         | Snap objects to ground

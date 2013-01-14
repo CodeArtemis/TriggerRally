@@ -197,7 +197,8 @@ function sanitizeTrack(track) {
     name: track.name,
     env: sanitizeEnv(track.env),
     config: track.config,
-    user: sanitizeUser(track.user)
+    user: sanitizeUser(track.user),
+    published: track.published
   };
 }
 
@@ -227,6 +228,7 @@ exports.trackCopy = function(req, res) {
   track._id = undefined;
   track.pub_id = undefined;
   track.name += ' copy';
+  track.published = false;
   var newTrack = new Track(track);
   newTrack.save(function(err, newTrack) {
     if (err) {

@@ -90,7 +90,7 @@
       buildProperties @
 
     class models.Track extends BaseModel
-      attributeNames: [ 'config', 'env', 'name', 'user' ]
+      attributeNames: [ 'config', 'env', 'name', 'user', 'published' ]
       defaults:
         config: new models.TrackConfig
       relations: [

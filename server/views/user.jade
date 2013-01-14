@@ -55,21 +55,25 @@ block body
         table.list
           tr
             td Name
+            td
+            td
+            td
             td Created
             td Modified
-            td
-            td
           each track in tracks
             tr
-              td
-                a(href="/track/#{track.pub_id}")= track.name
-              td= track.created_ago
-              td= track.modified_ago
+              td= track.name
               td
                 a(href="/track/#{track.pub_id}/drive") Drive
               if track.env
                 td
-                  a(href="/track/#{track.pub_id}/edit") Open in editor
+                  a(href="/track/#{track.pub_id}/edit") Editor
+              else
+                td
+              td
+                a(href="/track/#{track.pub_id}") Details
+              td= track.created_ago
+              td= track.modified_ago
       else
         span No tracks.
 

@@ -7,6 +7,13 @@ define [
 ], (
   $
 ) ->
+  deepClone = (obj) -> JSON.parse JSON.stringify obj
+
+  # Utility for manipulating objects in models.
+  manipulate = (model, attrib, fn) ->
+    fn obj = deepClone model.get(attrib)
+    model.set attrib, obj
+
   Controller: (selection, track) ->
     $inspector = $('#editor-inspector')
     $inspectorAttribs = $inspector.find('.attrib')
@@ -30,13 +37,19 @@ define [
     cmdCopy         = attrib '#cmd-copy'
     cmdDelete       = attrib '#cmd-delete'
     cmdCopyTrack    = attrib '#cmd-copy-track'
-    toggleSnap      = $inspector.find '#toggle-snap input'
+    flagPublish     = $inspector.find '#flag-publish input'
+    flagSnap        = $inspector.find '#flag-snap input'
 
     for layer, idx in track.env.scenery.layers
       sceneryType.$content.append new Option layer.id, idx
 
+    selTitle.$content.val track.name
     selTitle.$content.on 'input', ->
       track.name = selTitle.$content.val()
+
+    flagPublish[0].checked = track.published
+    flagPublish.on 'change', ->
+      track.published = flagPublish[0].checked
 
     bindSlider = (type, slider, eachSel) ->
       $content = slider.$content
@@ -143,8 +156,8 @@ define [
       form.method = 'POST'
       form.submit()
 
-    do updateSnap = => @snapToGround = toggleSnap[0].checked
-    toggleSnap.on 'change', updateSnap
+    do updateSnap = => @snapToGround = flagSnap[0].checked
+    flagSnap.on 'change', updateSnap
 
     checkpointSliderSet = (slider, val) ->
       slider.$content.val val
@@ -163,8 +176,6 @@ define [
           else
             sel.type
         else '[multiple]'
-
-      selTitle.$content.val track.name
 
       for selModel in selection.models
         sel = selModel.get 'sel'

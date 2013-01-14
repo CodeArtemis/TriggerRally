@@ -419,6 +419,7 @@ getPublicTrackPubId = (pub_id, cb) ->
           config: track.config
           env: env
           user: publicUserBasic user
+          published: track.published
 
 io.of('/api').on 'connection', (socket) ->
   session = socket.handshake.session
@@ -448,6 +449,7 @@ io.of('/api').on 'connection', (socket) ->
                 return callback '403'
               track.config = data.model.config
               track.name = data.model.name
+              track.published = data.model.published
               track.modified = new Date()
               db.tracks.save track, (err) ->
                 callback err, {}

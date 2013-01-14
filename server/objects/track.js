@@ -38,6 +38,7 @@ var Track = new Schema({
   , config    : Schema.Types.Mixed
   , modified  : { type: Date }
   , parent    : { type: Schema.ObjectId, ref: 'Track' }
+  , published : { type: Boolean }
 }, { strict: true });
 
 Track.virtual('created')
