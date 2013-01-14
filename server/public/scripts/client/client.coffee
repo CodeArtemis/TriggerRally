@@ -255,10 +255,10 @@ define [
         if gamepad
           axes = gamepad.axes
           buttons = gamepad.buttons
-          controls.left += Math.max 0, -axes[0]
-          controls.right += Math.max 0, axes[0]
-          controls.forward += buttons[0] or buttons[5] or buttons[7]
-          controls.back += buttons[1] or buttons[4] or buttons[6]
+          controls.left += Math.max 0, -axes[0], buttons[14]
+          controls.right += Math.max 0, axes[0], buttons[15]
+          controls.forward += Math.max buttons[0], buttons[5], buttons[7], buttons[12]
+          controls.back += Math.max buttons[1], buttons[4], buttons[6], buttons[13]
           controls.handbrake += buttons[2]
       controls.forward = Math.min 1, controls.forward
       controls.back = Math.min 1, controls.back
