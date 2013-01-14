@@ -7,6 +7,9 @@ block body
 
     h1= urlTrack.name
 
+    p: a(href="/track/#{urlTrack.pub_id}/drive") Drive this track
+    p: a(href="/track/#{urlTrack.pub_id}/edit") Open in editor
+
     .section Information
 
     dl
@@ -26,11 +29,6 @@ block body
     dl
       dt Modified
       dd= urlTrack.modified_ago
-
-    dl
-      dt &nbsp;
-      dd
-        a(href="/track/#{urlTrack.pub_id}/edit") Open in editor
 
     if urlTrack.parent
       dl
