@@ -1,14 +1,18 @@
-- if (field.value || field.editing)
+if field.value || field.editing
   dl
     dt= field.title
     dd
-      - if (field.editing)
-        - if (field.focus)
+      if field.editing
+        if field.focus
           input(name='#{field.name}', type='#{field.fieldtype}', value='#{field.value}', oninput='onInput("#{field.name}")', autofocus)
-        - else
+        else
           input(name='#{field.name}', type='#{field.fieldtype}', value='#{field.value}', oninput='onInput("#{field.name}")')
         //-span.fieldstatusok(id="fieldstatusok=#{name}")&#10003;
         //-span.fieldstatuserror(id="fieldstatuserror=#{name}")&#10007;
         span.fielderror(id="fielderror-#{field.name}")
-      - else
-        =field.value
+      else
+        if field.name == 'website'
+          a(href=field.value, rel="nofollow")
+            =field.value
+        else
+          =field.value
