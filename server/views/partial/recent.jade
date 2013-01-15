@@ -1,20 +1,18 @@
 table.list
   tr
-    td Name
+    td Track
     td By
     td Modified
     td
     td
-    td
   each track in recentTracks
     tr
-      td= track.name
+      td
+        a(href="/track/#{track.pub_id}/drive")= track.name
       td
         user = track.user
         include user
       td= track.modified_ago
-      td
-        a(href="/track/#{track.pub_id}/drive") Drive
       td
         a(href="/track/#{track.pub_id}") Details
       if track.env

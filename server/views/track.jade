@@ -7,8 +7,8 @@ block body
 
     h1= urlTrack.name
 
-    p: a(href="/track/#{urlTrack.pub_id}/drive") Drive this track
-    p: a(href="/track/#{urlTrack.pub_id}/edit") Open in editor
+    a.button(href="/track/#{urlTrack.pub_id}/drive") Drive
+    a.button(href="/track/#{urlTrack.pub_id}/edit") Edit
 
     .section Information
 

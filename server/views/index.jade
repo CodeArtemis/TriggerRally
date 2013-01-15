@@ -7,26 +7,18 @@ block body
 
     p Fast arcade rally racing action!
 
-    table
-      tr
-        td
-          a(href="/track/v3-base-1/edit")
-            img(width="300", height="169", src="/images/screen4.jpg", alt="Screenshot of Track Editor")
-        td
-          a.button.special(href="/track/v3-base-1/edit") New: try the <b>track editor</b>!
-          if !user
-            a.button(href="/login") (Requires log in)
-
     if recentTracks
       .section Latest published tracks
       include partial/recent
 
       p
-        a(href="/recenttracks") See more tracks
-        span  or 
-        a(href="/track/v3-base-1/edit") make your own!
+        | See 
+        a(href="/recenttracks") more tracks
+        |  or make your own with the 
+        a(href="/track/v3-base-1/edit") editor
+        | .
 
-      p To include your track in this list, click <em>"Publish this track"</em> in the editor.
+      p To include a track in this list, check the <em>"Publish this track"</em> option in the editor.
 
     .section Previous versions
 

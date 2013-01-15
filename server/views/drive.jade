@@ -15,6 +15,18 @@ block body
         |  &mdash;
         a(href="/run/#{runs[0].pub_id}/replay") watch replay
 
+    div
+      span Track: 
+      span= urlTrack.name
+      span  &mdash; 
+      a(href="/track/#{urlTrack.pub_id}") Details
+      span  &mdash; 
+      a(href="/track/#{urlTrack.pub_id}/edit") Edit
+      span  &mdash; by 
+      user = urlTrack.user
+      include partial/user
+    br
+
     .frame3d
       .loading
         div(style="height: 6em")
