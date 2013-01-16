@@ -7,6 +7,18 @@ block body
 
     p Fast arcade rally racing action!
 
+    .section Featured tracks
+
+    a.featured(
+      href="/x/Alpina/ArbusuG/drive",
+      style="background-image: url(/images/screen3.jpg)",
+      title="Drive Alpina")
+
+    a.featured(
+      href="/x/Preview/Arbusu/drive",
+      style="background-image: url(/images/screen1.jpg)",
+      title="Drive Preview")
+
     if recentTracks
       .section Latest published tracks
       tracks = recentTracks
@@ -20,23 +32,6 @@ block body
         | .
 
       p To include a track in this list, check the <em>"Publish this track"</em> option in the editor.
-
-    .section Previous versions
-
-    table
-      tr
-        td
-          a(href="/x/Alpina/ArbusuG/drive")
-            img(width="150", height="85", src="/images/screen3.jpg", alt="Screenshot of Trigger Rally v2")
-        td
-          a.button(href="/x/Alpina/ArbusuG/drive") Play Version 2
-
-      tr
-        td
-          a(href="/x/Preview/Arbusu/drive")
-            img(width="150", height="105", src="/images/screen1.jpg", alt="Screenshot of v1")
-        td
-          a.button(href="/x/Preview/Arbusu/drive") Play Version 1
 
     .section Blog 
       a(href="//blog.triggerrally.com/") (more here)

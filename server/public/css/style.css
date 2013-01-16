@@ -91,7 +91,9 @@ h1 img {
   opacity: 0.6;
 }
 .section {
-  background: #dec;
+  background-color: #dec;
+  background: url("/images/section.jpg") no-repeat center center;
+  background-size: cover;
   color: rgba(0,0,0,0.5);
   font-style: italic;
   margin: 30px 0px 20px;
@@ -151,6 +153,19 @@ h2 {
 }
 .version {
   opacity: 0.3;
+}
+.featured {
+  display: inline-block;
+  background-color: #bda;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  border-radius: 0.5em;
+  box-shadow: -1px -2px 1px #fff, 1px 2px 1px #361;
+  margin: 1em;
+  padding: 0.8em 1.5em;
+  width: 200px;
+  height: 120px;
 }
 .button {
   display: inline-block;
