@@ -203,9 +203,9 @@ loadUrlUser = (req, res, next) ->
         else
           res.send 404
 
-loadUrlTrack = (req, res, next) ->
-  Track
-    .findOne(pub_id: req.params.idTrack)
+
+loadUrlTrackInternal = (find, req, res, next) ->
+  find
     .populate('user')
     .populate('env')
     .populate('parent', {'pub_id':1, 'name':1})
@@ -225,6 +225,18 @@ loadUrlTrack = (req, res, next) ->
           # See Environment model for the rest of the hack.
           req.urlTrack.env.populatedCars = cars
           next()
+
+loadUrlTrack = (req, res, next) ->
+  find = Track.findOne
+    pub_id: req.params.idTrack
+  loadUrlTrackInternal find, req, res, next
+
+loadUrlTrackIncDrive = (req, res, next) ->
+  find = Track.findOneAndUpdate
+    pub_id: req.params.idTrack
+  ,
+    $inc: { count_drive: 1 }
+  loadUrlTrackInternal find, req, res, next
 
 loadUrlCar = (req, res, next) ->
   Car
@@ -292,7 +304,7 @@ app.post '/car/:idCar/json/save', loadUrlCar, editCar, routes.carJsonSave
 app.get '/run/:idRun', loadUrlRun, routes.run
 app.post '/run/new', routes.runSave
 app.get '/run/:idRun/replay', loadUrlRun, routes.runReplay
-app.get '/x/:idTrack/:idCar/drive', loadUrlTrack, loadUrlCar, routes.drive
+app.get '/x/:idTrack/:idCar/drive', loadUrlTrackIncDrive, loadUrlCar, routes.drive
 app.get '/x/:idTrack/:idCar/top', loadUrlTrack, loadUrlCar, routes.top
 app.post '/metrics', routes.metricsSave
 app.get '/auth/facebook', passport.authenticate('facebook')

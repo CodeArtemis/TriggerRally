@@ -52,28 +52,7 @@ block body
     if tracks
       .section Tracks
       if tracks.length > 0
-        table.list
-          tr
-            td Name
-            td
-            td
-            td
-            td Created
-            td Modified
-          each track in tracks
-            tr
-              td= track.name
-              td
-                a(href="/track/#{track.pub_id}/drive") Drive
-              td
-                a(href="/track/#{track.pub_id}") Details
-              if track.env
-                td
-                  a(href="/track/#{track.pub_id}/edit") Edit
-              else
-                td
-              td= track.created_ago
-              td= track.modified_ago
+        include partial/tracklist
       else
         span No tracks.
 

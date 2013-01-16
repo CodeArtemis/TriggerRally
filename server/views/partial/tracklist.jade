@@ -1,0 +1,29 @@
+table.list
+  tr
+    td Track
+    td
+    td
+    td
+    td By
+    td Last edited
+    td: img(src="/emojis/car.png", title="Drive count").emoji
+    td: img(src="/emojis/evergreen_tree.png", title="Copy count").emoji
+    //-td: img(src="/emojis/heart.png", title="Favorited").emoji
+  each track in tracks
+    tr
+      td
+        a(href="/track/#{track.pub_id}/drive")= track.name
+      td.highlight
+        a(href="/track/#{track.pub_id}/drive"): strong Drive
+      td
+        a(href="/track/#{track.pub_id}") Details
+      td
+        if track.env
+          a(href="/track/#{track.pub_id}/edit") Edit
+      td
+        user = track.user
+        include user
+      td= track.modified_ago
+      td= track.count_drive
+      td= track.count_copy
+      //-td= track.count_fav

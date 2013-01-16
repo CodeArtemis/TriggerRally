@@ -19,6 +19,10 @@ h2 {
   margin-right: 5px;
   vertical-align: -20%;
 }
+img.emoji {
+  width: 1em;
+  height: 1em;
+}
 a,
 a:visited {
   color: #370;
@@ -129,6 +133,9 @@ table.list tr:first-child {
 }
 table.list td {
   padding: 0 20px;
+}
+td.highlight {
+  background: #efe;
 }
 .logo {
   width: 64px;

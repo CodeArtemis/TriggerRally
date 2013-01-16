@@ -31,15 +31,22 @@ Environment.pre('save', function(next) {
 
 
 var Track = new Schema({
-    pub_id    : { type: String, index: { unique: true } }
-  , name      : { type: String, trim: true, validate: [validate.goosify(validate.required), 'name'] }
-  , env       : { type: Schema.ObjectId, ref: 'Environment' }
-  , user      : { type: Schema.ObjectId, ref: 'User' }
-  , config    : Schema.Types.Mixed
-  , modified  : { type: Date }
-  , parent    : { type: Schema.ObjectId, ref: 'Track' }
-  , published : { type: Boolean }
+    pub_id      : { type: String, index: { unique: true } }
+  , name        : { type: String, trim: true, validate: [validate.goosify(validate.required), 'name'] }
+  , env         : { type: Schema.ObjectId, ref: 'Environment' }
+  , user        : { type: Schema.ObjectId, ref: 'User' }
+  , config      : Schema.Types.Mixed
+  , modified    : { type: Date }
+  , parent      : { type: Schema.ObjectId, ref: 'Track' }
+  , published   : { type: Boolean }
+  , count_drive : { type: Number, default: 0 }
+  , count_copy  : { type: Number, default: 0 }
+  , count_fav   : { type: Number, default: 0 }
 }, { strict: true });
+
+Track.statics.findAndModify = function() {
+  return this.collection.findAndModify.apply(this.collection, arguments);
+};
 
 Track.virtual('created')
   .get(function() {
@@ -62,7 +69,6 @@ Track.pre('save', function(next) {
     this._id = this._id || new mongodb.ObjectID();
     this.pub_id = common.makePubId(this.id);
   }
-  this.modified = new Date();
   next();
 });
 

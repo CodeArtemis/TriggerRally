@@ -121,6 +121,7 @@ exports.user = function(req, res) {
         //.populate('track', {'pub_id':1, 'name':1})
         //.populate('car', {'pub_id':1, 'name':1})
         .populate('parent', {'pub_id':1, 'name':1})
+        .populate('user')
         .exec(function(error, tracks) {
           if (error) {
             console.log('Error fetching tracks:');
@@ -222,15 +223,15 @@ exports.trackCopy = function(req, res) {
   if (!req.user) {
     return res.redirect('/login');
   }
-  var track = req.urlTrack;
-  track.parent = track.id;
-  track.user = req.user.user.id;
-  track._id = undefined;
-  track.pub_id = undefined;
-  track.name += ' copy';
-  track.published = false;
-  var newTrack = new Track(track);
-  newTrack.save(function(err, newTrack) {
+  var parentTrack = req.urlTrack;
+  var track = new Track({
+    parent: parentTrack.id,
+    user: req.user.user.id,
+    name: parentTrack.name + ' copy',
+    env: parentTrack.env,
+    config: parentTrack.config
+  });
+  track.save(function(err, newTrack) {
     if (err) {
       console.log('Error saving copied track:');
       console.log(err);
@@ -239,6 +240,8 @@ exports.trackCopy = function(req, res) {
       res.redirect('/track/' + newTrack.pub_id + '/edit');
     }
   });
+  parentTrack.count_copy += 1;
+  parentTrack.save();
 };
 
 exports.trackJson = function(req, res) {
@@ -259,6 +262,7 @@ exports.trackJsonSave = function(req, res) {
   // TODO: Validate config.
   // TODO: Verify that env, etc matches.
   track.config = JSON.parse(req.body.config);
+  track.modified = new Date();
   track.save(function(error) {
     if (error) {
       console.log('Error updating track:');
