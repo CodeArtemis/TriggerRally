@@ -269,20 +269,20 @@ loadUrlRun = (req, res, next) ->
 
 editTrack = (req, res, next) ->
   unless req.urlTrack.isAuthenticated
-    return next 'Unauthorized'
+    return res.send 403
   # TODO: mark just the track as editable, not the whole request.
   req.editing = true
   next()
 
 editCar = (req, res, next) ->
   unless req.urlCar.isAuthenticated
-    return next 'Unauthorized'
+    return res.send 403
   req.editing = true
   next()
 
 editUser = (req, res, next) ->
   unless req.urlUser.isAuthenticated
-    return next 'Unauthorized'
+    return res.send 403
   req.editing = true
   next()
 
@@ -295,6 +295,7 @@ app.get '/user/:idUser/edit', loadUrlUser, editUser, routes.user
 app.post '/user/:idUser/save', loadUrlUser, editUser, routes.userSave
 app.get '/recenttracks', routes.recentTracks
 app.get '/track/:idTrack', loadUrlTrack, routes.track
+app.delete '/track/:idTrack', loadUrlTrack, editTrack, routes.trackDelete
 app.get '/track/:idTrack/drive', loadUrlTrack, routes.trackDrive
 app.get '/track/:idTrack/edit', loadUrlTrack, routes.trackEdit
 app.post '/track/:idTrack/copy', loadUrlTrack, routes.trackCopy
@@ -457,8 +458,10 @@ io.of('/api').on 'connection', (socket) ->
           when 'track'
             db.tracks.findOne { pub_id: data.model.id }, (err, track) ->
               return callback err if err?
+              unless track?
+                return callback 404
               unless track.user.equals session.user._id
-                return callback '403'
+                return callback 403
               track.config = data.model.config
               track.name = data.model.name
               track.published = data.model.published

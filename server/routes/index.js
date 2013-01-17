@@ -261,6 +261,17 @@ exports.trackCopy = function(req, res) {
   parentTrack.save();
 };
 
+exports.trackDelete = function(req, res) {
+  req.urlTrack.remove(function(err, track) {
+    if (err) {
+      console.log('Error deleting track:');
+      console.log(err);
+      return res.send(500);
+    }
+    res.send(200);
+  });
+};
+
 exports.trackJson = function(req, res) {
   if (req.editing) {
     req.jadeParams.title = req.urlTrack.name;

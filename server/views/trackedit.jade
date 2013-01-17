@@ -113,6 +113,11 @@ block body
       span.label Action
       button.content Copy Track
 
+    if origUser && origUser.pub_id === trackData.user.id
+      #cmd-delete-track
+        span.label Action
+        button.content Delete Track
+
     #flag-publish
       label
         input(type="checkbox")

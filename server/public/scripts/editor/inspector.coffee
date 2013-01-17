@@ -37,6 +37,7 @@ define [
     cmdCopy         = attrib '#cmd-copy'
     cmdDelete       = attrib '#cmd-delete'
     cmdCopyTrack    = attrib '#cmd-copy-track'
+    cmdDeleteTrack  = attrib '#cmd-delete-track'
     flagPublish     = $inspector.find '#flag-publish input'
     flagSnap        = $inspector.find '#flag-snap input'
 
@@ -155,6 +156,19 @@ define [
       form.action = 'copy'
       form.method = 'POST'
       form.submit()
+
+    cmdDeleteTrack.$content.click ->
+      return unless window.confirm "Are you sure you want to DELETE this track?"
+      xhr = new XMLHttpRequest()
+      xhr.open "DELETE", "."
+      xhr.onload = ->
+        if xhr.status is 200
+          window.location = "/"
+        else
+          window.alert "Delete failed with status #{xhr.status} (#{xhr.statusText})"
+      xhr.onerror = ->
+        window.alert "Error: #{xhr.status}"
+      xhr.send()
 
     do updateSnap = => @snapToGround = flagSnap[0].checked
     flagSnap.on 'change', updateSnap
