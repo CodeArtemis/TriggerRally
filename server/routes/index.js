@@ -27,7 +27,6 @@ exports.defaultParams = function(req, res, next) {
         "grinning.png",
         "yum.png",
         "sunglasses.png",
-        "grin.png",
         "satisfied.png",
         "stuck_out_tongue.png",
         "innocent.png"
