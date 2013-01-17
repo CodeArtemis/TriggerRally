@@ -12,7 +12,7 @@ block body
         a.button(href="/user/#{urlUser.pub_id}/edit") Edit profile
     h1
       a(href="/user/#{urlUser.pub_id}")
-        img(src="https://secure.gravatar.com/avatar/#{urlUser.gravatar_hash}?s=70")
+        img.profilepic(src="https://secure.gravatar.com/avatar/#{urlUser.gravatar_hash}?s=140&d=#{randomSmiley()}")
       a(href="/user/#{urlUser.pub_id}")
         span.username #{urlUser.name} 
 

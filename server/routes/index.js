@@ -17,11 +17,25 @@ exports.defaultParams = function(req, res, next) {
       title: null
     , user: req.user && req.user.user || null
     , userPassport: req.user
-      // For form field entries.
-    , fieldtype: 'text'
-    , value: ''
-    , focus: 0
     , editing: false
+    , randomSmiley: function() {
+      smileys = [
+        "smiley.png",
+        "smile.png",
+        "smirk.png",
+        "relaxed.png",
+        "grinning.png",
+        "yum.png",
+        "sunglasses.png",
+        "grin.png",
+        "satisfied.png",
+        "stuck_out_tongue.png",
+        "innocent.png"
+      ];
+      var idx = Math.floor(Math.random() * smileys.length);
+      var url = "http://triggerrally.com/emojis/" + smileys[idx];
+      return encodeURIComponent(url);
+    }
   };
   next();
 };
@@ -49,8 +63,9 @@ exports.index = function(req, res) {
 };
 
 exports.recentTracks = function(req, res) {
+  var filter = req.query["filter"];
   Track
-    .find({published: true})
+    .find({published: filter !== "all"})
     .sort({modified: -1})
     .limit(50)
     .populate('user')  // Is this too slow?
