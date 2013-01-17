@@ -34,6 +34,14 @@ block body
       dt Published
       dd= urlTrack.published ? "yes" : "no"
 
+    dl
+      dt Driven
+      dd= urlTrack.count_drive
+
+    dl
+      dt Copied
+      dd= urlTrack.count_copy
+
     if urlTrack.parent
       dl
         dt Parent track

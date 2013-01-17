@@ -20,6 +20,17 @@ LocalStrategy = require('passport-local').Strategy
 config = require('./config')
 routes = require('./routes')
 objects = require('./objects')
+
+getIsodate = -> new Date().toISOString()
+express.logger.format 'isodate', (req, res) -> getIsodate()
+log = (msg) ->
+  isodate = getIsodate()
+  console.log "[#{isodate}] #{msg}"
+
+mongoose.connection.on "error", (err) ->
+  log "Could not connect to mongo server!"
+  log err.message
+
 SessionStore = session_mongoose(connect)
 sessionStore = new SessionStore(
   url: 'mongodb://localhost/sessions'
@@ -33,18 +44,12 @@ Car = mongoose.model('Car')
 Track = mongoose.model('Track')
 Run = mongoose.model('Run')
 
-getIsodate = -> new Date().toISOString()
-express.logger.format 'isodate', (req, res) -> getIsodate()
-
-
 # Alternate DB connection
 dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
 db = mongoskin.db dbUrl, { safe: true }
 
 
-do ->
-  isodate = getIsodate()
-  console.log "[#{isodate}] Base directory: #{__dirname}"
+log "Base directory: #{__dirname}"
 
 app = module.exports = express()
 
@@ -338,15 +343,11 @@ app.get '/drive', (req, res) ->
 server = http.createServer(app)
 io = socketio.listen(server)
 server.listen PORT
-do ->
-  isodate = getIsodate()
-  console.log "[#{isodate}] Server listening on port #{PORT} in #{app.settings.env} mode"
-
+log "Server listening on port #{PORT} in #{app.settings.env} mode"
 
 
 modelsModule = require './public/scripts/models'
 models = modelsModule.genModels()
-
 
 
 models.BaseModel::sync = (method, model, options) ->
@@ -363,8 +364,7 @@ else
 showNumberConnected = ->
   clients = io.sockets.clients()
   numConnected = clients.length
-  isodate = getIsodate()
-  console.log "[#{isodate}] Connected sockets: #{numConnected}"
+  log "Connected sockets: #{numConnected}"
 
 io.set 'authorization', (data, accept) ->
   # http://www.danielbaulig.de/socket-ioexpress/

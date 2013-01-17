@@ -5,11 +5,11 @@
         a(href="/") Trigger Rally
         span.version  online edition&nbsp;
     .userinfo
-      - if (user)
+      if user
         include user
         span  &mdash; 
         a(href='/logout') Log Out
-      - else//- if (login)
+      else
         span
           a(href="/login")
             strong Log in

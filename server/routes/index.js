@@ -71,6 +71,12 @@ exports.about = function(req, res) {
   res.render('about', req.jadeParams);
 };
 
+exports.down = function(req, res) {
+  req.jadeParams.title = 'Down';
+  res.statusCode = 503;
+  res.render('down', req.jadeParams);
+};
+
 exports.login = function(req, res) {
   req.jadeParams.title = 'Log In';
   req.jadeParams.validate = {};
@@ -118,8 +124,6 @@ exports.user = function(req, res) {
         .find({ user: req.urlUser.id })
         .limit(500)
         .sort({_id: 'desc'})
-        //.populate('track', {'pub_id':1, 'name':1})
-        //.populate('car', {'pub_id':1, 'name':1})
         .populate('parent', {'pub_id':1, 'name':1})
         .populate('user')
         .exec(function(error, tracks) {
