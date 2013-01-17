@@ -3,7 +3,6 @@ table.list
     td Track
     td
     td
-    td
     td By
     td Last edited
     td: img(src="/emojis/car.png", title="Number of times this track has been driven").emoji
@@ -12,9 +11,7 @@ table.list
   each track in tracks
     tr
       td
-        a(href="/track/#{track.pub_id}/drive")= track.name
-      td.highlight
-        a(href="/track/#{track.pub_id}/drive"): strong Drive
+        a(href="/track/#{track.pub_id}/drive"): strong= track.name
       td
         a(href="/track/#{track.pub_id}") Details
       td

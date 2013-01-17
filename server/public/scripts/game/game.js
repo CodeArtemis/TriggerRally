@@ -20,10 +20,15 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
   exports.Progress = function(track, vehicle) {
     this.checkpoints = track.checkpoints;
     this.vehicle = vehicle;
-    this.nextCpIndex = 0;
     this.pubsub = new pubsub.PubSub();
+    this.restart();
+  };
+
+  exports.Progress.prototype.restart = function() {
+    this.nextCpIndex = 0;
     this.lastCpDistSq = 0;
     this.cpTimes = [];
+    this.pubsub.publish('advance');
   };
 
   exports.Progress.prototype.on = function(event, callback) {
@@ -72,6 +77,14 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     this.sim.pubsub.subscribe('step', this.onSimStep.bind(this));
   };
 
+  exports.Game.prototype.restart = function() {
+    this.progs.forEach(function(prog) {
+      prog.restart();
+      this.setupVehicle(prog.vehicle);
+    }, this);
+    this.sim.restart();
+  };
+
   exports.Game.prototype.on = function(event, callback) {
     this.pubsub.subscribe(event, callback);
   };
@@ -118,7 +131,15 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
   exports.Game.prototype.addCarConfig = function(carConfig, callback) {
     var vehicle = new pvehicle.Vehicle(this.sim, carConfig);
 
-    vehicle.body.pos.set(100, 100, 2000);
+    this.setupVehicle(vehicle);
+
+    var progress = new exports.Progress(this.track, vehicle);
+    this.progs.push(progress);
+    if (callback) callback(progress);
+    this.pubsub.publish('addvehicle', vehicle, progress);
+  };
+
+  exports.Game.prototype.setupVehicle = function(vehicle) {
     vehicle.body.ori.set(1, 1, 1, 1).normalize();
     vehicle.body.pos.set(
         this.track.config.course.startposition.pos[0],
@@ -129,11 +150,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
         this.track.config.course.startposition.rot[2]);
     vehicle.body.ori = tmpQuat.multiplySelf(vehicle.body.ori);
     vehicle.body.updateMatrices();
-
-    var progress = new exports.Progress(this.track, vehicle);
-    this.progs.push(progress);
-    if (callback) callback(progress);
-    this.pubsub.publish('addvehicle', vehicle, progress);
+    vehicle.init();
   };
 
   exports.Game.prototype.deleteCar = function(progress) {

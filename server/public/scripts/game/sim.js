@@ -23,12 +23,16 @@ function(THREE, pubsub, util) {
     this.gravity = new Vec3(0, 0, -9.81);
     this.objects = [];
     this.staticObjects = [];  // Just used for clipping.
-    this.time = 0;
-    this.timeAccumulator = 0;
     this.timeStep = timeStep;
-    this.alpha = 0;
+    this.restart();
     this.pubsub = new pubsub.PubSub();
     this.on = this.pubsub.subscribe.bind(this.pubsub);
+  };
+
+  exports.Sim.prototype.restart = function() {
+    this.time = 0;
+    this.timeAccumulator = 0;
+    this.alpha = 0;
   };
 
   exports.Sim.prototype.addObject = function(obj) {

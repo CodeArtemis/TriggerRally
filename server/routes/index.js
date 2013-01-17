@@ -62,10 +62,8 @@ exports.index = function(req, res) {
 };
 
 exports.recentTracks = function(req, res) {
-  var query = {};
-  if (req.query["filter"] !== "all") query["published"] = true;
   Track
-    .find(query)
+    .find({})
     .sort({modified: -1})
     .limit(50)
     .populate('user')  // Is this too slow?

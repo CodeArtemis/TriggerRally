@@ -168,16 +168,27 @@ function(THREE, psim, collision, util) {
 
   exports.Vehicle = function(sim, config) {
     this.sim = sim;
-    // It's important that we add ourselves before our rigid bodies, so that we
-    // get ticked first each frame.
-    sim.addObject(this);
-
     this.cfg = config;
 
     this.body = new psim.RigidBody(sim);
+
+    this.init(sim, config);
+
+    sim.addObject(this);
+  }
+
+  exports.Vehicle.prototype.init = function() {
+    var config = this.cfg;
+
+    this.body.linVel.set(0, 0, 0);
+    this.body.angVel.set(0, 0, 0);
+    this.body.angMom.set(0, 0, 0);
+
     this.body.setMassCuboid(
         config.mass,
         Vec3FromArray(config.dimensions).multiplyScalar(0.5));
+
+    this.body.recordState();
 
     this.wheelTurnPos = -1;
     this.wheelTurnVel = 0;

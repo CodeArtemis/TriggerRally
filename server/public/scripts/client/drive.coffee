@@ -45,7 +45,7 @@ define [
     countdown = $('#countdown')
     checkpoints = $('#checkpoints')
 
-    updateTimer = true
+    updateTimer = yes
 
     game = new gameGame.Game()
     client = new clientClient.TriggerClient view3d[0], game, blockKeys: yes
@@ -85,7 +85,7 @@ define [
         if raceTime >= 0
           if lastRaceTime < 0
             countdown.html 'Go!'
-            countdown.addClass ' fadeout'
+            countdown.addClass 'fadeout'
             if followProgress?
               checkpoints.html followProgress.nextCpIndex + ' / ' + game.track.checkpoints.length
           runTimer.html formatRunTime raceTime
@@ -93,7 +93,9 @@ define [
           num = Math.ceil -raceTime
           lastNum = Math.ceil -lastRaceTime
           if num != lastNum
+            runTimer.html ""
             countdown.html '' + num
+            countdown.removeClass 'fadeout'
         lastRaceTime = raceTime;
 
       client.update delta
@@ -139,8 +141,8 @@ define [
 
         if !nextCp
           # Race complete.
-          updateTimer = false
-          runTimer.removeClass()
+          updateTimer = no
+          runTimer.removeClass 'running'
           #if !TRIGGER.RUN
           #  if TRIGGER.USER_LOGGED_IN
           #    _.delay(uploadRun, 1000)
@@ -154,5 +156,9 @@ define [
       switch event.keyCode
         when KEYCODE['C']
           client.camControl?.nextMode()
+        when KEYCODE['R']
+          updateTimer = yes
+          runTimer.addClass 'running'
+          game.restart()
 
     return
