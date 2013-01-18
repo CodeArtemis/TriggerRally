@@ -157,7 +157,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
             radius = Math.max(0, radius);
             tStep = radius / 3 + 3;
 
-            if (radius > 0) {
+            if (radius > 0 && alpha > 0) {
               pX = catmullRom(cp[0].x, cp[1].x, cp[2].x, cp[3].x, u);
               pY = catmullRom(cp[0].y, cp[1].y, cp[2].y, cp[3].y, u);
 
@@ -185,7 +185,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
             radius = Math.max(0, radius);
             tStep = radius / 3 + 3;
 
-            if (radius > 0) {
+            if (radius > 0 && alpha > 0) {
               pX = catmullRom(cp[0].x, cp[1].x, cp[2].x, cp[3].x, u);
               pY = catmullRom(cp[0].y, cp[1].y, cp[2].y, cp[3].y, u);
               pZ = catmullRom(cp[0].z, cp[1].z, cp[2].z, cp[3].z, u);
