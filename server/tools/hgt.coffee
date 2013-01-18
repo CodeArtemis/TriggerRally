@@ -76,6 +76,37 @@ outData = tgaHeader widthSecs, heightSecs
 
 BORDER = 0.1
 
+lastVal = undefined
+
+writeVal = if yes
+  (val) ->
+    outData.push 0
+    outData.push Math.floor val / 256
+    outData.push Math.floor val
+else
+  (val) ->
+    val = Math.floor val
+
+    if lastVal?
+      diff = val - lastVal
+      sign = if diff < 0 then -1 else 1
+      diff = Math.log(Math.abs(diff) + 1)
+      diff = Math.floor(diff / Math.log(2)) - 1
+      diff = Math.pow(2, diff)
+      diff *= sign
+      diff += 128
+      #console.log diff
+      diff = Math.max 0, Math.min 255, diff
+      lastVal += diff - 128
+    else
+      diff = 0
+      lastVal = val
+      console.log "Base level: #{val}"
+
+    outData.push diff
+    outData.push diff
+    outData.push diff
+
 for latSecs in [latFromSecs...latToSecs]
   for longSecs in [longFromSecs...longToSecs]
     latF = (latSecs - latFromSecs) / (latToSecs - latFromSecs)
@@ -97,9 +128,6 @@ for latSecs in [latFromSecs...latToSecs]
           weight += w
 
     if weight > 0 then val /= weight
-
-    outData.push 0
-    outData.push Math.floor val / 256
-    outData.push Math.floor val
+    writeVal val
 
 fs.writeFileSync outFile, new Buffer(outData)
