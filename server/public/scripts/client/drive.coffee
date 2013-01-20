@@ -20,7 +20,7 @@ define [
   gameGame
   gameTrack
   quiver
-  modelsModule
+  models
   sync
 ) ->
   KEYCODE = util.KEYCODE
@@ -111,7 +111,6 @@ define [
     #TRIGGER.TRACK.config.terrain = TRIGGER.TRACK.env.terrain
 
     #socket = io.connect '/api'
-    models = modelsModule.genModels()
     #models.BaseModel::sync = sync.syncSocket socket
 
     trackModel = new models.Track TRIGGER.TRACK

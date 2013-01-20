@@ -27,7 +27,7 @@ define [
   gameGame
   gameTrack
   quiver
-  modelsModule
+  models
   sync
   inspector
 ) ->
@@ -77,7 +77,6 @@ define [
 
     socket = io.connect '/api'
 
-    models = modelsModule.genModels()
     models.BaseModel::sync = sync.syncSocket socket
 
     trackModel = new models.Track
