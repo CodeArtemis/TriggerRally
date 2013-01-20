@@ -96,7 +96,6 @@ function(LFIB4, collision, hash2d, util, THREE) {
           pts.push(pt);
         })
         this.sphereList = new collision.SphereList(pts);
-        //this.sphereList.originalCenter = this.sphereList.bounds.center.clone();
       }
     }
   };
@@ -104,7 +103,8 @@ function(LFIB4, collision, hash2d, util, THREE) {
   exports.Layer.prototype.collideSphereList = function(sphereList) {
     var thisSphereList = this.sphereList;
     // TODO: This algorithm seems more efficient than IndirectHash2D. Replace it?
-    var radius = sphereList.bounds.radius + thisSphereList.bounds.radius;
+    var maxScale = 2.8;
+    var radius = sphereList.bounds.radius + thisSphereList.bounds.radius * maxScale;
     var center = sphereList.bounds.center;
     var objects = this.getObjects(
         center.x - radius, center.y - radius,
@@ -115,16 +115,19 @@ function(LFIB4, collision, hash2d, util, THREE) {
     var i, numpts = sl.points.length;
     var scale = new Vec3(), pt;
     objects.forEach(function(object) {
+      var objScale = object.scale;
       mat4.setRotationFromEuler(object.rotation);
-      mat4.scale(scale.set(object.scale, object.scale, object.scale));
+      mat4.scale(scale.set(objScale, objScale, objScale));
       for (i = 0; i < numpts; ++i) {
         pt = sl.points[i];
         pt.copy(thisSphereList.points[i]);
         mat4.multiplyVector3(pt);
-        pt.radius *= object.scale;
+        pt.radius = thisSphereList.points[i].radius * objScale;
       }
+      sl.bounds.center.copy(thisSphereList.bounds.center);
       mat4.multiplyVector3(sl.bounds.center);
-      sl.bounds.center.add(thisSphereList.bounds.center, object.position);
+      sl.bounds.center.addSelf(object.position);
+      sl.bounds.radius = thisSphereList.bounds.radius * objScale;
       contactArrays.push(sl.collideSphereList(sphereList));
     });
     return [].concat.apply([], contactArrays);

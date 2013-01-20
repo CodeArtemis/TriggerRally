@@ -65,21 +65,21 @@ define [
       center1 = sl1.bounds.center
       center2 = sl2.bounds.center
       _tmpVec3a.sub center2, center1
-      if _tmpVec3a.length() < sl1.bounds.radius + sl2.bounds.radius
-        # Collide MxN sphere to sphere.
-        for pt1 in sl1.points
-          for pt2 in sl2.points
-            _tmpVec3a.sub pt2, pt1
-            _tmpVec3a.addSelf center2
-            _tmpVec3a.subSelf center1
-            dist = _tmpVec3a.length()
-            bothRadius = pt1.radius + pt2.radius
-            continue unless dist < bothRadius
-            _tmpVec3a.multiplyScalar 1 / dist
-            contact =
-              normal: _tmpVec3a.clone()
-              depth: bothRadius - dist
-              pos1: _tmpVec3a.clone().multiplyScalar(pt1.radius).addSelf(pt1).addSelf(center1)
-              pos2: _tmpVec3a.clone().multiplyScalar(-pt2.radius).addSelf(pt2).addSelf(center2)
-            contacts.push contact
+      return contacts unless _tmpVec3a.length() < sl1.bounds.radius + sl2.bounds.radius
+      # Collide MxN sphere to sphere.
+      for pt1 in sl1.points
+        for pt2 in sl2.points
+          _tmpVec3a.sub pt2, pt1
+          _tmpVec3a.addSelf center2
+          _tmpVec3a.subSelf center1
+          dist = _tmpVec3a.length()
+          bothRadius = pt1.radius + pt2.radius
+          continue unless dist < bothRadius
+          _tmpVec3a.multiplyScalar 1 / dist
+          contact =
+            normal: _tmpVec3a.clone()
+            depth: bothRadius - dist
+            pos1: _tmpVec3a.clone().multiplyScalar(pt1.radius).addSelf(pt1).addSelf(center1)
+            pos2: _tmpVec3a.clone().multiplyScalar(-pt2.radius).addSelf(pt2).addSelf(center2)
+          contacts.push contact
       contacts
