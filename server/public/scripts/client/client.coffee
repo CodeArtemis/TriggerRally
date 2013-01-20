@@ -119,12 +119,12 @@ define [
         color: 0x206020
         blending: THREE.AdditiveBlending
         transparent: 1
-        depthWrite: false
+        depthTest: false
       mat2 = new THREE.MeshBasicMaterial
         color: 0x051005
         blending: THREE.AdditiveBlending
         transparent: 1
-        depthWrite: false
+        depthTest: false
       # TODO: Use an ArrayGeometry.
       geom = new THREE.Geometry()
       geom.vertices.push new Vec3(0, 0, 0.6)
@@ -167,8 +167,32 @@ define [
       # not the one passed into update().
       @mode = 0
 
-      @modes = [
-        (cam, car, delta) ->
+      pullTransformedQuat = (quat, quatTarget, amount) ->
+        quat.x = PULLTOWARD(quat.x, -quatTarget.z, amount)
+        quat.y = PULLTOWARD(quat.y,  quatTarget.w, amount)
+        quat.z = PULLTOWARD(quat.z,  quatTarget.x, amount)
+        quat.w = PULLTOWARD(quat.w, -quatTarget.y, amount)
+        quat.normalize()
+
+      translate = (pos, matrix, x, y, z) ->
+        el = matrix.elements
+        pos.x += el[0] * x + el[4] * y + el[8] * z
+        pos.y += el[1] * x + el[5] * y + el[9] * z
+        pos.z += el[2] * x + el[6] * y + el[10] * z
+
+      pullCameraQuat = (cam, car, amount) ->
+        cam.useQuaternion = true
+        pullTransformedQuat cam.quaternion, car.root.quaternion, amount
+        cam.updateMatrix()
+
+      translateCam = (cam, car, x, y, z) ->
+        cam.position.copy car.root.position
+        translate cam.position, cam.matrix, x, y, z
+        cam.matrix.setPosition cam.position
+
+      chaseCam =
+        update: (cam, car, delta) ->
+          car.bodyMesh.visible = yes
           targetPos = car.root.position.clone()
           targetPos.addSelf(car.vehic.body.linVel.clone().multiplyScalar(.17))
           targetPos.addSelf(car.root.matrix.getColumnX().clone().multiplyScalar(0))
@@ -180,41 +204,46 @@ define [
           cam.position.z = PULLTOWARD(cam.position.z, targetPos.z, camDelta)
 
           cam.useQuaternion = false
+          pullTransformedQuat cam.quaternion, car.root.quaternion, 1
           lookPos = car.root.position.clone()
-          lookPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(0.7))
+          translate lookPos, car.root.matrix, 0, 0.7, 0
           cam.lookAt(lookPos)
           return
-        (cam, car, delta) ->
-          cam.useQuaternion = true
-          cam.updateMatrix()
-          cam.position.copy car.root.position
-          cam.position.addSelf cam.matrix.getColumnY().multiplyScalar 0.7
-          cam.position.addSelf cam.matrix.getColumnZ().multiplyScalar -0.5
-          cam.matrix.setPosition cam.position
+
+      insideCam =
+        update: (cam, car, delta) ->
+          car.bodyMesh.visible = yes
+          pullCameraQuat cam, car, delta * 30
+          translateCam cam, car, 0, 0.7, -1
           return
-        (cam, car, delta) ->
-          cam.useQuaternion = true
-          cam.updateMatrix()
-          cam.position.copy car.root.position
-          cam.position.addSelf cam.matrix.getColumnX().multiplyScalar 1.0
-          cam.position.addSelf cam.matrix.getColumnZ().multiplyScalar -0.4
-          cam.matrix.setPosition cam.position
+
+      insideCam2 =
+        update: (cam, car, delta) ->
+          car.bodyMesh.visible = no
+          pullCameraQuat cam, car, 1
+          translateCam cam, car, 0, 0.7, -1
           return
+
+      wheelCam =
+        update: (cam, car, delta) ->
+          car.bodyMesh.visible = yes
+          pullCameraQuat cam, car, delta * 100
+          translateCam cam, car, 1, 0, -0.4
+          return
+
+      @modes = [
+        chaseCam
+        insideCam
+        insideCam2
+        wheelCam
       ]
       return
 
-    update: (camera, delta) ->
-      pullQuat = (cam, car, delta) ->
-        pull = delta * 20
-        cam.quaternion.x = PULLTOWARD(cam.quaternion.x, -car.root.quaternion.z, pull)
-        cam.quaternion.y = PULLTOWARD(cam.quaternion.y, car.root.quaternion.w, pull)
-        cam.quaternion.z = PULLTOWARD(cam.quaternion.z, car.root.quaternion.x, pull)
-        cam.quaternion.w = PULLTOWARD(cam.quaternion.w, -car.root.quaternion.y, pull)
-        camera.quaternion.normalize()
+    getMode: -> @modes[@mode]
 
+    update: (camera, delta) ->
       if @car.root?
-        pullQuat @camera, @car, delta
-        @modes[@mode] @camera, @car, delta
+        @getMode().update @camera, @car, delta
       return
 
     nextMode: ->
