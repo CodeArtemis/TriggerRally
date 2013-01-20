@@ -34,7 +34,7 @@ define('fs', function() {});
 
 define('backbone-full',
        [ 'backbone', 'backbone-relational' ],
-       function(Backbone) { return Backbone; });
+       function(bb1, bb2) { return bb1; });
 
 require(
   {

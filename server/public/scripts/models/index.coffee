@@ -3,12 +3,14 @@
 ###
 
 ((factory) ->
-  if typeof exports is "object"
-    # CommonJS.
-    factory exports, require("backbone-relational")
-  else if typeof define is "function" and define.amd
+  if typeof define is "function" and define.amd
     # AMD. Register as an anonymous module.
     define ["exports", "backbone-full"], factory
+  else if typeof exports is "object"
+    # CommonJS.
+    factory exports, require("backbone-relational")
+  else
+    throw "Oops! Couldn't determine module type."
 ) (exports, Backbone) ->
 
   # http://www.narrativescience.com/blog/automatically-creating-getterssetters-for-backbone-models/

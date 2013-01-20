@@ -39,7 +39,7 @@
     , 'coffee-script': '../js/coffee-script'
     , 'underscore': '../js/underscore-min'  // -min
     , 'backbone': '../js/backbone-min'  // -min
-    //, 'backbone-relational': '../js/backbone-relational'  // don't define modules that aren't used
+    , 'backbone-relational': '../js/backbone-relational'
     , 'zepto': '../js/zepto.min'  // .min
   },
   stubModules: ['cs']
