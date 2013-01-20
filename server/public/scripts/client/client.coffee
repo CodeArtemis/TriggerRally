@@ -286,8 +286,8 @@ define [
           buttons = gamepad.buttons
           controls.left += Math.max 0, -axes[0], buttons[14]
           controls.right += Math.max 0, axes[0], buttons[15]
-          controls.forward += Math.max buttons[0], buttons[5], buttons[7], buttons[12]
-          controls.back += Math.max buttons[1], buttons[4], buttons[6], buttons[13]
+          controls.forward += Math.max 0, -axes[3], buttons[0], buttons[5], buttons[7], buttons[12]
+          controls.back += Math.max 0, axes[3], buttons[1], buttons[4], buttons[6], buttons[13]
           controls.handbrake += buttons[2]
       controls.forward = Math.min 1, controls.forward
       controls.back = Math.min 1, controls.back
