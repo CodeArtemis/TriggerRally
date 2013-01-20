@@ -347,16 +347,6 @@ server.listen PORT
 log "Server listening on port #{PORT} in #{app.settings.env} mode"
 
 
-modelsModule = require './public/scripts/models'
-models = modelsModule.genModels()
-
-
-models.BaseModel::sync = (method, model, options) ->
-  console.log 'server syncing!'
-  console.log arguments
-
-
-
 if 'production' is process.env.NODE_ENV
   io.set 'log level', 1
 else
