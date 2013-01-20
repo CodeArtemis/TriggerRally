@@ -7,6 +7,8 @@ define [
 ], (
   $
 ) ->
+  TWOPI = Math.PI * 2
+
   deepClone = (obj) -> JSON.parse JSON.stringify obj
 
   # Utility for manipulating objects in models.
@@ -111,14 +113,22 @@ define [
             sel = selection.first().get 'sel'
             idx = sel.idx
             selCp = checkpoints.at idx
-            otherCp = checkpoints.at (if idx < checkpoints.length - 1 then idx + 1 else idx - 1)
-            interpPos = [
-              (selCp.pos[0] + otherCp.pos[0]) * 0.5
-              (selCp.pos[1] + otherCp.pos[1]) * 0.5
-              (selCp.pos[2] + otherCp.pos[2]) * 0.5
-            ]
+            if idx < checkpoints.length - 1
+              otherCp = checkpoints.at idx + 1
+              newPos = [
+                (selCp.pos[0] + otherCp.pos[0]) * 0.5
+                (selCp.pos[1] + otherCp.pos[1]) * 0.5
+                (selCp.pos[2] + otherCp.pos[2]) * 0.5
+              ]
+            else
+              otherCp = checkpoints.at idx - 1
+              newPos = [
+                selCp.pos[0] * 1.5 - otherCp.pos[0] * 0.5
+                selCp.pos[1] * 1.5 - otherCp.pos[1] * 0.5
+                selCp.pos[2] * 1.5 - otherCp.pos[2] * 0.5
+              ]
             newCp = selCp.clone()
-            newCp.pos = interpPos
+            newCp.pos = newPos
             selection.reset()
             checkpoints.add newCp, at: idx + 1
           when 'scenery'
@@ -139,8 +149,7 @@ define [
           when 'checkpoint'
             checkpointsToRemove.push sel.object if (
                 sel.type is 'checkpoint' and
-                sel.idx > 0 and
-                sel.idx < checkpoints.length - 1)
+                checkpoints.length - checkpointsToRemove.length >= 2)
           when 'scenery'
             sceneryToRemove.push scenery[sel.layer].add[sel.idx]
       selection.reset()
