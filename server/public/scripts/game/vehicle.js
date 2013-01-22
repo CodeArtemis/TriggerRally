@@ -29,10 +29,6 @@ function(THREE, psim, collision, util) {
   var SUSP_DAMPING = 50;
   var SUSP_MAX = 0.13;
   var WHEEL_MASS = 15;
-  var THROTTLE_RESPONSE = 8;
-  var BRAKE_RESPONSE = 5;
-  var HANDBRAKE_RESPONSE = 20;
-  var TURN_RESPONSE = 5;
   var ENGINE_BRAKE_REGION = 0.5;
   var ENGINE_BRAKE_TORQUE = 0.1;
   var REDLINE_RECOVER_FRACTION = 0.98;
@@ -84,11 +80,10 @@ function(THREE, psim, collision, util) {
     this.vehicle = vehicle;
     this.shiftTimer = 0;
     this.input = {
-      forward: 0,
-      back: 0,
-      left: 0,
-      right: 0,
-      handbrake: 0
+      throttle: 0,
+      brake: 0,
+      handbrake: 0,
+      turn: 0
     };
     this.output = {
       throttle: 0,
@@ -113,8 +108,8 @@ function(THREE, psim, collision, util) {
       return testPower * vehicle.gearRatios[testGear] / testAngVel;
     };
 
-    var accel = input.forward;
-    var brake = input.back;
+    var accel = input.throttle;
+    var brake = input.brake;
 
     // We estimate what the engine speed would be at a different gear, and see
     // if it would provide more torque.
@@ -152,18 +147,14 @@ function(THREE, psim, collision, util) {
       //output.clutch = 0;
     }
 
-    output.throttle = PULLTOWARD(output.throttle, accel,
-        delta * THROTTLE_RESPONSE);
-    output.brake = PULLTOWARD(output.brake, brake,
-        delta * BRAKE_RESPONSE);
-    output.handbrake = PULLTOWARD(output.handbrake, input.handbrake,
-        delta * HANDBRAKE_RESPONSE);
-    output.desiredTurnPos = PULLTOWARD(output.desiredTurnPos, input.left - input.right,
-        delta * TURN_RESPONSE);
+    output.throttle = accel;
+    output.brake = brake;
+    output.handbrake = input.handbrake;
+    output.desiredTurnPos = input.turn;
+    output.clutch = 1;
 
     // Disengage clutch when using handbrake.
-    output.clutch = 1;
-    output.clutch *= (output.handbrake < 0.5) ? 1 : 0;
+    if (output.handbrake >= 0.5) output.clutch = 0;
   };
 
   exports.Vehicle = function(sim, config) {

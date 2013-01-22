@@ -20,6 +20,7 @@ define [
   PULLTOWARD = util.PULLTOWARD
   MAP_RANGE = util.MAP_RANGE
   KEYCODE = util.KEYCODE
+  deadZone = util.deadZone
 
   projector = new THREE.Projector
 
@@ -260,40 +261,94 @@ define [
       camPos.z = Math.max camPos.z, terrainHeight + 0.2
       return
 
+  class KeyboardController
+    THROTTLE_RESPONSE = 8
+    BRAKE_RESPONSE = 5
+    HANDBRAKE_RESPONSE = 20
+    TURN_RESPONSE = 5
+
+    constructor: (@vehic, @client) ->
+      @controls = util.deepClone @vehic.controller.input
+
+    update: (delta) ->
+      keyDown = @client.keyDown
+      throttle = if keyDown[KEYCODE['UP']] or keyDown[KEYCODE['W']] then 1 else 0
+      brake = if keyDown[KEYCODE['DOWN']] or keyDown[KEYCODE['S']] then 1 else 0
+      left = if keyDown[KEYCODE['LEFT']] or keyDown[KEYCODE['A']] then 1 else 0
+      right = if keyDown[KEYCODE['RIGHT']] or keyDown[KEYCODE['D']] then 1 else 0
+      handbrake = if keyDown[KEYCODE['SPACE']] then 1 else 0
+
+      controls = @controls
+      controls.throttle = PULLTOWARD(controls.throttle, throttle, THROTTLE_RESPONSE * delta)
+      controls.brake = PULLTOWARD(controls.brake, brake, BRAKE_RESPONSE * delta)
+      controls.handbrake = PULLTOWARD(controls.handbrake, handbrake, HANDBRAKE_RESPONSE * delta)
+      controls.turn = PULLTOWARD(controls.turn, left - right, TURN_RESPONSE * delta)
+
+  class GamepadController
+    constructor: (@vehic, @gamepad) ->
+      @controls = util.deepClone @vehic.controller.input
+
+    update: (delta) ->
+      controls = @controls
+      axes = @gamepad.axes
+      buttons = @gamepad.buttons
+      a = (i) -> axes[i] or 0
+      b = (i) -> buttons[i] or 0
+      axes0 = deadZone a(0), 0.01
+      axes3 = deadZone a(3), 0.01
+      controls.throttle = Math.max 0, -axes3, buttons[0] or 0, buttons[5] or 0, buttons[7] or 0
+      controls.brake = Math.max 0, axes3, buttons[4] or 0, buttons[6] or 0
+      controls.handbrake = buttons[2] or 0
+      controls.turn = -axes0 + (buttons[15] or 0) - (buttons[14] or 0)
+
+  class WheelController
+    constructor: (@vehic, @gamepad) ->
+      @controls = util.deepClone @vehic.controller.input
+
+    update: (delta) ->
+      controls = @controls
+      axes = @gamepad.axes
+      buttons = @gamepad.buttons
+      axes0 = deadZone axes[0], 0.01
+      axes1 = deadZone axes[1], 0.01
+      controls.throttle = Math.max 0, -axes1
+      controls.brake = Math.max 0, axes1
+      controls.handbrake = Math.max buttons[6] or 0, buttons[7] or 0
+      controls.turn = -axes0
+
+  getGamepads = ->
+    nav = navigator
+    nav.getGamepads?() or nav.gamepads or
+    nav.mozGetGamepads?() or nav.mozGamepads or
+    nav.webkitGetGamepads?() or nav.webkitGamepads or
+    []
+
+  gamepadType = (id) ->
+    if /Racing Wheel/.test id
+      WheelController
+    else
+      GamepadController
+
   class CarControl
-    constructor: (@vehic, @input) ->
-      return
+    constructor: (@vehic, @client) ->
+      @controllers = []
+      @gamepadMap = {}
+      @controllers.push new KeyboardController vehic, client
 
     update: (camera, delta) ->
-      controls = @vehic.controller.input;
-      keyDown = @input.keyDown
-      controls.forward = if keyDown[KEYCODE['UP']] or keyDown[KEYCODE['W']] then 1 else 0
-      controls.back = if keyDown[KEYCODE['DOWN']] or keyDown[KEYCODE['S']] then 1 else 0
-      controls.left = if keyDown[KEYCODE['LEFT']] or keyDown[KEYCODE['A']] then 1 else 0
-      controls.right = if keyDown[KEYCODE['RIGHT']] or keyDown[KEYCODE['D']] then 1 else 0
-      controls.handbrake = if keyDown[KEYCODE['SPACE']] then 1 else 0
+      for gamepad, i in getGamepads()
+        if gamepad? and i not of @gamepadMap
+          @gamepadMap[i] = yes
+          type = gamepadType gamepad.id
+          @controllers.push new type @vehic, gamepad
 
-      # Override controls with gamepad if connected.
-      nav = navigator
-      gamepads =
-        nav.getGamepads and nav.getGamepads() or nav.gamepads or
-        nav.mozGetGamepads and nav.mozGetGamepads() or nav.mozGamepads or
-        nav.webkitGetGamepads and nav.webkitGetGamepads() or nav.webkitGamepads or
-        []
-      for gamepad in gamepads
-        if gamepad
-          axes = gamepad.axes
-          buttons = gamepad.buttons
-          controls.left += Math.max 0, -axes[0], buttons[14]
-          controls.right += Math.max 0, axes[0], buttons[15]
-          controls.forward += Math.max 0, -axes[3], buttons[0], buttons[5], buttons[7], buttons[12]
-          controls.back += Math.max 0, axes[3], buttons[1], buttons[4], buttons[6], buttons[13]
-          controls.handbrake += buttons[2]
-      controls.forward = Math.min 1, controls.forward
-      controls.back = Math.min 1, controls.back
-      controls.left = Math.min 1, controls.left
-      controls.right = Math.min 1, controls.right
-      controls.handbrake = Math.min 1, controls.handbrake
+      controls = @vehic.controller.input
+      for key of controls
+        controls[key] = 0
+      for controller in @controllers
+        controller.update delta
+        for key of controls
+          controls[key] += controller.controls[key]
       return
 
   class SunLight

@@ -39,6 +39,14 @@ function(THREE) {
   exports.MAP_RANGE = function(value, premin, premax, postmin, postmax) {
     return (value - premin) * (postmax - postmin) / (premax - premin) + postmin;
   };
+  exports.deadZone = function(value, zone) {
+    if (value > zone)
+      return exports.MAP_RANGE(value, zone, 1, 0, 1);
+    else if (value < -zone)
+      return exports.MAP_RANGE(value, -zone, -1, 0, -1);
+    else
+      return 0;
+  };
   exports.Vec3FromArray = function(arr) {
     return new Vec3(arr[0], arr[1], arr[2]);
   };
@@ -108,6 +116,10 @@ function(THREE) {
       p1 * (8 * x - 9 * x2 + 1) +
       p2 * (3 * x2 - 2 * x)
     );
+  };
+
+  exports.deepClone = function(obj) {
+    return JSON.parse(JSON.stringify(obj));
   };
 
   return exports;
