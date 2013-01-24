@@ -129,12 +129,14 @@ function(THREE, psim, collision, util) {
           output.gear += 1;
           this.shiftTimer = MIN_TIME_BETWEEN_SHIFTS;
           //output.clutch = 0;
-        } else if (brake && vehicle.differentialAngVel < 1) {
+        } else if (brake > 0.1 && vehicle.differentialAngVel < 1) {
           output.gear = -1;
+          accel = brake;
+          brake = 0;
           this.shiftTimer = MIN_TIME_BETWEEN_SHIFTS;
         }
       } else if (output.gear == -1) {
-        if (accel) {
+        if (accel > 0.1) {
           output.gear = 1;
           this.shiftTimer = MIN_TIME_BETWEEN_SHIFTS;
         } else {
@@ -431,7 +433,7 @@ function(THREE, psim, collision, util) {
       }, this);
       var list = new collision.SphereList(worldPts);
       var contacts = this.sim.collideSphereList(list);
-      if (contacts) this.hasContact = true;
+      if (contacts.length > 0) this.hasContact = true;
       contacts.forEach(this.contactResponse, this);
     }).call(this);
 
@@ -532,7 +534,7 @@ function(THREE, psim, collision, util) {
     clipPos.addSelf(tmpVec3b);
     var contactVel = this.body.getLinearVelAtPoint(clipPos);
     var contacts = this.sim.collidePoint(clipPos);
-    if (contacts) this.hasContact = true;
+    if (contacts.length > 0) this.hasContact = true;
     for (var c = 0; c < contacts.length; ++c) {
       var contact = contacts[c];
       var surf = getSurfaceBasis(contact.normal,
