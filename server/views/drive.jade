@@ -42,9 +42,12 @@ block body
       p#replays
 
     p.note Controls: arrow keys or W/S/A/D to drive, space for handbrake, C for camera.
+      if urlTrack.config.gameversion >= 3
+        span  R to restart. See 
+          a(href="https://github.com/CodeArtemis/TriggerRally/wiki/Controllers") this page
+          |  for info on gamepad support.
 
-    p.note
-      span Game code version #{urlTrack.config.gameversion}
+    p.note Game code version #{urlTrack.config.gameversion}
 
     include partial/footer
 
