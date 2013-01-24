@@ -105,9 +105,10 @@ define [
     update: (camera, delta) ->
       @revMeter.rotation.z = -2.5 - 4.5 *
           ((@vehic.engineAngVelSmoothed - @vehic.engineIdle) /
-              (@vehic.engineRedline - @vehic.engineIdle));
+              (@vehic.engineRedline - @vehic.engineIdle))
       @speedMeter.rotation.z = -2.5 - 4.5 *
-          Math.abs(@vehic.differentialAngVel / 200);
+          Math.abs(@vehic.differentialAngVel / 200)
+      @revMeter.rotation.z = if @vehic.hasContact then 1 else 0
       return
 
     highlightCheckpoint: (i) ->
@@ -292,14 +293,12 @@ define [
       controls = @controls
       axes = @gamepad.axes
       buttons = @gamepad.buttons
-      a = (i) -> axes[i] or 0
-      b = (i) -> buttons[i] or 0
-      axes0 = deadZone a(0), 0.01
-      axes3 = deadZone a(3), 0.01
+      axes0 = deadZone axes[0], 0.01
+      axes3 = deadZone axes[3], 0.01
       controls.throttle = Math.max 0, -axes3, buttons[0] or 0, buttons[5] or 0, buttons[7] or 0
       controls.brake = Math.max 0, axes3, buttons[4] or 0, buttons[6] or 0
       controls.handbrake = buttons[2] or 0
-      controls.turn = -axes0 + (buttons[15] or 0) - (buttons[14] or 0)
+      controls.turn = -axes0 - (buttons[15] or 0) + (buttons[14] or 0)
 
   class WheelController
     constructor: (@vehic, @gamepad) ->
