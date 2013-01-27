@@ -10,7 +10,7 @@
     # CommonJS.
     factory exports, require("backbone-relational")
   else
-    throw "Oops! Couldn't determine module type."
+    throw "Couldn't determine module type."
 ) (exports, Backbone) ->
 
   # http://www.narrativescience.com/blog/automatically-creating-getterssetters-for-backbone-models/
