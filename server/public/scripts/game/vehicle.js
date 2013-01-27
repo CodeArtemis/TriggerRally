@@ -324,9 +324,9 @@ function(THREE, psim, collision, util) {
     this.crashLevel = PULLTOWARD(this.crashLevel, 0, delta * 5);
     this.skidLevel = 0;
 
-    if (this.hasContact && (
-          this.body.oriMat.elements[6] <= 0.1 ||
-          this.recoverTimer >= this.cfg.recover.triggerTime)) {
+    if ((this.hasContact &&
+         this.body.oriMat.elements[6] <= 0.1) ||
+        this.recoverTimer >= this.cfg.recover.triggerTime) {
       this.recoverTimer += delta;
 
       if (this.recoverTimer >= this.cfg.recover.triggerTime) {
