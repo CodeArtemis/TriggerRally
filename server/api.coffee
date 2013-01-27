@@ -31,12 +31,6 @@ dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
 db = mongoskin.db dbUrl, { safe: true }
 
 sessionStore = new SkinStore(`db`, `options`[, callback]);
-SessionStore = session_mongoose(connect)
-sessionStore = new SessionStore(
-  url: 'mongodb://localhost/sessions'
-  # Expiration check worker run interval in millisec (default: 60000)
-  interval: 120000
-)
 
 User = mongoose.model('User')
 UserPassport = mongoose.model('UserPassport')
