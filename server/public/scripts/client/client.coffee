@@ -108,7 +108,6 @@ define [
               (@vehic.engineRedline - @vehic.engineIdle))
       @speedMeter.rotation.z = -2.5 - 4.5 *
           Math.abs(@vehic.differentialAngVel / 200)
-      @revMeter.rotation.z = if @vehic.hasContact then 1 else 0
       return
 
     highlightCheckpoint: (i) ->
@@ -148,6 +147,7 @@ define [
       nextCp2 = @progress.nextCheckpoint 1
       carPos = @progress.vehicle.body.pos
       camMatrixEl = camera.matrixWorld.elements
+      @meshArrow.visible = nextCp?
       if nextCp
         cpVec = new Vec2(nextCp.x - carPos.x,
                          nextCp.y - carPos.y)
@@ -155,6 +155,7 @@ define [
             cpVec.x * camMatrixEl[1] + cpVec.y * camMatrixEl[9],
             cpVec.x * camMatrixEl[0] + cpVec.y * camMatrixEl[8])
         @meshArrow.rotation.y = Math.atan2(cpVecCamSpace.y, cpVecCamSpace.x)
+      @meshArrow2.visible = nextCp2?
       if nextCp2
         cpVec = new Vec2(nextCp2.x - carPos.x,
                          nextCp2.y - carPos.y)
