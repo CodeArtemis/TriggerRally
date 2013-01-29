@@ -78,34 +78,10 @@ BORDER = 0.1
 
 lastVal = undefined
 
-writeVal = if yes
-  (val) ->
-    outData.push 0
-    outData.push Math.floor val / 256
-    outData.push Math.floor val
-else
-  (val) ->
-    val = Math.floor val
-
-    if lastVal?
-      diff = val - lastVal
-      sign = if diff < 0 then -1 else 1
-      diff = Math.log(Math.abs(diff) + 1)
-      diff = Math.floor(diff / Math.log(2)) - 1
-      diff = Math.pow(2, diff)
-      diff *= sign
-      diff += 128
-      #console.log diff
-      diff = Math.max 0, Math.min 255, diff
-      lastVal += diff - 128
-    else
-      diff = 0
-      lastVal = val
-      console.log "Base level: #{val}"
-
-    outData.push diff
-    outData.push diff
-    outData.push diff
+writeVal = (val) ->
+  outData.push 0
+  outData.push Math.floor val / 256
+  outData.push Math.floor val
 
 for latSecs in [latFromSecs...latToSecs]
   for longSecs in [longFromSecs...longToSecs]
@@ -121,7 +97,6 @@ for latSecs in [latFromSecs...latToSecs]
         longSampleF = longF + longSample
         longW = Math.max 0, 0.5 * Math.min 2, 1 + Math.min(longSampleF, 1 - longSampleF) / BORDER
         if latW > 0 and longW > 0
-          w = 1 + cubic(latW) * cubic(longW)
           w = cubic(latW) * cubic(longW)
           val += w * worldSample latSecs + widthSecs * latSample,
                                  longSecs + heightSecs * longSample
