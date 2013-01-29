@@ -31,7 +31,7 @@ block body
       include partial/formfield
       field = { title:'Location', name:'location', value:urlUser.location, editing:editing }
       include partial/formfield
-      field = { title:'Website', name:'website', value:urlUser.website, editing:editing }
+      field = { title:'Website', name:'website', value:urlUser.website, editing:editing, type:"url" }
       include partial/formfield
       field = { title:'About me', name:'bio', value:urlUser.bio, editing:editing }
       include partial/formfield
@@ -44,9 +44,15 @@ block body
         .section Private information, visible only to you
         div Email is used for your <a href="http://gravatar.com">Gravatar</a> profile picture.
           |  It will not be shared with anyone.
-        field = { title: 'Email', name:'email', value:urlUser.email, editing:editing }
+        field = { title: 'Email', name:'email', value:urlUser.email, editing:editing, type:"email" }
         include partial/formfield
         field = { title: 'Identity Provider', name:'idp', value:urlUser.id_prov, editing:false }
+        include partial/formfield
+
+        .section Preferences
+        field = { title: 'Audio enabled', name:'audio', checked:urlUser.prefs.audio, editing:editing, type:"checkbox" }
+        include partial/formfield
+        field = { title: 'Shadows enabled', name:'shadows', checked:urlUser.prefs.shadows, editing:editing, type:"checkbox" }
         include partial/formfield
 
     if tracks

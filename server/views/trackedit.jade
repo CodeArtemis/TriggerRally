@@ -1,7 +1,7 @@
 extends layout-editor
 
 block body
-  origUser = user
+  userLoggedIn = user
 
   #editor-statusbar
     table
@@ -102,7 +102,7 @@ block body
         user = trackData.user
         include partial/user
 
-    if !origUser || origUser.pub_id !== trackData.user.id
+    if !userLoggedIn || userLoggedIn.pub_id !== trackData.user.id
       .warning
         | You cannot modify this track because it belongs to another
         | user, but you can make your own copy using the <b>Copy Track</b> button below.
@@ -113,7 +113,7 @@ block body
       span.label Action
       button.content Copy Track
 
-    if origUser && origUser.pub_id === trackData.user.id
+    if userLoggedIn && userLoggedIn.pub_id === trackData.user.id
       #cmd-delete-track
         span.label Action
         button.content Delete Track
@@ -219,8 +219,15 @@ block body
   script
     var TRIGGER = {
       TRACK: !{JSON.stringify(trackData)},
-      READONLY: !{!origUser || origUser.pub_id !== trackData.user.id}
+      READONLY: !{!userLoggedIn || userLoggedIn.pub_id !== trackData.user.id}
     };
+
+  if userLoggedIn
+    script
+      TRIGGER.USER = {
+        id: "#{userLoggedIn.pub_id}",
+        prefs: #{userLoggedIn.prefs}
+      };
 
   - if ('production' === process.env.NODE_ENV)
     script(data-main="/build-v3/editor-main", src="/js/require.js")

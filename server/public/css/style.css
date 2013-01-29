@@ -120,7 +120,7 @@ input.invalid {
   margin-left: 10px;
 }
 dl {
-  margin-top: 10px;
+  margin: 0.2em 0;
 }
 dt {
   float: left;

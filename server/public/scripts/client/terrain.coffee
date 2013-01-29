@@ -322,6 +322,7 @@ define [
 
             float fDepth;
             vec3 shadowColor = vec3(1.0);
+            #ifdef USE_SHADOWMAP
             for( int i = 0; i < MAX_SHADOWS; i ++ ) {
               vec3 shadowCoord = vShadowCoord[ i ].xyz / vShadowCoord[ i ].w;
               bvec4 inFrustumVec = bvec4 ( shadowCoord.x >= 0.0, shadowCoord.x <= 1.0, shadowCoord.y >= 0.0, shadowCoord.y <= 1.0 );
@@ -367,6 +368,7 @@ define [
                 shadowColor = shadowColor * vec3((1.0 - shadow));
               }
             }
+            #endif
 
             vec3 directIllum = vec3(0.0);
             vec3 specularIllum = vec3(0.0);

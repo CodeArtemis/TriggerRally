@@ -1,12 +1,15 @@
 if field.value || field.editing
+  type = field.type || "text"
   dl
     dt= field.title
     dd
       if field.editing
-        if field.focus
-          input(name='#{field.name}', type='#{field.fieldtype}', value='#{field.value}', oninput='onInput("#{field.name}")', autofocus)
+        if typeof field.checked != "undefined"
+          input(name='#{field.name}', type='#{type}', value='on', oninput='onInput("#{field.name}")', checked=field.checked)
+        else if field.focus
+          input(name='#{field.name}', type='#{type}', value='#{field.value}', oninput='onInput("#{field.name}")', autofocus)
         else
-          input(name='#{field.name}', type='#{field.fieldtype}', value='#{field.value}', oninput='onInput("#{field.name}")')
+          input(name='#{field.name}', type='#{type}', value='#{field.value}', oninput='onInput("#{field.name}")')
         //-span.fieldstatusok(id="fieldstatusok=#{name}")&#10003;
         //-span.fieldstatuserror(id="fieldstatuserror=#{name}")&#10007;
         span.fielderror(id="fielderror-#{field.name}")

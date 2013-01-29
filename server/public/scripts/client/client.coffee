@@ -204,7 +204,7 @@ define [
 
       chaseCam =
         update: (cam, car, delta) ->
-          car.bodyMesh.visible = yes
+          car.bodyMesh?.visible = yes
           targetPos = car.root.position.clone()
           targetPos.addSelf(car.vehic.body.linVel.clone().multiplyScalar(.17))
           targetPos.addSelf(car.root.matrix.getColumnX().clone().multiplyScalar(0))
@@ -224,21 +224,21 @@ define [
 
       insideCam =
         update: (cam, car, delta) ->
-          car.bodyMesh.visible = yes
+          car.bodyMesh?.visible = yes
           pullCameraQuat cam, car, delta * 30
           translateCam cam, car, 0, 0.7, -1
           return
 
       insideCam2 =
         update: (cam, car, delta) ->
-          car.bodyMesh.visible = no
+          car.bodyMesh?.visible = no
           pullCameraQuat cam, car, 1
           translateCam cam, car, 0, 0.7, -1
           return
 
       wheelCam =
         update: (cam, car, delta) ->
-          car.bodyMesh.visible = yes
+          car.bodyMesh?.visible = yes
           pullCameraQuat cam, car, delta * 100
           translateCam cam, car, 1, 0, -0.4
           return
@@ -361,28 +361,29 @@ define [
       return
 
   class SunLight
-    constructor: (scene) ->
+    constructor: (scene, useShadows) ->
       sunLight = @sunLight = new THREE.DirectionalLight( 0xffe0bb )
       sunLight.intensity = 1.3
       @sunLightPos = new Vec3 -6, 7, 10
       sunLight.position.copy @sunLightPos
 
-      sunLight.castShadow = true
+      sunLight.castShadow = useShadows
 
-      sunLight.shadowCameraNear = -20
-      sunLight.shadowCameraFar = 60
-      sunLight.shadowCameraLeft = -24
-      sunLight.shadowCameraRight = 24
-      sunLight.shadowCameraTop = 24
-      sunLight.shadowCameraBottom = -24
+      if useShadows
+        sunLight.shadowCameraNear = -20
+        sunLight.shadowCameraFar = 60
+        sunLight.shadowCameraLeft = -24
+        sunLight.shadowCameraRight = 24
+        sunLight.shadowCameraTop = 24
+        sunLight.shadowCameraBottom = -24
 
-      #sunLight.shadowCameraVisible = true
+        #sunLight.shadowCameraVisible = true
 
-      #sunLight.shadowBias = -0.001
-      sunLight.shadowDarkness = 0.5
+        #sunLight.shadowBias = -0.001
+        sunLight.shadowDarkness = 0.5
 
-      sunLight.shadowMapWidth = 1024
-      sunLight.shadowMapHeight = 1024
+        sunLight.shadowMapWidth = 1024
+        sunLight.shadowMapHeight = 1024
 
       scene.add sunLight
       return
@@ -405,7 +406,7 @@ define [
       @objects = {}
       @pubsub = new pubsub.PubSub()
 
-      @renderer = @createRenderer()
+      @renderer = @createRenderer options.prefs.shadows
       @containerEl.appendChild @renderer.domElement
 
       @sceneHUD = new THREE.Scene()
@@ -422,9 +423,9 @@ define [
       @scene.add new THREE.AmbientLight 0x446680
       @scene.add @cubeMesh()
 
-      @add new SunLight @scene
+      @add new SunLight @scene, options.prefs.shadows
 
-      @audio = new clientAudio.WebkitAudio() unless options.noAudio
+      @audio = new clientAudio.WebkitAudio() if options.prefs.audio
       checkpointBuffer = null
       @audio?.loadBuffer '/a/sounds/checkpoint.wav', (buffer) ->
         checkpointBuffer = buffer
@@ -504,15 +505,16 @@ define [
       layer = @objects[priority] ?= []
       layer.push obj
 
-    createRenderer: ->
+    createRenderer: (useShadows) ->
       r = new THREE.WebGLRenderer
         alpha: false
         antialias: false
         premultipliedAlpha: false
         clearColor: 0xffffff
-      r.shadowMapEnabled = true
-      r.shadowMapSoft = true
-      r.shadowMapCullFrontFaces = false
+      if useShadows
+        r.shadowMapEnabled = true
+        r.shadowMapSoft = true
+        r.shadowMapCullFrontFaces = false
       r.autoClear = false
       r
 

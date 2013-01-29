@@ -63,7 +63,9 @@ define [
     setStatus = (msg) -> $status.text msg
 
     game = new gameGame.Game()
-    client = new clientClient.TriggerClient $view3d[0], game, noAudio: yes
+    prefs = TRIGGER.USER.prefs
+    prefs.audio = no
+    client = new clientClient.TriggerClient $view3d[0], game, prefs: prefs
 
     client.camera.eulerOrder = 'ZYX'
     camPos = client.camera.position
@@ -186,6 +188,7 @@ define [
 
     inspectorController = new inspector.Controller selection, trackModel
 
+    $('#editor-helpbox-wrapper').removeClass 'visible'
     $('#editor-helpbox-wrapper .close-tab').click ->
       $('#editor-helpbox-wrapper').toggleClass 'visible'
 

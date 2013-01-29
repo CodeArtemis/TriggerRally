@@ -38,7 +38,7 @@ var Track = new Schema({
   , config      : Schema.Types.Mixed
   , modified    : { type: Date }
   , parent      : { type: Schema.ObjectId, ref: 'Track' }
-  , published   : { type: Boolean }
+  , published   : { type: Boolean, default: false }
   , count_drive : { type: Number, default: 0 }
   , count_copy  : { type: Number, default: 0 }
   , count_fav   : { type: Number, default: 0 }

@@ -48,7 +48,7 @@ define [
     updateTimer = yes
 
     game = new gameGame.Game()
-    client = new clientClient.TriggerClient view3d[0], game, blockKeys: yes
+    client = new clientClient.TriggerClient view3d[0], game, blockKeys: yes, prefs: TRIGGER.USER.prefs
 
     onWindowResize = ->
       client.setSize view3d.width(), view3d.height()

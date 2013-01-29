@@ -18,6 +18,10 @@ var User = new Schema({
   , website     : { type: String, default: '', trim: true }
   , bio         : { type: String, default: '', trim: true }
   , email       : { type: String, default: '', trim: true }
+  , prefs       : {
+      shadows     : { type: Boolean, default: true }
+    , audio       : { type: Boolean, default: true }
+  }
 }, { strict: true });
 
 User.virtual('id')
