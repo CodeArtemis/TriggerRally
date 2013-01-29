@@ -293,6 +293,18 @@ canvas {
   color: #000;
   -webkit-transform: scale(1);
 }
+#speedo {
+  position: absolute;
+  bottom: 1em;
+  left: 1em;
+  font-size: 2em;
+  color: #040;
+  text-align: center;
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  -webkit-transform: scale(1);
+  width: 6em;
+  z-index: 2;
+}
 #countdown {
   color: #000;
   position: absolute;

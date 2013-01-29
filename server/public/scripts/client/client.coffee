@@ -93,21 +93,30 @@ define [
         depthTest: false
       @revMeter = new THREE.Mesh geom, mat
       @revMeter.position.x = -1.3
-      @revMeter.position.y = -0.7
+      @revMeter.position.y = -0.2
       @revMeter.scale.multiplyScalar 0.4
       scene.add @revMeter
       @speedMeter = new THREE.Mesh geom, mat
       @speedMeter.position.x = -1.3
-      @speedMeter.position.y = -0.2
+      @speedMeter.position.y = -0.7
       @speedMeter.scale.multiplyScalar 0.4
       scene.add @speedMeter
 
+      @$digital = $("#speedo")
+
     update: (camera, delta) ->
+      vehic = @vehic
       @revMeter.rotation.z = -2.5 - 4.5 *
-          ((@vehic.engineAngVelSmoothed - @vehic.engineIdle) /
-              (@vehic.engineRedline - @vehic.engineIdle))
-      @speedMeter.rotation.z = -2.5 - 4.5 *
-          Math.abs(@vehic.differentialAngVel / 200)
+          ((vehic.engineAngVelSmoothed - vehic.engineIdle) /
+              (vehic.engineRedline - vehic.engineIdle))
+      # I'm not sure where or how this factor has crept in. It's suspiciously close to the
+      # first gear ratio though (3.636).
+      # Approx max speed of ArbusuG measured as 7678m / 112s = 246.8 km/h,
+      # while this magic number shows a max speed of 250km/h which is close enough for now.
+      MAGIC_CONVERSION = 3.6
+      speed = Math.abs(vehic.differentialAngVel) * vehic.avgDriveWheelRadius * MAGIC_CONVERSION
+      @speedMeter.rotation.z = -2.5 - 4.5 * speed * 0.0035
+      @$digital.text speed.toFixed(0) + " km/h"
       return
 
     highlightCheckpoint: (i) ->

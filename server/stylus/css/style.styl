@@ -64,7 +64,7 @@ input[type=password]
   width 250px
 
 input.invalid
-  background: #fcc
+  background #fcc
 
 .fielderror
   color #500
@@ -102,10 +102,10 @@ td.highlight
   margin-right 1em
 
 h1, h2
-  font-family: 'Ubuntu', sans-serif;
-  font-style: italic;
-  font-weight: bold;
-  margin: 0
+  font-family 'Ubuntu', sans-serif
+  font-style italic
+  font-weight bold
+  margin 0
 
 .version
   opacity 0.3
@@ -139,21 +139,21 @@ h1, h2
 
 .button
   display inline-block
-  background: #bda
-  background: linear-gradient(-90deg, #bda, #ceb)
-  background: -webkit-linear-gradient(-90deg, #bda, #ceb)
-  border-radius: 0.5em
+  background #bda
+  background linear-gradient(-90deg, #bda, #ceb)
+  background -webkit-linear-gradient(-90deg, #bda, #ceb)
+  border-radius 0.5em
   box-shadow -1px -2px 1px #fff, 1px 2px 1px #361
-  margin: 1em
-  padding: 0.8em 1.5em
+  margin 1em
+  padding 0.8em 1.5em
 
 a.disabled .button
   background #ccc
   box-shadow -1px -2px 1px #fff, 1px 2px 1px #333
 
 .button.special
-  background: linear-gradient(-90deg, #be9, #cfa)
-  background: -webkit-linear-gradient(-90deg, #be9, #cfa)
+  background linear-gradient(-90deg, #be9, #cfa)
+  background -webkit-linear-gradient(-90deg, #be9, #cfa)
 
 .button img
   margin-right 15px
@@ -202,53 +202,63 @@ canvas
   //z-index 0
 
 .frame3d .loading
-  width: 100%
-  height: 100%
-  position: absolute
-  z-index: 1
-  text-align: center
-  pointer-events: none
+  width 100%
+  height 100%
+  position absolute
+  z-index 1
+  text-align center
+  pointer-events none
 
 .frame3d .loading h1,
-.frame3d .loading h2 {
-  margin: 0; padding: 0;
-  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
-  -webkit-transition: opacity 0.5s;
-}
-.frame3d .loading h1 {
-  font-size: 6em;
-}
-.frame3d .loading h2 {
-  font-size: 3em;
-}
-.frame3d .loading.loaded h2,
-.frame3d .loading.loaded h1 {
-  opacity: 0;
-}
+.frame3d .loading h2
+  margin 0
+  padding 0
+  text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
+  -webkit-transition opacity 0.5s
 
-#checkpoints {
-  color: #000;
-  position: absolute;
-  top: 1em;
-  left: 2em;
-  font-size: 3em;
-  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
-  z-index: 2;
-}
-#timer {
-  color: #040;
-  position: absolute;
-  top: 1em;
-  right: 3em;
-  font-size: 3em;
-  -webkit-transition: -webkit-transform 2s;
-  -webkit-transform: scale(2);
-  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
-  z-index: 2;
-}
+.frame3d .loading h1
+  font-size 6em
+
+.frame3d .loading h2
+  font-size 3em
+
+.frame3d .loading.loaded h2,
+.frame3d .loading.loaded h1
+  opacity 0
+
+
+#checkpoints
+  color #000
+  position absolute
+  top 1em
+  left 2em
+  font-size 3em
+  text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
+  z-index 2
+#timer
+  color #040
+  position absolute
+  top 1em
+  right 3em
+  font-size 3em
+  -webkit-transition -webkit-transform 2s
+  -webkit-transform scale(2)
+  text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
+  z-index 2
 #timer.running
   color #000
   -webkit-transform scale(1)
+#speedo
+  position absolute
+  bottom 1em
+  left 1em
+  font-size 2em
+  color #040
+  text-align center
+  text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
+  -webkit-transform scale(1)
+  width 6em
+  z-index 2
 
 #countdown
   color #000
@@ -266,16 +276,16 @@ canvas
 #countdown.fadeout
   opacity 0
 
-#twitterlink {
-  display: none;
-  position: absolute;
-  top: 8em;
-  right: 5em;
-  font-size: 1em;
-  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
-  z-index: 3;
-}
-#twitterlink.visible {
-  display: block;
-  position: absolute;
-}
+#twitterlink
+  display none
+  position absolute
+  top 8em
+  right 5em
+  font-size 1em
+  text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
+  z-index 3
+
+#twitterlink.visible
+  display block
+  position absolute
+

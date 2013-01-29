@@ -199,6 +199,7 @@ function(THREE, psim, collision, util) {
       });
     }
 
+    this.avgDriveWheelRadius = 0;
     this.wheels = [];
     for (var w = 0; w < config.wheels.length; ++w) {
       var wheel = this.wheels[w] = {};
@@ -212,8 +213,11 @@ function(THREE, psim, collision, util) {
       wheel.spinPos = 0;
       wheel.spinVel = 0;
       wheel.frictionForce = new Vec2();
-      this.totalDrive += wheel.cfg.drive || 0;
+      var drive = wheel.cfg.drive || 0;
+      this.totalDrive += drive;
+      this.avgDriveWheelRadius += wheel.cfg.radius * drive;
     }
+    this.avgDriveWheelRadius /= this.totalDrive;
 
     this.controller = new exports.AutomaticController(this);
 
