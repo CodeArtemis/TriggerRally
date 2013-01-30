@@ -123,9 +123,9 @@ define [
             else
               otherCp = checkpoints.at idx - 1
               newPos = [
-                selCp.pos[0] * 1.5 - otherCp.pos[0] * 0.5
-                selCp.pos[1] * 1.5 - otherCp.pos[1] * 0.5
-                selCp.pos[2] * 1.5 - otherCp.pos[2] * 0.5
+                selCp.pos[0] * 2 - otherCp.pos[0]
+                selCp.pos[1] * 2 - otherCp.pos[1]
+                selCp.pos[2] * 2 - otherCp.pos[2]
               ]
             newCp = selCp.clone()
             newCp.pos = newPos
