@@ -54,6 +54,8 @@ block body
         include partial/formfield
         field = { title: 'Shadows enabled', name:'shadows', checked:urlUser.prefs.shadows, editing:editing, type:"checkbox" }
         include partial/formfield
+        field = { title: 'High quality terrain', name:'terrainhq', checked:urlUser.prefs.terrainhq, editing:editing, type:"checkbox" }
+        include partial/formfield
 
     if tracks
       .section Tracks

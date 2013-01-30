@@ -12,13 +12,19 @@ define [
   Vec3 = THREE.Vector3
 
   RenderTerrain: class RenderTerrain
-    constructor: (@scene, @terrain, @gl) ->
+    constructor: (@scene, @terrain, @gl, terrainhq) ->
       # We currently grab the terrain source directly. This is not very kosher.
       @geom = null
-      @numLayers = 10
+      if terrainhq
+        @baseScale = 0.5
+        @numLayers = 10
+        @ringWidth = 31
+      else
+        @baseScale = 2
+        @numLayers = 8
+        @ringWidth = 15
       @totalTime = 0
       @glDerivs = @gl.getExtension('OES_standard_derivatives')
-      @baseScale = 0.5
       @glAniso =
         @gl.getExtension("EXT_texture_filter_anisotropic") or
         @gl.getExtension("WEBKIT_EXT_texture_filter_anisotropic")
@@ -109,6 +115,8 @@ define [
           """
 
           const int NUM_LAYERS = #{@numLayers};
+          const float RING_WIDTH = #{@ringWidth}.0;
+
           uniform sampler2D tHeight;
           uniform vec2 tHeightSize;
           uniform vec3 tHeightScale;
@@ -123,8 +131,6 @@ define [
 
           varying vec4 eyePosition;
           varying vec3 worldPosition;
-
-          const float RING_WIDTH = 31.0;
 
           vec2 worldToMapSpace(vec2 coord, vec2 size, vec2 scale) {
             return (coord / scale + 0.5) / size;
@@ -509,7 +515,7 @@ define [
           itemSize: 3
       idx = geom.attributes["index"].array
       posn = geom.attributes["position"].array
-      RING_WIDTH = 31
+      RING_WIDTH = @ringWidth
       ringSegments = [
         [  1,  0,  0,  1 ],
         [  0, -1,  1,  0 ],

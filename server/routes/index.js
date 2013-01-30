@@ -159,7 +159,7 @@ exports.userSave = function(req, res) {
   attribs.forEach(function(attrib) {
     user[attrib] = req.body[attrib];
   });
-  var prefsFlags = [ 'audio', 'shadows' ];
+  var prefsFlags = [ 'audio', 'shadows', 'terrainhq' ];
   prefsFlags.forEach(function(flag) {
     user.prefs[flag] = (req.body[flag] === "on");
   });

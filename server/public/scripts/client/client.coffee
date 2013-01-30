@@ -444,7 +444,7 @@ define [
       deferredCars = []
 
       @game.on 'settrack', (track) =>
-        @add new clientTerrain.RenderTerrain @scene, track.terrain, @renderer.context
+        @add new clientTerrain.RenderTerrain @scene, track.terrain, @renderer.context, options.prefs.terrainhq
         sceneLoader = new THREE.SceneLoader()
         loadFunc = (url, callback) -> sceneLoader.load url, callback
         @add @renderScenery = new clientScenery.RenderScenery @scene, track.scenery, loadFunc, @renderer
