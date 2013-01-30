@@ -118,12 +118,16 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
         })();
 
         // Track curve.
-        var pts = checkpoints;
+        var pts = checkpoints.slice(0);
+
+        // Add bonus checkpoints.
+        pts[-1] = pts[0].clone().multiplyScalar(2).subSelf(pts[1]);
+        pts[pts.length] = pts[pts.length-1].clone().multiplyScalar(2).subSelf(pts[pts.length-2]);
 
         // First we compute the chord length of the curve.
         var totalLength = 0;
         var chords = [];
-        var numChords = pts.length - 1;
+        var numChords = checkpoints.length - 1;
         var i;
         for (i = 0; i < numChords; ++i) {
           var chordLength = new Vec2().sub(pts[i+1], pts[i]).length();
@@ -143,7 +147,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
         for (i = 0; i < numChords; ++i) {
           // TODO: try different start point positions?
           ix = [ Math.max(0, i-1), i, i+1, Math.min(i+2, numChords) ];
-          cp = [ pts[ix[0]], pts[ix[1]], pts[ix[2]], pts[ix[3]] ];
+          cp = [ pts[i-1], pts[i], pts[i+1], pts[i+2] ];
           for (; t < chords[i]; t += tStep) {
             u = t / chords[i];
             radius   = linearInterp(  //checkpointsCfg[ix[0]].surf.radius,
@@ -171,7 +175,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
         for (i = 0; i < numChords; ++i) {
           // TODO: try different start point positions?
           ix = [ Math.max(0, i-1), i, i+1, Math.min(i+2, numChords) ];
-          cp = [ pts[ix[0]], pts[ix[1]], pts[ix[2]], pts[ix[3]] ];
+          cp = [ pts[i-1], pts[i], pts[i+1], pts[i+2] ];
           for (; t < chords[i]; t += tStep) {
             u = t / chords[i];
             radius   = linearInterp(  //checkpointsCfg[ix[0]].disp.radius,
@@ -221,7 +225,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
             derivY = srcData[srcPtr + 1] / 127.5 - 1;
             type = srcData[srcPtr + 2];
             gradient = Math.sqrt(derivX * derivX + derivY * derivY);
-            roughness = (gradient * 0.1 + 0.002) * type + 0.01;
+            roughness = (gradient * 0.1 + 0.002) * type + 0.005;
             dstData[dstPtr + 3] = Math.min(255, roughness * 256);
             srcPtr += srcChannels;
             dstPtr += dstChannels;
