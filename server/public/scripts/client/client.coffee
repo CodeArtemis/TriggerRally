@@ -406,7 +406,9 @@ define [
       @objects = {}
       @pubsub = new pubsub.PubSub()
 
-      @renderer = @createRenderer options.prefs.shadows
+      prefs = options.prefs or {}
+
+      @renderer = @createRenderer prefs.shadows
       @containerEl.appendChild @renderer.domElement
 
       @sceneHUD = new THREE.Scene()
@@ -423,9 +425,9 @@ define [
       @scene.add new THREE.AmbientLight 0x446680
       @scene.add @cubeMesh()
 
-      @add new SunLight @scene, options.prefs.shadows
+      @add new SunLight @scene, prefs.shadows
 
-      @audio = new clientAudio.WebkitAudio() if options.prefs.audio
+      @audio = new clientAudio.WebkitAudio() if prefs.audio
       checkpointBuffer = null
       @audio?.loadBuffer '/a/sounds/checkpoint.wav', (buffer) ->
         checkpointBuffer = buffer
@@ -444,7 +446,7 @@ define [
       deferredCars = []
 
       @game.on 'settrack', (track) =>
-        @add new clientTerrain.RenderTerrain @scene, track.terrain, @renderer.context, options.prefs.terrainhq
+        @add new clientTerrain.RenderTerrain @scene, track.terrain, @renderer.context, prefs.terrainhq
         sceneLoader = new THREE.SceneLoader()
         loadFunc = (url, callback) -> sceneLoader.load url, callback
         @add @renderScenery = new clientScenery.RenderScenery @scene, track.scenery, loadFunc, @renderer

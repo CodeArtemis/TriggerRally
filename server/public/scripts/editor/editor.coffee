@@ -63,7 +63,7 @@ define [
     setStatus = (msg) -> $status.text msg
 
     game = new gameGame.Game()
-    prefs = TRIGGER.USER.prefs
+    prefs = TRIGGER.USER?.prefs or {}
     prefs.audio = no
     client = new clientClient.TriggerClient $view3d[0], game, prefs: prefs
 
