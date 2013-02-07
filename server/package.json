@@ -4,23 +4,24 @@
   "private": true,
   "dependencies": {
     "async": "*",
+    "backbone-relational": "~0.7.0",
+    "canvas": "*",
     "express": ">= 3",
+    "http-proxy": "*",
     "jade": "*",
     "mongodb": "*",
     "mongoose": "*",
-    "http-proxy": "*",
+    "mongoskin": "~0.4.4",
     "passport": "*",
     "passport-facebook": "*",
     "passport-google": "*",
     "passport-local": "*",
     "passport-twitter": "*",
+    "quiver": "*",
     "requirejs": "*",
+    "rethinkdb": "~1.2.6-1",
     "session-mongoose": "*",
     "socket.io": "*",
-    "stylus": "*",
-    "canvas": "*",
-    "backbone-relational": "~0.7.0",
-    "mongoskin": "~0.4.4",
-    "rethinkdb": "~1.2.6-1"
+    "stylus": "*"
   }
 }
