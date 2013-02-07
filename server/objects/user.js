@@ -21,8 +21,9 @@ var User = new Schema({
   , prefs       : {
       shadows     : { type: Boolean, default: true }
     , audio       : { type: Boolean, default: true }
-    , terrainhq   : { type: Boolean, default: true }
+    , terrainhq   : { type: Boolean, default: false }
   }
+  , admin       : { type: Boolean, default: false }
 }, { strict: true });
 
 User.virtual('id')

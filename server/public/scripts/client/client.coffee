@@ -406,7 +406,11 @@ define [
       @objects = {}
       @pubsub = new pubsub.PubSub()
 
-      prefs = options.prefs or {}
+      prefs = options.prefs or {
+        audio: yes
+        shadows: yes
+        terrainhq: no
+      }
 
       @renderer = @createRenderer prefs.shadows
       @containerEl.appendChild @renderer.domElement

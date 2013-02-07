@@ -12,6 +12,8 @@ var Track = mongoose.model('Track');
 var Run = mongoose.model('Run');
 var MetricsRecord = mongoose.model('MetricsRecord');
 
+var alpEnvId = new mongoose.Types.ObjectId('506754342668a4626133ccd7');
+
 exports.defaultParams = function(req, res, next) {
   req.jadeParams = {
       title: null
@@ -44,8 +46,10 @@ exports.index = function(req, res) {
     req.jadeParams.recentTracks = null;
     res.render('index', req.jadeParams);
   } else {
+    var query = { published: true };
+    if (!(req.user && req.user.user.admin)) query.env = alpEnvId;
     Track
-      .find({published: true})
+      .find(query)
       .sort({modified: -1})
       .limit(10)
       .populate('user')  // Is this too slow?
@@ -62,8 +66,10 @@ exports.index = function(req, res) {
 };
 
 exports.recentTracks = function(req, res) {
+  var query = {};
+  if (!(req.user && req.user.user.admin)) query.env = alpEnvId;
   Track
-    .find({})
+    .find(query)
     .sort({modified: -1})
     .limit(50)
     .populate('user')  // Is this too slow?
@@ -133,8 +139,10 @@ exports.user = function(req, res) {
         console.log(error);
         // Continue despite the error.
       }
+      var query = { user: req.urlUser.id };
+      if (!(req.user && req.user.user.admin)) query.env = alpEnvId;
       Track
-        .find({ user: req.urlUser.id })
+        .find(query)
         .limit(500)
         .sort({_id: 'desc'})
         .populate('parent', {'pub_id':1, 'name':1})
