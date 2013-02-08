@@ -96,7 +96,7 @@ define [
           setStatus 'OK'
         error: (model, xhr, options) ->
           setStatus 'ERROR: ' + xhr
-    , 1500
+    , 1000
 
     requestSave = ->
       setStatus 'Changed'

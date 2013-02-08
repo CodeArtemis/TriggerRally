@@ -15,7 +15,7 @@ define [
       for layer in @layers
         do (layer) ->
           render = layer.src.config.render
-          loadFunc render["scene-r54"], (result) ->
+          loadFunc render["scene-r54"] or render["scene"], (result) ->
             layer.meshes = for mesh in result.scene.children
               geom = new array_geometry.ArrayGeometry()
               geom.addGeometry mesh.geometry
