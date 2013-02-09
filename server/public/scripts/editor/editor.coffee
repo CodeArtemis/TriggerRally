@@ -315,6 +315,10 @@ define [
     cursorMesh = clientMisc.selectionMesh()
     client.scene.add cursorMesh
     buttons = 0
+    MB =
+      LEFT: 1
+      MIDDLE: 2
+      RIGHT: 4
     hasMoved = no
     isSecondClick = no  # We only allow dragging on second click to prevent mistakes.
 
@@ -328,20 +332,26 @@ define [
       cursor = newCursor
       if cursor?
         Vec3::set.apply cursorMesh.position, cursor.object.pos
+      return
 
     $view3d.mousedown (event) ->
-      buttons |= Math.pow(2, event.button)
+      buttons |= 1 << event.button
       hasMoved = no
       return
 
     $view3d.mouseup (event) ->
-      buttons &= ~Math.pow(2, event.button)
+      buttons &= ~(1 << event.button)
       unless hasMoved
         selection.reset() unless event.shiftKey
         if cursor
           unless selection.contains cursor
             addSelection cursor
       return
+
+    $view3d.mouseout (event) ->
+      # If the cursor leaves the view, we have to disable drag because we don't
+      # know what buttons the user is holding when the cursor re-enters.
+      buttons = 0
 
     intersectZPlane = (ray, pos) ->
       return null if Math.abs(ray.direction.z) < 1e-10
@@ -380,8 +390,8 @@ define [
       angZ = motionX * 0.01
       mouseX = event.offsetX
       mouseY = event.offsetY
-      if buttons & 3 and cursor
-        rotateMode = (event.altKey and buttons & 1) or buttons & 2
+      if buttons & (MB.LEFT | MB.MIDDLE) and cursor
+        rotateMode = (event.altKey and buttons & MB.LEFT) or buttons & MB.MIDDLE
         viewRay = client.viewRay mouseX, mouseY
         cursorPos = cursorMesh.position
         planeHit = if event.shiftKey
