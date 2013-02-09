@@ -18,11 +18,11 @@ define [
       if terrainhq
         @baseScale = 0.5
         @numLayers = 10
-        @ringWidth = 31
-      else
-        @baseScale = 2
-        @numLayers = 8
         @ringWidth = 15
+      else
+        @baseScale = 1
+        @numLayers = 10
+        @ringWidth = 7
       @totalTime = 0
       @glDerivs = @gl.getExtension('OES_standard_derivatives')
       @glAniso =

@@ -79,8 +79,8 @@ define [
         offset.count += PRIMITIVE_SIZE
       # Save final offset.
       addOffset() if offset.count > 0
-      if @offsets.length > 1
-        console.log 'ArrayGeometry with ' + indices.length/3 + ' triangles split into ' + @offsets.length + ' DrawElements calls.'
+      #if @offsets.length > 1
+      #  console.log 'ArrayGeometry with ' + indices.length/3 + ' triangles split into ' + @offsets.length + ' DrawElements calls.'
 
       for key, attrib of @attributes
         type = if key is "index" then Uint16Array else Float32Array
