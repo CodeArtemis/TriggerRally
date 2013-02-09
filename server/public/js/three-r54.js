@@ -10897,7 +10897,7 @@ THREE.SceneLoader.prototype.parse = function ( json, callbackFinished, url ) {
 
 		for ( parID in matJSON.parameters ) {
 
-			if ( parID === "envMap" || parID === "map" || parID === "lightMap" || parID === "bumpMap" ) {
+			if ( parID === "envMap" || parID === "map" || parID === "lightMap" || parID === "bumpMap" || parID === "normalMap" ) {
 
 				matJSON.parameters[ parID ] = result.textures[ matJSON.parameters[ parID ] ];
 
@@ -10958,7 +10958,7 @@ THREE.SceneLoader.prototype.parse = function ( json, callbackFinished, url ) {
 
 		}
 
-		if ( matJSON.parameters.normalMap ) {
+		if ( false && matJSON.parameters.normalMap ) {
 
 			var shader = THREE.ShaderUtils.lib[ "normal" ];
 			var uniforms = THREE.UniformsUtils.clone( shader.uniforms );
