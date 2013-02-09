@@ -361,7 +361,6 @@ define [
                 if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
                 fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( dx1, dy1 ) ) );
                 if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
-                //shadowColor = shadowColor * vec3( ( 1.0 - shadowDarkness[ i ] * shadow ) );
 
                 // Fade out the edges of the shadow.
                 const float edgeSize = 0.05;
