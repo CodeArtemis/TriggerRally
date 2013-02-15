@@ -409,7 +409,7 @@ define [
       prefs = options.prefs or {
         audio: yes
         shadows: yes
-        terrainhq: no
+        terrainhq: yes
       }
 
       @renderer = @createRenderer prefs.shadows
