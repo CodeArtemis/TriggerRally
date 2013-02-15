@@ -5,7 +5,17 @@ block body
 
   .content
 
-    p Fast arcade rally racing action! Made by <a href="http://twitter.com/jareiko" target="_blank">@jareiko</a>.
+    p Fast arcade rally racing action!
+      if isChrome
+        span &nbsp; &nbsp; &nbsp; New:
+        a#add-to-chrome(href="#", onclick="chrome.webstore.install(); return false")
+          | &nbsp;
+          img.inline(src="/images/chrome-web-store.png")
+          | Add to Chrome
+        script
+          if (chrome.app.isInstalled) {
+            document.getElementById("add-to-chrome").display = "none";
+          }
 
     .section Featured
 

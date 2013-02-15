@@ -20,6 +20,7 @@ exports.defaultParams = function(req, res, next) {
     , user: req.user && req.user.user || null
     , userPassport: req.user
     , editing: false
+    , isChrome: /Chrome/.test(req.headers['user-agent'])
     , randomSmiley: function() {
       smileys = [
         "smiley.png",

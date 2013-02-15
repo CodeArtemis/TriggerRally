@@ -21,7 +21,7 @@ var User = new Schema({
   , prefs       : {
       shadows     : { type: Boolean, default: true }
     , audio       : { type: Boolean, default: true }
-    , terrainhq   : { type: Boolean, default: false }
+    , terrainhq   : { type: Boolean, default: true }
   }
   , admin       : { type: Boolean, default: false }
 }, { strict: true });
