@@ -162,6 +162,14 @@ h2 {
   opacity: 0.3;
 }
 .featured {
+  text-align: justify;
+}
+.featured:after {
+  content: "";
+  display: inline-block;
+  width: 100%;
+}
+.featured a {
   display: inline-block;
   background-color: #bda;
   background-repeat: no-repeat;
@@ -169,12 +177,11 @@ h2 {
   background-size: cover;
   border-radius: 0.5em;
   box-shadow: -1px -2px 1px #fff, 1px 2px 1px #361;
-  margin: 1em;
   width: 300px;
   height: 180px;
   position: relative;
 }
-.featured .label {
+.featured a .label {
   bottom: 0.4em;
   color: #fff;
   text-shadow: none;
@@ -185,7 +192,7 @@ h2 {
   -webkit-transform: rotate(-20deg);
   transform: rotate(-20deg);
 }
-.featured:hover .label {
+.featured a:hover .label {
   text-shadow: 0 0 0.2em #fff;
 }
 .button {
