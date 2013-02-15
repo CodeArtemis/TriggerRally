@@ -7,14 +7,14 @@ block body
 
     p Fast arcade rally racing action!
       if isChrome
-        span &nbsp; &nbsp; &nbsp; New:
-        a#add-to-chrome(href="#", onclick="chrome.webstore.install(); return false")
-          | &nbsp;
-          img.inline(src="/images/chrome-web-store.png")
-          | Add to Chrome
+        span#add-to-chrome &nbsp; &nbsp; &nbsp; New:
+          a(href="#", onclick="chrome.webstore.install(); return false")
+            | &nbsp;
+            img.inline(src="/images/chrome-web-store.png")
+            | Add to Chrome
         script
           if (chrome.app.isInstalled) {
-            document.getElementById("add-to-chrome").display = "none";
+            document.getElementById("add-to-chrome").style.display = "none";
           }
 
     .section Featured
