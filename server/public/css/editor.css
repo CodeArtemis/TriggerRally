@@ -230,3 +230,7 @@ menu li:hover > menu {
   position: absolute;
   width: 100%;
 }
+.highlight {
+  font-weight: bold;
+  color: #f33;
+}

@@ -80,48 +80,65 @@ block body
   #editor-inspector
     //-h3 Property inspector
 
-    #title
-      span.label Track name:
-      input.content(type="text")
+    details
+      summary My Tracks 
+        span.highlight (new!)
 
-    div
-      span.label &nbsp;
-      a.content(href="drive")
-        | Drive this track
-
-    div
-      span.label &nbsp;
-      a.content(href=".")
-        | Track info page
+      p (a list of tracks)
 
     hr
 
-    div
-      span.label Owner
-      span.content
-        user = trackData.user
-        include partial/user
+    details(open)
+      summary Track info
 
-    if !userLoggedIn || userLoggedIn.pub_id !== trackData.user.id
-      .warning
-        | You cannot modify this track because it belongs to another
-        | user, but you can make your own copy using the <b>Copy Track</b> button below.
+      div
+        span.label Owner
+        span.content
+          user = trackData.user
+          include partial/user
 
-    hr
+      if !userLoggedIn || userLoggedIn.pub_id !== trackData.user.id
+        .warning
+          | You cannot modify this track because it belongs to another
+          | user, but you can make your own copy using the <b>Copy Track</b> button below.
 
-    #cmd-copy-track
-      span.label Action
-      button.content Copy Track
+      #title
+        span.label Track name:
+        input.content(type="text")
 
-    if userLoggedIn && userLoggedIn.pub_id === trackData.user.id
-      #cmd-delete-track
+      div
+        span.label &nbsp;
+        a.content(href="drive")
+          | Drive this track
+
+      div
+        span.label &nbsp;
+        a.content(href=".")
+          | Track info page
+
+      #cmd-copy-track
         span.label Action
-        button.content Delete Track
+        button.content Copy Track
 
-    #flag-publish
-      label
-        input(type="checkbox")
-        | Publish this track
+      if userLoggedIn && userLoggedIn.pub_id === trackData.user.id
+        #cmd-delete-track
+          span.label Action
+          button.content Delete Track
+
+      #flag-publish
+        label
+          input(type="checkbox")
+          | Publish this track
+
+    hr
+
+    details
+      summary Editor options
+
+      #flag-snap
+        label
+          input(type="checkbox", checked)
+          | Snap objects to ground
 
     hr
 
@@ -201,16 +218,6 @@ block body
       hr
       span.label Action
       button.content Delete
-
-    hr
-
-    //- Editor options, not really track properties.
-    //- Could move these to another window?
-
-    #flag-snap
-      label
-        input(type="checkbox", checked)
-        | Snap objects to ground
 
   #view3d
 

@@ -7,9 +7,9 @@ block body
 
     p Fast arcade rally racing action!
       if isChrome
-        span#add-to-chrome &nbsp; &nbsp; &nbsp; New:
+        span#add-to-chrome
+          span(style="display:inline-block; width:20px")
           a(href="#", onclick="chrome.webstore.install(); return false")
-            | &nbsp;
             img.inline(src="/images/chrome-web-store.png")
             | Add to Chrome
         script
