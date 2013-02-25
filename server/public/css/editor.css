@@ -234,3 +234,10 @@ menu li:hover > menu {
   font-weight: bold;
   color: #f33;
 }
+#track-list {
+  max-height: 8em;
+  overflow: auto;
+}
+#track-list .track.selected {
+  background: #fec;
+}

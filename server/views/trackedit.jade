@@ -80,11 +80,12 @@ block body
   #editor-inspector
     //-h3 Property inspector
 
-    details
+    details(open)
       summary My Tracks 
         span.highlight (new!)
 
-      p (a list of tracks)
+      #track-list
+        .track.selected: a(href="#") Track 3
 
     hr
 

@@ -81,6 +81,17 @@ define [
 
     models.BaseModel::sync = sync.syncSocket socket
 
+    class TrackCollection extends Backbone.Collection
+      model: models.Track
+
+    tracksColl = new TrackCollection [
+      name: 'track a'
+    ,
+      name: 'track b'
+    ,
+      name: 'track c'
+    ]
+
     trackModel = new models.Track
     #  id: TRIGGER.TRACK.id
 
@@ -186,7 +197,7 @@ define [
     $container.on 'resize', ->
       layout()
 
-    inspectorController = new inspector.Controller selection, trackModel
+    inspectorController = new inspector.Controller selection, trackModel, tracksColl
 
     $('#editor-helpbox-wrapper').removeClass 'visible'
     $('#editor-helpbox-wrapper .close-tab').click ->
