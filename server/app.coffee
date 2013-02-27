@@ -33,7 +33,7 @@ mongoose.connection.on "error", (err) ->
 
 SessionStore = session_mongoose(connect)
 sessionStore = new SessionStore(
-  url: 'mongodb://localhost/sessions'
+  url: "mongodb://#{config.MONGODB_HOST}/sessions"
   # Expiration check worker run interval in millisec (default: 60000)
   interval: 120000
 )
@@ -147,6 +147,12 @@ passport.deserializeUser (id, done) ->
 
 app.use express.logger(format: '[:isodate] :status :response-time ms :method :url :referrer')
 app.disable 'x-powered-by'
+app.use express.compress()
+app.use express.static(__dirname + '/public')
+app.use stylus.middleware(
+  src: __dirname + '/stylus'
+  dest: __dirname + '/public'
+)
 app.set 'views', __dirname + '/views'
 app.set 'view engine', 'jade'
 app.use express.bodyParser()
@@ -160,15 +166,11 @@ app.use express.session(
 app.use passport.initialize()
 app.use passport.session()
 app.use express.methodOverride()
-app.use stylus.middleware(
-  src: __dirname + '/stylus'
-  dest: __dirname + '/public'
-)
-app.use routes.defaultParams
 app.use (req, res, next) ->
   # Enable Chrome Frame if installed.
   res.setHeader 'X-UA-Compatible', 'chrome=1'
   next()
+app.use routes.defaultParams
 
 #
 #// We can delay certain resources for debugging purposes.
@@ -183,17 +185,24 @@ app.use (req, res, next) ->
 #
 
 app.use app.router
-app.use express.static(__dirname + '/public')
+
+app.use (req, res) ->
+  res.send 404, "Sorry, we couldn't find a page with this address."
+
 app.configure 'development', ->
-  app.use express.errorHandler(
-    dumpExceptions: true
-    showStack: true
-  )
-  mongoose.connect 'mongodb://localhost/trigger-prod'
+  app.use (err, req, res, next) ->
+    console.error err
+    res.json 500,
+      error: "Internal Server Error"
+      call_stack: err.stack.split('\n')
 
 app.configure 'production', ->
-  app.use express.errorHandler(dumpExceptions: true)
-  mongoose.connect 'mongodb://localhost/trigger-prod'
+  app.use (err, req, res, next) ->
+    console.error err
+    res.json 500,
+      error: "Internal Server Error"
+
+mongoose.connect config.MONGOOSE_URL
 
 loadUrlUser = (req, res, next) ->
   User
@@ -286,43 +295,44 @@ editUser = (req, res, next) ->
   req.editing = true
   next()
 
-app.get '/', routes.index
-app.get '/about', routes.about
-app.get '/login', routes.login
-app.get '/user/confirm', routes.userconfirm
-app.get '/user/:idUser', loadUrlUser, routes.user
-app.get '/user/:idUser/edit', loadUrlUser, editUser, routes.user
-app.post '/user/:idUser/save', loadUrlUser, editUser, routes.userSave
-app.get '/recenttracks', routes.recentTracks
-app.get '/track/:idTrack', loadUrlTrack, routes.track
+require('./api') app
+app.get    '/', routes.index
+app.get    '/about', routes.about
+app.get    '/login', routes.login
+app.get    '/user/confirm', routes.userconfirm
+app.get    '/user/:idUser', loadUrlUser, routes.user
+app.get    '/user/:idUser/edit', loadUrlUser, editUser, routes.user
+app.post   '/user/:idUser/save', loadUrlUser, editUser, routes.userSave
+app.get    '/recenttracks', routes.recentTracks
+app.get    '/track/:idTrack', loadUrlTrack, routes.track
 app.delete '/track/:idTrack', loadUrlTrack, editTrack, routes.trackDelete
-app.get '/track/:idTrack/drive', loadUrlTrack, routes.trackDrive
-app.get '/track/:idTrack/edit', loadUrlTrack, routes.trackEdit
-app.post '/track/:idTrack/copy', loadUrlTrack, routes.trackCopy
-app.get '/track/:idTrack/json', loadUrlTrack, routes.trackJson
-app.get '/track/:idTrack/json/edit', loadUrlTrack, editTrack, routes.trackJson
-app.post '/track/:idTrack/json/save', loadUrlTrack, editTrack, routes.trackJsonSave
-app.put '/track/:idTrack/json/save', loadUrlTrack, editTrack, routes.trackJsonSave
-app.get '/car/:idCar', loadUrlCar, routes.car
-app.get '/car/:idCar/json', loadUrlCar, routes.carJson
-app.get '/car/:idCar/json/edit', loadUrlCar, editCar, routes.carJson
-app.post '/car/:idCar/json/save', loadUrlCar, editCar, routes.carJsonSave
-app.get '/run/:idRun', loadUrlRun, routes.run
-app.post '/run/new', routes.runSave
-app.get '/run/:idRun/replay', loadUrlRun, routes.runReplay
-app.get '/x/:idTrack/:idCar/drive', loadUrlTrackIncDrive, loadUrlCar, routes.drive
-app.get '/x/:idTrack/:idCar/top', loadUrlTrack, loadUrlCar, routes.top
-app.post '/metrics', routes.metricsSave
-app.get '/auth/facebook', passport.authenticate('facebook')
-app.get '/auth/facebook/callback', passport.authenticate('facebook',
+app.get    '/track/:idTrack/drive', loadUrlTrack, routes.trackDrive
+app.get    '/track/:idTrack/edit', loadUrlTrack, routes.trackEdit
+app.post   '/track/:idTrack/copy', loadUrlTrack, routes.trackCopy
+app.get    '/track/:idTrack/json', loadUrlTrack, routes.trackJson
+app.get    '/track/:idTrack/json/edit', loadUrlTrack, editTrack, routes.trackJson
+app.post   '/track/:idTrack/json/save', loadUrlTrack, editTrack, routes.trackJsonSave
+app.put    '/track/:idTrack/json/save', loadUrlTrack, editTrack, routes.trackJsonSave
+app.get    '/car/:idCar', loadUrlCar, routes.car
+app.get    '/car/:idCar/json', loadUrlCar, routes.carJson
+app.get    '/car/:idCar/json/edit', loadUrlCar, editCar, routes.carJson
+app.post   '/car/:idCar/json/save', loadUrlCar, editCar, routes.carJsonSave
+app.get    '/run/:idRun', loadUrlRun, routes.run
+app.post   '/run/new', routes.runSave
+app.get    '/run/:idRun/replay', loadUrlRun, routes.runReplay
+app.get    '/x/:idTrack/:idCar/drive', loadUrlTrackIncDrive, loadUrlCar, routes.drive
+app.get    '/x/:idTrack/:idCar/top', loadUrlTrack, loadUrlCar, routes.top
+app.post   '/metrics', routes.metricsSave
+app.get    '/auth/facebook', passport.authenticate('facebook')
+app.get    '/auth/facebook/callback', passport.authenticate('facebook',
   failureRedirect: '/login'
 ), authenticationSuccessful
-app.get '/auth/google', passport.authenticate('google')
-app.get '/auth/google/return', passport.authenticate('google',
+app.get    '/auth/google', passport.authenticate('google')
+app.get    '/auth/google/return', passport.authenticate('google',
   failureRedirect: '/login'
 ), authenticationSuccessful
-app.get '/auth/twitter', passport.authenticate('twitter')
-app.get '/auth/twitter/callback', passport.authenticate('twitter',
+app.get    '/auth/twitter', passport.authenticate('twitter')
+app.get    '/auth/twitter/callback', passport.authenticate('twitter',
   failureRedirect: '/login'
 ), authenticationSuccessful
 

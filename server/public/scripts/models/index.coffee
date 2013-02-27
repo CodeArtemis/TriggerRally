@@ -25,7 +25,7 @@
         set: buildSetter attr
 
   childChange = (parent, mdl) ->
-    return unless mdl?
+    return unless mdl? and mdl.on?
     mdl.on 'change', ->
       parent.trigger 'childchange', []
     mdl.on 'childchange', (stack) ->
@@ -33,19 +33,21 @@
 
   models = exports
 
-  BaseModel = Backbone.RelationalModel.extend {}
+  Model = Backbone.RelationalModel.extend {}
   #  initialize: ->
   #    @on 'all', -> console.log arguments
 
-  class models.Checkpoint extends BaseModel
+  Collection = Backbone.Collection
+
+  class models.Checkpoint extends Model
     attributeNames: [ 'disp', 'pos', 'surf' ]
     buildProperties @
 
-  class models.StartPos extends BaseModel
+  class models.StartPos extends Model
     attributeNames: [ 'pos', 'rot' ]
     buildProperties @
 
-  class models.Course extends BaseModel
+  class models.Course extends Model
     attributeNames: [ 'checkpoints', 'startposition' ]
     defaults:
       startposition: new models.StartPos
@@ -69,7 +71,7 @@
       @on 'change:checkpoints', childChange
       super
 
-  class models.TrackConfig extends BaseModel
+  class models.TrackConfig extends Model
     attributeNames: [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
     defaults:
       course: new models.Course
@@ -84,12 +86,22 @@
       @on 'change:course', childChange
       super
 
-  class models.Env extends BaseModel
+  class models.Env extends Model
     attributeNames: [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
     buildProperties @
 
-  class models.Track extends BaseModel
-    attributeNames: [ 'config', 'env', 'name', 'user', 'published' ]
+  class models.Track extends Model
+    attributeNames: [
+      'config'
+      'count_copy'
+      'count_drive'
+      'count_fav'
+      'env'
+      'modified'
+      'name'
+      'published'
+      'user'
+    ]
     defaults:
       config: new models.TrackConfig
     relations: [
@@ -110,22 +122,29 @@
       @on 'change:env', childChange
       super
 
-  class models.User extends BaseModel
+  class models.UserTracks extends Collection
+
+  class models.User extends Model
     attributeNames: [
       'bio'
       'created'
       'email'
       'gravatar_hash'
-      'id'
       'location'
       'name'
+      'tracks'  # NOTE: computed at runtime, not currently present in DB.
       'website'
+    ]
+    relations: [
+      type: Backbone.HasMany
+      key: 'tracks'
+      collectionType: models.UserTracks
+      relatedModel: models.Track
     ]
     buildProperties @
 
-  class models.UserPassport extends BaseModel
+  class models.UserPassport extends Model
     attributeNames: [
-      'id'
       'profile'
       'user'
     ]
@@ -136,7 +155,7 @@
     ]
     buildProperties @
 
-  model.setup() for name, model of models
-  models.BaseModel = BaseModel
+  model.setup?() for name, model of models
+  models.Model = Model
 
   exports
