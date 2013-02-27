@@ -48,6 +48,7 @@ app.defaultConfiguration = function(){
   // default settings
   this.enable('x-powered-by');
   this.set('env', process.env.NODE_ENV || 'development');
+  this.set('subdomain offset', 2);
   debug('booting in %s mode', this.get('env'));
 
   // implicit middleware
@@ -160,7 +161,7 @@ app.use = function(route, fn){
  * [Consolidate.js](https://github.com/visionmedia/consolidate.js)
  * library was created to map all of node's popular template
  * engines to follow this convention, thus allowing them to
- * work seemlessly within Express.
+ * work seeessly within Express.
  *
  * @param {String} ext
  * @param {Function} fn

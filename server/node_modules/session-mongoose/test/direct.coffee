@@ -6,7 +6,7 @@ describe "session-mongoose direct", ->
 
   store = new SessionStore
     url: "mongodb://localhost/session-mongoose-test"
-    interval: 1000
+    interval: 1000 # ms
 
   reset = ->
     store.clear()
@@ -17,7 +17,7 @@ describe "session-mongoose direct", ->
     reset()
     store.set '123',
       cookie:
-        maxAge: 2000 # seconds
+        maxAge: 2000 # ms
       name: 'don'
       value: '456'
     , (err, ok) ->
@@ -28,7 +28,7 @@ describe "session-mongoose direct", ->
         assert.ifError err
         assert.deepEqual data,
           cookie:
-            maxAge: 2000 # seconds
+            maxAge: 2000 # ms
           name: 'don'
           value: '456'
         reset()
@@ -38,7 +38,7 @@ describe "session-mongoose direct", ->
     reset()
     store.set '123',
       cookie:
-        maxAge: 2000 # seconds
+        maxAge: 2000 # ms
       name: 'don'
       value: '456'
     , (err, ok) ->
@@ -54,7 +54,7 @@ describe "session-mongoose direct", ->
     reset()
     store.set '123',
       cookie:
-        maxAge: 2000 # seconds
+        maxAge: 2000 # ms
       name: 'don'
       value: '456'
     , (err, ok) ->
@@ -70,7 +70,7 @@ describe "session-mongoose direct", ->
     reset()
     store.set '123',
       cookie:
-        maxAge: 2000 # seconds
+        maxAge: 2000 # ms
       name: 'don'
       value: '456'
     , (err, ok) ->
@@ -86,7 +86,7 @@ describe "session-mongoose direct", ->
     reset()
     store.set '123',
       cookie:
-        maxAge: 2000 # seconds
+        maxAge: 2000 # ms
       name: 'don'
       value: '456'
     , (err, ok) ->
@@ -94,7 +94,7 @@ describe "session-mongoose direct", ->
       assert.equal ok, 1, "SessionStore.set should return 1"
       store.set 'abc',
         cookie:
-          maxAge: 2000 # seconds
+          maxAge: 2000 # ms
         name: 'don'
         value: '456'
       , (err, ok) ->
@@ -144,7 +144,7 @@ describe "session-mongoose direct", ->
 
     expected = 
       cookie:
-        maxAge: 2000 # seconds
+        maxAge: 2000 # ms
       name: 'don'
       value: '456'
       array: [

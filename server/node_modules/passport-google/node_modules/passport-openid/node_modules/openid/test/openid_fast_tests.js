@@ -87,3 +87,20 @@ exports.testAttributeExchange = function(test)
   
   test.done();
 }
+
+exports.testPape = function(test)
+{
+  var exampleParams = {
+        "openid.pape.auth_time" : new Date().toISOString(),
+        "openid.pape.auth_policies" : 'http://schemas.openid.net/pape/policies/2007/06/multi-factor http://schemas.openid.net/pape/policies/2007/06/phishing-resistant'
+      };
+  var pape = new openid.PAPE(),
+      results = {};
+  
+  pape.fillResult(exampleParams, results);
+  assert.notEqual(results['auth_time'], undefined);
+  assert.notEqual(results['auth_policies'], undefined);
+  assert.equal(results['auth_policies'], "multi-factor phishing-resistant"); 
+  test.done();
+}
+
