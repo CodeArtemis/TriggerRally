@@ -35,7 +35,7 @@ define [
         transparent: 1
         depthWrite: false
 
-      quiver.connect checkpoints, (ins, outs, done) =>
+      updateCheckpoints = (ins, outs, done) =>
         for mesh in @meshes
           scene.remove mesh
         @meshes = for cp in checkpoints
@@ -44,6 +44,8 @@ define [
           scene.add mesh
           mesh
         done()
+      quiver.connect checkpoints, updateCheckpoints
+      quiver.pull updateCheckpoints
 
     update: (camera, delta) ->
       return
@@ -517,6 +519,7 @@ define [
         antialias: false
         premultipliedAlpha: false
         clearColor: 0xffffff
+      r.devicePixelRatio = Math.min 4/3, r.devicePixelRatio
       if useShadows
         r.shadowMapEnabled = true
         r.shadowMapSoft = true
@@ -528,6 +531,7 @@ define [
       @renderer.setSize @width, @height
       aspect = if @height > 0 then @width / @height else 1
       @camera.aspect = aspect
+      @camera.fov = 75 / Math.max 1, aspect / 1.777
       @camera.updateProjectionMatrix()
       @cameraHUD.left = -aspect
       @cameraHUD.right = aspect
@@ -625,10 +629,11 @@ define [
     # TODO: Does this intersection stuff belong in client?
     intersectRay: (ray) ->
       isect = []
-      isect = isect.concat @track.scenery.intersectRay ray
-      isect = isect.concat @intersectCheckpoints ray
-      isect = isect.concat @intersectStartPosition ray
-      isect = isect.concat @intersectTerrain ray
+      if @track?
+        isect = isect.concat @track.scenery.intersectRay ray
+        isect = isect.concat @intersectCheckpoints ray
+        isect = isect.concat @intersectTerrain ray
+        isect = isect.concat @intersectStartPosition ray
       [].concat.apply [], isect
 
     intersectTerrain: (ray) ->

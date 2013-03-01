@@ -57,17 +57,6 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
                        checkpointsCfg[i].pos[1],
                        checkpointsCfg[i].pos[2]));
         }
-        // Doing a quiver push inside a worker function seems like a Really Bad Idea,
-        // but we're doing it because we've modified checkpoints.
-        quiver.push(checkpoints);
-
-        var adjustCheckpointHeights = function() {
-          checkpoints.forEach(function (cpWithZ) {
-            var contact = this.terrain.getContact(cpWithZ);
-            cpWithZ.z = contact.surfacePos.z;
-          }, this);
-        }.bind(this);
-        //adjustCheckpointHeights();
 
         // Cut course into terrain.
         // TODO: Move this to terrain module.
@@ -206,7 +195,6 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
             calls[i]();
           }
         }*/
-        //adjustCheckpointHeights();
         callback();
       };
 
@@ -256,7 +244,6 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
         quiver.connect(this.config.course.checkpoints,
                        drawTrackNode,
                        this.checkpoints);
-
         // TOOD: Listen for individual checkpoint changes, update just relevant region.
         var updateCheckpoints = _.debounce(function() {
           quiver.push(this.config.course.checkpoints);
@@ -265,6 +252,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
         this.config.course.checkpoints.on('add', updateCheckpoints);
         this.config.course.checkpoints.on('remove', updateCheckpoints);
         this.config.course.checkpoints.on('reset', updateCheckpoints);
+        this.config.course.checkpoints.on('sort', updateCheckpoints);
       }).call(this);
 
       (function() {

@@ -79,7 +79,7 @@ define [
 
     socket = io.connect '/api'
 
-    models.BaseModel::sync = sync.syncSocket socket
+    models.Model::sync = sync.syncSocket socket
 
     class TrackCollection extends Backbone.Collection
       model: models.Track
@@ -97,6 +97,7 @@ define [
 
     #trackModel.on 'all', ->
     #  console.log arguments
+    #  console.log trackModel.changedAttributes()
 
     track = null
 
@@ -168,19 +169,17 @@ define [
       renderCar.update()
 
     trackModel.set TRIGGER.TRACK, fromServer: yes
-    ###
-    trackModel.fetch
-      fromServer: yes
-      success: -> setStatus 'OK'
-      error: ->
-        setStatus 'ERROR'
-        console.log 'error details:'
-        console.log arguments
-    ###
+    # trackModel.fetch
+    #   fromServer: yes
+    #   success: -> setStatus 'OK'
+    #   error: ->
+    #     setStatus 'ERROR'
+    #     console.log 'error details:'
+    #     console.log arguments
 
     if TRIGGER.READONLY
       # Prevent any modification to the model.
-      models.BaseModel::validate = (attrs) -> 'Read only mode'
+      models.Model::validate = (attrs) -> 'Read only mode'
 
     layout = ->
       #[$statusbar, $view3d].forEach (panel) ->
@@ -331,7 +330,6 @@ define [
       MIDDLE: 2
       RIGHT: 4
     hasMoved = no
-    isSecondClick = no  # We only allow dragging on second click to prevent mistakes.
 
     findObject = (mouseX, mouseY) ->
       isect = client.findObject mouseX, mouseY
@@ -441,8 +439,7 @@ define [
                   tmp = new Vec3 pos[0], pos[1], -Infinity
                   contact = track.terrain.getContact tmp
                   pos[2] = contact.surfacePos.z
-                  if sel.type is 'startpos'
-                    pos[2] += 1
+                  pos[2] += 1 if sel.type is 'startpos'
               switch sel.type
                 when 'scenery'
                   # DUPLICATE CODE ALERT
