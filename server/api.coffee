@@ -26,7 +26,7 @@ parseMongoose = (doc) ->
     result = {}
     for key, value of doc
       result[key] = parseMongoose value
-    result.id = doc.pub_id
+    result.id = doc.pub_id if doc.pub_id
     delete result.pub_id
     delete result._id
     delete result["__v"]
@@ -207,7 +207,7 @@ class DataContext
 # UTILITY FUNCTIONS
 
 findModel = (Model, pub_id, done) ->
-  model = Model.findOrCreate pub_id
+  model = Model.findOrCreate id: pub_id
   return done model if model.name?  # Already in the Store.
   model.fetch
     success: -> done model

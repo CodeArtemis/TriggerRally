@@ -153,11 +153,13 @@ define [
     renderCar = null
 
     trackModel.on 'change:env', ->
-      mockVehicle.cfg = trackModel.env.cars[0].config
-      # TODO: Deallocate renderCar.
-      startPos.remove renderCar if renderCar
-      renderCar = new clientCar.RenderCar startPos, mockVehicle, null
-      renderCar.update()
+      car = trackModel.env.cars.at(0)
+      if car
+        mockVehicle.cfg = car.config
+        # TODO: Deallocate renderCar.
+        startPos.remove renderCar if renderCar
+        renderCar = new clientCar.RenderCar startPos, mockVehicle, null
+        renderCar.update()
 
     # trackModel.set TRIGGER.TRACK, dontSave: yes
     # trackModel.fetch
@@ -485,7 +487,7 @@ define [
     hide: ->
 
     setTrack: (trackId) ->
-      newTrack = new models.Track id: trackId
-      newTrack.fetch
+      trackModel.set 'id', trackId, silent: yes
+      trackModel.fetch
         success: (model, response, options) ->
-          trackModel.set model, dontSave: yes
+          console.log 'success!'

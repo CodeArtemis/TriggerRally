@@ -13,6 +13,9 @@ requirejs.config({
       deps: ['underscore'],
       exports: 'Backbone'
     },
+    'jquery': {
+      exports: '$'
+    },
     'backbone-relational': {
       deps: ['underscore', 'backbone']
     },
