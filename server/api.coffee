@@ -13,11 +13,11 @@ mo = do ->
   User:  mongoose.model('User')
 
 parseMongoose = (doc) ->
-  #if doc?.created then console.log doc.created
+  if doc?.prefs then console.log doc.prefs
   if doc instanceof mongoose.Document
     parseMongoose doc.toObject getters: yes
   else if doc instanceof mongoose.Types.ObjectId
-    doc.toHexString()
+    "[ObjectId]"
   else if _.isArray doc
     (parseMongoose el for el in doc)
   else if doc instanceof Date
@@ -39,12 +39,7 @@ makeSync = (handlers) ->
     error = options?.error or ->
     handlers[method] model, success, error, options
 
-# bb.Track::sync = makeSync
-#   read: (model, success, error, options) ->
-#     mo.Track
-#       .findOne(pub_id: model.id)
-
-#TODO: break up this megafunction
+# TODO: break up this megafunction.
 bb.User::sync = makeSync
   read: (model, success, error, options) ->
     mo.User
@@ -53,7 +48,7 @@ bb.User::sync = makeSync
         return error model, err, options if err or not user?
         mo.Track
           .find(user: user.id)
-          #.populate('env', 'pub_id')
+          .populate('parent', 'pub_id')
           .exec (err, tracks) ->
             return error model, err, options if err
             envIds = _.uniq (track.env.toHexString() for track in tracks when track.env)
@@ -65,10 +60,14 @@ bb.User::sync = makeSync
                 carIds = _.uniq _.flatten carIds
                 mo.Car
                   .find(_id: { $in: carIds })
+                  .populate('user', 'pub_id')
                   .exec (err, cars) ->
                     return error model, err, options if err
 
-                    parsedCars = (parseMongoose car for car in cars)
+                    parsedCars = for car in cars
+                      parsedCar = parseMongoose car
+                      parsedCar.user = _.pick parsedCar.user, 'id' if parsedCar.user?
+                      parsedCar
                     #bb.Car.build car for car in parsedCars
                     carsById = _.object ([car.id, parsedCars[i]] for car, i in cars)
 
@@ -81,6 +80,7 @@ bb.User::sync = makeSync
 
                     parsedTracks = for track in tracks
                       parsedTrack = parseMongoose track
+                      parsedTrack.parent = _.pick parsedTrack.parent, 'id' if parsedTrack.parent?
                       parsedTrack.env = envsById[track.env] if track.env
                       parsedTrack
                     bb.Track.build track for track in parsedTracks
@@ -102,6 +102,7 @@ bb.User::toPublic = (opts) ->
 class DataContext
   constructor: ->
     @data = {}
+
   witness: (model) ->
     try
       url = _.result model, 'url'
@@ -113,29 +114,37 @@ class DataContext
     @data[url] = yes
     seen
 
-serializeModel = (model, context = new DataContext) ->
-  seen = context.witness model
-  if seen
-    id: model.id
-  else
+  scanValue: (value) ->
+    if value instanceof bb.BackboneModel
+      @scanModel value
+    else if value instanceof bb.BackboneCollection
+      @scanArray value.models
+    else if _.isArray value
+      @scanArray value
+    else if _.isObject value
+      @scanObject value
+    else
+      #console.log value
+      value
+
+  scanModel: (model) ->
+    seen = @witness model
+    if seen
+      id: model.id
+    else
+      @scanObject model.attributes
+
+  scanObject: (object) ->
     result = {}
-    for key, value of model.attributes
-      if key in ['_id', 'object_id', 'email', 'admin', 'created', 'modified']
+    for key, value of object
+      if key in ['_id', 'object_id', 'email', 'admin', 'created', 'modified', 'prefs']
         continue
-      else if value instanceof bb.Model
-        result[key] = serializeModel value, context
-      else if value instanceof bb.BackboneCollection
-        result[key] = (serializeModel model, context for model in value.models)
-      else if _.isArray value
-        for item in value
-          if item instanceof bb.Model
-            result[key] = serializeModel item, context
-          else
-            result[key] = item
-      else
-        #console.log value
-        result[key] = value
+      result[key] = @scanValue value
     result
+
+  scanArray: (array) ->
+    for item in array
+      @scanValue item
 
 # bb.TrackCollection::toPublic = ->
 #   exclude = [ 'object_id', 'config' ]
@@ -163,7 +172,7 @@ module.exports = (app) ->
   app.get "#{base}/users/:user_id", (req, res) ->
     findUser req.params['user_id'], (user) ->
       return error404 res unless user?
-      res.json serializeModel user
+      res.json (new DataContext).scanModel user
       return
       res.json
         users: [

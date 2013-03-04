@@ -179,6 +179,7 @@
 
   model.setup?() for name, model of models
   models.BackboneCollection = Backbone.Collection
+  models.BackboneModel = Backbone.Model
   models.Collection = Collection
   models.Model = Model
 
