@@ -37,7 +37,15 @@
   #  initialize: ->
   #    @on 'all', -> console.log arguments
 
-  Collection = Backbone.Collection
+  class Collection extends Backbone.Collection
+    url: "/v1/#{@type}"
+
+  class models.EnvCollection extends Collection
+    type: 'envs'
+  class models.TrackCollection extends Collection
+    type: 'tracks'
+  class models.UserCollection extends Collection
+    type: 'users'
 
   class models.Checkpoint extends Model
     attributeNames: [ 'disp', 'pos', 'surf' ]
@@ -49,6 +57,7 @@
 
   class models.Course extends Model
     attributeNames: [ 'checkpoints', 'startposition' ]
+    buildProperties @
     defaults:
       startposition: new models.StartPos
     relations: [
@@ -63,7 +72,6 @@
       key: 'checkpoints'
       relatedModel: models.Checkpoint
     ]
-    buildProperties @
     initialize: ->
       childChange @, @startposition
       childChange @, @checkpoints
@@ -73,6 +81,7 @@
 
   class models.TrackConfig extends Model
     attributeNames: [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
+    buildProperties @
     defaults:
       course: new models.Course
     relations: [
@@ -80,15 +89,26 @@
       key: 'course'
       relatedModel: models.Course
     ]
-    buildProperties @
     initialize: ->
       childChange @, @course
       @on 'change:course', childChange
       super
 
+  class models.Car extends Model
+    #attributeNames: [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
+    #buildProperties @
+    urlRoot: '/v1/cars'
+
   class models.Env extends Model
     attributeNames: [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
     buildProperties @
+    urlRoot: '/v1/envs'
+    collection: models.EnvCollection
+    relations: [
+      type: Backbone.HasMany
+      key: 'cars'
+      relatedModel: models.Car
+    ]
 
   class models.Track extends Model
     attributeNames: [
@@ -102,6 +122,8 @@
       'published'
       'user'
     ]
+    buildProperties @
+    urlRoot: '/v1/tracks'
     defaults:
       config: new models.TrackConfig
     relations: [
@@ -113,16 +135,12 @@
       key: 'env'
       relatedModel: models.Env
     ]
-    urlRoot: 'track'
-    buildProperties @
     initialize: ->
       childChange @, @config
       childChange @, @env
       @on 'change:config', childChange
       @on 'change:env', childChange
       super
-
-  class models.UserTracks extends Collection
 
   class models.User extends Model
     attributeNames: [
@@ -132,30 +150,36 @@
       'gravatar_hash'
       'location'
       'name'
-      'tracks'  # NOTE: computed at runtime, not currently present in DB.
+      'tracks'  # NOTE: computed attribute, not currently present in DB.
       'website'
     ]
+    buildProperties @
+    urlRoot: '/v1/users'
     relations: [
       type: Backbone.HasMany
       key: 'tracks'
-      collectionType: models.UserTracks
+      collectionType: models.TrackCollection
       relatedModel: models.Track
+      includeInJSON: 'id'
+      reverseRelation:
+        key: 'user'
     ]
-    buildProperties @
 
   class models.UserPassport extends Model
     attributeNames: [
       'profile'
       'user'
     ]
+    buildProperties @
     relations: [
       type: Backbone.HasOne
       key: 'user'
       relatedModel: models.User
     ]
-    buildProperties @
 
   model.setup?() for name, model of models
+  models.BackboneCollection = Backbone.Collection
+  models.Collection = Collection
   models.Model = Model
 
   exports

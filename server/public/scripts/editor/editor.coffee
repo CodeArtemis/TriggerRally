@@ -79,18 +79,10 @@ define [
 
     socket = io.connect '/api'
 
-    models.Model::sync = sync.syncSocket socket
+    #models.Model::sync = sync.syncSocket socket
 
-    class TrackCollection extends Backbone.Collection
-      model: models.Track
-
-    tracksColl = new TrackCollection [
-      name: 'track a'
-    ,
-      name: 'track b'
-    ,
-      name: 'track c'
-    ]
+    userModel = new models.User
+      id: 'jareiko'
 
     trackModel = new models.Track
     #  id: TRIGGER.TRACK.id
@@ -120,13 +112,13 @@ define [
           track = theTrack
           client.addEditorCheckpoints track
 
-      if options?.fromServer
+      if options?.dontSave
         setStatus 'OK'
       else
         requestSave()
 
     trackModel.on 'childchange', ->
-      requestSave()# unless options.fromServer
+      requestSave()# unless options.dontSave
 
     trackModel.on 'sync', ->
       setStatus 'sync'
@@ -168,18 +160,25 @@ define [
       renderCar = new clientCar.RenderCar startPos, mockVehicle, null
       renderCar.update()
 
-    trackModel.set TRIGGER.TRACK, fromServer: yes
+    userModel.fetch
+      update: yes
+      success: ->
+        mdl = userModel.tracks.get(TRIGGER.TRACK.id).toJSON()
+        delete mdl.env
+        trackModel.set mdl, dontSave: yes
+
+    # trackModel.set TRIGGER.TRACK, dontSave: yes
     # trackModel.fetch
-    #   fromServer: yes
+    #   dontSave: yes
     #   success: -> setStatus 'OK'
     #   error: ->
     #     setStatus 'ERROR'
     #     console.log 'error details:'
     #     console.log arguments
 
-    if TRIGGER.READONLY
-      # Prevent any modification to the model.
-      models.Model::validate = (attrs) -> 'Read only mode'
+    #if TRIGGER.READONLY
+    #  # Prevent any modification to the model.
+    #  models.Model::validate = (attrs) -> 'Read only mode'
 
     layout = ->
       #[$statusbar, $view3d].forEach (panel) ->
@@ -196,7 +195,7 @@ define [
     $container.on 'resize', ->
       layout()
 
-    inspectorController = new inspector.Controller selection, trackModel, tracksColl
+    inspectorController = new inspector.Controller selection, trackModel, userModel.tracks
 
     $('#editor-helpbox-wrapper').removeClass 'visible'
     $('#editor-helpbox-wrapper .close-tab').click ->

@@ -4,39 +4,34 @@ bb = require('./public/scripts/models')
 
 # BACKBONE TO MONGOOSE LAYER
 
+mongoose = require('mongoose')
 mo = do ->
-  mongoose = require('mongoose')
   Car:   mongoose.model('Car')
+  Env:   mongoose.model('Environment')
   Run:   mongoose.model('Run')
   Track: mongoose.model('Track')
   User:  mongoose.model('User')
 
-parseMongoose = (attribNames, doc) ->
-  attribs = {}
-  for name in attribNames
-    attribs[name] = doc[name]
-  attribs.id = doc.pub_id
-  attribs.object_id = doc._id
-  attribs
-
-###
-syncModel = (Model) ->
-  (method, model, options) ->
-    success = options.success or ->
-    error = options.error or ->
-
-    switch method
-      when 'read'
-        Model
-          .findOne(pub_id: model.id)
-          .exec (err, doc) ->
-            return error model, err, options if err or not doc?
-            parsed = parseMongoose model.attributeNames, doc.toObject(virtuals:yes)
-            success model, parsed, options
-      else
-        error model, "#{method} method not implemented", options
-    return
-###
+parseMongoose = (doc) ->
+  #if doc?.created then console.log doc.created
+  if doc instanceof mongoose.Document
+    parseMongoose doc.toObject getters: yes
+  else if doc instanceof mongoose.Types.ObjectId
+    doc.toHexString()
+  else if _.isArray doc
+    (parseMongoose el for el in doc)
+  else if doc instanceof Date
+    doc
+  else if _.isObject doc
+    result = {}
+    for key, value of doc
+      result[key] = parseMongoose value
+    result.id = doc.pub_id
+    delete result.pub_id
+    delete result["__v"]
+    result
+  else
+    doc
 
 makeSync = (handlers) ->
   (method, model, options) ->
@@ -44,6 +39,12 @@ makeSync = (handlers) ->
     error = options?.error or ->
     handlers[method] model, success, error, options
 
+# bb.Track::sync = makeSync
+#   read: (model, success, error, options) ->
+#     mo.Track
+#       .findOne(pub_id: model.id)
+
+#TODO: break up this megafunction
 bb.User::sync = makeSync
   read: (model, success, error, options) ->
     mo.User
@@ -52,19 +53,44 @@ bb.User::sync = makeSync
         return error model, err, options if err or not user?
         mo.Track
           .find(user: user.id)
-          .populate('env', 'pub_id')
+          #.populate('env', 'pub_id')
           .exec (err, tracks) ->
             return error model, err, options if err
-            parsed = parseMongoose model.attributeNames, user.toObject(virtuals:yes)
-            console.log tracks.length
-            parsed.tracks = for track in tracks
-              parseMongoose bb.Track::attributeNames, track.toObject()
-            success model, parsed, options
+            envIds = _.uniq (track.env.toHexString() for track in tracks when track.env)
+            mo.Env
+              .find(_id: { $in: envIds })
+              .exec (err, envs) ->
+                return error model, err, options if err
+                carIds = ((car.toHexString() for car in env.cars) for env in envs)
+                carIds = _.uniq _.flatten carIds
+                mo.Car
+                  .find(_id: { $in: carIds })
+                  .exec (err, cars) ->
+                    return error model, err, options if err
+
+                    parsedCars = (parseMongoose car for car in cars)
+                    #bb.Car.build car for car in parsedCars
+                    carsById = _.object ([car.id, parsedCars[i]] for car, i in cars)
+
+                    parsedEnvs = for env in envs
+                      parsedEnv = parseMongoose env
+                      parsedEnv.cars = (carsById[car] for car in env.cars)
+                      parsedEnv
+                    #bb.Env.build env for env in parsedEnvs
+                    envsById = _.object ([env.id, parsedEnvs[i]] for env, i in envs)
+
+                    parsedTracks = for track in tracks
+                      parsedTrack = parseMongoose track
+                      parsedTrack.env = envsById[track.env] if track.env
+                      parsedTrack
+                    bb.Track.build track for track in parsedTracks
+
+                    parsed = parseMongoose user
+                    parsed.tracks = parsedTracks
+                    success model, parsed, options
 
 #for model in ['User', 'Track']
 #  bb[model]::sync = syncModel mo[model]
-
-#bb.UserTracks::sync = syncCollection mo.Tracks
 
 # NO MONGOOSE BEYOND THIS POINT
 
@@ -73,23 +99,48 @@ bb.User::toPublic = (opts) ->
   include.push 'tracks' if opts.tracks
   _.pick @toJSON(), include
 
-bb.UserTracks::toPublic = ->
-  exclude = [ 'object_id', 'config' ]
-  #include = [ 'id', 'bio', 'location', 'name', 'website' ]
-  (_.omit entry, exclude for entry in @toJSON())
+class DataContext
+  constructor: ->
+    @data = {}
+  witness: (model) ->
+    try
+      url = _.result model, 'url'
+    catch e
+      # Object does not have a URL mapping, so always treat it as unseen.
+      return no
+    seen = @data[url]?
+    # In future, this may contain the actual data and/or a timestamp.
+    @data[url] = yes
+    seen
 
-###
-bb.User::fetchTracks = (done) ->
-  mo.Track
-    .find(user: @get('object_id'))
-    .populate('env', {'pub_id':1})
-    .exec (error, tracks) =>
-      throw error if error
-      attribs = bb.Track::attributeNames
-      plainTracks = (parseMongoose attribs, track.toObject() for track in tracks)
-      @tracks.reset plainTracks
-      done()
-###
+serializeModel = (model, context = new DataContext) ->
+  seen = context.witness model
+  if seen
+    id: model.id
+  else
+    result = {}
+    for key, value of model.attributes
+      if key in ['_id', 'object_id', 'email', 'admin', 'created', 'modified']
+        continue
+      else if value instanceof bb.Model
+        result[key] = serializeModel value, context
+      else if value instanceof bb.BackboneCollection
+        result[key] = (serializeModel model, context for model in value.models)
+      else if _.isArray value
+        for item in value
+          if item instanceof bb.Model
+            result[key] = serializeModel item, context
+          else
+            result[key] = item
+      else
+        #console.log value
+        result[key] = value
+    result
+
+# bb.TrackCollection::toPublic = ->
+#   exclude = [ 'object_id', 'config' ]
+#   #include = [ 'id', 'bio', 'location', 'name', 'website' ]
+#   (_.omit entry, exclude for entry in @toJSON())
 
 # UTILITY FUNCTIONS
 
@@ -112,8 +163,13 @@ module.exports = (app) ->
   app.get "#{base}/users/:user_id", (req, res) ->
     findUser req.params['user_id'], (user) ->
       return error404 res unless user?
-      res.json user.toPublic
-        tracks: boolean req.query.with_tracks
+      res.json serializeModel user
+      return
+      res.json
+        users: [
+          user.toPublic
+            tracks: boolean req.query.with_tracks
+        ]
 
   ###
   app.get "#{base}/users/:user_id/tracks", (req, res) ->

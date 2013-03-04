@@ -18,7 +18,7 @@ define [
     fn obj = deepClone model.get(attrib)
     model.set attrib, obj
 
-  Controller: (selection, track, tracks) ->
+  Controller: (selection, track, userTracks) ->
     $inspector = $('#editor-inspector')
     $inspectorAttribs = $inspector.find('.attrib')
 
@@ -48,16 +48,20 @@ define [
 
     trackListView = new TrackList.View
       el: '#track-list'
-      collection: tracks
+      collection: userTracks
 
-    for layer, idx in track.env.scenery.layers
-      sceneryType.$content.append new Option layer.id, idx
+    onChangeEnv = ->
+      for layer, idx in track.env.scenery.layers
+        sceneryType.$content.append new Option layer.id, idx
+    track.on 'change:env', onChangeEnv
 
-    selTitle.$content.val track.name
+    track.on 'change:name', ->
+      selTitle.$content.val track.name
     selTitle.$content.on 'input', ->
       track.name = selTitle.$content.val()
 
-    flagPublish[0].checked = track.published
+    track.on 'change:published', ->
+      flagPublish[0].checked = track.published
     flagPublish.on 'change', ->
       track.published = flagPublish[0].checked
 

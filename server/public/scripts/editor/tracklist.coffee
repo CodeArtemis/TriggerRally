@@ -26,6 +26,8 @@ define [
   class TrackListView extends Backbone.View
     # Expects @el and @collection.
     initialize: ->
+      console.log 'tracklistview init'
+      console.log @collection
       @views = for model in @collection.models
         view = new TrackListEntryView {model}
         @el.appendChild view.render().el

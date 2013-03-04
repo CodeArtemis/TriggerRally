@@ -457,9 +457,10 @@ define [
         loadFunc = (url, callback) -> sceneLoader.load url, callback
         @add @renderScenery = new clientScenery.RenderScenery @scene, track.scenery, loadFunc, @renderer
         @track = track
-        for car, progress in deferredCars
-          onTrackCar track, car, progress
-        deferredCars = null
+        if deferredCars
+          for car, progress in deferredCars
+            onTrackCar track, car, progress
+          deferredCars = null
         @add new CamTerrainClipping(@camera, track.terrain), 10
         return
 
