@@ -13,7 +13,7 @@ mo = do ->
   User:  mongoose.model('User')
 
 parseMongoose = (doc) ->
-  if doc?.prefs then console.log doc.prefs
+  #if doc?.prefs then console.log doc.prefs
   if doc instanceof mongoose.Document
     parseMongoose doc.toObject getters: yes
   else if doc instanceof mongoose.Types.ObjectId
@@ -28,6 +28,7 @@ parseMongoose = (doc) ->
       result[key] = parseMongoose value
     result.id = doc.pub_id
     delete result.pub_id
+    delete result._id
     delete result["__v"]
     result
   else
@@ -39,7 +40,7 @@ makeSync = (handlers) ->
     error = options?.error or ->
     handlers[method] model, success, error, options
 
-# TODO: break up this megafunction.
+###
 bb.User::sync = makeSync
   read: (model, success, error, options) ->
     mo.User
@@ -83,22 +84,71 @@ bb.User::sync = makeSync
                       parsedTrack.parent = _.pick parsedTrack.parent, 'id' if parsedTrack.parent?
                       parsedTrack.env = envsById[track.env] if track.env
                       parsedTrack
-                    bb.Track.build track for track in parsedTracks
+                    #bb.Track.build track for track in parsedTracks
 
                     parsed = parseMongoose user
                     parsed.tracks = parsedTracks
                     success model, parsed, options
+###
+
+bb.Env::sync = makeSync
+  read: (model, success, error, options) ->
+    mo.Env
+      .findOne(pub_id: model.id)
+      .exec (err, env) ->
+        return error model, err, options if err or not env?
+        mo.Car
+          .find(_id: { $in: env.cars })
+          .select('pub_id')
+          .exec (err, cars) ->
+            return error model, err, options if err
+            parsed = parseMongoose env
+            parsed.cars = ({id: car.pub_id} for car in cars)
+            success model, parsed, options
+
+bb.Track::sync = makeSync
+  read: (model, success, error, options) ->
+    mo.Track
+      .findOne(pub_id: model.id)
+      .populate('env', 'pub_id')
+      .populate('parent', 'pub_id')
+      .populate('user', 'pub_id')
+      .exec (err, track) ->
+        return error model, err, options if err or not track?
+        parsed = parseMongoose track
+        parsed.env = id: parsed.env.id if parsed.env
+        parsed.parent = id: parsed.parent.id if parsed.parent
+        parsed.user = id: parsed.user.id if parsed.user
+        success model, parsed, options
+
+bb.User::sync = makeSync
+  read: (model, success, error, options) ->
+    mo.User
+      .findOne(pub_id: model.id)
+      .exec (err, user) ->
+        return error model, err, options if err or not user?
+        mo.Track
+          .find(user: user.id)
+          .select('pub_id')
+          .exec (err, tracks) ->
+            return error model, err, options if err
+            parsed = parseMongoose user
+            parsed.tracks = ({id: track.pub_id} for track in tracks)
+            success model, parsed, options
 
 #for model in ['User', 'Track']
 #  bb[model]::sync = syncModel mo[model]
 
 # NO MONGOOSE BEYOND THIS POINT
 
+###
 bb.User::toPublic = (opts) ->
   include = [ 'id', 'bio', 'location', 'name', 'website' ]
   include.push 'tracks' if opts.tracks
   _.pick @toJSON(), include
+###
 
+###
 class DataContext
   constructor: ->
     @data = {}
@@ -137,14 +187,17 @@ class DataContext
   scanObject: (object) ->
     result = {}
     for key, value of object
-      if key in ['_id', 'object_id', 'email', 'admin', 'created', 'modified', 'prefs']
-        continue
-      result[key] = @scanValue value
-    result
+      continue if key in ['_id', 'object_id', 'email', 'admin', 'created', 'modified', 'prefs']
+      scanned = @scanValue value
+      result[key] = scanned if scanned?
+    console.log result
+    if _.isEmpty result then null else result
 
   scanArray: (array) ->
-    for item in array
+    result = for item in array
       @scanValue item
+    if _.isEmpty result then null else result
+###
 
 # bb.TrackCollection::toPublic = ->
 #   exclude = [ 'object_id', 'config' ]
@@ -153,12 +206,15 @@ class DataContext
 
 # UTILITY FUNCTIONS
 
-findUser = (pub_id, done) ->
-  user = bb.User.findOrCreate(id: pub_id)
-  return done user if user.name?  # Already in the Store.
-  user.fetch
-    success: -> done user
-    error: -> done null
+findModel = (Model, pub_id, done) ->
+  model = Model.findOrCreate(id: pub_id)
+  return done model if model.name?  # Already in the Store.
+  model.fetch
+    success: -> done model
+    error:   -> done null
+
+findTrack = -> findModel(bb.Track, arguments...)
+findUser = -> findModel(bb.User, arguments...)
 
 # THE PUBLIC API
 
@@ -169,16 +225,17 @@ module.exports = (app) ->
 
   boolean = (val) -> val? and val in ['1', 't', 'y', 'true', 'yes']
 
+  app.get "#{base}/tracks/:track_id", (req, res) ->
+    findTrack req.params['track_id'], (track) ->
+      return error404 res unless track?
+      track.env.fetch
+        success: -> res.json track.toJSON()
+        error:   -> error404 res unless track?
+
   app.get "#{base}/users/:user_id", (req, res) ->
     findUser req.params['user_id'], (user) ->
       return error404 res unless user?
-      res.json (new DataContext).scanModel user
-      return
-      res.json
-        users: [
-          user.toPublic
-            tracks: boolean req.query.with_tracks
-        ]
+      res.json user.toJSON()
 
   ###
   app.get "#{base}/users/:user_id/tracks", (req, res) ->

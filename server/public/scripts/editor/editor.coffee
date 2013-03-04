@@ -54,7 +54,7 @@ define [
     contains: (sel) ->
       @some (element) -> element.get('sel').object is sel.object
 
-  run: ->
+  Editor = (app) ->
     $container = $(window)
     $statusbar = $('#editor-statusbar')
     $view3d = $('#view3d')
@@ -62,8 +62,13 @@ define [
 
     setStatus = (msg) -> $status.text msg
 
+    userModel = app.user
+
+    trackModel = new models.Track
+    #  id: TRIGGER.TRACK.id
+
     game = new gameGame.Game()
-    prefs = TRIGGER.USER?.prefs or {}
+    prefs = userModel.prefs or {}
     prefs.audio = no
     client = new clientClient.TriggerClient $view3d[0], game, prefs: prefs
 
@@ -77,15 +82,9 @@ define [
 
     selection = new Selection()
 
-    socket = io.connect '/api'
+    #socket = io.connect '/api'
 
     #models.Model::sync = sync.syncSocket socket
-
-    userModel = new models.User
-      id: 'jareiko'
-
-    trackModel = new models.Track
-    #  id: TRIGGER.TRACK.id
 
     #trackModel.on 'all', ->
     #  console.log arguments
@@ -159,13 +158,6 @@ define [
       startPos.remove renderCar if renderCar
       renderCar = new clientCar.RenderCar startPos, mockVehicle, null
       renderCar.update()
-
-    userModel.fetch
-      update: yes
-      success: ->
-        mdl = userModel.tracks.get(TRIGGER.TRACK.id).toJSON()
-        delete mdl.env
-        trackModel.set mdl, dontSave: yes
 
     # trackModel.set TRIGGER.TRACK, dontSave: yes
     # trackModel.fetch
@@ -486,4 +478,14 @@ define [
       deltaY = if origEvent.wheelDeltaY? then origEvent.wheelDeltaY else origEvent.deltaY
       scroll deltaY, event
 
-    return
+    # Editor API.
+
+    show: ->
+
+    hide: ->
+
+    setTrack: (trackId) ->
+      newTrack = new models.Track id: trackId
+      newTrack.fetch
+        success: (model, response, options) ->
+          trackModel.set model, dontSave: yes

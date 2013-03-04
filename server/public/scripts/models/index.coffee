@@ -47,6 +47,8 @@
   class models.UserCollection extends Collection
     type: 'users'
 
+  Backbone.Relational.store.addModelScope models
+
   class models.Checkpoint extends Model
     attributeNames: [ 'disp', 'pos', 'surf' ]
     buildProperties @
@@ -108,6 +110,7 @@
       type: Backbone.HasMany
       key: 'cars'
       relatedModel: models.Car
+      includeInJSON: 'id'
     ]
 
   class models.Track extends Model
@@ -119,6 +122,7 @@
       'env'
       'modified'
       'name'
+      'parent'
       'published'
       'user'
     ]
@@ -134,6 +138,11 @@
       type: Backbone.HasOne
       key: 'env'
       relatedModel: models.Env
+    ,
+      type: Backbone.HasOne
+      key: 'parent'
+      relatedModel: 'Track'
+      includeInJSON: 'id'
     ]
     initialize: ->
       childChange @, @config
@@ -141,6 +150,11 @@
       @on 'change:config', childChange
       @on 'change:env', childChange
       super
+    toJSON: (options) ->
+      json = super
+      delete json.created
+      delete json.modified
+      json
 
   class models.User extends Model
     attributeNames: [
@@ -163,7 +177,16 @@
       includeInJSON: 'id'
       reverseRelation:
         key: 'user'
+        includeInJSON: 'id'
     ]
+    toJSON: (options) ->
+      json = super
+      delete json.created
+      delete json.email
+      unless options?.authenticated
+        delete json.admin
+        delete json.prefs
+      json
 
   class models.UserPassport extends Model
     attributeNames: [
@@ -182,5 +205,4 @@
   models.BackboneModel = Backbone.Model
   models.Collection = Collection
   models.Model = Model
-
-  exports
+  models

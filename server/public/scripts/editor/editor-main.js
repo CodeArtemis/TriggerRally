@@ -43,13 +43,14 @@ require(
       , 'underscore': '../js/underscore-min'  // -min
       , 'backbone': '../js/backbone'  // -min
       , 'backbone-relational': '../js/backbone-relational'
-      , 'jquery': '../js/jquery-1.8.3.min'  // .min
+      , 'jquery': '../js/jquery-1.9.1.min'  // .min
     }
   },
   [
-    'cs!editor/editor'
+    'cs!editor/app'
   ],
-  function editorMain(editor) {
-    editor.run();
+  function main(App) {
+    var app = new App();
+    app.run();
   }
 );
