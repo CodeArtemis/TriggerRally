@@ -207,14 +207,15 @@ class DataContext
 # UTILITY FUNCTIONS
 
 findModel = (Model, pub_id, done) ->
-  model = Model.findOrCreate(id: pub_id)
+  model = Model.findOrCreate pub_id
   return done model if model.name?  # Already in the Store.
   model.fetch
     success: -> done model
     error:   -> done null
 
+findEnv   = -> findModel(bb.Env,   arguments...)
 findTrack = -> findModel(bb.Track, arguments...)
-findUser = -> findModel(bb.User, arguments...)
+findUser  = -> findModel(bb.User,  arguments...)
 
 # THE PUBLIC API
 
