@@ -33,7 +33,7 @@ mongoose.connection.on "error", (err) ->
 
 SessionStore = session_mongoose(connect)
 sessionStore = new SessionStore(
-  url: 'mongodb://localhost/sessions'
+  url: 'mongodb://127.0.0.1/sessions'
   # Expiration check worker run interval in millisec (default: 60000)
   interval: 120000
 )
@@ -189,11 +189,11 @@ app.configure 'development', ->
     dumpExceptions: true
     showStack: true
   )
-  mongoose.connect 'mongodb://localhost/trigger-prod'
+  mongoose.connect 'mongodb://127.0.0.1/trigger-prod'
 
 app.configure 'production', ->
   app.use express.errorHandler(dumpExceptions: true)
-  mongoose.connect 'mongodb://localhost/trigger-prod'
+  mongoose.connect 'mongodb://127.0.0.1/trigger-prod'
 
 loadUrlUser = (req, res, next) ->
   User
