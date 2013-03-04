@@ -57,13 +57,17 @@ define [
     # TODO: Move this to client?
     $('#fullscreenlink').on 'click', (ev) ->
       el = view3d[0]
-      reqFS = el.requestFullScreenWithKeys or
-              el.mozRequestFullScreenWithKeys or
-              el.webkitRequestFullScreenWithKeys or
-              el.requestFullScreen or
-              el.mozRequestFullScreen or
-              el.webkitRequestFullScreen
-      reqFS.bind(el)()
+      reqFS = el.webkitRequestFullScreen
+      if reqFS
+        reqFS.call el, Element.ALLOW_KEYBOARD_INPUT
+      else
+        reqFS = el.requestFullScreenWithKeys or
+                el.mozRequestFullScreenWithKeys or
+                el.webkitRequestFullScreenWithKeys or
+                el.requestFullScreen or
+                el.mozRequestFullScreen or
+                el.webkitRequestFullScreen
+        reqFS.call el
       return false
 
     # Workaround to wait for Chrome's fullscreen animation to finish.
