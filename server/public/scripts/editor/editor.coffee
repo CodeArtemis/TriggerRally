@@ -119,8 +119,8 @@ define [
     trackModel.on 'childchange', ->
       requestSave()# unless options.dontSave
 
-    trackModel.on 'sync', ->
-      setStatus 'sync'
+    #trackModel.on 'sync', ->
+    #  setStatus 'sync'
 
     startPos = new THREE.Object3D()
     client.scene.add startPos
@@ -189,7 +189,7 @@ define [
     $container.on 'resize', ->
       layout()
 
-    inspectorController = new inspector.Controller selection, trackModel, userModel.tracks
+    inspectorController = new inspector.Controller selection, trackModel, userModel
 
     $('#editor-helpbox-wrapper').removeClass 'visible'
     $('#editor-helpbox-wrapper .close-tab').click ->
@@ -489,5 +489,6 @@ define [
     setTrack: (trackId) ->
       trackModel.set 'id', trackId, silent: yes
       trackModel.fetch
+        dontSave: yes
         success: (model, response, options) ->
-          console.log 'success!'
+          console.log 'loaded track!'

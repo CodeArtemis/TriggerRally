@@ -55,7 +55,8 @@ app = module.exports = express()
 
 PORT = process.env.PORT or 80
 DOMAIN = process.env.DOMAIN or 'triggerrally.com'
-URL_PREFIX = 'http://' + DOMAIN
+PORT_SUFFIX = if PORT is 80 then "" else ":#{PORT}"
+URL_PREFIX = "http://#{DOMAIN}#{PORT_SUFFIX}"
 
 authenticateUser = (profile, done) ->
   passport_id = profile.identifier or (profile.provider + profile.id)
@@ -79,20 +80,13 @@ authenticateUser = (profile, done) ->
           done error, userPassport
           #res.redirect('/user/' + user.pub_id + '/edit');
 
+authenticationSuccessfulAPI = (req, res) ->
+  throw new Error('authenticationSuccessfulAPI: req.user array') if Array.isArray req.user
+  res.json status: "ok"
+
 authenticationSuccessful = (req, res) ->
-  user = req.user
-  throw new Error('authenticationSuccessful: user array') if Array.isArray(user)
+  throw new Error('authenticationSuccessful: req.user array') if Array.isArray req.user
   res.redirect '/'
-  # Directing users to edit their profile each time may be annoying.
-  #
-  #  if (user.newbie) {
-  #    // User has not yet saved their profile.
-  #    res.redirect('/user/' + user.pub_id + '/edit');
-  #    //res.end();
-  #  } else {
-  #    res.redirect('/');
-  #    //res.end();
-  #  }
 
 #passport.use new LocalStrategy(
 #  usernameField: 'email'
@@ -107,33 +101,32 @@ authenticationSuccessful = (req, res) ->
 #    done null, user
 #)
 
-passport.use new FacebookStrategy(
-  clientID: config.FACEBOOK_APP_ID
-  clientSecret: config.FACEBOOK_APP_SECRET
-  callbackURL: URL_PREFIX + '/auth/facebook/callback'
-, (accessToken, refreshToken, profile, done) ->
-  profile.auth = { accessToken, refreshToken }
-  authenticateUser profile, done
-)
-
-passport.use new GoogleStrategy(
-  returnURL: URL_PREFIX + '/auth/google/return'
-  realm: URL_PREFIX + '/'
-, (identifier, profile, done) ->
-  # passport-oauth doesn't supply provider or id.
-  profile.identifier = identifier  # Old storage
-  profile.auth = { identifier }    # New unified auth
-  authenticateUser profile, done
-)
-
-passport.use new TwitterStrategy(
-  consumerKey: config.TWITTER_APP_KEY
-  consumerSecret: config.TWITTER_APP_SECRET
-  callbackURL: URL_PREFIX + '/auth/twitter/callback'
-, (token, tokenSecret, profile, done) ->
-  profile.auth = { token, tokenSecret }
-  authenticateUser profile, done
-)
+for i in ["", "/v1"]
+  passport.use "facebook#{i}", new FacebookStrategy(
+    clientID: config.FACEBOOK_APP_ID
+    clientSecret: config.FACEBOOK_APP_SECRET
+    callbackURL: "#{URL_PREFIX}#{i}/auth/facebook/callback"
+  , (accessToken, refreshToken, profile, done) ->
+    profile.auth = { accessToken, refreshToken }
+    authenticateUser profile, done
+  )
+  passport.use "google#{i}", new GoogleStrategy(
+    returnURL: "#{URL_PREFIX}#{i}/auth/google/return"
+    realm: URL_PREFIX + '/'
+  , (identifier, profile, done) ->
+    # passport-oauth doesn't supply provider or id.
+    profile.identifier = identifier  # Old storage
+    profile.auth = { identifier }    # New unified auth
+    authenticateUser profile, done
+  )
+  passport.use "twitter#{i}", new TwitterStrategy(
+    consumerKey: config.TWITTER_APP_KEY
+    consumerSecret: config.TWITTER_APP_SECRET
+    callbackURL: "#{URL_PREFIX}#{i}/auth/twitter/callback"
+  , (token, tokenSecret, profile, done) ->
+    profile.auth = { token, tokenSecret }
+    authenticateUser profile, done
+  )
 
 passport.serializeUser (userPassport, done) ->
   done null, userPassport.id
@@ -295,7 +288,40 @@ editUser = (req, res, next) ->
   req.editing = true
   next()
 
-require('./api') app
+app.get    '/auth/facebook', passport.authenticate('facebook')
+app.get    '/auth/facebook/callback', passport.authenticate('facebook',
+  failureRedirect: '/login'
+), authenticationSuccessful
+app.get    '/auth/google', passport.authenticate('google')
+app.get    '/auth/google/return', passport.authenticate('google',
+  failureRedirect: '/login'
+), authenticationSuccessful
+app.get    '/auth/twitter', passport.authenticate('twitter')
+app.get    '/auth/twitter/callback', passport.authenticate('twitter',
+  failureRedirect: '/login'
+), authenticationSuccessful
+
+app.get    '/logout', (req, res) ->
+  req.logOut()
+  res.redirect '/'
+
+app.get    '/v1/auth/facebook', passport.authenticate('facebook/v1')
+app.get    '/v1/auth/facebook/callback', passport.authenticate('facebook/v1',
+  failureRedirect: '/login'
+), authenticationSuccessfulAPI
+app.get    '/v1/auth/google', passport.authenticate('google/v1')
+app.get    '/v1/auth/google/return', passport.authenticate('google/v1',
+  failureRedirect: '/login'
+), authenticationSuccessfulAPI
+app.get    '/v1/auth/twitter', passport.authenticate('twitter/v1')
+app.get    '/v1/auth/twitter/callback', passport.authenticate('twitter/v1'), authenticationSuccessfulAPI
+
+app.get    '/v1/auth/logout', (req, res) ->
+  req.logOut()
+  res.json status: "ok"
+
+require('./api') app, passport
+
 app.get    '/', routes.index
 app.get    '/about', routes.about
 app.get    '/login', routes.login
@@ -323,18 +349,6 @@ app.get    '/run/:idRun/replay', loadUrlRun, routes.runReplay
 app.get    '/x/:idTrack/:idCar/drive', loadUrlTrackIncDrive, loadUrlCar, routes.drive
 app.get    '/x/:idTrack/:idCar/top', loadUrlTrack, loadUrlCar, routes.top
 app.post   '/metrics', routes.metricsSave
-app.get    '/auth/facebook', passport.authenticate('facebook')
-app.get    '/auth/facebook/callback', passport.authenticate('facebook',
-  failureRedirect: '/login'
-), authenticationSuccessful
-app.get    '/auth/google', passport.authenticate('google')
-app.get    '/auth/google/return', passport.authenticate('google',
-  failureRedirect: '/login'
-), authenticationSuccessful
-app.get    '/auth/twitter', passport.authenticate('twitter')
-app.get    '/auth/twitter/callback', passport.authenticate('twitter',
-  failureRedirect: '/login'
-), authenticationSuccessful
 
 #
 #app.post('/login',
@@ -342,10 +356,6 @@ app.get    '/auth/twitter/callback', passport.authenticate('twitter',
 #    authenticationSuccessful
 #);
 #
-
-app.get '/logout', (req, res) ->
-  req.logOut()
-  res.redirect '/'
 
 # Backward compatibility.
 app.get '/drive', (req, res) ->

@@ -238,14 +238,14 @@ module.exports = (app) ->
       return error404 res unless user?
       res.json user.toJSON()
 
-  ###
-  app.get "#{base}/users/:user_id/tracks", (req, res) ->
-    findUser req.params['user_id'], (user) ->
-      return error404 res unless user?
-      user.tracks.fetch
-        success: -> res.json user.tracks.toPublic()
-        error: -> error404 res
-  ###
+  app.get "#{base}/auth/user", (req, res) ->
+    if req.user?.user
+      findUser req.user.user.pub_id, (user) ->
+        return error404 res unless user?
+        res.json user: user.toJSON()
+    else
+      res.json user: null
+    return
 
   app.get "#{base}/*", (req, res) -> error404 res
 

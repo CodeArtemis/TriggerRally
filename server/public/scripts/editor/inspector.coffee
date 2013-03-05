@@ -5,11 +5,13 @@
 define [
   'jquery'
   'cs!./ops'
-  'cs!./tracklist'
+  'cs!views/tracklist'
+  'cs!views/user'
 ], (
   $
   Ops
-  TrackList
+  TrackListView
+  UserView
 ) ->
   deepClone = (obj) -> JSON.parse JSON.stringify obj
 
@@ -18,7 +20,7 @@ define [
     fn obj = deepClone model.get(attrib)
     model.set attrib, obj
 
-  Controller: (selection, track, userTracks) ->
+  Controller: (selection, track, user) ->
     $inspector = $('#editor-inspector')
     $inspectorAttribs = $inspector.find('.attrib')
 
@@ -27,43 +29,46 @@ define [
       $root: $el
       $content: $el.find '.content'
 
-    trackList       = $inspector.find '#track-list'
-    selType         = attrib '#sel-type'
-    selTitle        = attrib '#title'
-    selScale        = attrib '#scale'
-    selDispRadius   = attrib '#disp-radius'
-    selDispHardness = attrib '#disp-hardness'
-    selDispStrength = attrib '#disp-strength'
-    selSurfRadius   = attrib '#surf-radius'
-    selSurfHardness = attrib '#surf-hardness'
-    selSurfStrength = attrib '#surf-strength'
-    sceneryType     = attrib '#scenery-type'
-    cmdAdd          = attrib '#cmd-add'
-    cmdCopy         = attrib '#cmd-copy'
-    cmdDelete       = attrib '#cmd-delete'
-    cmdCopyTrack    = attrib '#cmd-copy-track'
-    cmdDeleteTrack  = attrib '#cmd-delete-track'
-    flagPublish     = $inspector.find '#flag-publish input'
-    flagSnap        = $inspector.find '#flag-snap input'
+    $selType         = attrib '#sel-type'
+    $selTitle        = attrib '#title'
+    $selScale        = attrib '#scale'
+    $selDispRadius   = attrib '#disp-radius'
+    $selDispHardness = attrib '#disp-hardness'
+    $selDispStrength = attrib '#disp-strength'
+    $selSurfRadius   = attrib '#surf-radius'
+    $selSurfHardness = attrib '#surf-hardness'
+    $selSurfStrength = attrib '#surf-strength'
+    $sceneryType     = attrib '#scenery-type'
+    $cmdAdd          = attrib '#cmd-add'
+    $cmdCopy         = attrib '#cmd-copy'
+    $cmdDelete       = attrib '#cmd-delete'
+    $cmdCopyTrack    = attrib '#cmd-copy-track'
+    $cmdDeleteTrack  = attrib '#cmd-delete-track'
+    $flagPublish     = $inspector.find '#flag-publish input'
+    $flagSnap        = $inspector.find '#flag-snap input'
 
-    trackListView = new TrackList.View
+    trackListView = new TrackListView
       el: '#track-list'
-      collection: userTracks
+      collection: user.tracks
+
+    userView = new UserView
+      el: '#user-track-owner'
+      model: user
 
     onChangeEnv = ->
       for layer, idx in track.env.scenery.layers
-        sceneryType.$content.append new Option layer.id, idx
+        $sceneryType.$content.append new Option layer.id, idx
     track.on 'change:env', onChangeEnv
 
     track.on 'change:name', ->
-      selTitle.$content.val track.name
-    selTitle.$content.on 'input', ->
-      track.name = selTitle.$content.val()
+      $selTitle.$content.val track.name
+    $selTitle.$content.on 'input', ->
+      track.name = $selTitle.$content.val()
 
     track.on 'change:published', ->
-      flagPublish[0].checked = track.published
-    flagPublish.on 'change', ->
-      track.published = flagPublish[0].checked
+      $flagPublish[0].checked = track.published
+    $flagPublish.on 'change', ->
+      track.published = $flagPublish[0].checked
 
     bindSlider = (type, slider, eachSel) ->
       $content = slider.$content
@@ -73,38 +78,38 @@ define [
           sel = selModel.get 'sel'
           eachSel sel, val if sel.type is type
 
-    bindSlider 'checkpoint', selDispRadius,   (sel, val) -> manipulate sel.object, 'disp', (o) -> o.radius   = val
-    bindSlider 'checkpoint', selDispHardness, (sel, val) -> manipulate sel.object, 'disp', (o) -> o.hardness = val
-    bindSlider 'checkpoint', selDispStrength, (sel, val) -> manipulate sel.object, 'disp', (o) -> o.strength = val
-    bindSlider 'checkpoint', selSurfRadius,   (sel, val) -> manipulate sel.object, 'surf', (o) -> o.radius   = val
-    bindSlider 'checkpoint', selSurfHardness, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.hardness = val
-    bindSlider 'checkpoint', selSurfStrength, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.strength = val
+    bindSlider 'checkpoint', $selDispRadius,   (sel, val) -> manipulate sel.object, 'disp', (o) -> o.radius   = val
+    bindSlider 'checkpoint', $selDispHardness, (sel, val) -> manipulate sel.object, 'disp', (o) -> o.hardness = val
+    bindSlider 'checkpoint', $selDispStrength, (sel, val) -> manipulate sel.object, 'disp', (o) -> o.strength = val
+    bindSlider 'checkpoint', $selSurfRadius,   (sel, val) -> manipulate sel.object, 'surf', (o) -> o.radius   = val
+    bindSlider 'checkpoint', $selSurfHardness, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.hardness = val
+    bindSlider 'checkpoint', $selSurfStrength, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.strength = val
 
-    bindSlider 'scenery', selScale, (sel, val) ->
+    bindSlider 'scenery', $selScale, (sel, val) ->
       scenery = deepClone track.config.scenery
       scenery[sel.layer].add[sel.idx].scale = Math.exp(val)
       track.config.scenery = scenery
 
-    cmdAdd.$content.click ->
-      $sceneryType = sceneryType.$content.find(":selected")
-      layerIdx = $sceneryType.val()
-      layer = $sceneryType.text()
+    $cmdAdd.$content.click ->
+      $$sceneryType = $sceneryType.$content.find(":selected")
+      layerIdx = $$sceneryType.val()
+      layer = $$sceneryType.text()
       Ops.addScenery track, layer, layerIdx, selection
 
-    cmdCopy.$content.click ->
+    $cmdCopy.$content.click ->
       Ops.copy track, selection
 
-    cmdDelete.$content.click ->
+    $cmdDelete.$content.click ->
       Ops.delete track, selection
 
-    cmdCopyTrack.$content.click ->
+    $cmdCopyTrack.$content.click ->
       return unless window.confirm "Are you sure you want to create a copy of this track?"
       form = document.createElement 'form'
       form.action = 'copy'
       form.method = 'POST'
       form.submit()
 
-    cmdDeleteTrack.$content.click ->
+    $cmdDeleteTrack.$content.click ->
       return unless window.confirm "Are you sure you want to DELETE this track?"
       xhr = new XMLHttpRequest()
       xhr.open "DELETE", "."
@@ -117,8 +122,8 @@ define [
         window.alert "Error: #{xhr.status}"
       xhr.send()
 
-    do updateSnap = => @snapToGround = flagSnap[0].checked
-    flagSnap.on 'change', updateSnap
+    do updateSnap = => @snapToGround = $flagSnap[0].checked
+    $flagSnap.on 'change', updateSnap
 
     checkpointSliderSet = (slider, val) ->
       slider.$content.val val
@@ -128,7 +133,7 @@ define [
       # Hide and reset all controls first.
       $inspectorAttribs.removeClass 'visible'
 
-      selType.$content.text switch selection.length
+      $selType.$content.text switch selection.length
         when 0 then 'none'
         when 1
           sel = selection.first().get('sel')
@@ -142,23 +147,23 @@ define [
         sel = selModel.get 'sel'
         switch sel.type
           when 'checkpoint'
-            checkpointSliderSet selDispRadius,   sel.object.disp.radius
-            checkpointSliderSet selDispHardness, sel.object.disp.hardness
-            checkpointSliderSet selDispStrength, sel.object.disp.strength
-            checkpointSliderSet selSurfRadius,   sel.object.surf.radius
-            checkpointSliderSet selSurfHardness, sel.object.surf.hardness
-            checkpointSliderSet selSurfStrength, sel.object.surf.strength
-            cmdDelete.$root.addClass 'visible'
-            cmdCopy.$root.addClass 'visible'
+            checkpointSliderSet $selDispRadius,   sel.object.disp.radius
+            checkpointSliderSet $selDispHardness, sel.object.disp.hardness
+            checkpointSliderSet $selDispStrength, sel.object.disp.strength
+            checkpointSliderSet $selSurfRadius,   sel.object.surf.radius
+            checkpointSliderSet $selSurfHardness, sel.object.surf.hardness
+            checkpointSliderSet $selSurfStrength, sel.object.surf.strength
+            $cmdDelete.$root.addClass 'visible'
+            $cmdCopy.$root.addClass 'visible'
           when 'scenery'
-            selScale.$content.val Math.log sel.object.scale
-            selScale.$root.addClass 'visible'
-            cmdDelete.$root.addClass 'visible'
-            cmdCopy.$root.addClass 'visible'
+            $selScale.$content.val Math.log sel.object.scale
+            $selScale.$root.addClass 'visible'
+            $cmdDelete.$root.addClass 'visible'
+            $cmdCopy.$root.addClass 'visible'
           when 'terrain'
             # Terrain selection acts as marker for adding scenery.
-            sceneryType.$root.addClass 'visible'
-            cmdAdd.$root.addClass 'visible'
+            $sceneryType.$root.addClass 'visible'
+            $cmdAdd.$root.addClass 'visible'
       return
 
     onChange()

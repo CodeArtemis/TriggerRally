@@ -97,10 +97,7 @@ block body
       div
         span.label Owner
         span.content
-          span IMPLEMENT ME
-          //-
-            user = trackData.user
-            include partial/user
+          span.user#user-track-owner
 
       //- if !userLoggedIn || userLoggedIn.pub_id !== trackData.user.id
         .warning
