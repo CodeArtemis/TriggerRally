@@ -1,26 +1,27 @@
 define [
-  'backbone-full'
+  'cs!./view'
   'jade!templates/user'
   'jade!templates/userstatus'
 ], (
-  Backbone
+  View
   templateBasic
   templateWithStatus
 ) ->
-  class UserView extends Backbone.View
+  class UserView extends View
     initialize: ->
       super
       @model.on 'change', =>
         @render()
 
-    render: ->
+    template: (viewModel) ->
       template = if @options.showStatus then templateWithStatus else templateBasic
-      @$el.html template
-        user: @model
-        randomSmiley: @randomSmiley
-      @
+      template viewModel
 
-    randomSmiley: ->
+    viewModel: ->
+      user: @model
+      randomSmiley: randomSmiley
+
+    randomSmiley = ->
       smileys = [
         "smiley.png"
         "smile.png"

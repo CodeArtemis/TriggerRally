@@ -1,10 +1,8 @@
 define [
-  'backbone-full'
+  'cs!./view'
 ], (
-  Backbone
+  View
 ) ->
-  View = Backbone.View
-
   class ViewCollection extends View
     #collection: new Backbone.Collection()
     #view: View  # The type of child views to create.
@@ -14,14 +12,17 @@ define [
       @views = []
 
       @collection.on 'add', (model, collection, options) =>
-        @add new @view { model }
+        console.log 'add view'
+        @renderOne model
 
       @collection.on 'remove', (model, collection, options) =>
+        console.log 'remove view'
         view = @find (view) -> view.model.cid is model.cid
         @destroy view if view
 
-      @collection.on 'reset', (collection, options) =>
-        @reset collection.map (model) => new @view { model }
+      #@collection.on 'reset', (collection, options) =>
+      #  console.log 'reset view'
+      #  @reset collection.map (model) => new @view { model }
 
       @collection.on 'sort', (collection, options) =>
         throw 'sort not implemented'
@@ -35,18 +36,19 @@ define [
       views = if _.isArray(views) then views.slice() else [views]
       for view in views
         unless @get view.cid
-          @views.push(view)
-          @trigger('add', view, @) unless options.silent
+          @views.push view
+          #@trigger('add', view, @) unless options.silent
       @
 
     get: (cid) ->
       @find((view) -> view.cid is cid) or null
 
+    # TODO: Rename this method, it conflicts with Backbone.View.
     remove: (views, options = {}) ->
       views = if _.isArray(views) then views.slice() else [views]
       for view in views
         @destroy(view)
-        @trigger('remove', view, @) unless options.silent
+        #@trigger('remove', view, @) unless options.silent
       @
 
     destroy: (view = @, options = {}) ->
@@ -56,15 +58,15 @@ define [
       view.$el.removeData().unbind()
       #view.remove()
       Backbone.View::remove.call view
-      @trigger('remove', view, @) unless options.silent
+      #@trigger('remove', view, @) unless options.silent
       @
 
     reset: (views, options = {}) ->
       views = if _.isArray(views) then views.slice() else [views]
-      @destroy(view, options) for view in @views
+      @remove @views, options
       if views.length isnt 0
-        @add(view, options) for view in views
-        @trigger('reset', view, @) unless options.silent
+        @add views, options
+        #@trigger('reset', view, @) unless options.silent
       @
 
     renderOne: (model) =>

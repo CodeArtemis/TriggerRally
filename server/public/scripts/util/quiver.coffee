@@ -1,6 +1,7 @@
 # Copyright (C) 2012 jareiko / http://www.jareiko.net/
 
 moduleDef = (require, exports, module) ->
+  _ = require('underscore')
   async = require("async")
 
   _getUniqueId = do ->
@@ -155,7 +156,8 @@ moduleDef = (require, exports, module) ->
         do (info) ->
           tasks[nodeId] = info.deps.concat [
             (cb) ->
-              info.node.execute cb
+              _.defer ->
+                info.node.execute cb
           ]
       async.auto tasks, (err, results) ->
         lockedSet.release()
@@ -173,7 +175,8 @@ moduleDef = (require, exports, module) ->
         do (info) ->
           tasks[nodeId] = info.deps.concat [
             (cb) ->
-              info.node.execute cb
+              _.defer ->
+                info.node.execute cb
           ]
       async.auto tasks, (err, results) ->
         lockedSet.release()

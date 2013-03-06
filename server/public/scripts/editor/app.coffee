@@ -32,7 +32,7 @@ define [
 
     run: ->
       xhr = new XMLHttpRequest()
-      xhr.open 'GET', '/v1/auth/user'
+      xhr.open 'GET', '/v1/auth/me'
       xhr.onload = =>
         return unless xhr.readyState is 4
         return unless xhr.status is 200

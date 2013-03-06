@@ -1,40 +1,42 @@
 define [
-  'backbone-full'
+  'cs!./view'
   'cs!./view_collection'
+  'jade!templates/tracklistentry'
 ], (
-  Backbone
+  View
   ViewCollection
+  templateTrackListEntry
 ) ->
-  class TrackListEntryView extends Backbone.View
+  class TrackListEntryView extends View
     tagName: 'div'
     className: 'track'
+    template: templateTrackListEntry
 
     initialize: ->
-      @model.on 'change:name', ->
+      @model.on 'change:name', =>
         @render()
       return
 
-    template: (model) ->
-      # TODO: Move this into a separate file.
-      name = model.get 'name'
-      "<a href=\"../#{model.id}/edit\">#{name}</a>"
-
-    render: ->
-      @$el.html @template @model
-      @
+    viewModel: ->
+      name: @model.name or 'Loading...'
+      url: "../#{@model.id}/edit"
 
   class TrackListView extends ViewCollection
+    view: TrackListEntryView
+
     # Expects @el and @collection.
     initialize: ->
-      console.log 'tracklistview init'
-      console.log @collection
-      @render()
+      super
+      #console.log 'tracklistview init'
+      #console.log @collection
+      #@render()
 
-      @collection.on 'all', ->
-        console.log 'track collection event:'
-        console.log arguments
+      #@collection.on 'all', ->
+      #  console.log 'track collection event:'
+      #  console.log arguments
 
     render: ->
+      return super
       @views = for model in @collection.models
         view = new TrackListEntryView {model}
         @el.appendChild view.render().el

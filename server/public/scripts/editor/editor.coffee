@@ -68,7 +68,8 @@ define [
 
     trackModel = new models.Track
 
-    #userModel.fetchRelated 'tracks'
+    userModel.on 'change:tracks', ->
+      userModel.fetchRelated 'tracks'
 
     game = new gameGame.Game()
     prefs = userModel.prefs or {}
@@ -86,12 +87,7 @@ define [
     selection = new Selection()
 
     #socket = io.connect '/api'
-
     #models.Model::sync = sync.syncSocket socket
-
-    #trackModel.on 'all', ->
-    #  console.log arguments
-    #  console.log trackModel.changedAttributes()
 
     track = null
 
@@ -192,6 +188,7 @@ define [
     $container.on 'resize', ->
       layout()
 
+    # TODO: Move to a StatusBarView?
     userView = new UserView
       el: '#editor-statusbar .userinfo'
       model: userModel
@@ -500,4 +497,4 @@ define [
       trackModel.fetch
         dontSave: yes
         success: (model, response, options) ->
-          console.log 'loaded track!'
+          #console.log 'loaded track!'

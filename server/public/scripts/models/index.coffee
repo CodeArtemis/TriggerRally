@@ -44,6 +44,14 @@
     type: 'envs'
   class models.TrackCollection extends Collection
     type: 'tracks'
+    # url: (models) ->
+    #   if models?
+    #     ids = _.pluck(models, 'id').join('+')
+    #     "/v1/tracks/#{ids}"
+    #   else
+    #     "/v1/tracks"
+    # parse: (response, options) ->
+    #   response
   class models.UserCollection extends Collection
     type: 'users'
 

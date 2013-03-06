@@ -1,5 +1,4 @@
 _ = require('underscore')
-
 bb = require('./public/scripts/models')
 
 # BACKBONE TO MONGOOSE LAYER
@@ -227,18 +226,31 @@ module.exports = (app) ->
   boolean = (val) -> val? and val in ['1', 't', 'y', 'true', 'yes']
 
   app.get "#{base}/tracks/:track_id", (req, res) ->
-    findTrack req.params['track_id'], (track) ->
-      return error404 res unless track?
-      track.env.fetch
-        success: -> res.json track.toJSON()
-        error:   -> error404 res unless track?
+    trackIds = req.params['track_id'].split('+')
+    tracks = []
+
+    done = _.after trackIds.length, ->
+      for track in tracks
+        return error404 res unless track?
+      data = (track.toJSON() for track in tracks)
+      res.json if data[1] then data else data[0]
+
+    trackIds.forEach (trackId, i) ->
+      findTrack trackId, (track) ->
+        tracks[i] = track
+        if track?.env
+          track.env.fetch
+            success: done
+            error:   done
+        else
+          done()
 
   app.get "#{base}/users/:user_id", (req, res) ->
     findUser req.params['user_id'], (user) ->
       return error404 res unless user?
       res.json user.toJSON()
 
-  app.get "#{base}/auth/user", (req, res) ->
+  app.get "#{base}/auth/me", (req, res) ->
     if req.user?.user
       findUser req.user.user.pub_id, (user) ->
         return error404 res unless user?
