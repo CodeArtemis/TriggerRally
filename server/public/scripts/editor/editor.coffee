@@ -16,6 +16,7 @@ define [
   'cs!models/index'
   'cs!models/sync'
   'cs!editor/inspector'
+  'cs!views/user'
 ], (
   $
   Backbone
@@ -30,6 +31,7 @@ define [
   models
   sync
   inspector
+  UserView
 ) ->
   KEYCODE = util.KEYCODE
   Vec3FromArray = util.Vec3FromArray
@@ -65,7 +67,8 @@ define [
     userModel = app.user
 
     trackModel = new models.Track
-    #  id: TRIGGER.TRACK.id
+
+    #userModel.fetchRelated 'tracks'
 
     game = new gameGame.Game()
     prefs = userModel.prefs or {}
@@ -189,8 +192,14 @@ define [
     $container.on 'resize', ->
       layout()
 
+    userView = new UserView
+      el: '#editor-statusbar .userinfo'
+      model: userModel
+      showStatus: yes
+
     inspectorController = new inspector.Controller selection, trackModel, userModel
 
+    # Hide the help window.
     $('#editor-helpbox-wrapper').removeClass 'visible'
     $('#editor-helpbox-wrapper .close-tab').click ->
       $('#editor-helpbox-wrapper').toggleClass 'visible'

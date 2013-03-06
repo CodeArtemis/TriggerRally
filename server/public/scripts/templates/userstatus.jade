@@ -1,0 +1,13 @@
+if user
+  //- Unfortunately, Jade client-side includes aren't working.
+    include ./user
+  span.user
+    a(href="/user/#{user.pub_id || user.id}")
+      img(src="https://secure.gravatar.com/avatar/#{user.gravatar_hash}?s=40&d=#{randomSmiley()}")
+      span.username #{user.name}
+  span &nbsp;&mdash;&nbsp;
+  a(href='/logout') Log Out&nbsp;
+else
+  span
+    a(href="/login")
+      strong Log in&nbsp;

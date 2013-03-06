@@ -14,16 +14,6 @@ block body
           span#status Loading
         td
           .userinfo
-            span IMPLEMENT ME
-          //-
-            - if (user)
-              include partial/user
-              span &nbsp;&mdash;&nbsp;
-              a(href='/logout') Log Out&nbsp;
-            - else//- if (login)
-              span
-                a(href="/login")
-                  strong Log in&nbsp;
 
   #editor-helpbox-wrapper.visible
     .close-tab Toggle Help
@@ -94,10 +84,9 @@ block body
     details(open)
       summary Track info
 
-      div
+      #user-track-owner
         span.label Owner
         span.content
-          span.user#user-track-owner
 
       //- if !userLoggedIn || userLoggedIn.pub_id !== trackData.user.id
         .warning
@@ -122,11 +111,9 @@ block body
         span.label Action
         button.content Copy Track
 
-      span IMPLEMENT ME
-      //- if userLoggedIn && userLoggedIn.pub_id === trackData.user.id
-        #cmd-delete-track
-          span.label Action
-          button.content Delete Track
+      #cmd-delete-track.hidden
+        span.label Action
+        button.content Delete Track
 
       #flag-publish
         label
