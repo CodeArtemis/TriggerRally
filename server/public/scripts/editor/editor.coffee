@@ -117,9 +117,9 @@ define [
         # DUPLICATION vvv
         requestSave()
 
-    trackModel.on 'childchange', ->
-      # DUPLICATION ^^^
-      requestSave()# unless options.dontSave
+    #trackModel.on 'childchange', ->
+    #  # DUPLICATION ^^^
+    #  requestSave()# unless options.dontSave
 
     #trackModel.on 'sync', ->
     #  setStatus 'sync'
@@ -152,24 +152,17 @@ define [
         interp:
           pos: new Vec3(0,0,0)
           ori: (new THREE.Quaternion(1,1,1,1)).normalize()
-    renderCar = null
 
-    trackModel.on 'all', -> console.log arguments
+    #trackModel.on 'all', -> console.log arguments
 
-    trackModel.on 'change:env', ->
-      trackModel.env?.on 'all', ->
-        console.log arguments
-        console.log trackModel.env.cars.length
-      car = trackModel.env.cars.at(0)
-      console.log "env car #{car}"
-      if car
-        mockVehicle.cfg = car.config
-        # TODO: Deallocate renderCar.
-        startPos.remove renderCar if renderCar
+    # We always use an ArbusuG to represent the start position, for now.
+    arbusuModel = new models.Car id: 'ArbusuG'
+    arbusuModel.fetch
+      success: ->
+        mockVehicle.cfg = arbusuModel.config
+        # TODO: Deallocate old startposCar, if any.
         renderCar = new clientCar.RenderCar startPos, mockVehicle, null
         renderCar.update()
-      else
-        trackModel.env.fetchRelated 'cars'
 
     # trackModel.set TRIGGER.TRACK, dontSave: yes
     # trackModel.fetch
@@ -360,7 +353,7 @@ define [
 
     $view3d.mouseup (event) ->
       buttons &= ~(1 << event.button)
-      unless hasMoved
+      if event.button is 0 and not hasMoved
         selection.reset() unless event.shiftKey
         if cursor
           unless selection.contains cursor
