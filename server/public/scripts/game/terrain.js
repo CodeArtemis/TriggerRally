@@ -36,8 +36,6 @@ function(THREE, async, uImg, quiver, util) {
     var maps = this.maps;
 
     for (var k in config) {
-      if (config[k].url)
-        config[k].url = new String(config[k].url);
       maps[k] = {
         scale: new Vec3(config[k].scale[0],
                         config[k].scale[1],
@@ -64,7 +62,7 @@ function(THREE, async, uImg, quiver, util) {
     // Set up processing pipelines.
     // TODO: discard intermediate buffers.
     quiver.connect(
-        config.height.url,
+        config.height,
         uImg.imageFromUrl(),
         {},
         uImg.getImageData({flip: true}),
@@ -79,7 +77,7 @@ function(THREE, async, uImg, quiver, util) {
       // TODO: omit copyChannel stage.
       var imageData = {};
       quiver.connect(
-          config.detail.url,
+          config.detail,
           uImg.imageFromUrl(),
           {},
           uImg.getImageData({flip: true}),

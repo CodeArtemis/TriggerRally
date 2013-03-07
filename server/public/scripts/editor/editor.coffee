@@ -105,6 +105,7 @@ define [
       doSave()
 
     trackModel.on 'change', (model, options) ->
+      #console.log 'track model change'
       if hasChanged trackModel, ['config', 'env']
         game.setTrackConfig trackModel, (err, theTrack) ->
           track = theTrack
@@ -113,9 +114,11 @@ define [
       if options?.dontSave
         setStatus 'OK'
       else
+        # DUPLICATION vvv
         requestSave()
 
     trackModel.on 'childchange', ->
+      # DUPLICATION ^^^
       requestSave()# unless options.dontSave
 
     #trackModel.on 'sync', ->
@@ -151,14 +154,22 @@ define [
           ori: (new THREE.Quaternion(1,1,1,1)).normalize()
     renderCar = null
 
+    trackModel.on 'all', -> console.log arguments
+
     trackModel.on 'change:env', ->
+      trackModel.env?.on 'all', ->
+        console.log arguments
+        console.log trackModel.env.cars.length
       car = trackModel.env.cars.at(0)
+      console.log "env car #{car}"
       if car
         mockVehicle.cfg = car.config
         # TODO: Deallocate renderCar.
         startPos.remove renderCar if renderCar
         renderCar = new clientCar.RenderCar startPos, mockVehicle, null
         renderCar.update()
+      else
+        trackModel.env.fetchRelated 'cars'
 
     # trackModel.set TRIGGER.TRACK, dontSave: yes
     # trackModel.fetch

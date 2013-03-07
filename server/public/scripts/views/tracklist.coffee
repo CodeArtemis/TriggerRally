@@ -1,8 +1,10 @@
 define [
+  'backbone-full'
   'cs!./view'
   'cs!./view_collection'
   'jade!templates/tracklistentry'
 ], (
+  Backbone
   View
   ViewCollection
   templateTrackListEntry
@@ -13,31 +15,22 @@ define [
     template: templateTrackListEntry
 
     initialize: ->
+      super
+      @selected = no
       @model.on 'change:name', =>
         @render()
-      return
 
     viewModel: ->
       name: @model.name or 'Loading...'
-      url: "../#{@model.id}/edit"
+      url: "/track/#{@model.id}/edit"
+
+    afterRender: ->
+      @$el.toggleClass 'selected', @model is @options.parent.options.selectedTrack
+
+      $a = @$el.find('a')
+      $a.click ->
+        Backbone.history.navigate $a.attr('href'), trigger: yes
+        false
 
   class TrackListView extends ViewCollection
     view: TrackListEntryView
-
-    # Expects @el and @collection.
-    initialize: ->
-      super
-      #console.log 'tracklistview init'
-      #console.log @collection
-      #@render()
-
-      #@collection.on 'all', ->
-      #  console.log 'track collection event:'
-      #  console.log arguments
-
-    render: ->
-      return super
-      @views = for model in @collection.models
-        view = new TrackListEntryView {model}
-        @el.appendChild view.render().el
-        view

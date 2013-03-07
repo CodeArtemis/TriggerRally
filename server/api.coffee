@@ -39,56 +39,16 @@ makeSync = (handlers) ->
     error = options?.error or ->
     handlers[method] model, success, error, options
 
-###
-bb.User::sync = makeSync
+bb.Car::sync = makeSync
   read: (model, success, error, options) ->
-    mo.User
+    mo.Car
       .findOne(pub_id: model.id)
-      .exec (err, user) ->
-        return error model, err, options if err or not user?
-        mo.Track
-          .find(user: user.id)
-          .populate('parent', 'pub_id')
-          .exec (err, tracks) ->
-            return error model, err, options if err
-            envIds = _.uniq (track.env.toHexString() for track in tracks when track.env)
-            mo.Env
-              .find(_id: { $in: envIds })
-              .exec (err, envs) ->
-                return error model, err, options if err
-                carIds = ((car.toHexString() for car in env.cars) for env in envs)
-                carIds = _.uniq _.flatten carIds
-                mo.Car
-                  .find(_id: { $in: carIds })
-                  .populate('user', 'pub_id')
-                  .exec (err, cars) ->
-                    return error model, err, options if err
-
-                    parsedCars = for car in cars
-                      parsedCar = parseMongoose car
-                      parsedCar.user = _.pick parsedCar.user, 'id' if parsedCar.user?
-                      parsedCar
-                    #bb.Car.build car for car in parsedCars
-                    carsById = _.object ([car.id, parsedCars[i]] for car, i in cars)
-
-                    parsedEnvs = for env in envs
-                      parsedEnv = parseMongoose env
-                      parsedEnv.cars = (carsById[car] for car in env.cars)
-                      parsedEnv
-                    #bb.Env.build env for env in parsedEnvs
-                    envsById = _.object ([env.id, parsedEnvs[i]] for env, i in envs)
-
-                    parsedTracks = for track in tracks
-                      parsedTrack = parseMongoose track
-                      parsedTrack.parent = _.pick parsedTrack.parent, 'id' if parsedTrack.parent?
-                      parsedTrack.env = envsById[track.env] if track.env
-                      parsedTrack
-                    #bb.Track.build track for track in parsedTracks
-
-                    parsed = parseMongoose user
-                    parsed.tracks = parsedTracks
-                    success model, parsed, options
-###
+      .populate('user', 'pub_id')
+      .exec (err, car) ->
+        return error model, err, options if err or not car?
+        parsed = parseMongoose car
+        parsed.user = id: parsed.user.id if parsed.user
+        success model, parsed, options
 
 bb.Env::sync = makeSync
   read: (model, success, error, options) ->
@@ -135,17 +95,7 @@ bb.User::sync = makeSync
             parsed.tracks = ({id: track.pub_id} for track in tracks)
             success model, parsed, options
 
-#for model in ['User', 'Track']
-#  bb[model]::sync = syncModel mo[model]
-
 # NO MONGOOSE BEYOND THIS POINT
-
-###
-bb.User::toPublic = (opts) ->
-  include = [ 'id', 'bio', 'location', 'name', 'website' ]
-  include.push 'tracks' if opts.tracks
-  _.pick @toJSON(), include
-###
 
 ###
 class DataContext
@@ -212,6 +162,7 @@ findModel = (Model, pub_id, done) ->
     success: -> done model
     error:   -> done null
 
+findCar   = -> findModel(bb.Car,   arguments...)
 findEnv   = -> findModel(bb.Env,   arguments...)
 findTrack = -> findModel(bb.Track, arguments...)
 findUser  = -> findModel(bb.User,  arguments...)
@@ -224,6 +175,11 @@ module.exports = (app) ->
   error404 = (res) -> res.json 404, error: "Not Found"
 
   boolean = (val) -> val? and val in ['1', 't', 'y', 'true', 'yes']
+
+  app.get "#{base}/cars/:car_id", (req, res) ->
+    findCar req.params['car_id'], (car) ->
+      return error404 res unless car?
+      res.json car.toJSON()
 
   app.get "#{base}/tracks/:track_id", (req, res) ->
     trackIds = req.params['track_id'].split('+')

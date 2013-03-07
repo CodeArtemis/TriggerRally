@@ -84,9 +84,9 @@ define(function(require, exports, module) {
   };
 
   exports.imageFromUrl = function() {
-    return _oneToOne(function(url, imgObject, callback) {
+    return _oneToOne(function(urlNode, imgObject, callback) {
       var load = inNode ? _loadImageNode : _loadImageBrowser;
-      load(url, function(err, image) {
+      load(urlNode.url, function(err, image) {
         if (err) callback(err);
         else {
           imgObject.img = image;

@@ -44,6 +44,7 @@
     type: 'envs'
   class models.TrackCollection extends Collection
     type: 'tracks'
+    comparator: 'name'
     # url: (models) ->
     #   if models?
     #     ids = _.pluck(models, 'id').join('+')
@@ -105,9 +106,19 @@
       super
 
   class models.Car extends Model
-    #attributeNames: [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
-    #buildProperties @
+    attributeNames: [ 'config', 'name', 'user' ]
+    buildProperties @
     urlRoot: '/v1/cars'
+    relations: [
+      type: Backbone.HasOne
+      key: 'user'
+      relatedModel: 'User'
+      includeInJSON: 'id'
+    ]
+    toJSON: (options) ->
+      json = super
+      delete json.created
+      json
 
   class models.Env extends Model
     attributeNames: [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]

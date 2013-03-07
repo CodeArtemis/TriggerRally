@@ -51,6 +51,7 @@ define [
     trackListView = new TrackListView
       el: '#track-list'
       collection: user.tracks
+      selectedTrack: track
 
     userView = new UserView
       el: '#user-track-owner .content'
