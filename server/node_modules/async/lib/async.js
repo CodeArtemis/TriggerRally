@@ -425,16 +425,21 @@
         _each(keys, function (k) {
             var task = (tasks[k] instanceof Function) ? [tasks[k]]: tasks[k];
             var taskCallback = function (err) {
+                var args = Array.prototype.slice.call(arguments, 1);
+                if (args.length <= 1) {
+                    args = args[0];
+                }
                 if (err) {
-                    callback(err);
+                    var safeResults = {};
+                    _each(_keys(results), function(rkey) {
+                        safeResults[rkey] = results[rkey];
+                    });
+                    safeResults[k] = args;
+                    callback(err, safeResults);
                     // stop subsequent errors hitting callback multiple times
                     callback = function () {};
                 }
                 else {
-                    var args = Array.prototype.slice.call(arguments, 1);
-                    if (args.length <= 1) {
-                        args = args[0];
-                    }
                     results[k] = args;
                     async.nextTick(taskComplete);
                 }
@@ -693,6 +698,9 @@
     };
 
     async.queue = function (worker, concurrency) {
+        if (concurrency === undefined) {
+            concurrency = 1;
+        }
         function _insert(q, data, pos, callback) {
           if(data.constructor !== Array) {
               data = [data];
@@ -935,6 +943,25 @@
                 callback.apply(that, [err].concat(results));
             });
         };
+    };
+
+    async.applyEach = function (fns /*args...*/) {
+        var go = function () {
+            var that = this;
+            var args = Array.prototype.slice.call(arguments);
+            var callback = args.pop();
+            return async.each(fns, function (fn, cb) {
+                fn.apply(that, args.concat([cb]));
+            },
+            callback);
+        };
+        if (arguments.length > 1) {
+            var args = Array.prototype.slice.call(arguments, 1);
+            return go.apply(this, args);
+        }
+        else {
+            return go;
+        }
     };
 
     // AMD / RequireJS
