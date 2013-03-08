@@ -14,36 +14,68 @@
 ) (exports, Backbone) ->
 
   # http://www.narrativescience.com/blog/automatically-creating-getterssetters-for-backbone-models/
-  buildProperties = (func) ->
+  buildProps = (constructor, propNames) ->
     buildGetter = (name) ->
       -> @get name
     buildSetter = (name) ->
       (value) -> @set name, value
-    for attr in func.prototype.attributeNames
-      Object.defineProperty func.prototype, attr,
-        get: buildGetter attr
-        set: buildSetter attr
+    for prop in propNames
+      Object.defineProperty constructor::, prop,
+        get: buildGetter prop
+        set: buildSetter prop
 
-  childChange = (parent, mdl) ->
-    return unless mdl? and mdl.on?
-    mdl.on 'change', ->
-      parent.trigger 'childchange', []
-    mdl.on 'childchange', (stack) ->
-      parent.trigger 'childchange', stack.concat mdl
+  # childChange = (parent, mdl) ->
+  #   return unless mdl? and mdl.on?
+  #   mdl.on 'change', ->
+  #     parent.trigger 'childchange', []
+  #   mdl.on 'childchange', (stack) ->
+  #     parent.trigger 'childchange', stack.concat mdl
 
   models = exports
 
-  Model = Backbone.RelationalModel.extend {}
-  #  initialize: ->
-  #    @on 'all', -> console.log arguments
+  models.RelModel = class RelModel extends Backbone.RelationalModel
+    # TODO: override fetch() to check lastSync
+    parse: (response, options) ->
+      @lastSync = Date.now()
+      super
+
+    initialize: ->
+      super
+      monitored = {}
+      monitorAttribute = (parentModel, name) =>
+
+        onAll = (event, args...) ->
+          return unless event.startsWith('change:')
+          parentModel.trigger "change:#{name}.#{event[7..]}", args...
+
+        value = @get name
+        if monitored[name]?
+          return if monitored[name] is value
+          monitored[name].off 'all', onAll
+
+        return unless value instanceof Backbone.Model or value instanceof Backbone.Collection
+
+        monitored[name] = value
+        value.on 'all', onAll
+
+      # Bind to initial attributes.
+      monitorAttribute @, name for name of @attributes
+
+      # Watch for changes to attributes and rebind as necessary.
+      @on 'change', (model, options) =>
+        monitorAttribute @, name for name of @changed
+        return
+      return
+
+  RelModel.setup()
 
   class Collection extends Backbone.Collection
-    url: "/v1/#{@type}"
+    url: "/v1/#{@path}"
 
   class models.EnvCollection extends Collection
-    type: 'envs'
+    path: 'envs'
   class models.TrackCollection extends Collection
-    type: 'tracks'
+    path: 'tracks'
     comparator: 'name'
     # url: (models) ->
     #   if models?
@@ -54,21 +86,18 @@
     # parse: (response, options) ->
     #   response
   class models.UserCollection extends Collection
-    type: 'users'
+    path: 'users'
 
   Backbone.Relational.store.addModelScope models
 
-  class models.Checkpoint extends Model
-    attributeNames: [ 'disp', 'pos', 'surf' ]
-    buildProperties @
+  class models.Checkpoint extends RelModel
+    buildProps @, [ 'disp', 'pos', 'surf' ]
 
-  class models.StartPos extends Model
-    attributeNames: [ 'pos', 'rot' ]
-    buildProperties @
+  class models.StartPos extends RelModel
+    buildProps @, [ 'pos', 'rot' ]
 
-  class models.Course extends Model
-    attributeNames: [ 'checkpoints', 'startposition' ]
-    buildProperties @
+  class models.Course extends RelModel
+    buildProps @, [ 'checkpoints', 'startposition' ]
     defaults:
       startposition: new models.StartPos
     relations: [
@@ -84,15 +113,14 @@
       relatedModel: models.Checkpoint
     ]
     initialize: ->
-      childChange @, @startposition
-      childChange @, @checkpoints
-      @on 'change:startposition', childChange
-      @on 'change:checkpoints', childChange
+      # childChange @, @startposition
+      # childChange @, @checkpoints
+      # @on 'change:startposition', childChange
+      # @on 'change:checkpoints', childChange
       super
 
-  class models.TrackConfig extends Model
-    attributeNames: [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
-    buildProperties @
+  class models.TrackConfig extends RelModel
+    buildProps @, [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
     defaults:
       course: new models.Course
     relations: [
@@ -101,13 +129,12 @@
       relatedModel: models.Course
     ]
     initialize: ->
-      childChange @, @course
-      @on 'change:course', childChange
+      # childChange @, @course
+      # @on 'change:course', childChange
       super
 
-  class models.Car extends Model
-    attributeNames: [ 'config', 'name', 'user' ]
-    buildProperties @
+  class models.Car extends RelModel
+    buildProps @, [ 'config', 'name', 'user' ]
     urlRoot: '/v1/cars'
     relations: [
       type: Backbone.HasOne
@@ -120,9 +147,8 @@
       delete json.created
       json
 
-  class models.Env extends Model
-    attributeNames: [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
-    buildProperties @
+  class models.Env extends RelModel
+    buildProps @, [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
     urlRoot: '/v1/envs'
     collection: models.EnvCollection
     relations: [
@@ -132,8 +158,8 @@
       includeInJSON: 'id'
     ]
 
-  class models.Track extends Model
-    attributeNames: [
+  class models.Track extends RelModel
+    buildProps @, [
       'config'
       'count_copy'
       'count_drive'
@@ -145,7 +171,6 @@
       'published'
       'user'
     ]
-    buildProperties @
     urlRoot: '/v1/tracks'
     defaults:
       config: new models.TrackConfig
@@ -164,10 +189,10 @@
       includeInJSON: 'id'
     ]
     initialize: ->
-      childChange @, @config
-      childChange @, @env
-      @on 'change:config', childChange
-      @on 'change:env', childChange
+      # childChange @, @config
+      # childChange @, @env
+      # @on 'change:config', childChange
+      # @on 'change:env', childChange
       super
     toJSON: (options) ->
       json = super
@@ -175,8 +200,8 @@
       delete json.modified
       json
 
-  class models.User extends Model
-    attributeNames: [
+  class models.User extends RelModel
+    buildProps @, [
       'bio'
       'created'
       'email'
@@ -186,7 +211,6 @@
       'tracks'  # NOTE: computed attribute, not currently present in DB.
       'website'
     ]
-    buildProperties @
     urlRoot: '/v1/users'
     relations: [
       type: Backbone.HasMany
@@ -207,12 +231,11 @@
         delete json.prefs
       json
 
-  class models.UserPassport extends Model
-    attributeNames: [
+  class models.UserPassport extends RelModel
+    buildProps @, [
       'profile'
       'user'
     ]
-    buildProperties @
     relations: [
       type: Backbone.HasOne
       key: 'user'
@@ -220,8 +243,11 @@
     ]
 
   model.setup?() for name, model of models
+
+  models.buildProps = buildProps
   models.BackboneCollection = Backbone.Collection
   models.BackboneModel = Backbone.Model
   models.Collection = Collection
-  models.Model = Model
+  #models.RelModel = RelModel
+
   models

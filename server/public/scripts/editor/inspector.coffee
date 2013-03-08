@@ -20,7 +20,7 @@ define [
     fn obj = deepClone model.get(attrib)
     model.set attrib, obj
 
-  Controller: (selection, track, user) ->
+  Controller: (app, selection) ->
     $inspector = $('#editor-inspector')
     $inspectorAttribs = $inspector.find('.attrib')
 
@@ -47,6 +47,11 @@ define [
     $cmdDeleteTrack = $inspector.find '#cmd-delete-track'
     $flagPublish    = $inspector.find '#flag-publish input'
     $flagSnap       = $inspector.find '#flag-snap input'
+
+    root = app.model
+    user = app.model.user
+    track = app.currentTrack()
+    return unless track?
 
     trackListView = new TrackListView
       el: '#track-list'

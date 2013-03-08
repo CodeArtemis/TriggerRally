@@ -248,6 +248,9 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
         var updateCheckpoints = _.debounce(function() {
           quiver.push(this.config.course.checkpoints);
         }.bind(this), 200);
+        this.config.on('change', function() {
+          console.log("Oh! it changed!");
+        });
         this.config.course.checkpoints.on('change', updateCheckpoints);
         this.config.course.checkpoints.on('add', updateCheckpoints);
         this.config.course.checkpoints.on('remove', updateCheckpoints);

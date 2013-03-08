@@ -43,11 +43,6 @@ define [
   tmpVec3b = new THREE.Vector3
   plusZVec3 = new Vec3 0, 0, 1
 
-  hasChanged = (model, attrs) ->
-    for attr in attrs
-      return yes if model.hasChanged attr
-    no
-
   deepClone = (obj) -> JSON.parse JSON.stringify obj
 
   Sel = Backbone.Model.extend {}
@@ -64,15 +59,11 @@ define [
 
     setStatus = (msg) -> $status.text msg
 
-    userModel = app.user
-
-    trackModel = new models.Track
-
-    userModel.on 'change:tracks', ->
-      userModel.fetchRelated 'tracks'
+    app.model.user.on 'change:tracks', ->
+      app.model.user.fetchRelated 'tracks'
 
     game = new gameGame.Game()
-    prefs = userModel.prefs or {}
+    prefs = app.model.user.prefs or {}
     prefs.audio = no
     client = new clientClient.TriggerClient $view3d[0], game, prefs: prefs
 
@@ -86,65 +77,71 @@ define [
 
     selection = new Selection()
 
+    startPos = new THREE.Object3D()
+    client.scene.add startPos
+
     #socket = io.connect '/api'
     #models.Model::sync = sync.syncSocket socket
 
     track = null
 
-    doSave = _.debounce ->
-      setStatus 'Saving...'
-      trackModel.save null,
-        success: (model, response, options) ->
-          setStatus 'OK'
-        error: (model, xhr, options) ->
-          setStatus 'ERROR: ' + xhr
-    , 1000
+    bindTrack = (trackModel) ->
+      doSave = _.debounce ->
+        setStatus 'Saving...'
+        trackModel.save null,
+          success: (model, response, options) ->
+            setStatus 'OK'
+          error: (model, xhr, options) ->
+            setStatus 'ERROR: ' + xhr
+      , 1000
 
-    requestSave = ->
-      setStatus 'Changed'
-      doSave()
+      requestSave = ->
+        setStatus 'Changed'
+        doSave()
 
-    trackModel.on 'change', (model, options) ->
-      #console.log 'track model change'
-      if hasChanged trackModel, ['config', 'env']
+      trackModel.on 'change:config change:env', (model, options) ->
+        #console.log 'track model change'
         game.setTrackConfig trackModel, (err, theTrack) ->
           track = theTrack
           client.addEditorCheckpoints track
 
-      if options?.dontSave
-        setStatus 'OK'
-      else
-        # DUPLICATION vvv
-        requestSave()
+        if options?.dontSave
+          setStatus 'OK'
+        else
+          # DUPLICATION vvv
+          requestSave()
 
-    #trackModel.on 'childchange', ->
-    #  # DUPLICATION ^^^
-    #  requestSave()# unless options.dontSave
+      #trackModel.on 'childchange', ->
+      #  # DUPLICATION ^^^
+      #  requestSave()# unless options.dontSave
 
-    #trackModel.on 'sync', ->
-    #  setStatus 'sync'
+      #trackModel.on 'sync', ->
+      #  setStatus 'sync'
 
-    startPos = new THREE.Object3D()
-    client.scene.add startPos
-    trackModel.on 'change:config', ->
-      do changeCourse = ->
-        do changeStartPos = ->
-          startposition = trackModel.config.course.startposition
-          Vec3::set.apply startPos.position, startposition.pos
-          Vec3::set.apply startPos.rotation, startposition.rot
-        trackModel.config.course.on 'change:startposition', changeStartPos
-        trackModel.config.course.startposition.on 'change', changeStartPos
-      trackModel.config.on 'change:course', changeCourse
-      trackModel.config.course.on 'change', changeCourse
+      trackModel.on 'change:config', ->
+        do changeCourse = ->
+          do changeStartPos = ->
+            console.log 'change start pos'
+            startposition = trackModel.config.course.startposition
+            Vec3::set.apply startPos.position, startposition.pos
+            Vec3::set.apply startPos.rotation, startposition.rot
+          trackModel.config.course.on 'change:startposition', changeStartPos
+          trackModel.config.course.startposition.on 'change', changeStartPos
+        trackModel.config.on 'change:course', changeCourse
+        trackModel.config.course.on 'change', changeCourse
 
-    trackModel.once 'change', ->
-      startposition = trackModel.config.course.startposition
-      Vec3::set.apply camPos, startposition.pos
-      camAng.x = 0.9
-      camAng.z = startposition.rot[2] - Math.PI / 2
-      camPos.x -= 20 * Math.cos(startposition.rot[2])
-      camPos.y -= 20 * Math.sin(startposition.rot[2])
-      camPos.z += 40
+      trackModel.once 'change', ->
+        startposition = trackModel.config.course.startposition
+        Vec3::set.apply camPos, startposition.pos
+        camAng.x = 0.9
+        camAng.z = startposition.rot[2] - Math.PI / 2
+        camPos.x -= 20 * Math.cos(startposition.rot[2])
+        camPos.y -= 20 * Math.sin(startposition.rot[2])
+        camPos.z += 40
+
+      #trackModel.on 'all', -> console.log arguments
+
+    app.model.on 'change:trackid', -> bindTrack app.currentTrack()
 
     mockVehicle =
       cfg: null
@@ -152,8 +149,6 @@ define [
         interp:
           pos: new Vec3(0,0,0)
           ori: (new THREE.Quaternion(1,1,1,1)).normalize()
-
-    #trackModel.on 'all', -> console.log arguments
 
     # We always use an ArbusuG to represent the start position, for now.
     arbusuModel = new models.Car id: 'ArbusuG'
@@ -195,10 +190,10 @@ define [
     # TODO: Move to a StatusBarView?
     userView = new UserView
       el: '#editor-statusbar .userinfo'
-      model: userModel
+      model: app.model.user
       showStatus: yes
 
-    inspectorController = new inspector.Controller selection, trackModel, userModel
+    inspectorController = new inspector.Controller app, selection
 
     # Hide the help window.
     $('#editor-helpbox-wrapper').removeClass 'visible'
