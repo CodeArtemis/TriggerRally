@@ -59,8 +59,9 @@ define [
 
     setStatus = (msg) -> $status.text msg
 
-    app.model.user.on 'change:tracks', ->
-      app.model.user.fetchRelated 'tracks'
+    appModel = app.model
+    appModel.on 'change:user.tracks', ->
+      appModel.user.fetchRelated 'tracks'
 
     game = new gameGame.Game()
     prefs = app.model.user.prefs or {}
@@ -85,61 +86,53 @@ define [
 
     track = null
 
-    bindTrack = (trackModel) ->
-      doSave = _.debounce ->
-        setStatus 'Saving...'
-        trackModel.save null,
-          success: (model, response, options) ->
-            setStatus 'OK'
-          error: (model, xhr, options) ->
-            setStatus 'ERROR: ' + xhr
-      , 1000
-
-      requestSave = ->
-        setStatus 'Changed'
-        doSave()
-
-      trackModel.on 'change:config change:env', (model, options) ->
-        #console.log 'track model change'
-        game.setTrackConfig trackModel, (err, theTrack) ->
-          track = theTrack
-          client.addEditorCheckpoints track
-
-        if options?.dontSave
+    doSave = _.debounce ->
+      setStatus 'Saving...'
+      appModel.track.save null,
+        success: (model, response, options) ->
           setStatus 'OK'
-        else
-          # DUPLICATION vvv
-          requestSave()
+        error: (model, xhr, options) ->
+          setStatus 'ERROR: ' + xhr
+    , 1000
 
-      #trackModel.on 'childchange', ->
-      #  # DUPLICATION ^^^
-      #  requestSave()# unless options.dontSave
+    requestSave = ->
+      setStatus 'Changed'
+      doSave()
 
-      #trackModel.on 'sync', ->
-      #  setStatus 'sync'
+    appModel.on 'change:track.config change:track.env', (model, options) ->
+      game.setTrackConfig appModel.track, (err, theTrack) ->
+        track = theTrack
+        client.addEditorCheckpoints track
 
-      trackModel.on 'change:config', ->
-        do changeCourse = ->
-          do changeStartPos = ->
-            console.log 'change start pos'
-            startposition = trackModel.config.course.startposition
-            Vec3::set.apply startPos.position, startposition.pos
-            Vec3::set.apply startPos.rotation, startposition.rot
-          trackModel.config.course.on 'change:startposition', changeStartPos
-          trackModel.config.course.startposition.on 'change', changeStartPos
-        trackModel.config.on 'change:course', changeCourse
-        trackModel.config.course.on 'change', changeCourse
+      if options?.dontSave
+        setStatus 'OK'
+      else
+        # DUPLICATION vvv
+        requestSave()
 
-      trackModel.once 'change', ->
-        startposition = trackModel.config.course.startposition
-        Vec3::set.apply camPos, startposition.pos
-        camAng.x = 0.9
-        camAng.z = startposition.rot[2] - Math.PI / 2
-        camPos.x -= 20 * Math.cos(startposition.rot[2])
-        camPos.y -= 20 * Math.sin(startposition.rot[2])
-        camPos.z += 40
+    #appModel.track.on 'childchange', ->
+    #  # DUPLICATION ^^^
+    #  requestSave()# unless options.dontSave
 
-      #trackModel.on 'all', -> console.log arguments
+    #appModel.track.on 'sync', ->
+    #  setStatus 'sync'
+
+    appModel.on 'change:track.config.course.startposition', ->
+      console.log 'change startpos'
+      startposition = appModel.track.config.course.startposition
+      Vec3::set.apply startPos.position, startposition.pos
+      Vec3::set.apply startPos.rotation, startposition.rot
+
+    appModel.once 'change:track.config.course.startposition.pos', ->
+      startposition = appModel.track.config.course.startposition
+      Vec3::set.apply camPos, startposition.pos
+      camAng.x = 0.9
+      camAng.z = startposition.rot[2] - Math.PI / 2
+      camPos.x -= 20 * Math.cos(startposition.rot[2])
+      camPos.y -= 20 * Math.sin(startposition.rot[2])
+      camPos.z += 40
+
+    #appModel.track.on 'all', -> console.log arguments
 
     app.model.on 'change:trackid', -> bindTrack app.currentTrack()
 
@@ -159,8 +152,8 @@ define [
         renderCar = new clientCar.RenderCar startPos, mockVehicle, null
         renderCar.update()
 
-    # trackModel.set TRIGGER.TRACK, dontSave: yes
-    # trackModel.fetch
+    # appModel.track.set TRIGGER.TRACK, dontSave: yes
+    # appModel.track.fetch
     #   dontSave: yes
     #   success: -> setStatus 'OK'
     #   error: ->
@@ -242,10 +235,10 @@ define [
           rot[2] -= Math.floor(rot[2] / TWOPI) * TWOPI
           switch sel.type
             when 'scenery'
-              scenery = deepClone trackModel.config.scenery
+              scenery = deepClone appModel.track.config.scenery
               obj = scenery[sel.layer].add[sel.idx]
               obj.rot = rot
-              trackModel.config.scenery = scenery
+              appModel.track.config.scenery = scenery
               sel.object = obj
             else
               sel.object.rot = rot
@@ -419,10 +412,10 @@ define [
               switch sel.type
                 when 'scenery'
                   # DUPLICATE CODE ALERT
-                  scenery = deepClone trackModel.config.scenery
+                  scenery = deepClone appModel.track.config.scenery
                   obj = scenery[sel.layer].add[sel.idx]
                   obj.rot = rot
-                  trackModel.config.scenery = scenery
+                  appModel.track.config.scenery = scenery
                   cursor.object = obj if cursor.object is sel.object
                   sel.object = obj
                 else
@@ -441,10 +434,10 @@ define [
               switch sel.type
                 when 'scenery'
                   # DUPLICATE CODE ALERT
-                  scenery = deepClone trackModel.config.scenery
+                  scenery = deepClone appModel.track.config.scenery
                   obj = scenery[sel.layer].add[sel.idx]
                   obj.pos = pos
-                  trackModel.config.scenery = scenery
+                  appModel.track.config.scenery = scenery
                   cursor.object = obj if cursor.object is sel.object
                   sel.object = obj
                 else
@@ -490,10 +483,3 @@ define [
     show: ->
 
     hide: ->
-
-    setTrack: (trackId) ->
-      trackModel.set 'id', trackId, silent: yes
-      trackModel.fetch
-        dontSave: yes
-        success: (model, response, options) ->
-          #console.log 'loaded track!'

@@ -24,10 +24,8 @@ define [
       model.track.fetch()
 
   class AppModel extends models.RelModel
-    models.buildProps @, [
-      'track'
-      'user'
-    ]
+    models.buildProps @, [ 'track', 'user' ]
+    bubbleAttribs: [ 'track', 'user' ]
     initialize: ->
       super
       @on 'all', -> console.log arguments
@@ -39,7 +37,7 @@ define [
         track: new models.Track
 
       @currentView = null
-      #@editorView = new Editor @
+      @editorView = new Editor @
 
       @router = new Router @
 
@@ -54,8 +52,6 @@ define [
       xhr.send()
 
       Backbone.history.start pushState: yes
-
-    currentTrack: -> @model.tracks.get @model.trackid
 
     setCurrent: (view) ->
       if @currentView isnt view

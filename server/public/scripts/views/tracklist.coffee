@@ -14,8 +14,9 @@ define [
     className: 'track'
     template: templateTrackListEntry
 
-    initialize: ->
+    initialize: (options) ->
       super
+      @appModel = options.parent.options.appModel
       @selected = no
       @model.on 'change:name', =>
         @render()
@@ -25,7 +26,7 @@ define [
       url: "/track/#{@model.id}/edit"
 
     afterRender: ->
-      @$el.toggleClass 'selected', @model is @options.parent.options.selectedTrack
+      @$el.toggleClass 'selected', @model is @appModel.selectedTrack
 
       $a = @$el.find('a')
       $a.click ->

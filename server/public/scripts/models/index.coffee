@@ -36,25 +36,29 @@
   createAttributeMonitor = ->
     monitored = Object.create null
 
-    (parentModel, name) ->
+    (parentModel, attrib) ->
       onAll = (event, model, value, options) ->
         return unless event[..6] is 'change:'
-        options._triggered ?= {}
-        return if options._triggered[parentModel.cid]
-        options._triggered[parentModel.cid] = yes
-        parentModel.trigger "change:#{name}.#{event[7..]}", model, value, options
+        # Prevent infinite recursion.
+        # options._triggered ?= {}
+        # return if options._triggered[parentModel.cid]
+        # options._triggered[parentModel.cid] = yes
+        newEvent = "change:#{attrib}.#{event[7..]}"
+        parentModel.trigger newEvent, model, value, options
 
-      value = parentModel.get name
+      value = parentModel.get attrib
 
-      if monitored[name]?
-        return if value is monitored[name]
-        monitored[name].off 'all', onAll
+      if monitored[attrib]?
+        return if value is monitored[attrib]
+        monitored[attrib].off 'all', onAll
 
-      if value instanceof Backbone.Model or value instanceof Backbone.Collection
-        monitored[name] = value
+      if value instanceof Backbone.Model # or value instanceof Backbone.Collection
+        monitored[attrib] = value
         value.on 'all', onAll
 
   models.RelModel = class RelModel extends Backbone.RelationalModel
+    bubbleAttribs: null
+
     fetch: (options) ->
       # TODO: Check @lastSync and only fetch if out of date.
       super
@@ -65,14 +69,16 @@
 
     initialize: ->
       super
+      return unless @bubbleAttribs
+
       monitor = createAttributeMonitor()
 
       # Bind to initial attributes.
-      monitor @, name for name of @attributes
+      monitor @, attrib for attrib in @bubbleAttribs
 
       # Watch for changes to attributes and rebind as necessary.
       @on 'change', =>
-        monitor @, name for name of @changed
+        monitor @, attrib for attrib in @bubbleAttribs
         return
 
   RelModel.setup()
@@ -106,29 +112,22 @@
 
   class models.Course extends RelModel
     buildProps @, [ 'checkpoints', 'startposition' ]
+    bubbleAttribs: [ 'startposition' ]
     defaults:
       startposition: new models.StartPos
     relations: [
       type: Backbone.HasOne
       key: 'startposition'
       relatedModel: models.StartPos
-      #reverseRelation:
-      #  type: Backbone.HasOne
-      #  key: 'course'
     ,
       type: Backbone.HasMany
       key: 'checkpoints'
       relatedModel: models.Checkpoint
     ]
-    initialize: ->
-      # childChange @, @startposition
-      # childChange @, @checkpoints
-      # @on 'change:startposition', childChange
-      # @on 'change:checkpoints', childChange
-      super
 
   class models.TrackConfig extends RelModel
     buildProps @, [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
+    bubbleAttribs: [ 'course', 'scenery' ]
     defaults:
       course: new models.Course
     relations: [
@@ -136,10 +135,6 @@
       key: 'course'
       relatedModel: models.Course
     ]
-    initialize: ->
-      # childChange @, @course
-      # @on 'change:course', childChange
-      super
 
   class models.Car extends RelModel
     buildProps @, [ 'config', 'name', 'user' ]
@@ -179,6 +174,7 @@
       'published'
       'user'
     ]
+    bubbleAttribs: [ 'config', 'env' ]
     urlRoot: '/v1/tracks'
     defaults:
       config: new models.TrackConfig
@@ -196,12 +192,6 @@
       relatedModel: 'Track'
       includeInJSON: 'id'
     ]
-    initialize: ->
-      # childChange @, @config
-      # childChange @, @env
-      # @on 'change:config', childChange
-      # @on 'change:env', childChange
-      super
     toJSON: (options) ->
       json = super
       delete json.created
@@ -244,6 +234,7 @@
       'profile'
       'user'
     ]
+    bubbleAttribs: [ 'user' ]
     relations: [
       type: Backbone.HasOne
       key: 'user'
