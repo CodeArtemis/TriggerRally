@@ -67,12 +67,14 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     this.pubsub.publish('advance');
   };
 
-  exports.Game = function() {
-    this.track = new track.Track();
+  exports.Game = function(track) {
+    this.track = track;
     this.progs = [];
     this.pubsub = new pubsub.PubSub();
     // TODO: Use a more sensible time step.
     this.sim = new psim.Sim(1 / 150);
+    this.sim.addStaticObject(this.track.terrain);
+    this.track.scenery && this.track.scenery.addToSim(this.sim);
     this.startTime = 3;
     this.sim.pubsub.subscribe('step', this.onSimStep.bind(this));
   };
@@ -91,18 +93,6 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
 
   exports.Game.prototype.interpolatedRaceTime = function() {
     return this.sim.interpolatedTime() - this.startTime;
-  };
-
-  exports.Game.prototype.setTrack = function(trackUrl, callback) {
-    http.get({path:trackUrl}, function(err, result) {
-      if (err) {
-        if (callback) callback(err);
-        else throw new Error('Failed to fetch track: ' + err);
-      } else {
-        var config = JSON.parse(result);
-        this.setTrackConfig(config, callback);
-      }
-    }.bind(this));
   };
 
   exports.Game.prototype.setTrackConfig = function(trackModel, callback) {

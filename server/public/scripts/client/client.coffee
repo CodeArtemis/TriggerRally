@@ -403,7 +403,7 @@ define [
     event.ctrlKey or event.altKey or event.metaKey
 
   TriggerClient: class TriggerClient
-    constructor: (@containerEl, @game, @options = {}) ->
+    constructor: (@containerEl, @root, @options = {}) ->
       # TODO: Add Detector support.
       @objects = {}
       @pubsub = new pubsub.PubSub()
@@ -438,55 +438,54 @@ define [
       @audio?.loadBuffer '/a/sounds/checkpoint.wav', (buffer) ->
         checkpointBuffer = buffer
 
-      #@sync = new synchro.Synchro @game
+      # onTrackCar = (track, car, progress) =>
+      #   unless car.cfg.isRemote
+      #     @add renderCheckpoints = new RenderCheckpointsDrive @scene, track.checkpoints
+      #     @add new RenderCheckpointArrows @camera, progress
+      #     progress.on 'advance', =>
+      #       renderCheckpoints.highlightCheckpoint progress.nextCpIndex
+      #       if checkpointBuffer?
+      #         @audio?.playSound checkpointBuffer, false, 1, 1
 
-      onTrackCar = (track, car, progress) =>
-        unless car.cfg.isRemote
-          @add renderCheckpoints = new RenderCheckpointsDrive @scene, track.checkpoints
-          @add new RenderCheckpointArrows @camera, progress
-          progress.on 'advance', =>
-            renderCheckpoints.highlightCheckpoint progress.nextCpIndex
-            if checkpointBuffer?
-              @audio?.playSound checkpointBuffer, false, 1, 1
+      # deferredCars = []
 
-      deferredCars = []
+      track = new Track()
 
+      @root.on 'change:track', ->
+        track.loadWithConfig @root.track, ->
+          erm
       @game.on 'settrack', _.once (track) =>
         @add new clientTerrain.RenderTerrain @scene, track.terrain, @renderer.context, prefs.terrainhq
         sceneLoader = new THREE.SceneLoader()
         loadFunc = (url, callback) -> sceneLoader.load url, callback
         @add @renderScenery = new clientScenery.RenderScenery @scene, track.scenery, loadFunc, @renderer
         @track = track
-        if deferredCars
-          for car, progress in deferredCars
-            onTrackCar track, car, progress
-          deferredCars = null
         @add new CamTerrainClipping(@camera, track.terrain), 10
         return
 
-      @game.on 'addvehicle', (car, progress) =>
-        audio = if car.cfg.isRemote then null else @audio
-        renderCar = new clientCar.RenderCar @scene, car, audio
-        progress._renderCar = renderCar
-        @add renderCar
-        unless car.cfg.isRemote
-          @add @camControl = new CamControl @camera, renderCar
-          @add new CarControl car, this
-          @add new RenderDials @sceneHUD, car
-        if @track
-          onTrackCar @track, car, progress
-        else
-          deferredCars.push [car, progress]
-        return
+      # @game.on 'addvehicle', (car, progress) =>
+      #   audio = if car.cfg.isRemote then null else @audio
+      #   renderCar = new clientCar.RenderCar @scene, car, audio
+      #   progress._renderCar = renderCar
+      #   @add renderCar
+      #   unless car.cfg.isRemote
+      #     @add @camControl = new CamControl @camera, renderCar
+      #     @add new CarControl car, this
+      #     @add new RenderDials @sceneHUD, car
+      #   if @track
+      #     onTrackCar @track, car, progress
+      #   else
+      #     deferredCars.push [car, progress]
+      #   return
 
-      @game.on 'deletevehicle', (progress) =>
-        renderCar = progress._renderCar
-        progress._renderCar = null
-        for layer in @objects
-          idx = layer.indexOf renderCar
-          if idx isnt -1
-            layer.splice idx, 1
-        renderCar.destroy()
+      # @game.on 'deletevehicle', (progress) =>
+      #   renderCar = progress._renderCar
+      #   progress._renderCar = null
+      #   for layer in @objects
+      #     idx = layer.indexOf renderCar
+      #     if idx isnt -1
+      #       layer.splice idx, 1
+      #   renderCar.destroy()
 
       @keyDown = []
 

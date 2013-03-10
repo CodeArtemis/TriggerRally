@@ -28,25 +28,21 @@ function(THREE, async, uImg, quiver, util) {
   function wrap(x, lim) { return x - Math.floor(x / lim) * lim; }
 
   exports.ImageSource = function() {
-    this.maps = {};
-  };
+    var maps = this.maps = {
+      "detail": {
+        "url": "",
+        "scale": [ 1, 1, 1 ]
+      },
+      "height": {
+        "url": "",
+        "scale": [ 1, 1, 1 ]
+      },
+      "surface": {
+        "url": "",
+        "scale": [ 1, 1, 1 ]
+      }
+    };
 
-  exports.ImageSource.prototype.load = function(config, callback) {
-    this.config = config;
-    var maps = this.maps;
-
-    for (var k in config) {
-      maps[k] = {
-        scale: new Vec3(config[k].scale[0],
-                        config[k].scale[1],
-                        config[k].scale[2])
-      };
-    }
-    if (!maps.surface) {
-      maps.surface = {
-        scale: maps.height.scale,
-      };
-    }
     // Create seed buffers. The pipeline will preserve their data types.
     uImg.createBuffer(maps.height, 1, 1, 1, Float32Array);
     //uImg.createBuffer(maps.surface, 1, 1, 4, Uint8Array);
@@ -55,6 +51,7 @@ function(THREE, async, uImg, quiver, util) {
     // Note to self: elevation data in 8-bit PNG seems to compress 20% better
     // if you split the channels into separate greyscale PNG images.
     // (on Engelberg 1024x1024 dataset).
+    // Or could use 3072x1024 greyscale image.
 
     // TODO: More uniform handling of data types. Scale
     // everything to a 0-1 range?
@@ -73,25 +70,35 @@ function(THREE, async, uImg, quiver, util) {
         uImg.catmullRomDerivatives(127.5 / 127.5, 127.5),
         maps.surface);
 
-    if (config.detail) {
-      // TODO: omit copyChannel stage.
-      var imageData = {};
-      quiver.connect(
-          config.detail,
-          uImg.imageFromUrl(),
-          {},
-          uImg.getImageData({flip: true}),
-          imageData);
-      quiver.connect(
-          imageData,
-          uImg.copyChannel(0, 2),
-          maps.detail)
-      quiver.connect(
-          imageData,
-          uImg.derivatives(2, 127.5),
-          maps.detail)
+    var detailImageData = {};
+    quiver.connect(
+        config.detail,
+        uImg.imageFromUrl(),
+        {},
+        uImg.getImageData({flip: true}),
+        detailImageData);
+    // TODO: shortcut wasteful copyChannel stage.
+    quiver.connect(
+        detailImageData,
+        uImg.copyChannel(0, 2),
+        maps.detail)
+    quiver.connect(
+        detailImageData,
+        uImg.derivatives(2, 127.5),
+        maps.detail)
+  };
+
+  exports.ImageSource.prototype.setConfig = function(config) {
+    this.config = config;
+    var maps = this.maps;
+
+    for (var k in config) {
+      maps[k].url = config[k].url;
+      maps[k].scale = new Vec3(config[k].scale[0],
+                               config[k].scale[1],
+                               config[k].scale[2]);
     }
-    callback();
+    maps.surface.scale = maps.height.scale;
   };
 
   exports.Terrain = function(source) {

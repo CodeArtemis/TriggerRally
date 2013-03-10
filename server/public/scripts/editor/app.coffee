@@ -22,13 +22,14 @@ define [
       model = @app.model
       model.track = models.Track.findOrCreate id: trackId
       model.track.fetch()
+      # ^ TODO: Check this also works if track is fetched first, then assigned on success.
 
   class AppModel extends models.RelModel
     models.buildProps @, [ 'track', 'user' ]
     bubbleAttribs: [ 'track', 'user' ]
     initialize: ->
       super
-      @on 'all', -> console.log arguments
+      #@on 'all', -> console.log arguments
 
   class App
     constructor: ->

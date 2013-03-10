@@ -203,7 +203,8 @@ module.exports = (app) ->
   app.get "#{base}/users/:user_id", (req, res) ->
     findUser req.params['user_id'], (user) ->
       return error404 res unless user?
-      res.json user.toJSON()
+      authenticated = user.id is req.user?.user.pub_id
+      res.json user.toJSON { authenticated }
 
   app.get "#{base}/auth/me", (req, res) ->
     if req.user?.user

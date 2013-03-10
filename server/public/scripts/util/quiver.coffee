@@ -72,8 +72,7 @@ moduleDef = (require, exports, module) ->
       return
 
   class exports.Node
-    constructor: (opt_payload) ->
-      @payload = opt_payload or {}
+    constructor: (@payload = {}) ->
       @inputs = []
       @outputs = []
       @updated = false
