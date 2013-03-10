@@ -157,7 +157,6 @@ class DataContext
 
 findModel = (Model, pub_id, done) ->
   model = Model.findOrCreate id: pub_id
-  return done model if model.name?  # Already in the Store.
   model.fetch
     success: -> done model
     error:   -> done null

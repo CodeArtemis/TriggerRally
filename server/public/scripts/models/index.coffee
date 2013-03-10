@@ -33,39 +33,47 @@
 
   models = exports
 
+  createAttributeMonitor = ->
+    monitored = Object.create null
+
+    (parentModel, name) ->
+      onAll = (event, model, value, options) ->
+        return unless event[..6] is 'change:'
+        options._triggered ?= {}
+        return if options._triggered[parentModel.cid]
+        options._triggered[parentModel.cid] = yes
+        parentModel.trigger "change:#{name}.#{event[7..]}", model, value, options
+
+      value = parentModel.get name
+
+      if monitored[name]?
+        return if value is monitored[name]
+        monitored[name].off 'all', onAll
+
+      if value instanceof Backbone.Model or value instanceof Backbone.Collection
+        monitored[name] = value
+        value.on 'all', onAll
+
   models.RelModel = class RelModel extends Backbone.RelationalModel
-    # TODO: override fetch() to check lastSync
+    fetch: (options) ->
+      # TODO: Check @lastSync and only fetch if out of date.
+      super
+
     parse: (response, options) ->
       @lastSync = Date.now()
       super
 
     initialize: ->
       super
-      monitored = {}
-      monitorAttribute = (parentModel, name) =>
-
-        onAll = (event, args...) ->
-          return unless event.startsWith('change:')
-          parentModel.trigger "change:#{name}.#{event[7..]}", args...
-
-        value = @get name
-        if monitored[name]?
-          return if monitored[name] is value
-          monitored[name].off 'all', onAll
-
-        return unless value instanceof Backbone.Model or value instanceof Backbone.Collection
-
-        monitored[name] = value
-        value.on 'all', onAll
+      monitor = createAttributeMonitor()
 
       # Bind to initial attributes.
-      monitorAttribute @, name for name of @attributes
+      monitor @, name for name of @attributes
 
       # Watch for changes to attributes and rebind as necessary.
-      @on 'change', (model, options) =>
-        monitorAttribute @, name for name of @changed
+      @on 'change', =>
+        monitor @, name for name of @changed
         return
-      return
 
   RelModel.setup()
 
