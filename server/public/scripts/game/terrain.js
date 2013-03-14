@@ -28,7 +28,7 @@ function(THREE, async, uImg, quiver, util) {
   function wrap(x, lim) { return x - Math.floor(x / lim) * lim; }
 
   exports.ImageSource = function() {
-    this.config = {
+    this.maps = {
       "detail": {
         "url": "",
         "scale": [ 1, 1, 1 ]
@@ -42,11 +42,11 @@ function(THREE, async, uImg, quiver, util) {
         "scale": [ 1, 1, 1 ]
       }
     };
-    this.maps = {
-      "detail": {},
-      "height": {},
-      "surface": {}
-    };
+
+    for (var k in this.maps) {
+      this.maps[k].q_url = new quiver.Node(this.maps[k]);
+      this.maps[k].q_map = new quiver.Node(this.maps[k]);
+    }
 
     // Create seed buffers. The pipeline will preserve their data types.
     uImg.createBuffer(this.maps.height, 1, 1, 1, Float32Array);
@@ -64,20 +64,20 @@ function(THREE, async, uImg, quiver, util) {
     // Set up processing pipelines.
     // TODO: discard intermediate buffers.
     quiver.connect(
-        this.config.height,
+        this.maps.height.q_url,
         uImg.imageFromUrl(),
         {},
         uImg.getImageData({flip: true}),
         {},
         uImg.unpack16bit(),
-        this.maps.height,
+        this.maps.height.q_map,
         // We scale the derivatives to fit a Uint8 buffer.
         uImg.catmullRomDerivatives(127.5 / 127.5, 127.5),
-        this.maps.surface);
+        this.maps.surface.q_map);
 
     var detailImageData = {};
     quiver.connect(
-        this.config.detail,
+        this.maps.detail.q_url,
         uImg.imageFromUrl(),
         {},
         uImg.getImageData({flip: true}),
@@ -86,20 +86,21 @@ function(THREE, async, uImg, quiver, util) {
     quiver.connect(
         detailImageData,
         uImg.copyChannel(0, 2),
-        this.maps.detail)
+        this.maps.detail.q_map)
     quiver.connect(
         detailImageData,
         uImg.derivatives(2, 127.5),
-        this.maps.detail)
+        this.maps.detail.q_map)
   };
 
   exports.ImageSource.prototype.setConfig = function(config) {
-    debugger;
-    this.config = config;
     var maps = this.maps;
 
     for (var k in config) {
-      maps[k].url = config[k].url;
+      if (!Object.prototype.hasOwnProperty.call(config, k)) continue;
+      if (config[k].url) maps[k].url = config[k].url;
+      // TODO: Quiver push this url?
+      quiver.push(maps[k]);
       maps[k].scale = new Vec3(config[k].scale[0],
                                config[k].scale[1],
                                config[k].scale[2]);

@@ -22,6 +22,9 @@ function(LFIB4, collision, hash2d, util, THREE) {
     this.track = track;
     this.layers = [];
     this.layersById = {};
+    this.root = track.root;
+    this.root.on('change:track.config.scenery change:track.env.scenery',
+                 this.refresh, this);
   };
 
   exports.Scenery.prototype.getLayer = function(id) {
@@ -29,11 +32,17 @@ function(LFIB4, collision, hash2d, util, THREE) {
   };
 
   exports.Scenery.prototype.addToSim = function(sim) {
+    sim.addStaticObject(this);
+  };
+
+  exports.Scenery.prototype.collideSphereList = function(sphereList) {
+    var result = [];
     this.layers.forEach(function(layer) {
       if (layer.config.collision) {
-        sim.addStaticObject(layer);
+        result.push(layer.collideSphereList(sphereList));
       }
     });
+    return [].concat.apply([], result);
   };
 
   exports.Scenery.prototype.intersectRay = function(ray) {
@@ -44,18 +53,15 @@ function(LFIB4, collision, hash2d, util, THREE) {
     return [].concat.apply([], isect);
   };
 
-  exports.Scenery.prototype.setEnvConfig = function(envConfig) {
-    this.envConfig = envConfig;
-  };
-
-  exports.Scenery.prototype.setConfig = function(config) {
-    if (config) this.config = config;
-    var layers = this.envConfig.layers;
+  exports.Scenery.prototype.refresh = function() {
+    var config = this.root.track.config.scenery;
+    var envConfig = this.root.track.env.scenery;
+    var layers = envConfig.layers;
     this.layers = [];
     this.layersById = {};
     for (var i = 0; i < layers.length; ++i) {
       var layerId = layers[i].id;
-      var trackScenery = this.config[layerId];
+      var trackScenery = config[layerId];
       var layer = new exports.Layer(layers[i], this, trackScenery);
       this.layers.push(layer);
       this.layersById[layer.config.id] = i;
@@ -156,7 +162,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
           distance: along,
           type: 'scenery',
           layer: this.config.id,
-          object: this.scenery.config[this.config.id].add[idx],
+          object: this.scenery.root.track.config.scenery[this.config.id].add[idx],
           idx: idx
         });
       }

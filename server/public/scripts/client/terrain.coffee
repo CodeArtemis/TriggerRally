@@ -464,7 +464,7 @@ define [
       maps = @terrain.source.maps
       uniforms = @material.uniforms
 
-      quiver.connect maps.height, node = new quiver.Node (ins, outs, done) ->
+      quiver.connect maps.height.q_map, node = new quiver.Node (ins, outs, done) ->
         buffer = ins[0]
         uniforms.tHeight.value = createTexture buffer, false
         uniforms.tHeightSize.value.set buffer.width, buffer.height
@@ -473,7 +473,7 @@ define [
         done()
       quiver.pull node
 
-      quiver.connect maps.surface, node = new quiver.Node (ins, outs, done) ->
+      quiver.connect maps.surface.q_map, node = new quiver.Node (ins, outs, done) ->
         buffer = ins[0]
         uniforms.tSurface.value = createTexture buffer, true
         uniforms.tSurfaceSize.value.set buffer.width, buffer.height
@@ -482,7 +482,7 @@ define [
         done()
       quiver.pull node
 
-      quiver.connect maps.detail, node = new quiver.Node (ins, outs, done) ->
+      quiver.connect maps.detail.q_map, node = new quiver.Node (ins, outs, done) ->
         buffer = ins[0]
         uniforms.tDetail.value = createTexture buffer, true
         #if @glAniso then uniforms.tDetail.value.onUpdate = =>

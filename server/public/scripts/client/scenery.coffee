@@ -9,21 +9,23 @@ define [
 ], (THREE, array_geometry, quiver) ->
 
   RenderScenery: class RenderScenery
-    constructor: (@scene, @scenery, loadFunc) ->
+    constructor: (@scene, @scenery, @loadFunc) ->
       @fadeSpeed = 2
-      @layers = ({ src: l, tiles: {} } for l in @scenery.layers)
-      for layer in @layers
-        do (layer) ->
-          render = layer.src.config.render
-          loadFunc render["scene-r54"] or render["scene"], (result) ->
-            layer.meshes = for mesh in result.scene.children
-              geom = new array_geometry.ArrayGeometry()
-              geom.addGeometry mesh.geometry
-              #geom.material = mesh.material
-              mesh.geometry = geom
-              mesh
-            return
-      return
+      @layers = (@createLayer l for l in @scenery.layers)
+
+    createLayer: (src) ->
+      meshes = []
+      tiles = Object.create null
+      render = src.config.render
+      @loadFunc render["scene-r54"] or render["scene"], (result) ->
+        for mesh in result.scene.children
+          geom = new array_geometry.ArrayGeometry()
+          geom.addGeometry mesh.geometry
+          #geom.material = mesh.material
+          mesh.geometry = geom
+          meshes.push mesh
+        return
+      { src, tiles, meshes }
 
     createTile: (layer, tx, ty, skipFadeIn) ->
       entities = layer.src.getTile(tx, ty)
@@ -65,17 +67,18 @@ define [
       return
 
     update: (camera, delta) ->
-      added = false
-      addAll = false
+      added = no
+      addAll = no
       fadeAmount = @fadeSpeed * delta
 
+      # TODO: This shouldn't be done every frame. It should be notified of changes.
       for layer, i in @scenery.layers
-        if @layers[i].src isnt layer
-          keys = for key of @layers[i].tiles
-            key
-          @removeTile @layers[i], key for key in keys
-          @layers[i].src = layer
-          addAll = true
+        @layers[i] or= @createLayer layer
+        continue unless @layers[i].src isnt layer
+        keys = (key for key of @layers[i].tiles)
+        @removeTile @layers[i], key for key in keys
+        @layers[i].src = layer
+        addAll = yes
 
       for layer in @layers
         continue unless layer.meshes?  # Check that we have something to draw.
@@ -85,10 +88,10 @@ define [
         for ty in [tyCenter-3..tyCenter+3]
           for tx in [txCenter-3..txCenter+3]
             key = tx + ',' + ty
-            visibleTiles[key] = true
+            visibleTiles[key] = yes
             tile = layer.tiles[key]
             if not tile and (addAll or not added)
-              added = true
+              added = yes
               tile = layer.tiles[key] = @createTile layer, tx, ty, addAll
               @scene.add tile
             if tile and tile.opacity < 1

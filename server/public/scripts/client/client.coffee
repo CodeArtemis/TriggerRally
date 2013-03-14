@@ -39,7 +39,7 @@ define [
   projector = new THREE.Projector
 
   class RenderCheckpointsEditor
-    constructor: (scene, checkpoints) ->
+    constructor: (scene, root) ->
       @ang = 0
       @meshes = []
 
@@ -49,29 +49,27 @@ define [
         transparent: 1
         depthWrite: false
 
-      updateCheckpoints = (ins, outs, done) =>
+      updateCheckpoints = =>
         for mesh in @meshes
           scene.remove mesh
-        @meshes = for cp in checkpoints
+        @meshes = for cp in root.track.config.course.checkpoints.models
           mesh = clientMisc.checkpointMesh()
-          mesh.position.addSelf cp
+          mesh.position.x += cp[0]
+          mesh.position.y += cp[1]
+          mesh.position.z += cp[2]
           scene.add mesh
           mesh
-        done()
-      quiver.connect checkpoints, updateCheckpoints
-      quiver.pull updateCheckpoints
+      root.on 'change:track.config.course.checkpoints', updateCheckpoints
 
     update: (camera, delta) ->
-      return
 
     highlightCheckpoint: (i) ->
       for mesh in @meshes
         mesh.material = clientMisc.checkpointMaterial()
       @meshes[i]?.material = @selectedMat
-      return
 
   class RenderCheckpointsDrive
-    constructor: (scene, @checkpoints) ->
+    constructor: (scene, @root) ->
       @ang = 0
       @mesh = clientMisc.checkpointMesh()
       @initPos = @mesh.position.clone()
@@ -79,20 +77,18 @@ define [
       scene.add @mesh
 
     update: (camera, delta) ->
-      targetPos = @checkpoints[@current]
-      if targetPos?
-        @mesh.rotation.z += delta * 3
-        meshPos = @mesh.position
-        pull = delta * 2
-        pull = 1 if @current is 0
-        meshPos.x = PULLTOWARD meshPos.x, targetPos.x + @initPos.x, pull
-        meshPos.y = PULLTOWARD meshPos.y, targetPos.y + @initPos.y, pull
-        meshPos.z = PULLTOWARD meshPos.z, targetPos.z + @initPos.z, pull
-      return
+      targetCp = @root.track.config.course.checkpoints.at @current
+      return unless targetCp?
+      @mesh.rotation.z += delta * 3
+      meshPos = @mesh.position
+      pull = delta * 2
+      pull = 1 if @current is 0
+      meshPos.x = PULLTOWARD meshPos.x, targetCp[0] + @initPos.x, pull
+      meshPos.y = PULLTOWARD meshPos.y, targetCp[1] + @initPos.y, pull
+      meshPos.z = PULLTOWARD meshPos.z, targetCp[2] + @initPos.z, pull
 
     highlightCheckpoint: (i) ->
       @current = i
-      return
 
   class RenderDials
     constructor: (scene, @vehic) ->
@@ -550,7 +546,7 @@ define [
       return
 
     addEditorCheckpoints: (track) ->
-      @add @renderCheckpoints = new RenderCheckpointsEditor @scene, track.checkpoints
+      @add @renderCheckpoints = new RenderCheckpointsEditor @scene, @root
 
     debouncedMuteAudio: _.debounce((audio) ->
       audio.setGain 0
@@ -563,7 +559,7 @@ define [
       return
 
     update: (delta) ->
-      @game.sim.tick delta
+      @game?.sim.tick delta
       for priority, layer of @objects
         for object in layer
           object.update @camera, delta
@@ -698,11 +694,13 @@ define [
       []
 
     intersectStartPosition: (ray) ->
-      pos = @track.config.course.startposition.pos
+      startpos = @root.track.config.course.startposition
+      pos = startpos.pos
+      return [] unless pos?
       hit = @intersectSphere ray, new Vec3(pos[0], pos[1], pos[2]), 4
       if hit
         hit.type = 'startpos'
-        hit.object = @track.config.course.startposition
+        hit.object = startpos
         [hit]
       else
         []
@@ -722,7 +720,7 @@ define [
     intersectCheckpoints: (ray) ->
       radiusSq = 16
       isect = []
-      for cp, idx in @track.config.course.checkpoints.models
+      for cp, idx in @root.track.config.course.checkpoints.models
         hit = @intersectSphere ray, new Vec3(cp.pos[0], cp.pos[1], cp.pos[2]), radiusSq
         if hit
           hit.type = 'checkpoint'
