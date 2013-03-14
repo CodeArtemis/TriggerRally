@@ -28,7 +28,7 @@ function(THREE, async, uImg, quiver, util) {
   function wrap(x, lim) { return x - Math.floor(x / lim) * lim; }
 
   exports.ImageSource = function() {
-    var maps = this.maps = {
+    this.config = {
       "detail": {
         "url": "",
         "scale": [ 1, 1, 1 ]
@@ -42,11 +42,16 @@ function(THREE, async, uImg, quiver, util) {
         "scale": [ 1, 1, 1 ]
       }
     };
+    this.maps = {
+      "detail": {},
+      "height": {},
+      "surface": {}
+    };
 
     // Create seed buffers. The pipeline will preserve their data types.
-    uImg.createBuffer(maps.height, 1, 1, 1, Float32Array);
+    uImg.createBuffer(this.maps.height, 1, 1, 1, Float32Array);
     //uImg.createBuffer(maps.surface, 1, 1, 4, Uint8Array);
-    uImg.createBuffer(maps.detail, 1, 1, 4, Uint8Array);
+    uImg.createBuffer(this.maps.detail, 1, 1, 4, Uint8Array);
 
     // Note to self: elevation data in 8-bit PNG seems to compress 20% better
     // if you split the channels into separate greyscale PNG images.
@@ -59,20 +64,20 @@ function(THREE, async, uImg, quiver, util) {
     // Set up processing pipelines.
     // TODO: discard intermediate buffers.
     quiver.connect(
-        config.height,
+        this.config.height,
         uImg.imageFromUrl(),
         {},
         uImg.getImageData({flip: true}),
         {},
         uImg.unpack16bit(),
-        maps.height,
+        this.maps.height,
         // We scale the derivatives to fit a Uint8 buffer.
         uImg.catmullRomDerivatives(127.5 / 127.5, 127.5),
-        maps.surface);
+        this.maps.surface);
 
     var detailImageData = {};
     quiver.connect(
-        config.detail,
+        this.config.detail,
         uImg.imageFromUrl(),
         {},
         uImg.getImageData({flip: true}),
@@ -81,14 +86,15 @@ function(THREE, async, uImg, quiver, util) {
     quiver.connect(
         detailImageData,
         uImg.copyChannel(0, 2),
-        maps.detail)
+        this.maps.detail)
     quiver.connect(
         detailImageData,
         uImg.derivatives(2, 127.5),
-        maps.detail)
+        this.maps.detail)
   };
 
   exports.ImageSource.prototype.setConfig = function(config) {
+    debugger;
     this.config = config;
     var maps = this.maps;
 

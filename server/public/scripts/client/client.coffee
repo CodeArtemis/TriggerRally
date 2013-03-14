@@ -10,11 +10,25 @@ define [
   'cs!client/scenery'
   'cs!client/terrain'
   'game/game'
+  'game/track'
   'cs!game/synchro'
   'util/pubsub'
   'cs!util/quiver'
   'util/util'
-], (THREE, clientAudio, clientCar, clientMisc, clientScenery, clientTerrain, gameGame, synchro, pubsub, quiver, util) ->
+], (
+  THREE
+  clientAudio
+  clientCar
+  clientMisc
+  clientScenery
+  clientTerrain
+  gameGame
+  gameTrack
+  synchro
+  pubsub
+  quiver
+  util
+) ->
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
   PULLTOWARD = util.PULLTOWARD
@@ -449,19 +463,14 @@ define [
 
       # deferredCars = []
 
-      track = new Track()
+      @track = new gameTrack.Track @root
 
-      @root.on 'change:track', ->
-        track.loadWithConfig @root.track, ->
-          erm
-      @game.on 'settrack', _.once (track) =>
-        @add new clientTerrain.RenderTerrain @scene, track.terrain, @renderer.context, prefs.terrainhq
-        sceneLoader = new THREE.SceneLoader()
-        loadFunc = (url, callback) -> sceneLoader.load url, callback
-        @add @renderScenery = new clientScenery.RenderScenery @scene, track.scenery, loadFunc, @renderer
-        @track = track
-        @add new CamTerrainClipping(@camera, track.terrain), 10
-        return
+      @add new clientTerrain.RenderTerrain(
+          @scene, @track.terrain, @renderer.context, prefs.terrainhq)
+      sceneLoader = new THREE.SceneLoader()
+      loadFunc = (url, callback) -> sceneLoader.load url, callback
+      @add new clientScenery.RenderScenery @scene, @track.scenery, loadFunc, @renderer
+      @add new CamTerrainClipping(@camera, @track.terrain), 10
 
       # @game.on 'addvehicle', (car, progress) =>
       #   audio = if car.cfg.isRemote then null else @audio
@@ -512,6 +521,7 @@ define [
     add: (obj, priority = 0) ->
       layer = @objects[priority] ?= []
       layer.push obj
+      obj
 
     createRenderer: (useShadows) ->
       r = new THREE.WebGLRenderer

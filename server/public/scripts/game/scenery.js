@@ -18,10 +18,10 @@ function(LFIB4, collision, hash2d, util, THREE) {
 
   var COLLISION_HASH_SIZE = 5;
 
-  exports.Scenery = function(config, envConfig, track) {
-    this.envConfig = envConfig;
+  exports.Scenery = function(track) {
     this.track = track;
-    this.setConfig(config);
+    this.layers = [];
+    this.layersById = {};
   };
 
   exports.Scenery.prototype.getLayer = function(id) {
@@ -42,6 +42,10 @@ function(LFIB4, collision, hash2d, util, THREE) {
       isect.push(this.layers[i].intersectRay(ray));
     }
     return [].concat.apply([], isect);
+  };
+
+  exports.Scenery.prototype.setEnvConfig = function(envConfig) {
+    this.envConfig = envConfig;
   };
 
   exports.Scenery.prototype.setConfig = function(config) {

@@ -19,15 +19,22 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
   var catmullRom = util.catmullRom;
   var linearInterp = util.INTERP;
 
-  exports.Track = function() {
-    this.config = {};
+  exports.Track = function(root) {
+    this.root = root;
     this.checkpoints = [];
     this.source = new gameTerrain.ImageSource();
-    this.terrain = new gameTerrain.Terrain(source);
+    this.terrain = new gameTerrain.Terrain(this.source);
+    this.scenery = new gameScenery.Scenery(this);
     this.setupQuiver();
+
+    root.on('change:track change:env', function() {
+      if (root.track.env) {
+        this.setConfig(root.track);
+      }
+    });
   };
 
-  exports.Track.prototype.loadWithConfig = function(trackModel, callback) {
+  exports.Track.prototype.setConfig = function(trackModel) {
     var config = this.config = trackModel.config;
     var terrain = this.terrain;
     var course = config.course;
@@ -36,7 +43,31 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
 
     this.source.setConfig(trackModel.env.terrain);
 
-    this.scenery = new gameScenery.Scenery(trackModel.config.scenery, trackModel.env.scenery, this);
+    this.scenery.setEnvConfig(trackModel.env.scenery);
+    this.scenery.setConfig(trackModel.config.scenery);  // vvv DUP?
+
+
+    // TOOD: Listen for individual checkpoint changes, update just relevant region.
+    var updateCheckpoints = _.debounce(function() {
+      quiver.push(this.config.course.checkpoints);
+    }.bind(this), 200);
+    //this.config.on('change', function() {
+    //  console.log("Oh! it changed!");
+    //});
+    this.config.course.checkpoints.on('change', updateCheckpoints);
+    this.config.course.checkpoints.on('add', updateCheckpoints);
+    this.config.course.checkpoints.on('remove', updateCheckpoints);
+    this.config.course.checkpoints.on('reset', updateCheckpoints);
+    this.config.course.checkpoints.on('sort', updateCheckpoints);
+
+    // TODO: Invalidate scenery by layer, instead of this scatter-shot.
+    trackModel.config.on('change:scenery', function() {
+      this.scenery.setConfig(trackModel.config.scenery);  // ^^^ DUP?
+    }.bind(this));
+
+    //trackModel.env.on('change:scenery', function() {
+    //  this.scenery.setEnvConfig(trackModel.env.scenery);
+    //}.bind(this));
   };
 
   exports.Track.prototype.setupQuiver = function() {
@@ -158,7 +189,6 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
             pY = catmullRom(cp[0].y, cp[1].y, cp[2].y, cp[3].y, u);
 
             drawCircle(surf, 2, pX - halfX, pY - halfY, 0, radius, hardness, alpha);
-            //drawCircle(maps.surface, maps.surface.packed, 4, 2, pX, pY, 255, 100, 0.4, 1);
           }
         }
         t -= chords[i];
@@ -231,6 +261,8 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
       dstNode.inputs.splice(dstNode.inputs.indexOf(srcNode), 1);
     };
 
+    var maps = this.source.maps;
+
     (function() {
       var heightNode = maps.height._quiverNode;
       var sourceNode = heightNode.inputs[0];
@@ -244,21 +276,9 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
       quiver.connect(drawTrackNode,
                      maps.surface);
 
-      quiver.connect(this.config.course.checkpoints,
-                     drawTrackNode,
-                     this.checkpoints);
-      // TOOD: Listen for individual checkpoint changes, update just relevant region.
-      var updateCheckpoints = _.debounce(function() {
-        quiver.push(this.config.course.checkpoints);
-      }.bind(this), 200);
-      this.config.on('change', function() {
-        console.log("Oh! it changed!");
-      });
-      this.config.course.checkpoints.on('change', updateCheckpoints);
-      this.config.course.checkpoints.on('add', updateCheckpoints);
-      this.config.course.checkpoints.on('remove', updateCheckpoints);
-      this.config.course.checkpoints.on('reset', updateCheckpoints);
-      this.config.course.checkpoints.on('sort', updateCheckpoints);
+      // quiver.connect(this.config.course.checkpoints,
+      //                drawTrackNode,
+      //                this.checkpoints);
     }).call(this);
 
     (function() {
@@ -270,15 +290,6 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
                      newSurfaceNode);
     }).call(this);
 
-    // TODO: Invalidate scenery by layer, instead of this scatter-shot.
-    trackModel.config.on('change:scenery', function() {
-      this.scenery.setConfig(trackModel.config.scenery);
-    }.bind(this));
-
-    //trackModel.env.on('change:scenery', function() {
-    //  this.scenery.setEnvConfig(trackModel.env.scenery);
-    //}.bind(this));
-
     var invalidateSceneryQuiver = function(ins, outs, next) {
       outs[0].setConfig();
       next();
@@ -286,8 +297,6 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
     quiver.connect(invalidateSceneryQuiver, this.scenery);
     quiver.connect(maps.surface, invalidateSceneryQuiver);
     quiver.connect(maps.height, invalidateSceneryQuiver);
-
-    if (callback) callback();
   };
 
   return exports;

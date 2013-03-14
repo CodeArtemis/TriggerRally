@@ -63,10 +63,10 @@ define [
     appModel.on 'change:user.tracks', ->
       appModel.user.fetchRelated 'tracks'
 
-    game = new gameGame.Game()
+    #game = new gameGame.Game()
     prefs = app.model.user.prefs or {}
     prefs.audio = no
-    client = new clientClient.TriggerClient $view3d[0], game, prefs: prefs
+    client = new clientClient.TriggerClient $view3d[0], appModel, prefs: prefs
 
     client.camera.eulerOrder = 'ZYX'
     camPos = client.camera.position
@@ -100,9 +100,9 @@ define [
       doSave()
 
     appModel.on 'change:track.config change:track.env', (model, options) ->
-      game.setTrackConfig appModel.track, (err, theTrack) ->
-        track = theTrack
-        client.addEditorCheckpoints track
+      # game.setTrackConfig appModel.track, (err, theTrack) ->
+      #   track = theTrack
+      #   client.addEditorCheckpoints track
 
       if options?.dontSave
         setStatus 'OK'
