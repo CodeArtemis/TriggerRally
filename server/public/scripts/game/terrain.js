@@ -99,13 +99,12 @@ function(THREE, async, uImg, quiver, util) {
     for (var k in config) {
       if (!Object.prototype.hasOwnProperty.call(config, k)) continue;
       if (config[k].url) maps[k].url = config[k].url;
-      // TODO: Quiver push this url?
-      quiver.push(maps[k]);
       maps[k].scale = new Vec3(config[k].scale[0],
                                config[k].scale[1],
                                config[k].scale[2]);
+      quiver.push(maps[k]);
     }
-    maps.surface.scale = maps.height.scale;
+    //maps.surface.scale = maps.height.scale;
   };
 
   exports.Terrain = function(source) {
