@@ -252,11 +252,11 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
                      drawTrackNode,
                      heightNode);
 
-      // var surfaceNode = maps.surface.q_map;
-      // maps.surface.q_map = new quiver.Node(maps.surface);
-      var newSurfaceNode = new quiver.Node(maps.surface);
+      var surfaceNode = maps.surface.q_map;
+      maps.surface.q_map = new quiver.Node(maps.surface);
+      // var newSurfaceNode = new quiver.Node(maps.surface);
       quiver.connect(drawTrackNode,
-                     newSurfaceNode,
+                     surfaceNode,
                      prepSurface,
                      maps.surface.q_map);
     }).call(this);
