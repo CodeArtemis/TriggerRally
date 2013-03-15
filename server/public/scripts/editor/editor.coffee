@@ -59,14 +59,14 @@ define [
 
     setStatus = (msg) -> $status.text msg
 
-    appModel = app.model
-    appModel.on 'change:user.tracks', ->
-      appModel.user.fetchRelated 'tracks'
+    root = app.root
+    root.on 'change:user.tracks', ->
+      root.user.fetchRelated 'tracks'
 
     #game = new gameGame.Game()
-    prefs = app.model.user.prefs or {}
+    prefs = root.user.prefs or {}
     prefs.audio = no
-    client = new clientClient.TriggerClient $view3d[0], appModel, prefs: prefs
+    client = new clientClient.TriggerClient $view3d[0], root, prefs: prefs
 
     client.camera.eulerOrder = 'ZYX'
     camPos = client.camera.position
@@ -84,11 +84,9 @@ define [
     #socket = io.connect '/api'
     #models.Model::sync = sync.syncSocket socket
 
-    track = null
-
     doSave = _.debounce ->
       setStatus 'Saving...'
-      appModel.track.save null,
+      root.track.save null,
         success: (model, response, options) ->
           setStatus 'OK'
         error: (model, xhr, options) ->
@@ -99,8 +97,8 @@ define [
       setStatus 'Changed'
       doSave()
 
-    appModel.on 'change:track.config change:track.env', (model, options) ->
-      # game.setTrackConfig appModel.track, (err, theTrack) ->
+    root.on 'change:track.config change:track.env', (model, options) ->
+      # game.setTrackConfig root.track, (err, theTrack) ->
       #   track = theTrack
       #   client.addEditorCheckpoints track
 
@@ -110,21 +108,18 @@ define [
         # DUPLICATION vvv
         requestSave()
 
-    #appModel.track.on 'childchange', ->
-    #  # DUPLICATION ^^^
-    #  requestSave()# unless options.dontSave
-
-    #appModel.track.on 'sync', ->
+    #root.track.on 'sync', ->
     #  setStatus 'sync'
 
-    appModel.on 'change:track.config.course.startposition', ->
+    root.on 'change:track.config.course.startposition', ->
       console.log 'change startpos'
-      startposition = appModel.track.config.course.startposition
+      startposition = root.track.config.course.startposition
       Vec3::set.apply startPos.position, startposition.pos
       Vec3::set.apply startPos.rotation, startposition.rot
 
-    appModel.once 'change:track.config.course.startposition.pos', ->
-      startposition = appModel.track.config.course.startposition
+    root.once 'change:track.config.course.startposition.pos', ->
+      console.log 'Setting initial startposition'
+      startposition = root.track.config.course.startposition
       Vec3::set.apply camPos, startposition.pos
       camAng.x = 0.9
       camAng.z = startposition.rot[2] - Math.PI / 2
@@ -132,9 +127,7 @@ define [
       camPos.y -= 20 * Math.sin(startposition.rot[2])
       camPos.z += 40
 
-    #appModel.track.on 'all', -> console.log arguments
-
-    app.model.on 'change:trackid', -> bindTrack app.currentTrack()
+    #root.track.on 'all', -> console.log arguments
 
     mockVehicle =
       cfg: null
@@ -152,15 +145,7 @@ define [
         renderCar = new clientCar.RenderCar startPos, mockVehicle, null
         renderCar.update()
 
-    # appModel.track.set TRIGGER.TRACK, dontSave: yes
-    # appModel.track.fetch
-    #   dontSave: yes
-    #   success: -> setStatus 'OK'
-    #   error: ->
-    #     setStatus 'ERROR'
-    #     console.log 'error details:'
-    #     console.log arguments
-
+    # TODO: reimplement with dynamic track loading.
     #if TRIGGER.READONLY
     #  # Prevent any modification to the model.
     #  models.Model::validate = (attrs) -> 'Read only mode'
@@ -183,7 +168,7 @@ define [
     # TODO: Move to a StatusBarView?
     userView = new UserView
       el: '#editor-statusbar .userinfo'
-      model: app.model.user
+      model: root.user
       showStatus: yes
 
     inspectorController = new inspector.Controller app, selection
@@ -205,8 +190,8 @@ define [
         delta = 0.001
 
       terrainHeight = 0
-      if track?
-        terrainHeight = (track.terrain.getContactRayZ camPos.x, camPos.y).surfacePos.z
+      if client.track?
+        terrainHeight = (client.track.terrain.getContactRayZ camPos.x, camPos.y).surfacePos.z
       SPEED = 30 + 0.8 * Math.max 0, camPos.z - terrainHeight
       ANG_SPEED = 2
       VISCOSITY = 20
@@ -235,10 +220,10 @@ define [
           rot[2] -= Math.floor(rot[2] / TWOPI) * TWOPI
           switch sel.type
             when 'scenery'
-              scenery = deepClone appModel.track.config.scenery
+              scenery = deepClone root.track.config.scenery
               obj = scenery[sel.layer].add[sel.idx]
               obj.rot = rot
-              appModel.track.config.scenery = scenery
+              root.track.config.scenery = scenery
               sel.object = obj
             else
               sel.object.rot = rot
@@ -257,9 +242,6 @@ define [
       camAngVel.z = camAngVelTarget.z + (camAngVel.z - camAngVelTarget.z) * mult
 
       camPos.addSelf tmpVec3.copy(camVel).multiplyScalar delta
-      if track?
-        terrainHeight = (track.terrain.getContactRayZ camPos.x, camPos.y).surfacePos.z
-        camPos.z = Math.max camPos.z, terrainHeight + 1
 
       camAng.addSelf tmpVec3.copy(camAngVel).multiplyScalar delta
       camAng.x = Math.max 0, Math.min 2, camAng.x
@@ -412,10 +394,10 @@ define [
               switch sel.type
                 when 'scenery'
                   # DUPLICATE CODE ALERT
-                  scenery = deepClone appModel.track.config.scenery
+                  scenery = deepClone root.track.config.scenery
                   obj = scenery[sel.layer].add[sel.idx]
                   obj.rot = rot
-                  appModel.track.config.scenery = scenery
+                  root.track.config.scenery = scenery
                   cursor.object = obj if cursor.object is sel.object
                   sel.object = obj
                 else
@@ -428,16 +410,16 @@ define [
               if sel.type isnt 'checkpoint'
                 if inspectorController.snapToGround
                   tmp = new Vec3 pos[0], pos[1], -Infinity
-                  contact = track.terrain.getContact tmp
+                  contact = client.track.terrain.getContact tmp
                   pos[2] = contact.surfacePos.z
                   pos[2] += 1 if sel.type is 'startpos'
               switch sel.type
                 when 'scenery'
                   # DUPLICATE CODE ALERT
-                  scenery = deepClone appModel.track.config.scenery
+                  scenery = deepClone root.track.config.scenery
                   obj = scenery[sel.layer].add[sel.idx]
                   obj.pos = pos
-                  appModel.track.config.scenery = scenery
+                  root.track.config.scenery = scenery
                   cursor.object = obj if cursor.object is sel.object
                   sel.object = obj
                 else

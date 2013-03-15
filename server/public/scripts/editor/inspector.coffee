@@ -48,34 +48,34 @@ define [
     $flagPublish    = $inspector.find '#flag-publish input'
     $flagSnap       = $inspector.find '#flag-snap input'
 
-    appModel = app.model
+    root = app.root
 
     trackListView = new TrackListView
       el: '#track-list'
-      collection: appModel.user.tracks
-      appModel: appModel
+      collection: root.user.tracks
+      root: root
 
     userView = null
-    appModel.on 'change:user', ->
+    root.on 'change:user', ->
       userView?.destroy()
       userView = new UserView
         el: '#user-track-owner .content'
-        model: appModel.user
+        model: root.user
 
     onChangeEnv = ->
-      for layer, idx in appModel.track.env.scenery.layers
+      for layer, idx in root.track.env.scenery.layers
         sceneryType.$content.append new Option layer.id, idx
-    appModel.on 'change:track.env', onChangeEnv
+    root.on 'change:track.env', onChangeEnv
 
-    appModel.on 'change:track.name', ->
-      selTitle.$content.val appModel.track.name
+    root.on 'change:track.name', ->
+      selTitle.$content.val root.track.name
     selTitle.$content.on 'input', ->
-      appModel.track.name = selTitle.$content.val()
+      root.track.name = selTitle.$content.val()
 
-    appModel.on 'change:track.published', ->
-      $flagPublish[0].checked = appModel.track.published
+    root.on 'change:track.published', ->
+      $flagPublish[0].checked = root.track.published
     $flagPublish.on 'change', ->
-      appModel.track.published = $flagPublish[0].checked
+      root.track.published = $flagPublish[0].checked
 
     bindSlider = (type, slider, eachSel) ->
       $content = slider.$content
@@ -93,9 +93,9 @@ define [
     bindSlider 'checkpoint', selSurfStrength, (sel, val) -> manipulate sel.object, 'surf', (o) -> o.strength = val
 
     bindSlider 'scenery', selScale, (sel, val) ->
-      scenery = deepClone appModel.track.config.scenery
+      scenery = deepClone root.track.config.scenery
       scenery[sel.layer].add[sel.idx].scale = Math.exp(val)
-      appModel.track.config.scenery = scenery
+      root.track.config.scenery = scenery
 
     cmdAdd.$content.click ->
       $sceneryType = sceneryType.$content.find(":selected")
@@ -117,9 +117,9 @@ define [
       form.submit()
 
     compareUser = ->
-      $cmdDeleteTrack.toggleClass 'hidden', (appModel.track.user isnt appModel.user)
-    appModel.on 'change:track.owner', compareUser
-    appModel.on 'change:user.id', compareUser
+      $cmdDeleteTrack.toggleClass 'hidden', (root.track.user isnt root.user)
+    root.on 'change:track.owner', compareUser
+    root.on 'change:user.id', compareUser
 
     cmdDeleteTrack.$content.click ->
       return unless window.confirm "Are you sure you want to DELETE this track?"

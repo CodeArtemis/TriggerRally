@@ -18,22 +18,28 @@ define [
 
     trackEdit: (trackId) ->
       @app.setCurrent @app.editorView
-      console.log 'setting id'
-      model = @app.model
-      model.track = models.Track.findOrCreate id: trackId
-      model.track.fetch()
-      # ^ TODO: Check this also works if track is fetched first, then assigned on success.
+      root = @app.root
 
-  class AppModel extends models.RelModel
+      # This approach might be better, but doesn't fire events deeper than one layer.
+      # track = models.Track.findOrCreate id: trackId
+      # track.fetch
+      #   success: ->
+      #     root.track.set track.attributes
+
+      # So instead we just reassign the track and fetch it in place.
+      root.track = models.Track.findOrCreate id: trackId
+      root.track.fetch()
+
+  class RootModel extends models.RelModel
     models.buildProps @, [ 'track', 'user' ]
     bubbleAttribs: [ 'track', 'user' ]
     initialize: ->
       super
-      #@on 'all', -> console.log arguments
+      @on 'all', (event) -> console.log "RootModel: \"#{event}\""
 
   class App
     constructor: ->
-      @model = new AppModel
+      @root = new RootModel
         user: new models.User
         track: new models.Track
 
@@ -49,7 +55,7 @@ define [
         return unless xhr.readyState is 4
         return unless xhr.status is 200
         json = JSON.parse xhr.response
-        @model.user.set json.user if json.user
+        @root.user.set json.user if json.user
       xhr.send()
 
       Backbone.history.start pushState: yes

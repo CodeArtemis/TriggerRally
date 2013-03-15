@@ -16,7 +16,7 @@ define [
 
     initialize: (options) ->
       super
-      @appModel = options.parent.options.appModel
+      @root = options.parent.options.root
       @selected = no
       @model.on 'change:name', =>
         @render()
@@ -26,7 +26,7 @@ define [
       url: "/track/#{@model.id}/edit"
 
     afterRender: ->
-      @$el.toggleClass 'selected', @model is @appModel.selectedTrack
+      @$el.toggleClass 'selected', @model is @root.selectedTrack
 
       $a = @$el.find('a')
       $a.click ->
