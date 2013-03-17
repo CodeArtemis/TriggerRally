@@ -58,6 +58,13 @@ define [
         return unless xhr.readyState is 4
         return unless xhr.status is 200
         json = JSON.parse xhr.response
+
+        ## DELETE ME ##
+
+        delete json.user.tracks
+
+        ## DELETE ME ##
+
         @root.user.set @root.user.parse json.user if json.user
       xhr.send()
 

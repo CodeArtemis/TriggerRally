@@ -82,6 +82,8 @@ define [
     startPos = new THREE.Object3D()
     client.scene.add startPos
 
+    client.addEditorCheckpoints()
+
     #socket = io.connect '/api'
     #models.Model::sync = sync.syncSocket socket
 

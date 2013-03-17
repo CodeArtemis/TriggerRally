@@ -36,21 +36,27 @@
   createAttributeMonitor = ->
     monitored = Object.create null
 
-    (parentModel, attrib) ->
+    (parentModel, attrib, newValue, options) ->
+      console.log "monitoring #{parentModel.constructor.name}.#{attrib}"
       onAll = (event, model, value, options) ->
-        return unless event[..5] is 'change'
-        newEvent = "change:#{attrib}.#{event[7..]}"
+        split = event.split ':'
+        split[1] ?= ""
+        newEvent = "#{split[0]}:#{attrib}.#{split[1]}"
         parentModel.trigger newEvent, model, value, options
 
-      value = parentModel.get attrib
+      attribValue = parentModel.get attrib
 
       if monitored[attrib]?
-        return if value is monitored[attrib]
+        return if attribValue is monitored[attrib]
         monitored[attrib].off 'all', onAll
 
-      if value instanceof Backbone.Model # or value instanceof Backbone.Collection
-        monitored[attrib] = value
-        value.on 'all', onAll
+      if attribValue instanceof Backbone.Model or attribValue instanceof Backbone.Collection
+        monitored[attrib] = attribValue
+        attribValue.on 'all', onAll
+
+      if newValue?
+        event = "change:#{attrib}."
+        parentModel.trigger event, newValue, options
 
   models.Model = class Model extends Backbone.Model
     bubbleAttribs: null
@@ -87,19 +93,26 @@
       monitor = createAttributeMonitor()
 
       # Bind to initial attributes.
-      monitor @, attrib for attrib in @bubbleAttribs
+      for attrib in @bubbleAttribs
+        monitor @, attrib
+        @on "change:#{attrib}", (model, value, options) =>
+          monitor @, attrib, value, options
 
       # Watch for changes to attributes and rebind as necessary.
-      @on 'change', =>
-        monitor @, attrib for attrib in @bubbleAttribs
-        return
+      # @on 'change', =>
+      #   monitor @, attrib for attrib in @bubbleAttribs
+      #   changed = @changedAttributes()
+      #   debugger
+      #   return
 
   class Collection extends Backbone.Collection
+
+  class PathCollection extends Collection
     url: "/v1/#{@path}"
 
-  class models.EnvCollection extends Collection
+  class models.EnvCollection extends PathCollection
     path: 'envs'
-  class models.TrackCollection extends Collection
+  class models.TrackCollection extends PathCollection
     path: 'tracks'
     comparator: 'name'
     # url: (models) ->
@@ -110,7 +123,7 @@
     #     "/v1/tracks"
     # parse: (response, options) ->
     #   response
-  class models.UserCollection extends Collection
+  class models.UserCollection extends PathCollection
     path: 'users'
 
   class models.Checkpoint extends Model
@@ -124,20 +137,20 @@
   class models.Course extends Model
     buildProps @, [ 'checkpoints', 'startposition' ]
     bubbleAttribs: [ 'startposition' ]
-    defaults:
-      startposition: new models.StartPos
-      checkpoints: new Collection(model: models.Checkpoint)
+    initialize: ->
+      @startposition = new models.StartPos
+      @checkpoints = new Collection model: models.Checkpoint
+      super
     parse: (response, options) ->
       if response.startposition
         @startposition.set @startposition.parse response.startposition
-        delete response.startposition
+        response.startposition = @startposition
       if response.checkpoints
         checkpoints = for checkpoint in response.checkpoints
           c = new models.Checkpoint
           c.set c.parse checkpoint
           c
-        @checkpoints.update checkpoints
-        delete response.checkpoints
+        response.checkpoints = @checkpoints.update checkpoints
       response
     # relations: [
     #   type: Backbone.HasOne
@@ -152,15 +165,14 @@
   class models.TrackConfig extends Model
     buildProps @, [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
     bubbleAttribs: [ 'course', 'scenery' ]
-    defaults:
-      course: new models.Course
-    # initialize: ->
-    #   super
+    initialize: ->
+      @course = new models.Course
+      super
     #   @on 'all', (event) -> console.log 'TrackConfig: ' + event
     parse: (response, options) ->
       if response.course
-        @course.set @course.parse response.course
-        delete response.course
+        course = @course
+        response.course = course.set course.parse response.course
       response
     # relations: [
     #   type: Backbone.HasOne
@@ -186,7 +198,7 @@
     all: Collection.extend(model: @)
     buildProps @, [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
     urlRoot: '/v1/envs'
-    collection: models.EnvCollection
+    #collection: models.EnvCollection
     # defaults:
     #   scenery: new models.TrackConfig
     # relations: [
@@ -212,20 +224,17 @@
     ]
     bubbleAttribs: [ 'config', 'env' ]
     urlRoot: '/v1/tracks'
-    defaults:
-      config: new models.TrackConfig
-    # initialize: ->
-    #   super
-    #   @on 'all', (event) -> console.log 'Track: ' + event
+    initialize: ->
+      @config = new models.TrackConfig
+      super
+      # @on 'all', (event) -> console.log 'Track: ' + event
     parse: (response, options) ->
       if response.config
-        @config.set @config.parse response.config
-        delete response.config
+        config = @config  # or new models.TrackConfig
+        response.config = config.set config.parse response.config
       if response.env
-        # TODO: Handle setting env to null?
-        @env ?= new models.Env
-        @env.set @env.parse response.env
-        delete response.env
+        env = @env or new models.Env
+        response.env = env.set env.parse response.env
       response
     toJSON: (options) ->
       json = super
@@ -244,8 +253,9 @@
       'tracks'  # NOTE: computed attribute, not currently present in DB.
       'website'
     ]
-    defaults:
-      tracks: new models.TrackCollection
+    initialize: ->
+      @tracks = new models.TrackCollection
+      super
     urlRoot: '/v1/users'
     parse: (response, options) ->
       if response.tracks
@@ -253,8 +263,7 @@
           t = new models.Track
           t.set t.parse track
           t
-        @tracks.update tracks
-        delete response.tracks
+        response.tracks = @tracks.update tracks
       response
     toJSON: (options) ->
       json = super
