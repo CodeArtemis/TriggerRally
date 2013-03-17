@@ -91,7 +91,7 @@ define [
         success: (model, response, options) ->
           setStatus 'OK'
         error: (model, xhr, options) ->
-          setStatus 'ERROR: ' + xhr
+          setStatus "ERROR: #{xhr.statusText} (#{xhr.status})"
     , 1000
 
     root.on 'all', (event) ->
@@ -109,14 +109,12 @@ define [
     #  setStatus 'sync'
 
     root.on 'change:track.config.course.startposition.', ->
-    # root.on 'all', (event) ->
-      #return unless event.startsWith 'change:track.config.course.startposition'
       console.log 'change startpos'
       startposition = root.track.config.course.startposition
       Vec3::set.apply startPos.position, startposition.pos
       Vec3::set.apply startPos.rotation, startposition.rot
 
-    root.once 'change:track.config.course.startposition.pos', ->
+    root.once 'change:track.config.course.startposition.', ->
       console.log 'Setting initial startposition'
       startposition = root.track.config.course.startposition
       Vec3::set.apply camPos, startposition.pos

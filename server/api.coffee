@@ -39,6 +39,8 @@ makeSync = (handlers) ->
     success = options?.success or ->
     error = options?.error or ->
     handlers[method] model, success, error, options
+    # TODO: return an actual Promise object of some sort.
+    null
 
 bb.Car::sync = makeSync
   read: (model, success, error, options) ->

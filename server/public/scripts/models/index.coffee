@@ -38,9 +38,6 @@
 
     (parentModel, attrib) ->
       onAll = (event, model, value, options) ->
-        # if attrib is 'startposition'
-        #   console.log "startposition: #{event}"
-        #   debugger
         return unless event[..5] is 'change'
         newEvent = "change:#{attrib}.#{event[7..]}"
         parentModel.trigger newEvent, model, value, options
@@ -75,7 +72,7 @@
         .fail (data, textStatus, errorThrown) => options.error? @, xhr, options
       else
         xhr = @fetchXHR = super
-        xhr.always => @fetchXHR = null
+        xhr?.always => @fetchXHR = null
       xhr
 
     parse: (response, options) ->
@@ -157,9 +154,9 @@
     bubbleAttribs: [ 'course', 'scenery' ]
     defaults:
       course: new models.Course
-    initialize: ->
-      super
-      @on 'all', (event) -> console.log 'TrackConfig: ' + event
+    # initialize: ->
+    #   super
+    #   @on 'all', (event) -> console.log 'TrackConfig: ' + event
     parse: (response, options) ->
       if response.course
         @course.set @course.parse response.course
@@ -217,14 +214,15 @@
     urlRoot: '/v1/tracks'
     defaults:
       config: new models.TrackConfig
-    initialize: ->
-      super
-      @on 'all', (event) -> console.log 'Track: ' + event
+    # initialize: ->
+    #   super
+    #   @on 'all', (event) -> console.log 'Track: ' + event
     parse: (response, options) ->
       if response.config
         @config.set @config.parse response.config
         delete response.config
       if response.env
+        # TODO: Handle setting env to null?
         @env ?= new models.Env
         @env.set @env.parse response.env
         delete response.env
