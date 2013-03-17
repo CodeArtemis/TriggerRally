@@ -32,9 +32,12 @@ requirejs.config({
 define('canvas', function() {});
 define('fs', function() {});
 
+// define('backbone-full',
+//        [ 'backbone', 'backbone-relational' ],
+//        function(bb1, bb2) { return bb1; });
 define('backbone-full',
-       [ 'backbone', 'backbone-relational' ],
-       function(bb1, bb2) { return bb1; });
+       [ 'backbone' ],
+       function(bb1) { return bb1; });
 
 require(
   {

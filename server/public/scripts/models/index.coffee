@@ -8,7 +8,7 @@
     define ["exports", "backbone-full"], factory
   else if typeof exports is "object"
     # CommonJS.
-    factory exports, require("backbone-relational")
+    factory exports, require("backbone")
   else
     throw "Couldn't determine module type."
 ) (exports, Backbone) ->
@@ -55,7 +55,7 @@
         monitored[attrib] = value
         value.on 'all', onAll
 
-  models.RelModel = class RelModel extends Backbone.RelationalModel
+  models.RelModel = class RelModel extends Backbone.Model
     bubbleAttribs: null
 
     fetch: (options) ->
@@ -80,8 +80,6 @@
         monitor @, attrib for attrib in @bubbleAttribs
         return
 
-  RelModel.setup()
-
   class Collection extends Backbone.Collection
     url: "/v1/#{@path}"
 
@@ -100,8 +98,6 @@
     #   response
   class models.UserCollection extends Collection
     path: 'users'
-
-  Backbone.Relational.store.addModelScope models
 
   class models.Checkpoint extends RelModel
     buildProps @, [ 'disp', 'pos', 'surf' ]
@@ -197,6 +193,12 @@
       relatedModel: 'Track'
       includeInJSON: 'id'
     ]
+    parse: (response, options) ->
+      if response.env
+        @env ?= new models.Env
+        @env.set response.env
+        response.env = @env
+      response
     toJSON: (options) ->
       json = super
       delete json.created
@@ -246,12 +248,11 @@
       relatedModel: models.User
     ]
 
-  model.setup?() for name, model of models
-
   models.buildProps = buildProps
   models.BackboneCollection = Backbone.Collection
   models.BackboneModel = Backbone.Model
   models.Collection = Collection
   #models.RelModel = RelModel
+  models.Backbone = Backbone
 
   models
