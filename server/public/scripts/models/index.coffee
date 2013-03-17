@@ -109,7 +109,7 @@
   class models.StartPos extends RelModel
     buildProps @, [ 'pos', 'rot' ]
     set: ->
-      debugger
+      console.log 'set StartPos'
       super
     initialize: ->
       super
