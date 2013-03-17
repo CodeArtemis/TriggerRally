@@ -63,6 +63,8 @@ define [
         model: root.user
 
     onChangeEnv = ->
+      return unless root.track.env.scenery?.layers
+      sceneryType.$content.remove()
       for layer, idx in root.track.env.scenery.layers
         sceneryType.$content.append new Option layer.id, idx
     root.on 'change:track.env', onChangeEnv

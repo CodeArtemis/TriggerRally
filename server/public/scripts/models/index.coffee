@@ -67,7 +67,16 @@
 
     fetch: (options) ->
       # TODO: Check @lastSync and only fetch if out of date.
-      super
+      xhr = @fetchXHR
+      if xhr
+        # Bind handlers to in-progress fetch.
+        xhr
+        .done (data, textStatus, jqXHR) => options.success? @, data, options
+        .fail (data, textStatus, errorThrown) => options.error? @, xhr, options
+      else
+        xhr = @fetchXHR = super
+        xhr.always => @fetchXHR = null
+      xhr
 
     parse: (response, options) ->
       @lastSync = Date.now()
@@ -75,6 +84,7 @@
 
     initialize: ->
       super
+      @fetchXHR = null
       return unless @bubbleAttribs
 
       monitor = createAttributeMonitor()
@@ -113,9 +123,6 @@
     buildProps @, [ 'pos', 'rot' ]
     set: ->
       super
-    initialize: ->
-      super
-      @on 'all', (event) -> console.log "StartPos: #{event}"
 
   class models.Course extends Model
     buildProps @, [ 'checkpoints', 'startposition' ]
@@ -123,6 +130,18 @@
     defaults:
       startposition: new models.StartPos
       checkpoints: new Collection(model: models.Checkpoint)
+    parse: (response, options) ->
+      if response.startposition
+        @startposition.set @startposition.parse response.startposition
+        delete response.startposition
+      if response.checkpoints
+        checkpoints = for checkpoint in response.checkpoints
+          c = new models.Checkpoint
+          c.set c.parse checkpoint
+          c
+        @checkpoints.update checkpoints
+        delete response.checkpoints
+      response
     # relations: [
     #   type: Backbone.HasOne
     #   key: 'startposition'
@@ -138,6 +157,14 @@
     bubbleAttribs: [ 'course', 'scenery' ]
     defaults:
       course: new models.Course
+    initialize: ->
+      super
+      @on 'all', (event) -> console.log 'TrackConfig: ' + event
+    parse: (response, options) ->
+      if response.course
+        @course.set @course.parse response.course
+        delete response.course
+      response
     # relations: [
     #   type: Backbone.HasOne
     #   key: 'course'
@@ -163,6 +190,8 @@
     buildProps @, [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
     urlRoot: '/v1/envs'
     collection: models.EnvCollection
+    # defaults:
+    #   scenery: new models.TrackConfig
     # relations: [
     #   type: Backbone.HasMany
     #   key: 'cars'
@@ -188,25 +217,17 @@
     urlRoot: '/v1/tracks'
     defaults:
       config: new models.TrackConfig
-    # relations: [
-    #   type: Backbone.HasOne
-    #   key: 'config'
-    #   relatedModel: models.TrackConfig
-    # ,
-    #   type: Backbone.HasOne
-    #   key: 'env'
-    #   relatedModel: models.Env
-    # ,
-    #   type: Backbone.HasOne
-    #   key: 'parent'
-    #   relatedModel: 'Track'
-    #   includeInJSON: 'id'
-    # ]
+    initialize: ->
+      super
+      @on 'all', (event) -> console.log 'Track: ' + event
     parse: (response, options) ->
+      if response.config
+        @config.set @config.parse response.config
+        delete response.config
       if response.env
         @env ?= new models.Env
-        @env.set response.env
-        response.env = @env
+        @env.set @env.parse response.env
+        delete response.env
       response
     toJSON: (options) ->
       json = super
@@ -230,8 +251,12 @@
     urlRoot: '/v1/users'
     parse: (response, options) ->
       if response.tracks
-        @tracks.update response.tracks
-        response.tracks = @tracks
+        tracks = for track in response.tracks
+          t = new models.Track
+          t.set t.parse track
+          t
+        @tracks.update tracks
+        delete response.tracks
       response
     toJSON: (options) ->
       json = super

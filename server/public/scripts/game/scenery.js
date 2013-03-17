@@ -54,11 +54,14 @@ function(LFIB4, collision, hash2d, util, THREE) {
   };
 
   exports.Scenery.prototype.refresh = function() {
-    var config = this.root.track.config.scenery;
-    var envConfig = this.root.track.env.scenery;
-    var layers = envConfig.layers;
     this.layers = [];
     this.layersById = {};
+    var config = this.root.track.config.scenery;
+    if (!config) return;
+    var env = this.root.track.env;
+    if (!env) return;
+    var envConfig = env.scenery;
+    var layers = envConfig.layers;
     for (var i = 0; i < layers.length; ++i) {
       var layerId = layers[i].id;
       var trackScenery = config[layerId];
