@@ -156,15 +156,8 @@ class DataContext
 
 # UTILITY FUNCTIONS
 
-stores = Object.create null
-
 findModel = (Model, pub_id, done) ->
-  store = stores[Model.name]
-  store ?= stores[Model.name] = new Backbone.Collection model: Model
-  model = store.get pub_id
-  unless model
-    model = new Model id: pub_id
-    store.add model
+  model = Model.findOrCreate pub_id
   model.fetch
     success: -> done model
     error:   -> done null
@@ -202,7 +195,6 @@ module.exports = (app) ->
       findTrack trackId, (track) ->
         tracks[i] = track
         if track?.env
-          console.log track
           track.env.fetch
             success: done
             error:   done

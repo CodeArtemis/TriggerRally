@@ -61,7 +61,8 @@ define [
 
     root = app.root
     root.on 'change:user.tracks', ->
-      root.user.fetchRelated 'tracks'
+      root.user.tracks.each (track) ->
+        track.fetch()
 
     #game = new gameGame.Game()
     prefs = root.user.prefs or {}

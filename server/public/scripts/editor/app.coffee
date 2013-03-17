@@ -31,7 +31,7 @@ define [
       root.track.fetch
         dontSave: yes
 
-  class RootModel extends models.RelModel
+  class RootModel extends models.Model
     models.buildProps @, [ 'track', 'user' ]
     bubbleAttribs: [ 'track', 'user' ]
     initialize: ->
@@ -56,7 +56,7 @@ define [
         return unless xhr.readyState is 4
         return unless xhr.status is 200
         json = JSON.parse xhr.response
-        @root.user.set json.user if json.user
+        @root.user.set @root.user.parse json.user if json.user
       xhr.send()
 
       Backbone.history.start pushState: yes
