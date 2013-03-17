@@ -28,7 +28,8 @@ define [
 
       # So instead we just reassign the track and fetch it in place.
       root.track = models.Track.findOrCreate id: trackId
-      root.track.fetch()
+      root.track.fetch
+        dontSave: yes
 
   class RootModel extends models.RelModel
     models.buildProps @, [ 'track', 'user' ]

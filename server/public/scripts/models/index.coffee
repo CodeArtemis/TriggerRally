@@ -38,11 +38,10 @@
 
     (parentModel, attrib) ->
       onAll = (event, model, value, options) ->
-        return unless event[..6] is 'change:'
-        # Prevent infinite recursion.
-        # options._triggered ?= {}
-        # return if options._triggered[parentModel.cid]
-        # options._triggered[parentModel.cid] = yes
+        # if attrib is 'startposition'
+        #   console.log "startposition: #{event}"
+        #   debugger
+        return unless event[..5] is 'change'
         newEvent = "change:#{attrib}.#{event[7..]}"
         parentModel.trigger newEvent, model, value, options
 
@@ -109,6 +108,12 @@
 
   class models.StartPos extends RelModel
     buildProps @, [ 'pos', 'rot' ]
+    set: ->
+      debugger
+      super
+    initialize: ->
+      super
+      @on 'all', (event) -> console.log "StartPos: #{event}"
 
   class models.Course extends RelModel
     buildProps @, [ 'checkpoints', 'startposition' ]

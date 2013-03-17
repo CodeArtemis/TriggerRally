@@ -93,25 +93,23 @@ define [
           setStatus 'ERROR: ' + xhr
     , 1000
 
-    requestSave = ->
-      setStatus 'Changed'
-      doSave()
-
-    root.on 'change:track.config change:track.env', (model, options) ->
-      # game.setTrackConfig root.track, (err, theTrack) ->
-      #   track = theTrack
-      #   client.addEditorCheckpoints track
+    root.on 'all', (event) ->
+      options = arguments[arguments.length - 1]
+      return unless event.startsWith 'change:track'
+      #console.log "Saving due to event: #{event}"
 
       if options?.dontSave
         setStatus 'OK'
       else
-        # DUPLICATION vvv
-        requestSave()
+        setStatus 'Changed'
+        doSave()
 
     #root.track.on 'sync', ->
     #  setStatus 'sync'
 
-    root.on 'change:track.config.course.startposition', ->
+    root.on 'change:track.config.course.startposition.', ->
+    # root.on 'all', (event) ->
+      #return unless event.startsWith 'change:track.config.course.startposition'
       console.log 'change startpos'
       startposition = root.track.config.course.startposition
       Vec3::set.apply startPos.position, startposition.pos
