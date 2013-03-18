@@ -37,7 +37,6 @@
     monitored = Object.create null
 
     (parentModel, attrib, newValue, options) ->
-      console.log "monitoring #{parentModel.constructor.name}.#{attrib}"
       onAll = (event, model, value, options) ->
         split = event.split ':'
         split[1] ?= ""
@@ -48,9 +47,11 @@
 
       if monitored[attrib]?
         return if attribValue is monitored[attrib]
+        console.log "detaching #{parentModel.constructor.name}.#{attrib}"
         monitored[attrib].off 'all', onAll
 
       if attribValue instanceof Backbone.Model or attribValue instanceof Backbone.Collection
+        console.log "attaching #{parentModel.constructor.name}.#{attrib}"
         monitored[attrib] = attribValue
         attribValue.on 'all', onAll
 
@@ -86,24 +87,17 @@
       super
 
     initialize: ->
-      super
       @fetchXHR = null
-      return unless @bubbleAttribs
-
       monitor = createAttributeMonitor()
-
-      # Bind to initial attributes.
-      for attrib in @bubbleAttribs
+      bubbleAttribs = @bubbleAttribs ? []
+      bubbleAttribs.forEach (attrib) =>
+        # Bind to initial attributes.
         monitor @, attrib
+
+        # Watch for changes to attributes and rebind as necessary.
         @on "change:#{attrib}", (model, value, options) =>
           monitor @, attrib, value, options
-
-      # Watch for changes to attributes and rebind as necessary.
-      # @on 'change', =>
-      #   monitor @, attrib for attrib in @bubbleAttribs
-      #   changed = @changedAttributes()
-      #   debugger
-      #   return
+      super
 
   class Collection extends Backbone.Collection
 
@@ -164,7 +158,7 @@
 
   class models.TrackConfig extends Model
     buildProps @, [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
-    bubbleAttribs: [ 'course', 'scenery' ]
+    bubbleAttribs: [ 'course' ]
     initialize: ->
       @course = new models.Course
       super

@@ -111,9 +111,8 @@ define [
         )
 
         vertexShader:
-          THREE.ShaderChunk.shadowmap_pars_vertex +
+          THREE.ShaderChunk.shadowmap_pars_vertex + '\n' +
           """
-
           const int NUM_LAYERS = #{@numLayers};
           const float RING_WIDTH = #{@ringWidth}.0;
 

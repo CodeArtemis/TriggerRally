@@ -21,15 +21,15 @@ define [
       root = @app.root
 
       # This approach might be better, but doesn't fire events deeper than one layer.
-      track = models.Track.findOrCreate trackId
-      track.fetch
-        success: ->
-          root.track.set track.attributes
+      # track = models.Track.findOrCreate trackId
+      # track.fetch
+      #   success: ->
+      #     root.track.set track.attributes
 
       # So instead we just reassign the track and fetch it in place.
-      # root.track = models.Track.findOrCreate trackId
-      # root.track.fetch
-      #   dontSave: yes
+      root.track = models.Track.findOrCreate trackId
+      root.track.fetch
+        dontSave: yes
 
   class RootModel extends models.Model
     models.buildProps @, [ 'track', 'user' ]

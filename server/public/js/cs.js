@@ -1,5 +1,5 @@
 /**
- * @license cs 0.4.2 Copyright (c) 2010-2011, The Dojo Foundation All Rights Reserved.
+ * @license cs 0.4.3 Copyright (c) 2010-2011, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/jrburke/require-cs for details
  */
@@ -33,7 +33,7 @@ define(['coffee-script'], function (CoffeeScript) {
             if (typeof XMLHttpRequest !== "undefined") {
                 return new XMLHttpRequest();
             } else {
-                for (i = 0; i < 3; i++) {
+                for (i = 0; i < 3; i += 1) {
                     progId = progIds[i];
                     try {
                         xhr = new ActiveXObject(progId);
@@ -69,11 +69,11 @@ define(['coffee-script'], function (CoffeeScript) {
     } else if (typeof Packages !== 'undefined') {
         //Why Java, why is this so awkward?
         fetchText = function (path, callback) {
-            var encoding = "utf-8",
+            var stringBuffer, line,
+                encoding = "utf-8",
                 file = new java.io.File(path),
                 lineSeparator = java.lang.System.getProperty("line.separator"),
                 input = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(file), encoding)),
-                stringBuffer, line,
                 content = '';
             try {
                 stringBuffer = new java.lang.StringBuffer();
@@ -107,6 +107,8 @@ define(['coffee-script'], function (CoffeeScript) {
     }
 
     return {
+        fetchText: fetchText,
+
         get: function () {
             return CoffeeScript;
         },
@@ -118,7 +120,7 @@ define(['coffee-script'], function (CoffeeScript) {
             }
         },
 
-        version: '0.4.2',
+        version: '0.4.3',
 
         load: function (name, parentRequire, load, config) {
             var path = parentRequire.toUrl(name + '.coffee');
@@ -126,11 +128,10 @@ define(['coffee-script'], function (CoffeeScript) {
 
                 //Do CoffeeScript transform.
                 try {
-                  text = CoffeeScript.compile(text, config.CoffeeScript);
-                }
-                catch (err) {
-                  err.message = "In " + path + ", " + err.message;
-                  throw(err);
+                    text = CoffeeScript.compile(text, config.CoffeeScript);
+                } catch (err) {
+                    err.message = "In " + path + ", " + err.message;
+                    throw err;
                 }
 
                 //Hold on to the transformed text if a build.
