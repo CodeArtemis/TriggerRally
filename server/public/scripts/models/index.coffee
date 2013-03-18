@@ -10,7 +10,7 @@
     # CommonJS.
     factory exports, require("backbone")
   else
-    throw "Couldn't determine module type."
+    throw new Error "Couldn't determine module type."
 ) (exports, Backbone) ->
 
   # http://www.narrativescience.com/blog/automatically-creating-getterssetters-for-backbone-models/
@@ -31,8 +31,6 @@
   #   mdl.on 'childchange', (stack) ->
   #     parent.trigger 'childchange', stack.concat mdl
 
-  models = exports
-
   createAttributeMonitor = ->
     monitored = Object.create null
 
@@ -47,11 +45,11 @@
 
       if monitored[attrib]?
         return if attribValue is monitored[attrib]
-        console.log "detaching #{parentModel.constructor.name}.#{attrib}"
+        # console.log "detaching #{parentModel.constructor.name}.#{attrib}"
         monitored[attrib].off 'all', onAll
 
       if attribValue instanceof Backbone.Model or attribValue instanceof Backbone.Collection
-        console.log "attaching #{parentModel.constructor.name}.#{attrib}"
+        # console.log "attaching #{parentModel.constructor.name}.#{attrib}"
         monitored[attrib] = attribValue
         attribValue.on 'all', onAll
 
@@ -59,7 +57,7 @@
         event = "change:#{attrib}."
         parentModel.trigger event, newValue, options
 
-  models.Model = class Model extends Backbone.Model
+  Model = class Model extends Backbone.Model
     bubbleAttribs: null
 
     @findOrCreate: (id) ->
@@ -104,9 +102,9 @@
   class PathCollection extends Collection
     url: "/v1/#{@path}"
 
-  class models.EnvCollection extends PathCollection
+  class EnvCollection extends PathCollection
     path: 'envs'
-  class models.TrackCollection extends PathCollection
+  class TrackCollection extends PathCollection
     path: 'tracks'
     comparator: 'name'
     # url: (models) ->
@@ -117,23 +115,26 @@
     #     "/v1/tracks"
     # parse: (response, options) ->
     #   response
-  class models.UserCollection extends PathCollection
+  class UserCollection extends PathCollection
     path: 'users'
 
-  class models.Checkpoint extends Model
+  class Checkpoint extends Model
     buildProps @, [ 'disp', 'pos', 'surf' ]
 
-  class models.StartPos extends Model
+  class CheckpointsCollection extends Collection
+    model: Checkpoint
+
+  class StartPos extends Model
     buildProps @, [ 'pos', 'rot' ]
     set: ->
       super
 
-  class models.Course extends Model
+  class Course extends Model
     buildProps @, [ 'checkpoints', 'startposition' ]
-    bubbleAttribs: [ 'startposition' ]
+    bubbleAttribs: [ 'checkpoints', 'startposition' ]
     initialize: ->
-      @startposition = new models.StartPos
-      @checkpoints = new Collection model: models.Checkpoint
+      @startposition = new StartPos
+      @checkpoints = new CheckpointsCollection
       super
     parse: (response, options) ->
       if response.startposition
@@ -141,26 +142,27 @@
         response.startposition = @startposition
       if response.checkpoints
         checkpoints = for checkpoint in response.checkpoints
-          c = new models.Checkpoint
+          c = new Checkpoint
           c.set c.parse checkpoint
           c
-        response.checkpoints = @checkpoints.update checkpoints
+        @checkpoints.update checkpoints
+        response.checkpoints = @checkpoints
       response
     # relations: [
     #   type: Backbone.HasOne
     #   key: 'startposition'
-    #   relatedModel: models.StartPos
+    #   relatedModel: StartPos
     # ,
     #   type: Backbone.HasMany
     #   key: 'checkpoints'
-    #   relatedModel: models.Checkpoint
+    #   relatedModel: Checkpoint
     # ]
 
-  class models.TrackConfig extends Model
+  class TrackConfig extends Model
     buildProps @, [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
     bubbleAttribs: [ 'course' ]
     initialize: ->
-      @course = new models.Course
+      @course = new Course
       super
     #   @on 'all', (event) -> console.log 'TrackConfig: ' + event
     parse: (response, options) ->
@@ -171,10 +173,10 @@
     # relations: [
     #   type: Backbone.HasOne
     #   key: 'course'
-    #   relatedModel: models.Course
+    #   relatedModel: Course
     # ]
 
-  class models.Car extends Model
+  class Car extends Model
     buildProps @, [ 'config', 'name', 'user' ]
     urlRoot: '/v1/cars'
     # relations: [
@@ -188,21 +190,21 @@
       delete json.created
       json
 
-  class models.Env extends Model
+  class Env extends Model
     all: Collection.extend(model: @)
     buildProps @, [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
     urlRoot: '/v1/envs'
-    #collection: models.EnvCollection
+    #collection: EnvCollection
     # defaults:
-    #   scenery: new models.TrackConfig
+    #   scenery: new TrackConfig
     # relations: [
     #   type: Backbone.HasMany
     #   key: 'cars'
-    #   relatedModel: models.Car
+    #   relatedModel: Car
     #   includeInJSON: 'id'
     # ]
 
-  class models.Track extends Model
+  class Track extends Model
     all: Collection.extend(model: @)
     buildProps @, [
       'config'
@@ -219,15 +221,15 @@
     bubbleAttribs: [ 'config', 'env' ]
     urlRoot: '/v1/tracks'
     initialize: ->
-      @config = new models.TrackConfig
+      @config = new TrackConfig
       super
       # @on 'all', (event) -> console.log 'Track: ' + event
     parse: (response, options) ->
       if response.config
-        config = @config  # or new models.TrackConfig
+        config = @config  # or new TrackConfig
         response.config = config.set config.parse response.config
       if response.env
-        env = @env or new models.Env
+        env = @env or new Env
         response.env = env.set env.parse response.env
       response
     toJSON: (options) ->
@@ -236,7 +238,7 @@
       delete json.modified
       json
 
-  class models.User extends Model
+  class User extends Model
     buildProps @, [
       'bio'
       'created'
@@ -248,15 +250,17 @@
       'website'
     ]
     initialize: ->
-      @tracks = new models.TrackCollection
+      @tracks = new TrackCollection
       super
     urlRoot: '/v1/users'
     parse: (response, options) ->
       if response.tracks
         tracks = for track in response.tracks
-          t = new models.Track
-          t.set t.parse track
-          t
+          if typeof track is 'string'
+            new Track id: track
+          else
+            t = new Track
+            t.set t.parse track
         response.tracks = @tracks.update tracks
       response
     toJSON: (options) ->
@@ -266,9 +270,10 @@
       unless options?.authenticated
         delete json.admin
         delete json.prefs
+      json.tracks = (track.id for track in json.tracks.models) if json.tracks?
       json
 
-  class models.UserPassport extends Model
+  class UserPassport extends Model
     buildProps @, [
       'profile'
       'user'
@@ -277,13 +282,25 @@
     # relations: [
     #   type: Backbone.HasOne
     #   key: 'user'
-    #   relatedModel: models.User
+    #   relatedModel: User
     # ]
 
-  models.buildProps = buildProps
-  models.BackboneCollection = Backbone.Collection
-  models.BackboneModel = Backbone.Model
-  models.Collection = Collection
-  models.Backbone = Backbone
+  models = {
+    buildProps
+    BackboneCollection: Backbone.Collection
+    BackboneModel: Backbone.Model
+    Backbone
+    Collection
+    Model
 
-  models
+    Car
+    Checkpoint
+    Env
+    StartPos
+    Track
+    TrackConfig
+    User
+    UserPassport
+  }
+  exports[k] = v for k, v of models
+  exports

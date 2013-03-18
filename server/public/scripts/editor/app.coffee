@@ -20,7 +20,7 @@ define [
       @app.setCurrent @app.editorView
       root = @app.root
 
-      # This approach might be better, but doesn't fire events deeper than one layer.
+      # This approach might be better, but we lose change events within the Track.
       # track = models.Track.findOrCreate trackId
       # track.fetch
       #   success: ->
@@ -58,13 +58,6 @@ define [
         return unless xhr.readyState is 4
         return unless xhr.status is 200
         json = JSON.parse xhr.response
-
-        ## DELETE ME ##
-
-        delete json.user.tracks
-
-        ## DELETE ME ##
-
         @root.user.set @root.user.parse json.user if json.user
       xhr.send()
 

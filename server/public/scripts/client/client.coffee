@@ -49,17 +49,32 @@ define [
         transparent: 1
         depthWrite: false
 
-      updateCheckpoints = =>
-        for mesh in @meshes
-          scene.remove mesh
-        @meshes = for cp in root.track.config.course.checkpoints.models
-          mesh = clientMisc.checkpointMesh()
-          mesh.position.x += cp[0]
-          mesh.position.y += cp[1]
-          mesh.position.z += cp[2]
-          scene.add mesh
-          mesh
-      root.on 'change:track.config.course.checkpoints', updateCheckpoints
+      addCheckpoint = (cp) ->
+        mesh = clientMisc.checkpointMesh()
+        mesh.position.x += cp.pos[0]
+        mesh.position.y += cp.pos[1]
+        mesh.position.z += cp.pos[2]
+        scene.add mesh
+        mesh
+
+      resetCheckpoints = ->
+
+      root.on 'add:track.config.course.checkpoints.', addCheckpoint
+      root.on 'remove:track.config.course.checkpoints.', ->
+        console.error "Not implemented!"
+        console.log arguments
+
+      # do updateCheckpoints = =>
+      #   for mesh in @meshes
+      #     scene.remove mesh
+      #   @meshes = for cp in root.track.config.course.checkpoints.models
+      #     mesh = clientMisc.checkpointMesh()
+      #     mesh.position.x += cp[0]
+      #     mesh.position.y += cp[1]
+      #     mesh.position.z += cp[2]
+      #     scene.add mesh
+      #     mesh
+      # root.on 'change:track.config.course.checkpoints', updateCheckpoints
 
     update: (camera, delta) ->
 
