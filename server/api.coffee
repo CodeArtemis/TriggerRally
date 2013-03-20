@@ -50,7 +50,7 @@ bb.Car::sync = makeSync
       .exec (err, car) ->
         return error model, err, options if err or not car?
         parsed = parseMongoose car
-        parsed.user = id: parsed.user.id if parsed.user
+        parsed.user = parsed.user.id if parsed.user
         success model, parsed, options
 
 bb.Env::sync = makeSync
@@ -65,7 +65,7 @@ bb.Env::sync = makeSync
           .exec (err, cars) ->
             return error model, err, options if err
             parsed = parseMongoose env
-            parsed.cars = ({id: car.pub_id} for car in cars)
+            parsed.cars = (car.pub_id for car in cars)
             success model, parsed, options
 
 bb.Track::sync = makeSync
@@ -78,9 +78,9 @@ bb.Track::sync = makeSync
       .exec (err, track) ->
         return error model, err, options if err or not track?
         parsed = parseMongoose track
-        parsed.env = id: parsed.env.id if parsed.env
-        parsed.parent = id: parsed.parent.id if parsed.parent
-        parsed.user = id: parsed.user.id if parsed.user
+        parsed.env = parsed.env.id if parsed.env
+        parsed.parent = parsed.parent.id if parsed.parent
+        parsed.user = parsed.user.id if parsed.user
         success model, parsed, options
 
 bb.User::sync = makeSync
@@ -95,7 +95,7 @@ bb.User::sync = makeSync
           .exec (err, tracks) ->
             return error model, err, options if err
             parsed = parseMongoose user
-            parsed.tracks = ({id: track.pub_id} for track in tracks)
+            parsed.tracks = (track.pub_id for track in tracks)
             success model, parsed, options
 
 # NO MONGOOSE BEYOND THIS POINT
@@ -161,7 +161,6 @@ class DataContext
 findModel = (Model, pub_id, done) ->
   model = Model.findOrCreate pub_id
   model.fetch
-    force: yes
     success: -> done model
     error:   -> done null
 
@@ -211,6 +210,10 @@ module.exports = (app) ->
         #     error:   done
         # else
         #   done()
+
+  # app.put "#{base}/tracks/:track_id", (req, res) ->
+  #   console.log "PUT #{req.params['track_id']}"
+  #   res.json {}
 
   app.get "#{base}/users/:user_id", (req, res) ->
     findUser req.params['user_id'], (user) ->
