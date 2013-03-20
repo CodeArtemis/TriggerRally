@@ -243,7 +243,7 @@ exports.trackDrive = function(req, res) {
 };
 
 exports.trackEdit = function(req, res) {
-  req.jadeParams.title = 'Editing ' + req.urlTrack.name;
+  req.jadeParams.title = req.urlTrack.name;
   req.jadeParams.trackData = sanitizeTrack(req.urlTrack.toObject({ getters:true }));
   req.jadeParams.layout = 'layout-editor';
   res.render('trackedit', req.jadeParams);

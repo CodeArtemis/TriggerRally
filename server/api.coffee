@@ -161,6 +161,7 @@ class DataContext
 findModel = (Model, pub_id, done) ->
   model = Model.findOrCreate pub_id
   model.fetch
+    force: yes
     success: -> done model
     error:   -> done null
 
@@ -178,10 +179,17 @@ module.exports = (app) ->
 
   boolean = (val) -> val? and val in ['1', 't', 'y', 'true', 'yes']
 
+  jsonClone = (obj) -> JSON.parse JSON.stringify obj
+
   app.get "#{base}/cars/:car_id", (req, res) ->
     findCar req.params['car_id'], (car) ->
       return error404 res unless car?
-      res.json car.toJSON()
+      res.json car
+
+  app.get "#{base}/envs/:env_id", (req, res) ->
+    findEnv req.params['env_id'], (env) ->
+      return error404 res unless env?
+      res.json env
 
   app.get "#{base}/tracks/:track_id", (req, res) ->
     trackIds = req.params['track_id'].split('+')
@@ -190,18 +198,19 @@ module.exports = (app) ->
     done = _.after trackIds.length, ->
       for track in tracks
         return error404 res unless track?
-      data = (track.toJSON() for track in tracks)
-      res.json if data[1] then data else data[0]
+      data = if tracks.length > 1 then tracks else tracks[0]
+      res.json data
 
     trackIds.forEach (trackId, i) ->
       findTrack trackId, (track) ->
         tracks[i] = track
-        if track?.env
-          track.env.fetch
-            success: done
-            error:   done
-        else
-          done()
+        done()
+        # if track?.env
+        #   track.env.fetch
+        #     success: done
+        #     error:   done
+        # else
+        #   done()
 
   app.get "#{base}/users/:user_id", (req, res) ->
     findUser req.params['user_id'], (user) ->
@@ -213,7 +222,7 @@ module.exports = (app) ->
     if req.user?.user
       findUser req.user.user.pub_id, (user) ->
         return error404 res unless user?
-        res.json user: user.toJSON()
+        res.json user: user
     else
       res.json user: null
     return

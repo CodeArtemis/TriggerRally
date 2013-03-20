@@ -9,6 +9,8 @@ define [
   Editor
   models
 ) ->
+  jsonClone = (obj) -> JSON.parse JSON.stringify obj
+
   class Router extends Backbone.Router
     constructor: (@app) ->
       super()
@@ -21,24 +23,27 @@ define [
       root = @app.root
 
       # This approach might be better, but we lose change events within the Track.
-      # track = models.Track.findOrCreate trackId
-      # track.fetch
-      #   success: ->
-      #     root.track.set track.attributes
+      track = models.Track.findOrCreate trackId
+      track.fetch
+        success: ->
+          track.env.fetch
+            success: ->
+              trackData = jsonClone track
+              #trackData.env = jsonClone track.env
+              root.track.set root.track.parse trackData
 
       # So instead we just reassign the track and fetch it in place.
-      root.track = models.Track.findOrCreate trackId
-      root.track.fetch
-        dontSave: yes
+      # root.track = models.Track.findOrCreate trackId
+      # root.track.fetch
+      #   dontSave: yes
 
   class RootModel extends models.Model
     models.buildProps @, [ 'track', 'user' ]
     bubbleAttribs: [ 'track', 'user' ]
     initialize: ->
       super
-      @on 'all', (event) ->
-        # debugger if event is 'change:track.config.'
-        console.log "RootModel: \"#{event}\""
+      # @on 'all', (event) ->
+      #   console.log "RootModel: \"#{event}\""
 
   class App
     constructor: ->

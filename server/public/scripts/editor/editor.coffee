@@ -60,9 +60,11 @@ define [
     setStatus = (msg) -> $status.text msg
 
     root = app.root
-    root.on 'change:user.tracks', ->
-      root.user.tracks.each (track) ->
-        track.fetch()
+    # root.on 'change:user.tracks.', ->
+    #   root.user.tracks.each (track) ->
+    #     track.fetch()
+    root.on 'add:user.tracks.', (track) ->
+      track.fetch()
 
     #game = new gameGame.Game()
     prefs = root.user.prefs or {}
@@ -107,17 +109,21 @@ define [
         setStatus 'Changed'
         doSave()
 
+    root.on 'change:track.id', ->
+      selection.reset()
+
+    root.on 'change:track.name', (model, name) ->
+      document.title = "#{name} - Trigger Rally"
+
     #root.track.on 'sync', ->
     #  setStatus 'sync'
 
     root.on 'change:track.config.course.startposition.', ->
-      console.log 'change startpos'
       startposition = root.track.config.course.startposition
       Vec3::set.apply startPos.position, startposition.pos
       Vec3::set.apply startPos.rotation, startposition.rot
 
     root.once 'change:track.config.course.startposition.', ->
-      console.log 'Setting initial startposition'
       startposition = root.track.config.course.startposition
       Vec3::set.apply camPos, startposition.pos
       camAng.x = 0.9
@@ -318,7 +324,8 @@ define [
     $view3d.mousedown (event) ->
       buttons |= 1 << event.button
       hasMoved = no
-      return
+      event.preventDefault()
+      false
 
     $view3d.mouseup (event) ->
       buttons &= ~(1 << event.button)

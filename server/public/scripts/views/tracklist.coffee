@@ -18,15 +18,18 @@ define [
       super
       @root = options.parent.options.root
       @selected = no
-      @model.on 'change:name', =>
-        @render()
+      @model.on 'change:name', => @render()
+      @root.on 'change:track.id', => @renderSelected()
 
     viewModel: ->
       name: @model.name or 'Loading...'
       url: "/track/#{@model.id}/edit"
 
+    renderSelected: ->
+      @$el.toggleClass 'selected', @model.id is @root.track.id
+
     afterRender: ->
-      @$el.toggleClass 'selected', @model is @root.selectedTrack
+      @renderSelected()
 
       $a = @$el.find('a')
       $a.click ->

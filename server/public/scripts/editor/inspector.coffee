@@ -103,13 +103,13 @@ define [
       $sceneryType = sceneryType.$content.find(":selected")
       layerIdx = $sceneryType.val()
       layer = $sceneryType.text()
-      Ops.addScenery track, layer, layerIdx, selection
+      Ops.addScenery root.track, layer, layerIdx, selection
 
     cmdCopy.$content.click ->
-      Ops.copy track, selection
+      Ops.copy root.track, selection
 
     cmdDelete.$content.click ->
-      Ops.delete track, selection
+      Ops.delete root.track, selection
 
     cmdCopyTrack.$content.click ->
       return unless window.confirm "Are you sure you want to create a copy of this track?"

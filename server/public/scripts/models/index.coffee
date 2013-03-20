@@ -61,14 +61,14 @@
     bubbleAttribs: null
 
     @findOrCreate: (id) ->
-      model = @all?.get pub_id
+      model = @::all?.get id
       unless model
         model = new @ { id }
-        @all?.add model
+        @::all?.add model
       model
 
     fetch: (options) ->
-      # TODO: Check @lastSync and only fetch if out of date.
+      return options.success? @, null, options if @lastSync and not options?.force
       xhr = @fetchXHR
       if xhr
         # Bind handlers to in-progress fetch.
@@ -148,15 +148,6 @@
         @checkpoints.update checkpoints
         response.checkpoints = @checkpoints
       response
-    # relations: [
-    #   type: Backbone.HasOne
-    #   key: 'startposition'
-    #   relatedModel: StartPos
-    # ,
-    #   type: Backbone.HasMany
-    #   key: 'checkpoints'
-    #   relatedModel: Checkpoint
-    # ]
 
   class TrackConfig extends Model
     buildProps @, [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
@@ -166,17 +157,14 @@
       super
     #   @on 'all', (event) -> console.log 'TrackConfig: ' + event
     parse: (response, options) ->
-      if response.course
+      data = super
+      if data.course
         course = @course
-        response.course = course.set course.parse response.course
-      response
-    # relations: [
-    #   type: Backbone.HasOne
-    #   key: 'course'
-    #   relatedModel: Course
-    # ]
+        data.course = course.set course.parse data.course
+      data
 
   class Car extends Model
+    all: new (Collection.extend model: @)
     buildProps @, [ 'config', 'name', 'user' ]
     urlRoot: '/v1/cars'
     # relations: [
@@ -188,10 +176,11 @@
     toJSON: (options) ->
       json = super
       delete json.created
+      json.user = json.user.id if json.user?
       json
 
   class Env extends Model
-    all: Collection.extend(model: @)
+    all: new (Collection.extend model: @)
     buildProps @, [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
     urlRoot: '/v1/envs'
     #collection: EnvCollection
@@ -203,9 +192,13 @@
     #   relatedModel: Car
     #   includeInJSON: 'id'
     # ]
+    toJSON: (options) ->
+      json = super
+      json.cars = (car.id for car in json.cars) if json.cars?
+      json
 
   class Track extends Model
-    all: Collection.extend(model: @)
+    all: new (Collection.extend model: @)
     buildProps @, [
       'config'
       'count_copy'
@@ -225,20 +218,27 @@
       super
       # @on 'all', (event) -> console.log 'Track: ' + event
     parse: (response, options) ->
-      if response.config
+      data = super
+      if data.config
         config = @config  # or new TrackConfig
-        response.config = config.set config.parse response.config
-      if response.env
-        env = @env or new Env
-        response.env = env.set env.parse response.env
-      response
+        data.config = config.set config.parse data.config
+      if data.env
+        data.env = if typeof data.env is 'string'
+          Env.findOrCreate data.env
+        else
+          env = Env.findOrCreate data.env.id
+          env.set env.parse data.env
+      data
     toJSON: (options) ->
       json = super
       delete json.created
       delete json.modified
+      json.env = json.env.id if json.env?
+      json.user = json.user.id if json.user?
       json
 
   class User extends Model
+    all: new (Collection.extend model: @)
     buildProps @, [
       'bio'
       'created'
@@ -249,20 +249,22 @@
       'tracks'  # NOTE: computed attribute, not currently present in DB.
       'website'
     ]
+    bubbleAttribs: [ 'tracks' ]
     initialize: ->
       @tracks = new TrackCollection
       super
     urlRoot: '/v1/users'
     parse: (response, options) ->
-      if response.tracks
-        tracks = for track in response.tracks
+      data = super
+      if data.tracks
+        tracks = for track in data.tracks
           if typeof track is 'string'
             new Track id: track
           else
             t = new Track
             t.set t.parse track
-        response.tracks = @tracks.update tracks
-      response
+        data.tracks = @tracks.update tracks
+      data
     toJSON: (options) ->
       json = super
       delete json.created
