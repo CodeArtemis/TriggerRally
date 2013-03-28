@@ -2,6 +2,8 @@ _ = require('underscore')
 bb = require('./public/scripts/models')
 Backbone = bb.Backbone
 
+jsonClone = (obj) -> JSON.parse JSON.stringify obj
+
 # BACKBONE TO MONGOOSE LAYER
 
 mongoose = require('mongoose')
@@ -38,8 +40,12 @@ makeSync = (handlers) ->
   (method, model, options) ->
     success = options?.success or ->
     error = options?.error or ->
-    handlers[method] model, success, error, options
-    # TODO: return an actual Promise object of some sort.
+    if handlers[method]
+      handlers[method] model, success, error, options
+    else
+      console.log "Method '#{method}' not implemented for #{model.constructor.name}."
+      error model, null, options
+    # TODO: return a Promise object of some sort.
     null
 
 bb.Car::sync = makeSync
@@ -68,20 +74,35 @@ bb.Env::sync = makeSync
             parsed.cars = (car.pub_id for car in cars)
             success model, parsed, options
 
-bb.Track::sync = makeSync
-  read: (model, success, error, options) ->
-    mo.Track
-      .findOne(pub_id: model.id)
-      .populate('env', 'pub_id')
-      .populate('parent', 'pub_id')
-      .populate('user', 'pub_id')
-      .exec (err, track) ->
-        return error model, err, options if err or not track?
-        parsed = parseMongoose track
-        parsed.env = parsed.env.id if parsed.env
-        parsed.parent = parsed.parent.id if parsed.parent
-        parsed.user = parsed.user.id if parsed.user
-        success model, parsed, options
+bb.Track::sync = do ->
+  parseTrack = (track) ->
+    parsed = parseMongoose track
+    parsed.env = parsed.env.id if parsed.env
+    parsed.parent = parsed.parent.id if parsed.parent
+    parsed.user = parsed.user.id if parsed.user
+    parsed
+
+  makeSync
+    read: (model, success, error, options) ->
+      mo.Track
+        .findOne(pub_id: model.id)
+        .populate('env', 'pub_id')
+        .populate('parent', 'pub_id')
+        .populate('user', 'pub_id')
+        .exec (err, track) ->
+          return error model, err, options if err or not track?
+          success model, parseTrack(track), options
+    update: (model, success, error, options) ->
+      mo.Track
+        .findOne(pub_id: model.id)
+        .exec (err, track) ->
+          track.name = model.name
+          track.config = jsonClone model.config
+          track.save (err) ->
+            if err
+              console.log "Error saving track: #{err}"
+              return error model, null, options
+            success model, null, options
 
 bb.User::sync = makeSync
   read: (model, success, error, options) ->
@@ -174,20 +195,22 @@ findUser  = -> findModel(bb.User,  arguments...)
 module.exports = (app) ->
   base = '/v1'
 
-  error404 = (res) -> res.json 404, error: "Not Found"
+  jsonError = (code, res) ->
+    text =
+      403: "Forbidden"
+      404: "Not Found"
+    res.json code, { error: text[code] }
 
   boolean = (val) -> val? and val in ['1', 't', 'y', 'true', 'yes']
 
-  jsonClone = (obj) -> JSON.parse JSON.stringify obj
-
   app.get "#{base}/cars/:car_id", (req, res) ->
     findCar req.params['car_id'], (car) ->
-      return error404 res unless car?
+      return jsonError 404, res unless car?
       res.json car
 
   app.get "#{base}/envs/:env_id", (req, res) ->
     findEnv req.params['env_id'], (env) ->
-      return error404 res unless env?
+      return jsonError 404, res unless env?
       res.json env
 
   app.get "#{base}/tracks/:track_id", (req, res) ->
@@ -196,7 +219,7 @@ module.exports = (app) ->
 
     done = _.after trackIds.length, ->
       for track in tracks
-        return error404 res unless track?
+        return jsonError 404, res unless track?
       data = if tracks.length > 1 then tracks else tracks[0]
       res.json data
 
@@ -211,25 +234,36 @@ module.exports = (app) ->
         # else
         #   done()
 
-  # app.put "#{base}/tracks/:track_id", (req, res) ->
-  #   console.log "PUT #{req.params['track_id']}"
-  #   res.json {}
+  app.put "#{base}/tracks/:track_id", (req, res) ->
+    findTrack req.params['track_id'], (track) ->
+      return jsonError 404, res unless track?
+      return jsonError 403, res unless track.user is req.user?.user.pub_id
+      attribs =
+        config: req.body.config
+      if JSON.stringify(track.config) isnt JSON.stringify(attribs.config)
+        console.log "track #{track.id} (#{track.name}): saving changes"
+        track.save attribs,
+          success: -> res.json {}
+          error: -> jsonError 500, res
+      else
+        console.log "track #{track.id} (#{track.name}): no changes to save"
+        res.json {}
 
   app.get "#{base}/users/:user_id", (req, res) ->
     findUser req.params['user_id'], (user) ->
-      return error404 res unless user?
+      return jsonError 404, res unless user?
       authenticated = user.id is req.user?.user.pub_id
       res.json user.toJSON { authenticated }
 
   app.get "#{base}/auth/me", (req, res) ->
     if req.user?.user
       findUser req.user.user.pub_id, (user) ->
-        return error404 res unless user?
+        return jsonError 404, res unless user?
         res.json user: user
     else
       res.json user: null
     return
 
-  app.get "#{base}/*", (req, res) -> error404 res
+  app.get "#{base}/*", (req, res) -> jsonError 404, res
 
   return

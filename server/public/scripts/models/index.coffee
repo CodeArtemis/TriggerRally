@@ -219,10 +219,10 @@
       # @on 'all', (event) -> console.log 'Track: ' + event
     parse: (response, options) ->
       data = super
-      if data.config
+      if data?.config
         config = @config  # or new TrackConfig
         data.config = config.set config.parse data.config
-      if data.env
+      if data?.env
         data.env = if typeof data.env is 'string'
           Env.findOrCreate data.env
         else
