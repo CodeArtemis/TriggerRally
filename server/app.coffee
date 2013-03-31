@@ -422,7 +422,7 @@ getPublicEnv = (_id, cb) ->
     return cb err if err?
     db.cars.find({ _id: { $in: env.cars } }).toArray (err, cars) ->
       return cb err if err?
-      cb null
+      cb null,
         id: env.pub_id
         name: env.name
         cars: (publicCar(car) for car in cars)
@@ -436,7 +436,7 @@ getPublicTrackPubId = (pub_id, cb) ->
       return cb err if err?
       db.users.findOne track.user, (err, user) ->
         return cb err if err?
-        cb null
+        cb null,
           id: track.pub_id
           name: track.name
           config: track.config
