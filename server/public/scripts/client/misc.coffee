@@ -37,7 +37,9 @@ define [
     mesh.position.z = 2
     #mesh.rotation.x = Math.PI / 2
     mesh.castShadow = true
-    mesh
+    wrapper = new THREE.Object3D
+    wrapper.add mesh
+    wrapper
 
   selectionMesh: ->
     new THREE.Mesh selectionGeom, selectionMat

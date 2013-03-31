@@ -60,8 +60,11 @@ define [
     setStatus = (msg) -> $status.text msg
 
     root = app.root
-    root.on 'change:user.tracks', ->
-      root.user.fetchRelated 'tracks'
+    # root.on 'change:user.tracks.', ->
+    #   root.user.tracks.each (track) ->
+    #     track.fetch()
+    root.on 'add:user.tracks.', (track) ->
+      track.fetch()
 
     #game = new gameGame.Game()
     prefs = root.user.prefs or {}
@@ -81,6 +84,8 @@ define [
     startPos = new THREE.Object3D()
     client.scene.add startPos
 
+    client.addEditorCheckpoints()
+
     #socket = io.connect '/api'
     #models.Model::sync = sync.syncSocket socket
 
@@ -90,7 +95,7 @@ define [
         success: (model, response, options) ->
           setStatus 'OK'
         error: (model, xhr, options) ->
-          setStatus 'ERROR: ' + xhr
+          setStatus "ERROR: #{xhr.statusText} (#{xhr.status})"
     , 1000
 
     root.on 'all', (event) ->
@@ -104,19 +109,21 @@ define [
         setStatus 'Changed'
         doSave()
 
+    root.on 'change:track.id', ->
+      selection.reset()
+
+    root.on 'change:track.name', (model, name) ->
+      document.title = "#{name} - Trigger Rally"
+
     #root.track.on 'sync', ->
     #  setStatus 'sync'
 
-    # TODO: Work out why 'change:...startposition.' isn't fired at startup.
-
-    startPosEvents = 'change:track.config.course.startposition.pos ' +
-                     'change:track.config.course.startposition.rot'
-    root.on startPosEvents, ->
+    root.on 'change:track.config.course.startposition.', ->
       startposition = root.track.config.course.startposition
       Vec3::set.apply startPos.position, startposition.pos
       Vec3::set.apply startPos.rotation, startposition.rot
 
-    root.once 'change:track.config.course.startposition.pos', ->
+    root.once 'change:track.config.course.startposition.', ->
       startposition = root.track.config.course.startposition
       Vec3::set.apply camPos, startposition.pos
       camAng.x = 0.9
@@ -317,7 +324,8 @@ define [
     $view3d.mousedown (event) ->
       buttons |= 1 << event.button
       hasMoved = no
-      return
+      event.preventDefault()
+      false
 
     $view3d.mouseup (event) ->
       buttons &= ~(1 << event.button)

@@ -49,17 +49,19 @@ define [
         transparent: 1
         depthWrite: false
 
-      updateCheckpoints = =>
-        for mesh in @meshes
-          scene.remove mesh
-        @meshes = for cp in root.track.config.course.checkpoints.models
-          mesh = clientMisc.checkpointMesh()
-          mesh.position.x += cp[0]
-          mesh.position.y += cp[1]
-          mesh.position.z += cp[2]
-          scene.add mesh
-          mesh
-      root.on 'change:track.config.course.checkpoints', updateCheckpoints
+      setPos = (mesh) -> (cp) ->
+        mesh.position.x = cp.pos[0]
+        mesh.position.y = cp.pos[1]
+        mesh.position.z = cp.pos[2]
+
+      addCheckpoint = (cp) ->
+        mesh = clientMisc.checkpointMesh()
+        (setPos mesh) cp
+        scene.add mesh
+        cp.on 'change:pos', setPos mesh
+        cp.on 'remove', -> scene.remove mesh
+
+      root.on 'add:track.config.course.checkpoints.', addCheckpoint
 
     update: (camera, delta) ->
 

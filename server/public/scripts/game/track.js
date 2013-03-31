@@ -21,7 +21,6 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
 
   exports.Track = function(root) {
     this.root = root;
-    //this.checkpoints = [];
     this.source = new gameTerrain.ImageSource();
     this.terrain = new gameTerrain.Terrain(this.source);
     this.scenery = new gameScenery.Scenery(this);
@@ -37,17 +36,20 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
     // TODO: on change, scenery.refresh()
 
     // TOOD: Listen for individual checkpoint changes, update just relevant region.
-    // var updateCheckpoints = _.debounce(function() {
-    //   quiver.push(config.course.checkpoints);
-    // }.bind(this), 200);
-    // //this.config.on('change', function() {
-    // //  console.log("Oh! it changed!");
-    // //});
-    // this.config.course.checkpoints.on('change', updateCheckpoints);
-    // this.config.course.checkpoints.on('add', updateCheckpoints);
-    // this.config.course.checkpoints.on('remove', updateCheckpoints);
-    // this.config.course.checkpoints.on('reset', updateCheckpoints);
-    // this.config.course.checkpoints.on('sort', updateCheckpoints);
+    var updateCheckpoints = _.debounce(function() {
+      quiver.push(this.checkpointsNode);
+    }.bind(this), 200);
+    this.root.on('change:track.config.course.checkpoints.', updateCheckpoints);
+    this.root.on('add:track.config.course.checkpoints.', updateCheckpoints);
+    this.root.on('remove:track.config.course.checkpoints.', updateCheckpoints);
+    // this.root.on('reset:track.config.course.checkpoints.', updateCheckpoints);
+    // this.root.on('sort:track.config.course.checkpoints.', updateCheckpoints);
+
+    // This doesn't work because we have to rebuild the terrain first.
+    // var updateScenery = this.scenery.refresh.bind(this.scenery);
+    // this.root.on('change:track.config.course.checkpoints.', updateScenery);
+    // this.root.on('add:track.config.course.checkpoints.', updateScenery);
+    // this.root.on('remove:track.config.course.checkpoints.', updateScenery);
   };
 
   exports.Track.prototype.setupQuiver = function() {
@@ -252,31 +254,26 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
                      drawTrackNode,
                      heightNode);
 
-      var surfaceNode = maps.surface.q_map;
+      var oldSurfaceNode = maps.surface.q_map;
       maps.surface.q_map = new quiver.Node(maps.surface);
-      // var newSurfaceNode = new quiver.Node(maps.surface);
       quiver.connect(drawTrackNode,
-                     surfaceNode,
+                     oldSurfaceNode,
                      prepSurface,
                      maps.surface.q_map);
+      this.checkpointsNode = new quiver.Node();
+      quiver.connect(this.checkpointsNode,
+                     drawTrackNode);
     }).call(this);
 
-    // (function() {
-    //   var oldSurfaceNode = maps.surface.q_map;
-    //   var newSurfaceNode = new quiver.Node(maps.surface);
-    //   maps.surface._quiverNode = newSurfaceNode;
-    //   quiver.connect(oldSurfaceNode,
-    //                  prepSurface,
-    //                  newSurfaceNode);
-    // }).call(this);
-
-    var invalidateSceneryQuiver = function(ins, outs, next) {
-      outs[0].refresh();
+    var scenery = this.scenery;
+    var invalidateSceneryQuiver = new quiver.Node(function(ins, outs, next) {
+      scenery.refresh();
       next();
-    };
-    quiver.connect(invalidateSceneryQuiver, this.scenery);
-    quiver.connect(maps.surface, invalidateSceneryQuiver);
-    quiver.connect(maps.height, invalidateSceneryQuiver);
+    });
+    // For some reason, connecting to both breaks the quiver chain.
+    // TODO: Debug it. Connecting to either one alone seems to work.
+    quiver.connect(maps.surface.q_map, invalidateSceneryQuiver);
+    //quiver.connect(maps.height.q_map, invalidateSceneryQuiver);
   };
 
   return exports;

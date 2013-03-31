@@ -9,6 +9,8 @@ define [
   Editor
   models
 ) ->
+  jsonClone = (obj) -> JSON.parse JSON.stringify obj
+
   class Router extends Backbone.Router
     constructor: (@app) ->
       super()
@@ -20,23 +22,28 @@ define [
       @app.setCurrent @app.editorView
       root = @app.root
 
-      # This approach might be better, but doesn't fire events deeper than one layer.
-      # track = models.Track.findOrCreate id: trackId
-      # track.fetch
-      #   success: ->
-      #     root.track.set track.attributes
+      # This approach might be better, but we lose change events within the Track.
+      track = models.Track.findOrCreate trackId
+      track.fetch
+        success: ->
+          track.env.fetch
+            success: ->
+              trackData = jsonClone track
+              #trackData.env = jsonClone track.env
+              root.track.set root.track.parse trackData
 
       # So instead we just reassign the track and fetch it in place.
-      root.track = models.Track.findOrCreate id: trackId
-      root.track.fetch
-        dontSave: yes
+      # root.track = models.Track.findOrCreate trackId
+      # root.track.fetch
+      #   dontSave: yes
 
-  class RootModel extends models.RelModel
+  class RootModel extends models.Model
     models.buildProps @, [ 'track', 'user' ]
     bubbleAttribs: [ 'track', 'user' ]
     initialize: ->
       super
-      @on 'all', (event) -> console.log "RootModel: \"#{event}\""
+      # @on 'all', (event) ->
+      #   console.log "RootModel: \"#{event}\""
 
   class App
     constructor: ->
@@ -56,7 +63,7 @@ define [
         return unless xhr.readyState is 4
         return unless xhr.status is 200
         json = JSON.parse xhr.response
-        @root.user.set json.user if json.user
+        @root.user.set @root.user.parse json.user if json.user
       xhr.send()
 
       Backbone.history.start pushState: yes

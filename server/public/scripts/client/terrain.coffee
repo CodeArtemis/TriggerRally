@@ -111,9 +111,8 @@ define [
         )
 
         vertexShader:
-          THREE.ShaderChunk.shadowmap_pars_vertex +
+          THREE.ShaderChunk.shadowmap_pars_vertex + '\n' +
           """
-
           const int NUM_LAYERS = #{@numLayers};
           const float RING_WIDTH = #{@ringWidth}.0;
 
@@ -464,25 +463,23 @@ define [
       maps = @terrain.source.maps
       uniforms = @material.uniforms
 
-      quiver.connect maps.height.q_map, node = new quiver.Node (ins, outs, done) ->
+      quiver.connect maps.height.q_map, heightNode = new quiver.Node (ins, outs, done) ->
         buffer = ins[0]
         uniforms.tHeight.value = createTexture buffer, false
         uniforms.tHeightSize.value.set buffer.width, buffer.height
         uniforms.tHeightScale.value.copy maps.height.scale
         uniforms.tHeightScale.value.z *= typeScale buffer.data
         done()
-      quiver.pull node
 
-      quiver.connect maps.surface.q_map, node = new quiver.Node (ins, outs, done) ->
+      quiver.connect maps.surface.q_map, surfaceNode = new quiver.Node (ins, outs, done) ->
         buffer = ins[0]
         uniforms.tSurface.value = createTexture buffer, true
         uniforms.tSurfaceSize.value.set buffer.width, buffer.height
         uniforms.tSurfaceScale.value.copy maps.surface.scale
         #uniforms.tSurfaceScale.value.z *= typeScale buffer.data
         done()
-      quiver.pull node
 
-      quiver.connect maps.detail.q_map, node = new quiver.Node (ins, outs, done) ->
+      quiver.connect maps.detail.q_map, detailNode = new quiver.Node (ins, outs, done) ->
         buffer = ins[0]
         uniforms.tDetail.value = createTexture buffer, true
         #if @glAniso then uniforms.tDetail.value.onUpdate = =>
@@ -491,7 +488,11 @@ define [
         uniforms.tDetailScale.value.copy maps.detail.scale
         uniforms.tDetailScale.value.z *= typeScale buffer.data
         done()
-      quiver.pull node
+
+      # TODO: Implement quiver multi-pull.
+      quiver.pull heightNode
+      quiver.pull surfaceNode
+      quiver.pull detailNode
       return
 
     _createImmediateObject: ->

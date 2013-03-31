@@ -379,9 +379,11 @@ showNumberConnected = ->
 
 io.set 'authorization', (data, accept) ->
   # http://www.danielbaulig.de/socket-ioexpress/
-  return accept('No cookie transmitted.', false)  unless data.headers.cookie
+  return accept('No cookie transmitted.', false) unless data.headers.cookie
   data.cookie = cookie.parse(data.headers.cookie)
-  data.sessionID = data.cookie['connect.sid'].substring(2, 26)
+  sid = data.cookie['connect.sid']
+  return accept('No session id found.', false) unless sid
+  data.sessionID = sid.substring(2, 26)
   # save the session store to the data object
   # (as required by the Session constructor)
   data.sessionStore = sessionStore
