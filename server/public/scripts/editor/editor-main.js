@@ -47,7 +47,7 @@ require(
       , 'cs': '../js/cs'
       , 'coffee-script': '../js/coffee-script'
       , 'backbone': '../js/backbone'  // -min
-      , 'backbone-relational': '../js/backbone-relational'
+//      , 'backbone-relational': '../js/backbone-relational'
       , 'jade': '../js/require-jade'
       , 'jquery': '../js/jquery-1.9.1.min'  // .min
       , 'underscore': '../js/underscore-min'  // -min
