@@ -108,12 +108,12 @@
 
   class models.StartPos extends RelModel
     buildProps @, [ 'pos', 'rot' ]
-    set: ->
-      console.log 'set StartPos'
-      super
-    initialize: ->
-      super
-      @on 'all', (event) -> console.log "StartPos: #{event}"
+    # set: ->
+    #   console.log 'set StartPos'
+    #   super
+    # initialize: ->
+    #   super
+    #   @on 'all', (event) -> console.log "StartPos: #{event}"
 
   class models.Course extends RelModel
     buildProps @, [ 'checkpoints', 'startposition' ]

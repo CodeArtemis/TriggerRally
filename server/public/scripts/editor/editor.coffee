@@ -107,16 +107,16 @@ define [
     #root.track.on 'sync', ->
     #  setStatus 'sync'
 
-    root.on 'change:track.config.course.startposition.', ->
-    # root.on 'all', (event) ->
-      #return unless event.startsWith 'change:track.config.course.startposition'
-      console.log 'change startpos'
+    # TODO: Work out why 'change:...startposition.' isn't fired at startup.
+
+    startPosEvents = 'change:track.config.course.startposition.pos ' +
+                     'change:track.config.course.startposition.rot'
+    root.on startPosEvents, ->
       startposition = root.track.config.course.startposition
       Vec3::set.apply startPos.position, startposition.pos
       Vec3::set.apply startPos.rotation, startposition.rot
 
     root.once 'change:track.config.course.startposition.pos', ->
-      console.log 'Setting initial startposition'
       startposition = root.track.config.course.startposition
       Vec3::set.apply camPos, startposition.pos
       camAng.x = 0.9
