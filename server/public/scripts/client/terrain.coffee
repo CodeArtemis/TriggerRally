@@ -489,10 +489,6 @@ define [
         uniforms.tDetailScale.value.z *= typeScale buffer.data
         done()
 
-      # TODO: Implement quiver multi-pull.
-      quiver.pull heightNode
-      quiver.pull surfaceNode
-      quiver.pull detailNode
       return
 
     _createImmediateObject: ->

@@ -30,6 +30,8 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
 
   exports.Track.prototype.watchConfig = function() {
     this.root.on('change:track.env', function() {
+      console.log('setting env config');
+      console.log(this.root.track.env.terrain);
       this.source.setConfig(this.root.track.env.terrain);
     }, this);
 

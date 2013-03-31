@@ -78,6 +78,7 @@ define(function(require, exports, module) {
   };
 
   var _loadImageBrowser = function(url, callback) {
+    if (!url) return callback("Empty image URL");
     var image = new Image();
     image.onload = callback.bind(null, null, image);
     image.src = url;
