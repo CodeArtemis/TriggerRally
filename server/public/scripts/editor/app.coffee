@@ -22,7 +22,6 @@ define [
       @app.setCurrent @app.editorView
       root = @app.root
 
-      # This approach might be better, but we lose change events within the Track.
       track = models.Track.findOrCreate trackId
       track.fetch
         success: ->
@@ -32,10 +31,9 @@ define [
               #trackData.env = jsonClone track.env
               root.track.set root.track.parse trackData
 
-      # So instead we just reassign the track and fetch it in place.
-      # root.track = models.Track.findOrCreate trackId
-      # root.track.fetch
-      #   dontSave: yes
+      # TODO: Ideally, we should maintain just one instance of the track
+      # instead of copying it. But we currently depend on change events within
+      # the track to update the client.
 
   class RootModel extends models.Model
     models.buildProps @, [ 'track', 'user' ]

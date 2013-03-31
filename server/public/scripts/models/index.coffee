@@ -62,12 +62,16 @@
 
     @findOrCreate: (id) ->
       model = @::all?.get id
+      isNew = no
       unless model
+        isNew = yes
         model = new @ { id }
         @::all?.add model
+      console.log "findOrCreate #{@::constructor.name}:#{id} isNew = #{isNew}"
       model
 
-    fetch: (options) ->
+    fetch: (options = {}) ->
+      # console.log "fetch #{@constructor.name}:#{@id} lastSync is #{@lastSync}"
       return options.success? @, null, options if @lastSync and not options?.force
       xhr = @fetchXHR
       if xhr
@@ -257,9 +261,9 @@
       if data.tracks
         tracks = for track in data.tracks
           if typeof track is 'string'
-            new Track id: track
+            Track.findOrCreate track
           else
-            t = new Track
+            t = Track.findOrCreate track.id
             t.set t.parse track
         data.tracks = @tracks.update tracks
       data
