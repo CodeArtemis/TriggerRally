@@ -121,6 +121,8 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
         }
       })();
 
+      if (checkpoints.length < 2) return callback();
+
       // Track curve.
       var pts = checkpoints.slice(0);
 

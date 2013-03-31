@@ -26,7 +26,7 @@ define [
       url: "/track/#{@model.id}/edit"
 
     renderSelected: ->
-      @$el.toggleClass 'selected', @model.id is @root.track.id
+      @$el.toggleClass 'selected', @model.id is @root.track?.id
 
     afterRender: ->
       @renderSelected()

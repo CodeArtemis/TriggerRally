@@ -54,7 +54,8 @@ bb.Car::sync = makeSync
       .findOne(pub_id: model.id)
       .populate('user', 'pub_id')
       .exec (err, car) ->
-        return error model, err, options if err or not car?
+        return error model, err, options if err
+        return error "Couldn't find env #{model.id}" unless car
         parsed = parseMongoose car
         parsed.user = parsed.user.id if parsed.user
         success model, parsed, options
@@ -64,7 +65,8 @@ bb.Env::sync = makeSync
     mo.Env
       .findOne(pub_id: model.id)
       .exec (err, env) ->
-        return error model, err, options if err or not env?
+        return error model, err, options if err
+        return error "Couldn't find env #{model.id}" unless env
         mo.Car
           .find(_id: { $in: env.cars })
           .select('pub_id')
@@ -83,6 +85,19 @@ bb.Track::sync = do ->
     parsed
 
   makeSync
+    create: (model, success, error, options) ->
+      mo.Track
+        .findOne(pub_id: model.parent.id)
+        .exec (err, parentTrack) ->
+          return error model, err, options if err
+          return error "Couldn't find track #{model.parent.id}" unless parentTrack
+          track = new mo.Track
+            parent: parentTrack.id
+            user: options.user.id
+            name: parentTrack.name + ' copy'
+            env: parentTrack.env
+            config: parentTrack.config
+          success model, parseTrack(track), options
     read: (model, success, error, options) ->
       mo.Track
         .findOne(pub_id: model.id)
@@ -90,9 +105,16 @@ bb.Track::sync = do ->
         .populate('parent', 'pub_id')
         .populate('user', 'pub_id')
         .exec (err, track) ->
-          return error model, err, options if err or not track?
+          return error model, err, options if err
+          return error "Couldn't find track #{model.id}" unless track
           success model, parseTrack(track), options
     update: (model, success, error, options) ->
+      console.log "Saving track:"
+      console.log JSON.stringify model
+      unless model.config?
+        console.error "NO CONFIG!"
+        return error model, null, options
+      success model, null, options
       mo.Track
         .findOne(pub_id: model.id)
         .exec (err, track) ->
@@ -197,6 +219,8 @@ module.exports = (app) ->
 
   jsonError = (code, res) ->
     text =
+      400: "Bad Request"
+      401: "Unauthorized"
       403: "Forbidden"
       404: "Not Found"
     res.json code, { error: text[code] }
@@ -227,27 +251,47 @@ module.exports = (app) ->
       findTrack trackId, (track) ->
         tracks[i] = track
         done()
-        # if track?.env
-        #   track.env.fetch
-        #     success: done
-        #     error:   done
-        # else
-        #   done()
 
   app.put "#{base}/tracks/:track_id", (req, res) ->
     findTrack req.params['track_id'], (track) ->
       return jsonError 404, res unless track?
-      return jsonError 403, res unless track.user is req.user?.user.pub_id
-      attribs =
-        config: req.body.config
-      if JSON.stringify(track.config) isnt JSON.stringify(attribs.config)
+      return jsonError 403, res unless track.user.id is req.user?.user.pub_id
+      allowedKeys = [ 'config', 'name', 'published' ]
+      attribs = _.pick req.body, allowedKeys
+      prev = _.pick track, allowedKeys
+      if JSON.stringify(prev) isnt JSON.stringify(attribs)
         console.log "track #{track.id} (#{track.name}): saving changes"
+        console.log "old: " + JSON.stringify(prev)
+        console.log "new: " + JSON.stringify(attribs)
         track.save attribs,
           success: -> res.json {}
-          error: -> jsonError 500, res
+          error:   -> jsonError 500, res
       else
         console.log "track #{track.id} (#{track.name}): no changes to save"
         res.json {}
+
+  app.post "#{base}/tracks", (req, res) ->
+    return jsonError 401, res unless req.user?
+    findUser req.user.user.pub_id, (reqUser) ->
+      return jsonError 500, res unless reqUser
+      parentTrackId = req.body.parent
+      findTrack parentTrackId, (parentTrack) ->
+        return jsonError 400, res unless parentTrack?.env?
+        # TODO: Check this user is allowed to copy tracks from this env.
+        track = new bb.Track
+          parent: parentTrack
+          user: reqUser
+          name: parentTrack.name + ' copy'
+          env: parentTrack.env
+          config: parentTrack.config
+        track.save null,
+          user: req.user.user
+          success: -> res.json {}
+          error: (model, err) ->
+            console.log "Error saving track: #{err}"
+            jsonError 500, res
+        parentTrack.count_copy += 1
+        parentTrack.save()
 
   app.get "#{base}/users/:user_id", (req, res) ->
     findUser req.params['user_id'], (user) ->

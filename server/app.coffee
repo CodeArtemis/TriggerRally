@@ -288,23 +288,6 @@ editUser = (req, res, next) ->
   req.editing = true
   next()
 
-app.get    '/auth/facebook', passport.authenticate('facebook')
-app.get    '/auth/facebook/callback', passport.authenticate('facebook',
-  failureRedirect: '/login'
-), authenticationSuccessful
-app.get    '/auth/google', passport.authenticate('google')
-app.get    '/auth/google/return', passport.authenticate('google',
-  failureRedirect: '/login'
-), authenticationSuccessful
-app.get    '/auth/twitter', passport.authenticate('twitter')
-app.get    '/auth/twitter/callback', passport.authenticate('twitter',
-  failureRedirect: '/login'
-), authenticationSuccessful
-
-app.get    '/logout', (req, res) ->
-  req.logOut()
-  res.redirect '/'
-
 app.get    '/v1/auth/facebook', passport.authenticate('facebook/v1')
 app.get    '/v1/auth/facebook/callback', passport.authenticate('facebook/v1',
   failureRedirect: '/login'
@@ -321,6 +304,25 @@ app.get    '/v1/auth/logout', (req, res) ->
   res.json status: "ok"
 
 require('./api') app, passport
+
+return if process.env.API_ONLY
+
+app.get    '/auth/facebook', passport.authenticate('facebook')
+app.get    '/auth/facebook/callback', passport.authenticate('facebook',
+  failureRedirect: '/login'
+), authenticationSuccessful
+app.get    '/auth/google', passport.authenticate('google')
+app.get    '/auth/google/return', passport.authenticate('google',
+  failureRedirect: '/login'
+), authenticationSuccessful
+app.get    '/auth/twitter', passport.authenticate('twitter')
+app.get    '/auth/twitter/callback', passport.authenticate('twitter',
+  failureRedirect: '/login'
+), authenticationSuccessful
+
+app.get    '/logout', (req, res) ->
+  req.logOut()
+  res.redirect '/'
 
 app.get    '/', routes.index
 app.get    '/about', routes.about

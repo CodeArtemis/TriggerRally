@@ -7,11 +7,13 @@ define [
   'cs!./ops'
   'cs!views/tracklist'
   'cs!views/user'
+  'cs!models/index'
 ], (
   $
   Ops
   TrackListView
   UserView
+  models
 ) ->
   deepClone = (obj) -> JSON.parse JSON.stringify obj
 
@@ -50,17 +52,22 @@ define [
 
     root = app.root
 
-    trackListView = new TrackListView
-      el: '#track-list'
-      collection: root.user.tracks
-      root: root
+    trackListView = null
+    do updateTrackListView = ->
+      trackListView?.destroy()
+      trackListView = root.user and new TrackListView
+        el: '#track-list'
+        collection: root.user.tracks
+        root: root
+    root.on 'change:user', updateTrackListView
 
     userView = null
-    root.on 'change:user', ->
+    root.on 'change:track.user', ->
       userView?.destroy()
-      userView = new UserView
-        el: '#user-track-owner .content'
-        model: root.user
+      if root.track.user?
+        userView = new UserView
+          el: '#user-track-owner .content'
+          model: root.track.user
 
     onChangeEnv = ->
       return unless root.track.env.scenery?.layers
@@ -112,29 +119,29 @@ define [
       Ops.delete root.track, selection
 
     cmdCopyTrack.$content.click ->
-      return unless window.confirm "Are you sure you want to create a copy of this track?"
-      form = document.createElement 'form'
-      form.action = 'copy'
-      form.method = 'POST'
-      form.submit()
+      newTrack = new models.Track
+      attribs = JSON.parse JSON.stringify root.track
+      delete attribs.id
+      attribs.name += ' copy'
+      attribs.parent = root.track
+      attribs.user = root.user
+      newTrack.set newTrack.parse attribs
+      root.user.tracks.add newTrack
+      Backbone.trigger "app:settrack", newTrack
+      newTrack.save()
 
     compareUser = ->
-      $cmdDeleteTrack.toggleClass 'hidden', (root.track.user isnt root.user)
-    root.on 'change:track.owner', compareUser
-    root.on 'change:user.id', compareUser
+      $cmdDeleteTrack.toggleClass 'hidden', (root.track?.user isnt root.user)
+    root.on 'change:track.user', compareUser
+    root.on 'change:user', compareUser
 
     cmdDeleteTrack.$content.click ->
-      return unless window.confirm "Are you sure you want to DELETE this track?"
-      xhr = new XMLHttpRequest()
-      xhr.open "DELETE", "."
-      xhr.onload = ->
-        if xhr.status is 200
-          window.location = "/"
-        else
-          window.alert "Delete failed with status #{xhr.status} (#{xhr.statusText})"
-      xhr.onerror = ->
-        window.alert "Error: #{xhr.status}"
-      xhr.send()
+      return unless window.confirm "Are you sure you want to DELETE this track? This can't be undone!"
+      root.track.destroy
+        success: ->
+          Backbone.history.navigate "/track/v3-base-1/edit", trigger: yes
+        error: (model, xhr) ->
+          window.alert "Delete failed with status #{xhr.statusText} (#{xhr.status})"
 
     do updateSnap = => @snapToGround = $flagSnap[0].checked
     $flagSnap.on 'change', updateSnap

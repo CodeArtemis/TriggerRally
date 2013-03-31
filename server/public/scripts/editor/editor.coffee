@@ -67,7 +67,7 @@ define [
       track.fetch()
 
     #game = new gameGame.Game()
-    prefs = root.user.prefs or {}
+    prefs = root.user?.prefs or {}
     prefs.audio = no
     client = new clientClient.TriggerClient $view3d[0], root, prefs: prefs
 
@@ -112,8 +112,8 @@ define [
     root.on 'change:track.id', ->
       selection.reset()
 
-    root.on 'change:track.name', (model, name) ->
-      document.title = "#{name} - Trigger Rally"
+    root.on 'change:track.name', ->
+      document.title = "#{root.track.name} - Trigger Rally"
 
     #root.track.on 'sync', ->
     #  setStatus 'sync'
@@ -171,10 +171,14 @@ define [
       layout()
 
     # TODO: Move to a StatusBarView?
-    userView = new UserView
-      el: '#editor-statusbar .userinfo'
-      model: root.user
-      showStatus: yes
+    userView = null
+    do updateUserView = ->
+      userView?.destroy()
+      userView = root.user and new UserView
+        el: '#editor-statusbar .userinfo'
+        model: root.user
+        showStatus: yes
+    root.on 'change:user', updateUserView
 
     inspectorController = new inspector.Controller app, selection
 
@@ -469,5 +473,4 @@ define [
     # Editor API.
 
     show: ->
-
     hide: ->

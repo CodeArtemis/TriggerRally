@@ -40,35 +40,21 @@ define [
 
   class RenderCheckpointsEditor
     constructor: (scene, root) ->
-      @ang = 0
-      @meshes = []
+      meshes = []
 
-      @selectedMat = new THREE.MeshBasicMaterial
-        color: 0x903030
-        blending: THREE.AdditiveBlending
-        transparent: 1
-        depthWrite: false
+      reset = ->
+        console.log 'checkpoints reset'
+        for mesh in meshes
+          scene.remove mesh
+        meshes = for cp in root.track.config.course.checkpoints.models
+          mesh = clientMisc.checkpointMesh()
+          Vec3::set.apply mesh.position, cp.pos
+          scene.add mesh
+          mesh
 
-      setPos = (mesh) -> (cp) ->
-        mesh.position.x = cp.pos[0]
-        mesh.position.y = cp.pos[1]
-        mesh.position.z = cp.pos[2]
-
-      addCheckpoint = (cp) ->
-        mesh = clientMisc.checkpointMesh()
-        (setPos mesh) cp
-        scene.add mesh
-        cp.on 'change:pos', setPos mesh
-        cp.on 'remove', -> scene.remove mesh
-
-      root.on 'add:track.config.course.checkpoints.', addCheckpoint
+      root.on 'change:track.config.course.checkpoints.', reset
 
     update: (camera, delta) ->
-
-    highlightCheckpoint: (i) ->
-      for mesh in @meshes
-        mesh.material = clientMisc.checkpointMaterial()
-      @meshes[i]?.material = @selectedMat
 
   class RenderCheckpointsDrive
     constructor: (scene, @root) ->
@@ -637,11 +623,10 @@ define [
     # TODO: Does this intersection stuff belong in client?
     intersectRay: (ray) ->
       isect = []
-      if @track?
-        isect = isect.concat @track.scenery.intersectRay ray
-        isect = isect.concat @intersectCheckpoints ray
-        isect = isect.concat @intersectTerrain ray
-        isect = isect.concat @intersectStartPosition ray
+      isect = isect.concat @track.scenery.intersectRay ray
+      isect = isect.concat @intersectCheckpoints ray
+      isect = isect.concat @intersectTerrain ray
+      isect = isect.concat @intersectStartPosition ray
       [].concat.apply [], isect
 
     intersectTerrain: (ray) ->
@@ -696,6 +681,7 @@ define [
       []
 
     intersectStartPosition: (ray) ->
+      return [] unless @root.track?.config?
       startpos = @root.track.config.course.startposition
       pos = startpos.pos
       return [] unless pos?
@@ -720,6 +706,7 @@ define [
       distance: along
 
     intersectCheckpoints: (ray) ->
+      return [] unless @root.track?.config?
       radiusSq = 16
       isect = []
       for cp, idx in @root.track.config.course.checkpoints.models

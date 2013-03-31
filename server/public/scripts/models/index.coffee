@@ -62,12 +62,12 @@
 
     @findOrCreate: (id) ->
       model = @::all?.get id
-      isNew = no
+      # isNew = no
       unless model
-        isNew = yes
+        # isNew = yes
         model = new @ { id }
         @::all?.add model
-      console.log "findOrCreate #{@::constructor.name}:#{id} isNew = #{isNew}"
+      # console.log "findOrCreate #{@::constructor.name}:#{id} isNew = #{isNew}"
       model
 
     fetch: (options = {}) ->
@@ -216,13 +216,13 @@
     bubbleAttribs: [ 'config', 'env' ]
     urlRoot: '/v1/tracks'
     initialize: ->
-      @config = new TrackConfig
+      # @config = new TrackConfig
       super
       # @on 'all', (event) -> console.log 'Track: ' + event
     parse: (response, options) ->
       data = super
       if data?.config
-        config = @config  # or new TrackConfig
+        config = @config or new TrackConfig
         data.config = config.set config.parse data.config
       if data?.env
         data.env = if typeof data.env is 'string'
@@ -230,12 +230,21 @@
         else
           env = Env.findOrCreate data.env.id
           env.set env.parse data.env
+      if data?.parent
+        parent = data.parent
+        parentId = if typeof parent is 'string' then parent else parent.id
+        data.parent = Track.findOrCreate parentId
+      if data?.user
+        user = data.user
+        userId = if typeof user is 'string' then user else user.id
+        data.user = User.findOrCreate userId
       data
-    toJSON: (options) ->
+    toJSON: ->
       json = super
       delete json.created
       delete json.modified
       json.env = json.env.id if json.env?
+      json.parent = json.parent.id if json.parent?
       json.user = json.user.id if json.user?
       json
 

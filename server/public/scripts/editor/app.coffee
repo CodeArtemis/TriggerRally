@@ -25,34 +25,43 @@ define [
       track = models.Track.findOrCreate trackId
       track.fetch
         success: ->
+          Backbone.trigger "app:settrack", track
+          lastEnvId = track.env?.id
           track.env.fetch
             success: ->
-              trackData = jsonClone track
-              #trackData.env = jsonClone track.env
-              root.track.set root.track.parse trackData
-
-      # TODO: Ideally, we should maintain just one instance of the track
-      # instead of copying it. But we currently depend on change events within
-      # the track to update the client.
+              if track.env.id isnt lastEnvId
+                track.trigger 'change:env'
 
   class RootModel extends models.Model
     models.buildProps @, [ 'track', 'user' ]
     bubbleAttribs: [ 'track', 'user' ]
-    initialize: ->
-      super
-      # @on 'all', (event) ->
-      #   console.log "RootModel: \"#{event}\""
+    # initialize: ->
+    #   super
+    #   @on 'all', (event) ->
+    #     console.log "RootModel: \"#{event}\""
 
   class App
     constructor: ->
       @root = new RootModel
-        user: new models.User
-        track: new models.Track
+        user: null
+        track: null
 
       @currentView = null
       @editorView = new Editor @
 
       @router = new Router @
+
+      Backbone.on 'app:settrack', (track) =>
+        lastTrack = @root.track
+        return if track is lastTrack
+        @root.track = track
+        # TODO: Deep comparison with lastTrack to find out which events to fire.
+        track.trigger 'change:id'
+        track.trigger 'change:name'
+        track.trigger 'change:user'
+        track.trigger 'change:config.course.checkpoints.'
+        track.trigger 'change:config.course.startposition.'
+        track.trigger 'change:config.scenery.'
 
     run: ->
       xhr = new XMLHttpRequest()
@@ -61,7 +70,9 @@ define [
         return unless xhr.readyState is 4
         return unless xhr.status is 200
         json = JSON.parse xhr.response
-        @root.user.set @root.user.parse json.user if json.user
+        return unless json.user
+        user = @root.user = models.User.findOrCreate json.user.id
+        user.set user.parse json.user
       xhr.send()
 
       Backbone.history.start pushState: yes
