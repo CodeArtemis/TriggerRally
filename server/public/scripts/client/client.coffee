@@ -43,7 +43,6 @@ define [
       meshes = []
 
       reset = ->
-        console.log 'checkpoints reset'
         for mesh in meshes
           scene.remove mesh
         meshes = for cp in root.track.config.course.checkpoints.models

@@ -120,15 +120,12 @@ define [
 
     cmdCopyTrack.$content.click ->
       newTrack = new models.Track
-      attribs = JSON.parse JSON.stringify root.track
-      delete attribs.id
-      attribs.name += ' copy'
-      attribs.parent = root.track
-      attribs.user = root.user
-      newTrack.set newTrack.parse attribs
-      root.user.tracks.add newTrack
-      Backbone.trigger "app:settrack", newTrack
-      newTrack.save()
+        parent: root.track
+        user: root.user
+      newTrack.save null,
+        success: ->
+          root.user.tracks.add newTrack
+          Backbone.trigger "app:settrack", newTrack
 
     compareUser = ->
       $cmdDeleteTrack.toggleClass 'hidden', (root.track?.user isnt root.user)

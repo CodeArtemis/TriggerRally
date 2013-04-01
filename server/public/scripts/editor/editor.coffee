@@ -111,6 +111,7 @@ define [
 
     root.on 'change:track.id', ->
       selection.reset()
+      Backbone.history.navigate "/track/#{root.track.id}/edit"
 
     root.on 'change:track.name', ->
       document.title = "#{root.track.name} - Trigger Rally"
