@@ -512,7 +512,7 @@ define [
         antialias: false
         premultipliedAlpha: false
         clearColor: 0xffffff
-      r.devicePixelRatio = Math.min 4/3, r.devicePixelRatio
+      r.devicePixelRatio = 0.2 #Math.min 4/3, r.devicePixelRatio
       if useShadows
         r.shadowMapEnabled = true
         r.shadowMapSoft = true

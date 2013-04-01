@@ -25,12 +25,12 @@ define [
       track = models.Track.findOrCreate trackId
       track.fetch
         success: ->
-          Backbone.trigger "app:settrack", track
-          lastEnvId = track.env?.id
+          # lastEnvId = track.env?.id
           track.env.fetch
             success: ->
-              if track.env.id isnt lastEnvId
-                track.trigger 'change:env'
+              Backbone.trigger "app:settrack", track
+              # if track.env.id isnt lastEnvId
+              #   track.trigger 'change:env'
 
   class RootModel extends models.Model
     models.buildProps @, [ 'track', 'user' ]
@@ -56,6 +56,7 @@ define [
         return if track is lastTrack
         @root.track = track
         # TODO: Deep comparison with lastTrack to find out which events to fire.
+        track.trigger 'change:env' if track.env isnt lastTrack?.env
         track.trigger 'change:id'
         track.trigger 'change:name'
         track.trigger 'change:user'
