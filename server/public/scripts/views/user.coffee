@@ -10,8 +10,13 @@ define [
   class UserView extends View
     initialize: ->
       super
-      @model.on 'change', =>
-        @render()
+      @render()
+      @model.on 'change', @render, @
+      @model.fetch()
+
+    destroy: ->
+      @model.off 'change', @render, @
+      super
 
     template: (viewModel) ->
       template = if @options.showStatus then templateWithStatus else templateBasic

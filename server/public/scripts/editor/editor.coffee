@@ -53,11 +53,12 @@ define [
 
   Editor = (app) ->
     $container = $(window)
-    $statusbar = $('#editor-statusbar')
+    $statusbar = $('#editor-statusbar')  # TODO: Move to a StatusView belonging to App.
     $view3d = $('#view3d')
     $status = $statusbar.find('#status')
 
     setStatus = (msg) -> $status.text msg
+    Backbone.on 'app:status', setStatus
 
     root = app.root
     # root.on 'change:user.tracks.', ->
@@ -101,7 +102,7 @@ define [
     root.on 'all', (event) ->
       options = arguments[arguments.length - 1]
       return unless event.startsWith 'change:track'
-      #console.log "Saving due to event: #{event}"
+      # console.log "Saving due to event: #{event}"
 
       if options?.dontSave
         setStatus 'OK'

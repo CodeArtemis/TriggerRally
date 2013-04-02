@@ -489,6 +489,13 @@ define [
         uniforms.tDetailScale.value.z *= typeScale buffer.data
         done()
 
+      # We do a pull now because the rest of the pipeline may have already executed.
+      # If the images haven't loaded yet, we'll get a push again later.
+      # TODO: Implement optimized quiver multi-pull.
+      quiver.pull heightNode
+      quiver.pull surfaceNode
+      quiver.pull detailNode
+
       return
 
     _createImmediateObject: ->

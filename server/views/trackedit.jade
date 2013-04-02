@@ -87,11 +87,9 @@ block body
         span.label Owner
         span.content
 
-      span IMPLEMENT ME
-      //- if !userLoggedIn || userLoggedIn.pub_id !== trackData.user.id
-        .warning
-          | You cannot modify this track because it belongs to another
-          | user, but you can make your own copy using the <b>Copy Track</b> button below.
+      #track-ownership-warning.warning.hidden
+        | You cannot modify this track because it belongs to another
+        | user, but you can make your own copy using the <b>Copy Track</b> button below.
 
       #title
         span.label Track name:

@@ -139,17 +139,18 @@
       @checkpoints = new CheckpointsCollection
       super
     parse: (response, options) ->
-      if response.startposition
-        @startposition.set @startposition.parse response.startposition
-        response.startposition = @startposition
-      if response.checkpoints
-        checkpoints = for checkpoint in response.checkpoints
+      data = super
+      if data.startposition
+        @startposition.set @startposition.parse data.startposition
+        data.startposition = @startposition
+      if data.checkpoints
+        checkpoints = for checkpoint in data.checkpoints
           c = new Checkpoint
           c.set c.parse checkpoint
           c
         @checkpoints.update checkpoints
-        response.checkpoints = @checkpoints
-      response
+        data.checkpoints = @checkpoints
+      data
 
   class TrackConfig extends Model
     buildProps @, [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
@@ -206,6 +207,7 @@
       'count_copy'
       'count_drive'
       'count_fav'
+      'created'
       'env'
       'modified'
       'name'
@@ -221,28 +223,28 @@
       # @on 'all', (event) -> console.log 'Track: ' + event
     parse: (response, options) ->
       data = super
-      if data?.config
+      return data unless data
+      if data.config
         config = @config or new TrackConfig
         data.config = config.set config.parse data.config
-      if data?.env
+      if data.env
         data.env = if typeof data.env is 'string'
           Env.findOrCreate data.env
         else
           env = Env.findOrCreate data.env.id
           env.set env.parse data.env
-      if data?.parent
+      if data.parent
         parent = data.parent
         parentId = if typeof parent is 'string' then parent else parent.id
         data.parent = Track.findOrCreate parentId
-      if data?.user
+      if data.user
         user = data.user
         userId = if typeof user is 'string' then user else user.id
         data.user = User.findOrCreate userId
+      data.modified = data.created if data.created and not data.modified
       data
     toJSON: ->
       json = super
-      delete json.created
-      delete json.modified
       json.env = json.env.id if json.env?
       json.parent = json.parent.id if json.parent?
       json.user = json.user.id if json.user?

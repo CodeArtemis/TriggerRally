@@ -121,14 +121,15 @@ define [
     cmdCopyTrack.$content.click ->
       newTrack = new models.Track
         parent: root.track
-        user: root.user
       newTrack.save null,
         success: ->
           root.user.tracks.add newTrack
           Backbone.trigger "app:settrack", newTrack
 
     compareUser = ->
-      $cmdDeleteTrack.toggleClass 'hidden', (root.track?.user isnt root.user)
+      isOwnTrack = root.track?.user is root.user
+      $cmdDeleteTrack.toggleClass 'hidden', not isOwnTrack
+      $("#track-ownership-warning").toggleClass 'hidden', isOwnTrack
     root.on 'change:track.user', compareUser
     root.on 'change:user', compareUser
 
@@ -138,7 +139,7 @@ define [
         success: ->
           Backbone.history.navigate "/track/v3-base-1/edit", trigger: yes
         error: (model, xhr) ->
-          window.alert "Delete failed with status #{xhr.statusText} (#{xhr.status})"
+          Backbone.trigger "app:status", "Delete failed: #{xhr.statusText} (#{xhr.status})"
 
     do updateSnap = => @snapToGround = $flagSnap[0].checked
     $flagSnap.on 'change', updateSnap
