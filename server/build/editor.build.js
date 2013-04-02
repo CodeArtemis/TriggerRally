@@ -16,9 +16,6 @@
       deps: ['underscore'],
       exports: 'Backbone'
     },
-    'backbone-relational': {
-      deps: ['underscore', 'backbone']
-    },
     'THREE': {
       exports: 'THREE'
     },
@@ -29,12 +26,15 @@
   paths: {
       'THREE': '../js/three-r54.min'  // .min
     , 'async': '../js/async.min'  // .min
+    , 'backbone': '../js/backbone-min'  // -min
     , 'cs': '../js/cs'
     , 'coffee-script': '../js/coffee-script'
+    , 'jade': '../js/require-jade'
+    , 'jquery': '../js/jquery-1.9.1.min'  // .min
     , 'underscore': '../js/underscore-min'  // -min
-    , 'backbone': '../js/backbone-min'  // -min
-    , 'backbone-relational': '../js/backbone-relational'
-    , 'jquery': '../js/jquery-1.8.3.min'  // .min
   },
-  stubModules: ['cs']
+  stubModules: ['cs'],
+  pragmasOnSave: {
+    excludeJade : true
+  }
 })

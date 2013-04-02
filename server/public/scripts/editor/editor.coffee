@@ -91,6 +91,8 @@ define [
     #models.Model::sync = sync.syncSocket socket
 
     doSave = _.debounce ->
+      if root.user isnt root.track.user
+        return setStatus 'Read only'
       setStatus 'Saving...'
       root.track.save null,
         success: (model, response, options) ->
@@ -152,11 +154,6 @@ define [
         renderCar = new clientCar.RenderCar startPos, mockVehicle, null
         renderCar.update()
 
-    # TODO: reimplement with dynamic track loading.
-    #if TRIGGER.READONLY
-    #  # Prevent any modification to the model.
-    #  models.Model::validate = (attrs) -> 'Read only mode'
-
     layout = ->
       #[$statusbar, $view3d].forEach (panel) ->
         #panel.css 'position', 'absolute'
@@ -177,9 +174,9 @@ define [
     do updateUserView = ->
       userView?.destroy()
       userView = root.user and new UserView
-        el: '#editor-statusbar .userinfo'
         model: root.user
         showStatus: yes
+      $('#editor-statusbar .userinfo').append userView.el if userView
     root.on 'change:user', updateUserView
 
     inspectorController = new inspector.Controller app, selection
@@ -337,7 +334,7 @@ define [
       buttons &= ~(1 << event.button)
       if event.button is 0 and not hasMoved
         selection.reset() unless event.shiftKey
-        if cursor
+        if cursor and root.user is root.track.user
           unless selection.contains cursor
             addSelection cursor
       return
@@ -384,7 +381,9 @@ define [
       angZ = motionX * 0.01
       mouseX = event.offsetX
       mouseY = event.offsetY
-      if buttons & (MB.LEFT | MB.MIDDLE) and cursor
+      unless buttons & (MB.LEFT | MB.MIDDLE) and cursor
+        updateCursor findObject mouseX, mouseY
+      else
         rotateMode = (event.altKey and buttons & MB.LEFT) or buttons & MB.MIDDLE
         viewRay = client.viewRay mouseX, mouseY
         cursorPos = cursorMesh.position
@@ -454,8 +453,6 @@ define [
             camPos.subSelf relMotion
           # This seems to fix occasional glitches in THREE.Projector.
           client.camera.updateMatrixWorld()
-      else
-        updateCursor findObject mouseX, mouseY
       return
 
     scroll = (scrollY, event) ->

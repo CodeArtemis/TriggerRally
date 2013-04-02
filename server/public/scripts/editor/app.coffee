@@ -38,7 +38,9 @@ define [
     # initialize: ->
     #   super
     #   @on 'all', (event) ->
+    #     return unless event.startsWith 'change:track.user'
     #     console.log "RootModel: \"#{event}\""
+    #     # console.log "RootModel: " + JSON.stringify arguments
 
   class App
     constructor: ->
@@ -59,6 +61,7 @@ define [
         track.trigger 'change:env' if track.env isnt lastTrack?.env
         track.trigger 'change:id'
         track.trigger 'change:name'
+        track.trigger 'change:published'
         track.trigger 'change:user'
         track.trigger 'change:config.course.checkpoints.'
         track.trigger 'change:config.course.startposition.'

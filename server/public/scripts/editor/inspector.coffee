@@ -63,11 +63,12 @@ define [
 
     userView = null
     root.on 'change:track.user', ->
+      return if root.track.user is userView?.model
       userView?.destroy()
       if root.track.user?
         userView = new UserView
-          el: '#user-track-owner .content'
           model: root.track.user
+        $('#user-track-owner .content').append userView.el
 
     onChangeEnv = ->
       return unless root.track.env.scenery?.layers

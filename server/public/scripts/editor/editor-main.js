@@ -32,9 +32,7 @@ requirejs.config({
 define('canvas', function() {});
 define('fs', function() {});
 
-// define('backbone-full',
-//        [ 'backbone', 'backbone-relational' ],
-//        function(bb1, bb2) { return bb1; });
+// Legacy, from when we also depended on backbone-relational.
 define('backbone-full',
        [ 'backbone' ],
        function(bb1) { return bb1; });
@@ -47,7 +45,6 @@ require(
       , 'cs': '../js/cs'
       , 'coffee-script': '../js/coffee-script'
       , 'backbone': '../js/backbone'  // -min
-//      , 'backbone-relational': '../js/backbone-relational'
       , 'jade': '../js/require-jade'
       , 'jquery': '../js/jquery-1.9.1.min'  // .min
       , 'underscore': '../js/underscore-min'  // -min
