@@ -53,32 +53,40 @@ define [
 
       @router = new Router @
 
-      Backbone.on 'app:settrack', (track) =>
-        lastTrack = @root.track
-        return if track is lastTrack
-        @root.track = track
-        # TODO: Deep comparison with lastTrack to find out which events to fire.
-        track.trigger 'change:env' if track.env isnt lastTrack?.env
-        track.trigger 'change:id'
-        track.trigger 'change:name'
-        track.trigger 'change:published'
-        track.trigger 'change:user'
-        track.trigger 'change:config.course.checkpoints.'
-        track.trigger 'change:config.course.startposition.'
-        track.trigger 'change:config.scenery.'
+      Backbone.on 'app:settrack', @setTrack, @
+      Backbone.on 'app:checklogin', @checkUserLogin, @
+      Backbone.on 'app:logout', @logout, @
+
+    setTrack: (track) ->
+      lastTrack = @root.track
+      return if track is lastTrack
+      @root.track = track
+      # TODO: Deep comparison with lastTrack to find out which events to fire.
+      track.trigger 'change:env' if track.env isnt lastTrack?.env
+      track.trigger 'change:id'
+      track.trigger 'change:name'
+      track.trigger 'change:published'
+      track.trigger 'change:user'
+      track.trigger 'change:config.course.checkpoints.'
+      track.trigger 'change:config.course.startposition.'
+      track.trigger 'change:config.scenery.'
+
+    checkUserLogin: ->
+      $.ajax('/v1/auth/me')
+      .done (data) =>
+        if data.user
+          user = @root.user = models.User.findOrCreate data.user.id
+          user.set user.parse data.user
+          Backbone.trigger 'app:status', 'Logged in'
+        else
+          @logout()
+
+    logout: ->
+      @root.user = null
+      Backbone.trigger 'app:status', 'Logged out'
 
     run: ->
-      xhr = new XMLHttpRequest()
-      xhr.open 'GET', '/v1/auth/me'
-      xhr.onload = =>
-        return unless xhr.readyState is 4
-        return unless xhr.status is 200
-        json = JSON.parse xhr.response
-        return unless json.user
-        user = @root.user = models.User.findOrCreate json.user.id
-        user.set user.parse json.user
-      xhr.send()
-
+      @checkUserLogin()
       Backbone.history.start pushState: yes
 
     setCurrent: (view) ->

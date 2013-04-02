@@ -79,6 +79,7 @@ define [
         @removeTile @layers[i], key for key in keys
         @layers[i].src = layer
         addAll = yes
+      # TODO: Remove layers that have disappeared from @scenery.
 
       for layer in @layers
         continue unless layer.meshes?  # Check that we have something to draw.

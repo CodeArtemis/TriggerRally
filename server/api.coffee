@@ -191,8 +191,8 @@ module.exports = (app) ->
 
   jsonError = (code, res, msg) ->
     text =
-      400: "Bad Request"
-      401: "Unauthorized"
+      400: "Bad Request - might be a bug"
+      401: "Unauthorized - log in required"
       403: "Forbidden"
       404: "Not Found"
     result = { error: text[code] }

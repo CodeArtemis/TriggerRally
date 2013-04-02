@@ -126,6 +126,8 @@ define [
         success: ->
           root.user.tracks.add newTrack
           Backbone.trigger "app:settrack", newTrack
+        error: (model, xhr) ->
+          Backbone.trigger "app:status", "Copy failed: #{xhr.statusText} (#{xhr.status})"
 
     compareUser = ->
       isOwnTrack = root.track?.user is root.user

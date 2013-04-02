@@ -2,15 +2,17 @@
 
 p Log in with one of these services:
 
-a.button(href="/auth/facebook")
+prefix = popup ? "/v1" : ""
+
+a.button(href=prefix + "/auth/facebook")
   img(src="/images/facebook_64.png")
   strong Facebook
 
-a.button(href="/auth/google")
+a.button(href=prefix + "/auth/google")
   img(src="/images/google_64.png")
   strong Google
 
-a.button(href="/auth/twitter")
+a.button(href=prefix + "/auth/twitter")
   img(src="/images/twitter_64.png")
   strong Twitter
 

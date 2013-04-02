@@ -6,8 +6,8 @@ if user
       img(src="https://secure.gravatar.com/avatar/#{user.gravatar_hash}?s=40&d=#{randomSmiley()}")
       span.username #{user.name}
   span &nbsp;&mdash;&nbsp;
-  a(href='/logout') Log Out&nbsp;
+  a.logout(href='/logout') Log Out&nbsp;
 else
   span
-    a(href="/login")
+    a.login(href="/login")
       strong Log in&nbsp;

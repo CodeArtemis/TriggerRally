@@ -82,7 +82,7 @@ authenticateUser = (profile, done) ->
 
 authenticationSuccessfulAPI = (req, res) ->
   throw new Error('authenticationSuccessfulAPI: req.user array') if Array.isArray req.user
-  res.json status: "ok"
+  res.redirect '/closeme'
 
 authenticationSuccessful = (req, res) ->
   throw new Error('authenticationSuccessful: req.user array') if Array.isArray req.user
@@ -323,6 +323,8 @@ app.get    '/auth/twitter/callback', passport.authenticate('twitter',
 app.get    '/logout', (req, res) ->
   req.logOut()
   res.redirect '/'
+
+app.get    '/closeme', routes.closeme
 
 app.get    '/', routes.index
 app.get    '/about', routes.about

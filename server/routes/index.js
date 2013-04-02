@@ -66,6 +66,10 @@ exports.index = function(req, res) {
   }
 };
 
+exports.closeme = function(req, res) {
+  res.render('closeme', req.jadeParams);
+};
+
 exports.recentTracks = function(req, res) {
   var query = {};
   if (!(req.user && req.user.user.admin)) query.env = alpEnvId;
@@ -100,6 +104,7 @@ exports.down = function(req, res) {
 exports.login = function(req, res) {
   req.jadeParams.title = 'Log In';
   req.jadeParams.validate = {};
+  req.jadeParams.popup = req.query['popup'] || false;
   res.render('login', req.jadeParams);
 };
 

@@ -52,6 +52,7 @@ define [
       @some (element) -> element.get('sel').object is sel.object
 
   Editor = (app) ->
+    root = app.root
     $container = $(window)
     $statusbar = $('#editor-statusbar')  # TODO: Move to a StatusView belonging to App.
     $view3d = $('#view3d')
@@ -60,7 +61,35 @@ define [
     setStatus = (msg) -> $status.text msg
     Backbone.on 'app:status', setStatus
 
-    root = app.root
+    $(document).on 'click', 'a.login', (event) ->
+      popup = window.open "/login?popup=1",
+                          "Login",
+                          "width=800,height=500,top=100,left=100,centerscreen"
+      if popup
+        timer = setInterval ->
+          if popup.closed
+            clearInterval timer
+            Backbone.trigger 'app:checklogin'
+        , 1000
+      # If the popup fails to open, allow the link to trigger as normal.
+      not popup
+
+    $(document).on 'click', 'a.logout', (event) ->
+      $.ajax('/v1/auth/logout')
+      .done (data) ->
+        Backbone.trigger 'app:logout'
+      false
+
+    # TODO: Move to a StatusBarView?
+    userView = null
+    do updateUserView = ->
+      userView?.destroy()
+      userView = new UserView
+        model: root.user
+        showStatus: yes
+      $('#editor-statusbar .userinfo').append userView.el
+    root.on 'change:user', updateUserView
+
     # root.on 'change:user.tracks.', ->
     #   root.user.tracks.each (track) ->
     #     track.fetch()
@@ -168,16 +197,6 @@ define [
     layout()
     $container.on 'resize', ->
       layout()
-
-    # TODO: Move to a StatusBarView?
-    userView = null
-    do updateUserView = ->
-      userView?.destroy()
-      userView = root.user and new UserView
-        model: root.user
-        showStatus: yes
-      $('#editor-statusbar .userinfo').append userView.el if userView
-    root.on 'change:user', updateUserView
 
     inspectorController = new inspector.Controller app, selection
 

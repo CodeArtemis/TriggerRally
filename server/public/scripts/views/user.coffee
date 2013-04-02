@@ -11,11 +11,11 @@ define [
     initialize: ->
       super
       @render()
-      @model.on 'change', @render, @
-      @model.fetch()
+      @model?.on 'change', @render, @
+      @model?.fetch()
 
     destroy: ->
-      @model.off 'change', @render, @
+      @model?.off 'change', @render, @
       super
 
     template: (viewModel) ->
