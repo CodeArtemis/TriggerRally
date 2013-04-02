@@ -1,5 +1,5 @@
 define [
-  'cs!./view'
+  'cs!views/view'
   'jade!templates/user'
   'jade!templates/userstatus'
 ], (

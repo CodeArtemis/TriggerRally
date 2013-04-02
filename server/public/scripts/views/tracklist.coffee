@@ -1,7 +1,7 @@
 define [
   'backbone-full'
-  'cs!./view'
-  'cs!./view_collection'
+  'cs!views/view'
+  'cs!views/view_collection'
   'jade!templates/tracklistentry'
 ], (
   Backbone

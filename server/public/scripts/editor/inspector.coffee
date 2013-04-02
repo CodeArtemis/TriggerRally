@@ -4,7 +4,7 @@
 
 define [
   'jquery'
-  'cs!./ops'
+  'cs!editor/ops'
   'cs!views/tracklist'
   'cs!views/user'
   'cs!models/index'

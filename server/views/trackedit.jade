@@ -212,6 +212,6 @@ block body
   script(src="/socket.io/socket.io.js")
 
   - if ('production' === process.env.NODE_ENV)
-    script(data-main="/build-v3/editor-main", src="/js/require.js")
+    script(src="/build-v3/editor-main.js")
   - else
     script(data-main="/scripts/editor/editor-main", src="/js/require.js")

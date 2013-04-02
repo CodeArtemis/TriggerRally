@@ -1,39 +1,42 @@
 ({
   baseUrl: "../public/scripts",
-  dir: "../public/build-out",
+  //dir: "../public/build-out",
   optimize: "none",
-  modules: [
-    {
-      name: "editor/editor-main",
-      exclude: [ 'coffee-script' ]
-    }
-  ],
+
+//  insertRequire: [ "editor/editor-main" ],
+//  wrap: true,
+
+  name: "../js/almond",
+  out: "../public/build-out/editor-main.js",
+  include: [ "editor/editor-main" ],
+  exclude: [ "coffee-script" ],
+
   shim: {
-    'underscore': {
-      exports: '_'
+    "underscore": {
+      exports: "_"
     },
-    'backbone': {
-      deps: ['underscore'],
-      exports: 'Backbone'
+    "backbone": {
+      deps: ["underscore"],
+      exports: "Backbone"
     },
-    'THREE': {
-      exports: 'THREE'
+    "THREE": {
+      exports: "THREE"
     },
-    'async': {
-      exports: 'async'
+    "async": {
+      exports: "async"
     }
   },
   paths: {
-      'THREE': '../js/three-r54.min'  // .min
-    , 'async': '../js/async.min'  // .min
-    , 'backbone': '../js/backbone-min'  // -min
-    , 'cs': '../js/cs'
-    , 'coffee-script': '../js/coffee-script'
-    , 'jade': '../js/require-jade'
-    , 'jquery': '../js/jquery-1.9.1.min'  // .min
-    , 'underscore': '../js/underscore-min'  // -min
+      "THREE": "../js/three-r54.min"  // .min
+    , "async": "../js/async.min"  // .min
+    , "backbone": "../js/backbone-min"  // -min
+    , "cs": "../js/cs"
+    , "coffee-script": "../js/coffee-script"
+    , "jade": "../js/require-jade"
+    , "jquery": "../js/jquery-1.9.1.min"  // .min
+    , "underscore": "../js/underscore-min"  // -min
   },
-  stubModules: ['cs'],
+  stubModules: ["cs"],
   pragmasOnSave: {
     excludeJade : true
   }

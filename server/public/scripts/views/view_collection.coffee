@@ -1,5 +1,5 @@
 define [
-  'cs!./view'
+  'cs!views/view'
 ], (
   View
 ) ->
