@@ -17,19 +17,19 @@ define [
     initialize: (options) ->
       super
       @root = options.parent.options.root
-      @selected = no
       @model.on 'change:name', => @render()
-      @root.on 'change:track.id', => @renderSelected()
+      @root.on 'change:track.id', => @updateSelected()
+      @model.fetch()
 
     viewModel: ->
       name: @model.name or 'Loading...'
       url: "/track/#{@model.id}/edit"
 
-    renderSelected: ->
+    updateSelected: ->
       @$el.toggleClass 'selected', @model.id is @root.track?.id
 
     afterRender: ->
-      @renderSelected()
+      @updateSelected()
 
       $a = @$el.find('a')
       $a.click ->

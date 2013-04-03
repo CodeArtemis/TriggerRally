@@ -35,12 +35,12 @@ define [
   class RootModel extends models.Model
     models.buildProps @, [ 'track', 'user' ]
     bubbleAttribs: [ 'track', 'user' ]
-    initialize: ->
-      super
-      @on 'all', (event) ->
-        return unless event.startsWith 'change:track.config'
-        console.log "RootModel: \"#{event}\""
-        # console.log "RootModel: " + JSON.stringify arguments
+    # initialize: ->
+    #   super
+    #   @on 'all', (event) ->
+    #     return unless event.startsWith 'change:track.config'
+    #     console.log "RootModel: \"#{event}\""
+    #     # console.log "RootModel: " + JSON.stringify arguments
 
   class App
     constructor: ->
