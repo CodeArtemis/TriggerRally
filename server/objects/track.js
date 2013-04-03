@@ -32,7 +32,7 @@ Environment.pre('save', function(next) {
 
 var Track = new Schema({
     pub_id      : { type: String, index: { unique: true } }
-  , name        : { type: String, trim: true, validate: [validate.goosify(validate.required), 'name'] }
+  , name        : { type: String, trim: true }
   , env         : { type: Schema.ObjectId, ref: 'Environment' }
   , user        : { type: Schema.ObjectId, ref: 'User', index: true }
   , config      : Schema.Types.Mixed

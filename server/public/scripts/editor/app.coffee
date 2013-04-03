@@ -28,19 +28,19 @@ define [
           # lastEnvId = track.env?.id
           track.env.fetch
             success: ->
-              Backbone.trigger "app:settrack", track
+              Backbone.trigger "app:settrack", track, yes
               # if track.env.id isnt lastEnvId
               #   track.trigger 'change:env'
 
   class RootModel extends models.Model
     models.buildProps @, [ 'track', 'user' ]
     bubbleAttribs: [ 'track', 'user' ]
-    # initialize: ->
-    #   super
-    #   @on 'all', (event) ->
-    #     return unless event.startsWith 'change:track.user'
-    #     console.log "RootModel: \"#{event}\""
-    #     # console.log "RootModel: " + JSON.stringify arguments
+    initialize: ->
+      super
+      @on 'all', (event) ->
+        return unless event.startsWith 'change:track.config'
+        console.log "RootModel: \"#{event}\""
+        # console.log "RootModel: " + JSON.stringify arguments
 
   class App
     constructor: ->
@@ -57,7 +57,7 @@ define [
       Backbone.on 'app:checklogin', @checkUserLogin, @
       Backbone.on 'app:logout', @logout, @
 
-    setTrack: (track) ->
+    setTrack: (track, fromRouter) ->
       lastTrack = @root.track
       return if track is lastTrack
       @root.track = track
@@ -70,13 +70,15 @@ define [
       track.trigger 'change:config.course.checkpoints.'
       track.trigger 'change:config.course.startposition.'
       track.trigger 'change:config.scenery.'
+      Backbone.history.navigate "/track/#{@root.track.id}/edit" unless fromRouter
 
     checkUserLogin: ->
       $.ajax('/v1/auth/me')
       .done (data) =>
         if data.user
-          user = @root.user = models.User.findOrCreate data.user.id
+          user = models.User.findOrCreate data.user.id
           user.set user.parse data.user
+          @root.user = user
           Backbone.trigger 'app:status', 'Logged in'
         else
           @logout()

@@ -11,6 +11,8 @@ define [
       super
       @views = []
 
+      @renderAll()
+
       @collection.on 'add', (model, collection, options) =>
         #console.log 'add view'
         # TODO: Add new view in the right place using options.index.
@@ -26,8 +28,8 @@ define [
       #  @reset collection.map (model) => new @view { model }
 
       # TODO: Fix this.
-      #@collection.on 'sort', (collection, options) =>
-      #  @sort collection
+      # @collection.on 'sort', (collection, options) =>
+      #   @sort collection
 
       return
 

@@ -62,9 +62,13 @@ define [
     Backbone.on 'app:status', setStatus
 
     $(document).on 'click', 'a.login', (event) ->
+      width = 1000
+      height = 700
+      left = (window.screen.width - width) / 2
+      top = (window.screen.height - height) / 2
       popup = window.open "/login?popup=1",
                           "Login",
-                          "width=800,height=500,top=100,left=100,centerscreen"
+                          "width=#{width},height=#{height},left=#{left},top=#{top}"
       if popup
         timer = setInterval ->
           if popup.closed
@@ -90,14 +94,17 @@ define [
       $('#editor-statusbar .userinfo').append userView.el
     root.on 'change:user', updateUserView
 
-    # root.on 'change:user.tracks.', ->
-    #   root.user.tracks.each (track) ->
-    #     track.fetch()
-    root.on 'add:user.tracks.', (track) ->
-      track.fetch()
+    root.on 'change:user.tracks.', ->
+      root.user.tracks.each (track) ->
+        track.fetch()
+    # root.on 'add:user.tracks.', (track) ->
+    #   track.fetch()
 
     #game = new gameGame.Game()
-    prefs = root.user?.prefs or {}
+    prefs = root.user?.prefs or {
+      shadows: no
+      terrainhq: yes
+    }
     prefs.audio = no
     client = new clientClient.TriggerClient $view3d[0], root, prefs: prefs
 
@@ -108,6 +115,9 @@ define [
     camVelTarget = new Vec3
     camAngVel = new Vec3
     camAngVelTarget = new Vec3
+    camAutoTimer = -1
+    camAutoPos = new Vec3
+    camAutoAng = new Vec3
 
     selection = new Selection()
 
@@ -143,27 +153,23 @@ define [
 
     root.on 'change:track.id', ->
       selection.reset()
-      Backbone.history.navigate "/track/#{root.track.id}/edit"
+
+      startposition = root.track.config.course.startposition
+      Vec3::set.apply camAutoPos, startposition.pos
+      camAutoAng.x = 0.9
+      camAutoAng.z = startposition.rot[2] - Math.PI / 2
+      camAutoPos.x -= 20 * Math.cos(startposition.rot[2])
+      camAutoPos.y -= 20 * Math.sin(startposition.rot[2])
+      camAutoPos.z += 40
+      camAutoTimer = 0
 
     root.on 'change:track.name', ->
       document.title = "#{root.track.name} - Trigger Rally"
-
-    #root.track.on 'sync', ->
-    #  setStatus 'sync'
 
     root.on 'change:track.config.course.startposition.', ->
       startposition = root.track.config.course.startposition
       Vec3::set.apply startPos.position, startposition.pos
       Vec3::set.apply startPos.rotation, startposition.rot
-
-    root.once 'change:track.config.course.startposition.', ->
-      startposition = root.track.config.course.startposition
-      Vec3::set.apply camPos, startposition.pos
-      camAng.x = 0.9
-      camAng.z = startposition.rot[2] - Math.PI / 2
-      camPos.x -= 20 * Math.cos(startposition.rot[2])
-      camPos.y -= 20 * Math.sin(startposition.rot[2])
-      camPos.z += 40
 
     #root.track.on 'all', -> console.log arguments
 
@@ -255,22 +261,39 @@ define [
             else
               sel.object.rot = rot
 
-      camVelTarget.set(
-          camVelTarget.x * Math.cos(camAng.z) - camVelTarget.y * Math.sin(camAng.z),
-          camVelTarget.x * Math.sin(camAng.z) + camVelTarget.y * Math.cos(camAng.z),
-          camVelTarget.z)
+      if camAutoTimer isnt -1
+        camAutoTimer = Math.min 1, camAutoTimer + delta
+        if camAutoTimer < 1
+          camVelTarget.sub camAutoPos, camPos
+          camVelTarget.multiplyScalar delta * 10 * camAutoTimer
+          camPos.addSelf camVelTarget
 
-      mult = 1 / (1 + delta * VISCOSITY)
-      camVel.x = camVelTarget.x + (camVel.x - camVelTarget.x) * mult
-      camVel.y = camVelTarget.y + (camVel.y - camVelTarget.y) * mult
-      camVel.z = camVelTarget.z + (camVel.z - camVelTarget.z) * mult
-      camAngVel.x = camAngVelTarget.x + (camAngVel.x - camAngVelTarget.x) * mult
-      camAngVel.y = camAngVelTarget.y + (camAngVel.y - camAngVelTarget.y) * mult
-      camAngVel.z = camAngVelTarget.z + (camAngVel.z - camAngVelTarget.z) * mult
+          camAng.z -= Math.round((camAng.z - camAutoAng.z) / TWOPI) * TWOPI
+          camVelTarget.sub camAutoAng, camAng
+          camVelTarget.multiplyScalar delta * 10 * camAutoTimer
+          camAng.addSelf camVelTarget
+        else
+          camPos.copy camAutoPos
+          camAng.copy camAutoAng
+          camAutoTimer = -1
+      else
+        camVelTarget.set(
+            camVelTarget.x * Math.cos(camAng.z) - camVelTarget.y * Math.sin(camAng.z),
+            camVelTarget.x * Math.sin(camAng.z) + camVelTarget.y * Math.cos(camAng.z),
+            camVelTarget.z)
 
-      camPos.addSelf tmpVec3.copy(camVel).multiplyScalar delta
+        mult = 1 / (1 + delta * VISCOSITY)
+        camVel.x = camVelTarget.x + (camVel.x - camVelTarget.x) * mult
+        camVel.y = camVelTarget.y + (camVel.y - camVelTarget.y) * mult
+        camVel.z = camVelTarget.z + (camVel.z - camVelTarget.z) * mult
+        camAngVel.x = camAngVelTarget.x + (camAngVel.x - camAngVelTarget.x) * mult
+        camAngVel.y = camAngVelTarget.y + (camAngVel.y - camAngVelTarget.y) * mult
+        camAngVel.z = camAngVelTarget.z + (camAngVel.z - camAngVelTarget.z) * mult
 
-      camAng.addSelf tmpVec3.copy(camAngVel).multiplyScalar delta
+        camPos.addSelf tmpVec3.copy(camVel).multiplyScalar delta
+
+        camAng.addSelf tmpVec3.copy(camAngVel).multiplyScalar delta
+
       camAng.x = Math.max 0, Math.min 2, camAng.x
 
       client.update delta

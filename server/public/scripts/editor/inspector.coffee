@@ -56,9 +56,9 @@ define [
     do updateTrackListView = ->
       trackListView?.destroy()
       trackListView = root.user and new TrackListView
-        el: '#track-list'
         collection: root.user.tracks
         root: root
+      $('#track-list').append trackListView.el if trackListView?
     root.on 'change:user', updateTrackListView
 
     userView = null
@@ -72,7 +72,7 @@ define [
 
     onChangeEnv = ->
       return unless root.track.env.scenery?.layers
-      sceneryType.$content.remove()
+      sceneryType.$content.empty()
       for layer, idx in root.track.env.scenery.layers
         sceneryType.$content.append new Option layer.id, idx
     root.on 'change:track.env', onChangeEnv
@@ -133,6 +133,7 @@ define [
       isOwnTrack = root.track?.user is root.user
       $cmdDeleteTrack.toggleClass 'hidden', not isOwnTrack
       $("#track-ownership-warning").toggleClass 'hidden', isOwnTrack
+      $("#copy-login-prompt").toggleClass 'hidden', !! root.user
     root.on 'change:track.user', compareUser
     root.on 'change:user', compareUser
 

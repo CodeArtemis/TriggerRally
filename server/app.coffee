@@ -290,11 +290,11 @@ editUser = (req, res, next) ->
 
 app.get    '/v1/auth/facebook', passport.authenticate('facebook/v1')
 app.get    '/v1/auth/facebook/callback', passport.authenticate('facebook/v1',
-  failureRedirect: '/login'
+  failureRedirect: '/login?popup=1'
 ), authenticationSuccessfulAPI
 app.get    '/v1/auth/google', passport.authenticate('google/v1')
 app.get    '/v1/auth/google/return', passport.authenticate('google/v1',
-  failureRedirect: '/login'
+  failureRedirect: '/login?popup=1'
 ), authenticationSuccessfulAPI
 app.get    '/v1/auth/twitter', passport.authenticate('twitter/v1')
 app.get    '/v1/auth/twitter/callback', passport.authenticate('twitter/v1'), authenticationSuccessfulAPI

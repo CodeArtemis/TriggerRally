@@ -71,7 +71,6 @@
       model
 
     fetch: (options = {}) ->
-      # console.log "fetch #{@constructor.name}:#{@id} lastSync is #{@lastSync}"
       return options.success? @, null, options if @lastSync and not options?.force
       xhr = @fetchXHR
       if xhr

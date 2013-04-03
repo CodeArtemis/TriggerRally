@@ -93,6 +93,7 @@ bb.Track::sync = do ->
     create: (model, success, error, options) ->
       mo.Track
         .findOne(pub_id: model.parent.id)
+        .populate('env', 'pub_id')
         .exec (err, parentTrack) ->
           return error model, err, options if err
           return error model, "Couldn't find track #{model.parent.id}", options unless parentTrack
@@ -106,7 +107,12 @@ bb.Track::sync = do ->
             if err
               console.log "Error creating track: #{err}"
               return error model, null, options
-            success model, parseTrack(track), options
+            parsed = parseTrack(track)
+            # Hacky workaround for Mongoose population/ext ref problem.
+            # It would be nice to get rid of Mongoose.
+            parsed.user = options.user.pub_id
+            parsed.env = parentTrack.env.pub_id
+            success model, parsed, options
     read: (model, success, error, options) ->
       mo.Track
         .findOne(pub_id: model.id)
@@ -160,11 +166,11 @@ bb.User::sync = makeSync
         return error model, err, options if err or not user?
         mo.Track
           .find(user: user.id)
-          .select('pub_id')
+          .select('pub_id env')
           .exec (err, tracks) ->
             return error model, err, options if err
             parsed = parseMongoose user
-            parsed.tracks = (track.pub_id for track in tracks)
+            parsed.tracks = (track.pub_id for track in tracks when track.env)
             success model, parsed, options
 
 # NO MONGOOSE BEYOND THIS POINT
@@ -237,19 +243,6 @@ module.exports = (app) ->
             console.log "Error creating track: #{err}"
             jsonError 500, res
 
-  # app.get "#{base}/tracks/:track_id", (req, res) ->
-  #   trackIds = req.params['track_id'].split('+')
-  #   tracks = []
-  #   done = _.after trackIds.length, ->
-  #     for track in tracks
-  #       return jsonError 404, res unless track?
-  #     data = if tracks.length > 1 then tracks else tracks[0]
-  #     res.json data
-  #   trackIds.forEach (trackId, i) ->
-  #     findTrack trackId, (track) ->
-  #       tracks[i] = track
-  #       done()
-
   loadUrlTrack = (req, res, next) ->
     findTrack req.params['track_id'], (track) ->
       return jsonError 404, res unless track?
@@ -270,8 +263,22 @@ module.exports = (app) ->
         return jsonError 400, res, "expired: expected #{modifiedExpected} but got #{modifiedActual}"
       next()
 
-  app.get "#{base}/tracks/:track_id", loadUrlTrack, (req, res) ->
-    res.json req.apiUrlData.track
+  app.get "#{base}/tracks/:track_id", (req, res) ->
+    loadUrlTrack req, res, ->
+      res.json req.apiUrlData.track
+
+  # app.get "#{base}/tracks/:track_id", (req, res) ->
+  #   trackIds = req.params['track_id'].split('+')
+  #   tracks = []
+  #   done = _.after trackIds.length, ->
+  #     for track in tracks
+  #       return jsonError 404, res unless track?
+  #     data = if tracks.length > 1 then tracks else tracks[0]
+  #     res.json data
+  #   trackIds.forEach (trackId, i) ->
+  #     findTrack trackId, (track) ->
+  #       tracks[i] = track
+  #       done()
 
   app.put "#{base}/tracks/:track_id", editUrlTrack, (req, res) ->
     track = req.apiUrlData.track
@@ -280,13 +287,13 @@ module.exports = (app) ->
     attribs = _.pick req.body, allowedKeys
     prev = jsonClone _.pick track, allowedKeys
     if _.isEqual prev, attribs
-      console.log "track #{track.id} (#{track.name}): no changes to save"
+      console.log "track #{track.id}: no changes to save"
       return res.json {}
     if 'config' of attribs and not _.isEqual prev.config, attribs.config
       attribs.modified = new Date
-    console.log "track #{track.id} (#{track.name}): saving changes"
+    console.log "track #{track.id}: saving changes"
     track.save attribs,
-      success: -> res.json {}
+      success: -> res.json { modified: attribs.modified }
       error:   -> jsonError 500, res
 
   app.delete "#{base}/tracks/:track_id", editUrlTrack, (req, res) ->

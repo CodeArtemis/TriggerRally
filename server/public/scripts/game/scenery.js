@@ -24,7 +24,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
     this.layersById = {};
     this.root = track.root;
     this.root.on([
-        //'change:track.config.scenery',
+        'change:track.config.scenery',
         'change:track.env.scenery'
       ].join(' '), this.refresh, this);
   };
