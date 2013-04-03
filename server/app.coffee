@@ -367,10 +367,10 @@ app.post   '/metrics', routes.metricsSave
 app.get '/drive', (req, res) ->
   res.redirect '/x/Preview/Arbusu/drive', 301
 
-# server = http.createServer(app)
+server = http.createServer(app)
 # io = socketio.listen(server)
-# server.listen PORT
-# log "Server listening on port #{PORT} in #{app.settings.env} mode"
+server.listen PORT
+log "Server listening on port #{PORT} in #{app.settings.env} mode"
 
 
 # if NODE_ENV is 'production'
