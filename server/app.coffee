@@ -45,8 +45,8 @@ Track = mongoose.model('Track')
 Run = mongoose.model('Run')
 
 # Alternate DB connection
-dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
-db = mongoskin.db dbUrl, { safe: true }
+# dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
+# db = mongoskin.db dbUrl, { safe: true }
 
 
 log "Base directory: #{__dirname}"
@@ -55,7 +55,9 @@ app = module.exports = express()
 
 PORT = process.env.PORT or 80
 DOMAIN = process.env.DOMAIN or 'triggerrally.com'
-PORT_SUFFIX = if PORT is 80 then "" else ":#{PORT}"
+NODE_ENV = process.env.NODE_ENV
+PUBLIC_PORT = if NODE_ENV is 'production' then 80 else PORT
+PORT_SUFFIX = if PUBLIC_PORT is 80 then "" else ":#{PUBLIC_PORT}"
 URL_PREFIX = "http://#{DOMAIN}#{PORT_SUFFIX}"
 
 authenticateUser = (profile, done) ->
@@ -365,171 +367,171 @@ app.post   '/metrics', routes.metricsSave
 app.get '/drive', (req, res) ->
   res.redirect '/x/Preview/Arbusu/drive', 301
 
-server = http.createServer(app)
-io = socketio.listen(server)
-server.listen PORT
-log "Server listening on port #{PORT} in #{app.settings.env} mode"
+# server = http.createServer(app)
+# io = socketio.listen(server)
+# server.listen PORT
+# log "Server listening on port #{PORT} in #{app.settings.env} mode"
 
 
-if 'production' is process.env.NODE_ENV
-  io.set 'log level', 1
-else
-  io.set 'log level', 2
+# if NODE_ENV is 'production'
+#   io.set 'log level', 1
+# else
+#   io.set 'log level', 2
 
-showNumberConnected = ->
-  clients = io.sockets.clients()
-  numConnected = clients.length
-  log "Connected sockets: #{numConnected}"
+# showNumberConnected = ->
+#   clients = io.sockets.clients()
+#   numConnected = clients.length
+#   log "Connected sockets: #{numConnected}"
 
-io.set 'authorization', (data, accept) ->
-  # http://www.danielbaulig.de/socket-ioexpress/
-  return accept('No cookie transmitted.', false) unless data.headers.cookie
-  data.cookie = cookie.parse(data.headers.cookie)
-  sid = data.cookie['connect.sid']
-  return accept('No session id found.', false) unless sid
-  data.sessionID = sid.substring(2, 26)
-  # save the session store to the data object
-  # (as required by the Session constructor)
-  data.sessionStore = sessionStore
-  sessionStore.get data.sessionID, (err, session) ->
-    if err
-      accept err, false
-    else unless session
-      accept 'No session', false
-    else
-      # create a session object, passing data as request and our
-      # just acquired session data
-      Session = connect.middleware.session.Session
-      data.session = new Session(data, session)
-      # TODO: accept fast, before deserialization?
-      passport.deserializeUser data.session.passport.user, (err, userPassport) ->
-        if err then accept 'passport error: ' + err, false
-        else
-          data.session.user = userPassport.user
-          data.session.userPassport = userPassport
-          accept null, true
+# io.set 'authorization', (data, accept) ->
+#   # http://www.danielbaulig.de/socket-ioexpress/
+#   return accept('No cookie transmitted.', false) unless data.headers.cookie
+#   data.cookie = cookie.parse(data.headers.cookie)
+#   sid = data.cookie['connect.sid']
+#   return accept('No session id found.', false) unless sid
+#   data.sessionID = sid.substring(2, 26)
+#   # save the session store to the data object
+#   # (as required by the Session constructor)
+#   data.sessionStore = sessionStore
+#   sessionStore.get data.sessionID, (err, session) ->
+#     if err
+#       accept err, false
+#     else unless session
+#       accept 'No session', false
+#     else
+#       # create a session object, passing data as request and our
+#       # just acquired session data
+#       Session = connect.middleware.session.Session
+#       data.session = new Session(data, session)
+#       # TODO: accept fast, before deserialization?
+#       passport.deserializeUser data.session.passport.user, (err, userPassport) ->
+#         if err then accept 'passport error: ' + err, false
+#         else
+#           data.session.user = userPassport.user
+#           data.session.userPassport = userPassport
+#           accept null, true
 
-db.bind 'cars'
-db.bind 'environments'
-db.bind 'tracks'
-db.bind 'users'
+# db.bind 'cars'
+# db.bind 'environments'
+# db.bind 'tracks'
+# db.bind 'users'
 
-publicCar = (car) ->
-  id: car.pub_id
-  name: car.name
-  config: car.config
+# publicCar = (car) ->
+#   id: car.pub_id
+#   name: car.name
+#   config: car.config
 
-publicUserBasic = (user) ->
-  id: user.pub_id
-  name: user.name
+# publicUserBasic = (user) ->
+#   id: user.pub_id
+#   name: user.name
 
-getPublicEnv = (_id, cb) ->
-  db.environments.findOne {_id}, (err, env) ->
-    return cb err if err?
-    db.cars.find({ _id: { $in: env.cars } }).toArray (err, cars) ->
-      return cb err if err?
-      cb null,
-        id: env.pub_id
-        name: env.name
-        cars: (publicCar(car) for car in cars)
-        scenery: env.scenery
-        terrain: env.terrain
+# getPublicEnv = (_id, cb) ->
+#   db.environments.findOne {_id}, (err, env) ->
+#     return cb err if err?
+#     db.cars.find({ _id: { $in: env.cars } }).toArray (err, cars) ->
+#       return cb err if err?
+#       cb null,
+#         id: env.pub_id
+#         name: env.name
+#         cars: (publicCar(car) for car in cars)
+#         scenery: env.scenery
+#         terrain: env.terrain
 
-getPublicTrackPubId = (pub_id, cb) ->
-  db.tracks.findOne {pub_id}, (err, track) ->
-    return cb err if err?
-    getPublicEnv track.env, (err, env) ->
-      return cb err if err?
-      db.users.findOne track.user, (err, user) ->
-        return cb err if err?
-        cb null,
-          id: track.pub_id
-          name: track.name
-          config: track.config
-          env: env
-          user: publicUserBasic user
-          published: track.published
+# getPublicTrackPubId = (pub_id, cb) ->
+#   db.tracks.findOne {pub_id}, (err, track) ->
+#     return cb err if err?
+#     getPublicEnv track.env, (err, env) ->
+#       return cb err if err?
+#       db.users.findOne track.user, (err, user) ->
+#         return cb err if err?
+#         cb null,
+#           id: track.pub_id
+#           name: track.name
+#           config: track.config
+#           env: env
+#           user: publicUserBasic user
+#           published: track.published
 
-io.of('/api').on 'connection', (socket) ->
-  session = socket.handshake.session
-  wireId = socket.id
-  tag = (if session.user then " #{session.user.pub_id}" else "")
-  do ->
-    isodate = getIsodate()
-    console.log "[#{isodate}] #{wireId} connected" + tag
-  #showNumberConnected()
+# io.of('/api').on 'connection', (socket) ->
+#   session = socket.handshake.session
+#   wireId = socket.id
+#   tag = (if session.user then " #{session.user.pub_id}" else "")
+#   do ->
+#     isodate = getIsodate()
+#     console.log "[#{isodate}] #{wireId} connected" + tag
+#   #showNumberConnected()
 
-  socket.on 'sync', (data, callback) ->
-    switch data.method
-      when 'create'
-        callback 'create not implemented'
-      when 'read'
-        switch data.urlRoot
-          when 'track'
-            getPublicTrackPubId data.model.id, (err, track) ->
-              return callback err if err?
-              callback null, track
-      when 'update'
-        switch data.urlRoot
-          when 'track'
-            db.tracks.findOne { pub_id: data.model.id }, (err, track) ->
-              return callback err if err?
-              unless track?
-                return callback 404
-              unless track.user.equals session.user._id
-                return callback 403
-              track.config = data.model.config
-              track.name = data.model.name
-              track.published = data.model.published
-              track.modified = new Date()
-              db.tracks.save track, (err) ->
-                callback err, {}
-                isodate = getIsodate()
-                console.log "[#{isodate}] Track #{track.pub_id} saved by #{session.user.pub_id}"
-      when 'delete'
-        callback 'delete not implemented'
-    return
+#   socket.on 'sync', (data, callback) ->
+#     switch data.method
+#       when 'create'
+#         callback 'create not implemented'
+#       when 'read'
+#         switch data.urlRoot
+#           when 'track'
+#             getPublicTrackPubId data.model.id, (err, track) ->
+#               return callback err if err?
+#               callback null, track
+#       when 'update'
+#         switch data.urlRoot
+#           when 'track'
+#             db.tracks.findOne { pub_id: data.model.id }, (err, track) ->
+#               return callback err if err?
+#               unless track?
+#                 return callback 404
+#               unless track.user.equals session.user._id
+#                 return callback 403
+#               track.config = data.model.config
+#               track.name = data.model.name
+#               track.published = data.model.published
+#               track.modified = new Date()
+#               db.tracks.save track, (err) ->
+#                 callback err, {}
+#                 isodate = getIsodate()
+#                 console.log "[#{isodate}] Track #{track.pub_id} saved by #{session.user.pub_id}"
+#       when 'delete'
+#         callback 'delete not implemented'
+#     return
 
-  ###
-  # Stuff a custom storage object into the socket.
-  socket.hackyStore = {}
-  socket.on 'c2s', (data) ->
+#   ###
+#   # Stuff a custom storage object into the socket.
+#   socket.hackyStore = {}
+#   socket.on 'c2s', (data) ->
 
-    #console.log('Update from ' + wireId + tag);
-    if data.config
+#     #console.log('Update from ' + wireId + tag);
+#     if data.config
 
-      # TODO: Find a cleaner way of signaling that cars are remote?
-      data.config.isRemote = true
-      socket.hackyStore['config'] = data.config
-    if data.carstate
-      clients = io.sockets.clients()
-      clients.forEach (client) ->
-        if client.id isnt wireId
-          seen = client.hackyStore['seen'] or (client.hackyStore['seen'] = {})
-          unless seen[wireId]
-            seen[wireId] = true
-            client.emit 'addcar',
-              wireId: wireId
-              config: socket.hackyStore['config']
+#       # TODO: Find a cleaner way of signaling that cars are remote?
+#       data.config.isRemote = true
+#       socket.hackyStore['config'] = data.config
+#     if data.carstate
+#       clients = io.sockets.clients()
+#       clients.forEach (client) ->
+#         if client.id isnt wireId
+#           seen = client.hackyStore['seen'] or (client.hackyStore['seen'] = {})
+#           unless seen[wireId]
+#             seen[wireId] = true
+#             client.emit 'addcar',
+#               wireId: wireId
+#               config: socket.hackyStore['config']
 
-          client.volatile.emit 's2c',
-            wireId: wireId
-            carstate: data.carstate
+#           client.volatile.emit 's2c',
+#             wireId: wireId
+#             carstate: data.carstate
 
-  socket.on 'disconnect', ->
-    showNumberConnected()
-    console.log wireId + ' disconnected' + tag
-    clients = io.sockets.clients()
-    clients.forEach (client) ->
-      if client.id isnt wireId
-        seen = client.hackyStore['seen'] or (client.hackyStore['seen'] = {})
-        if wireId of seen
-          delete seen[wireId]
+#   socket.on 'disconnect', ->
+#     showNumberConnected()
+#     console.log wireId + ' disconnected' + tag
+#     clients = io.sockets.clients()
+#     clients.forEach (client) ->
+#       if client.id isnt wireId
+#         seen = client.hackyStore['seen'] or (client.hackyStore['seen'] = {})
+#         if wireId of seen
+#           delete seen[wireId]
 
-          client.emit 'deletecar',
-            wireId: wireId
-  ###
+#           client.emit 'deletecar',
+#             wireId: wireId
+#   ###
 
-  socket.on 'error', (data) ->
-    isodate = getIsodate()
-    console.log "[#{isodate}] Error from #{wireId}: #{data.msg}"
+#   socket.on 'error', (data) ->
+#     isodate = getIsodate()
+#     console.log "[#{isodate}] Error from #{wireId}: #{data.msg}"
