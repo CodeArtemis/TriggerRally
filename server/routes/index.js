@@ -35,7 +35,7 @@ exports.defaultParams = function(req, res, next) {
         "innocent.png"
       ];
       var idx = Math.floor(Math.random() * smileys.length);
-      var url = "http://triggerrally.com/emojis/" + smileys[idx];
+      var url = "https://triggerrally.com/emojis/" + smileys[idx];
       return encodeURIComponent(url);
     }
   };

@@ -44,6 +44,8 @@ Car = mongoose.model('Car')
 Track = mongoose.model('Track')
 Run = mongoose.model('Run')
 
+{ handleIPN } = require './ipn'
+
 # Alternate DB connection
 # dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
 # db = mongoskin.db dbUrl, { safe: true }
@@ -150,6 +152,11 @@ app.use stylus.middleware(
 )
 app.set 'views', __dirname + '/views'
 app.set 'view engine', 'jade'
+app.use (req, res, next) ->
+  req.rawBody = ''
+  # req.setEncoding('utf8')
+  req.on 'data', (chunk) -> req.rawBody += chunk
+  next()
 app.use express.bodyParser()
 app.use express.cookieParser(config.SESSION_SECRET)
 app.use express.session(
@@ -307,8 +314,6 @@ app.get    '/v1/auth/logout', (req, res) ->
 
 require('./api') app, passport
 
-return if process.env.API_ONLY
-
 app.get    '/auth/facebook', passport.authenticate('facebook')
 app.get    '/auth/facebook/callback', passport.authenticate('facebook',
   failureRedirect: '/login'
@@ -367,11 +372,15 @@ app.post   '/metrics', routes.metricsSave
 app.get '/drive', (req, res) ->
   res.redirect '/x/Preview/Arbusu/drive', 301
 
+app.post '/paypal/ipn', handleIPN
+
 server = http.createServer(app)
 # io = socketio.listen(server)
 server.listen PORT
 log "Server listening on port #{PORT} in #{app.settings.env} mode"
 
+
+# TODO: Mirror http api over socket.io.
 
 # if NODE_ENV is 'production'
 #   io.set 'log level', 1

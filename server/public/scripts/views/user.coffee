@@ -40,5 +40,5 @@ define [
         "innocent.png"
       ]
       idx = Math.floor(Math.random() * smileys.length)
-      url = "http://triggerrally.com/emojis/#{smileys[idx]}"
+      url = "https://triggerrally.com/emojis/#{smileys[idx]}"
       encodeURIComponent url
