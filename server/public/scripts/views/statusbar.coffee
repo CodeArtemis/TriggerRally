@@ -13,7 +13,7 @@ define [
     el: '#statusbar'
     template: template
 
-    constructor: (@app) -> super
+    constructor: (@app) -> super()
 
     afterRender: ->
       $status = @$('#status')
@@ -28,4 +28,4 @@ define [
         @$('.userinfo').append userView.el
       @app.root.on 'change:user', updateUserView
 
-    height: -> @$.height()
+    height: -> @$el.height()

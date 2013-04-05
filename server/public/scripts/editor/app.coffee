@@ -21,7 +21,7 @@ define [
       "track/:trackId/edit": "trackEdit"
 
     trackEdit: (trackId) ->
-      @app.setCurrent @app.editorView
+      @app.unifiedView.setView @app.editorView
       root = @app.root
 
       track = models.Track.findOrCreate trackId
@@ -53,8 +53,8 @@ define [
       @unifiedView = new UnifiedView @
       @unifiedView.render()
 
-      @currentView = null
-      @editorView = new EditorView @, unifiedView.client
+      @editorView = new EditorView @, @unifiedView.client
+      @editorView.render()
 
       @router = new Router @
 
@@ -94,10 +94,3 @@ define [
     logout: ->
       @root.user = null
       Backbone.trigger 'app:status', 'Logged out'
-
-    setCurrent: (view) ->
-      if @currentView isnt view
-        @currentView?.hide()
-        @currentView = view
-        view?.show()
-      return

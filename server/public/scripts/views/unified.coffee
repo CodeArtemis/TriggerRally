@@ -14,20 +14,33 @@ define [
   class UnifiedView extends View
     # el: document.body
 
-    constructor: (@app) -> super
+    constructor: (@app) -> super()
 
     afterRender: ->
       statusBarView = new StatusBarView @app
       statusBarView.render()
 
-      $container = $(window)
+      $window = $(window)
       $view3d = $('#view3d')
 
       client = @client = new TriggerClient $view3d[0], @app.root
 
       do layout = ->
         statusbarHeight = statusBarView.height()
-        $view3d.height $container.height() - statusbarHeight
+        $view3d.height $window.height() - statusbarHeight
         $view3d.css 'top', statusbarHeight
         client.setSize $view3d.width(), $view3d.height()
-      $container.on 'resize', layout
+      $window.on 'resize', layout
+
+      @currentView = null
+
+    setView: (view) ->
+      if @currentView isnt view
+        @currentView?.hide?()
+        container = $('#unified-child')
+        container.empty()
+        @currentView = view
+        if view
+          container.append view.el
+          view.show?()
+      return
