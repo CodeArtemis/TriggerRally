@@ -52,6 +52,5 @@ require(
   ],
   function main(App) {
     var app = new App();
-    app.run();
   }
 );

@@ -1,13 +1,15 @@
 define [
   'jquery'
   'backbone-full'
-  'cs!editor/editor'
   'cs!models/index'
+  'cs!views/unified'
+  'cs!editor/editor'
 ], (
   $
   Backbone
-  Editor
   models
+  UnifiedView
+  EditorView
 ) ->
   jsonClone = (obj) -> JSON.parse JSON.stringify obj
 
@@ -48,14 +50,20 @@ define [
         user: null
         track: null
 
+      @unifiedView = new UnifiedView @
+      @unifiedView.render()
+
       @currentView = null
-      @editorView = new Editor @
+      @editorView = new EditorView @, unifiedView.client
 
       @router = new Router @
 
       Backbone.on 'app:settrack', @setTrack, @
       Backbone.on 'app:checklogin', @checkUserLogin, @
       Backbone.on 'app:logout', @logout, @
+
+      @checkUserLogin()
+      Backbone.history.start pushState: yes
 
     setTrack: (track, fromRouter) ->
       lastTrack = @root.track
@@ -86,10 +94,6 @@ define [
     logout: ->
       @root.user = null
       Backbone.trigger 'app:status', 'Logged out'
-
-    run: ->
-      @checkUserLogin()
-      Backbone.history.start pushState: yes
 
     setCurrent: (view) ->
       if @currentView isnt view

@@ -18,6 +18,7 @@ h2 {
   height: 20px;
   margin-right: 5px;
   vertical-align: -20%;
+  border-radius: 2px;
 }
 img.emoji {
   width: 1em;
@@ -26,6 +27,7 @@ img.emoji {
 img.profilepic {
   width: 70px;
   height: 70px;
+  border-radius: 7px;
 }
 a,
 a:visited {
@@ -63,10 +65,12 @@ body {
   padding: 0;
   margin: 0;
   font-family: "Ubuntu", sans-serif;
-  overflow: hidden;
   -moz-user-select: none;
   -webkit-user-select: none;
   user-select: none;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
 }
 h2 {
   display: inline;
@@ -77,7 +81,7 @@ input[type="range"] {
 input:checked + label {
   color: #e77;
 }
-#editor-statusbar,
+#statusbar,
 #editor-inspector,
 #editor-helpbox,
 .close-tab {
@@ -85,21 +89,21 @@ input:checked + label {
   box-shadow: 0 0 10px #000;
   position: absolute;
 }
-#editor-statusbar {
+#statusbar {
   width: 100%;
   z-index: 2;
 }
-#editor-statusbar > table {
+#statusbar > table {
   border-spacing: 0;
   width: 100%;
 }
-#editor-statusbar > table td {
+#statusbar > table td {
   width: 33.3%;
 }
-#editor-statusbar > table td:nth-child(2) {
+#statusbar > table td:nth-child(2) {
   text-align: center;
 }
-#editor-statusbar > table td:last-child {
+#statusbar > table td:last-child {
   text-align: right;
 }
 #editor-helpbox-wrapper,
@@ -118,7 +122,7 @@ input:checked + label {
   z-index: 4;
   width: 600px;
   right: -620px;
-  -webkit-transition: right 1s;
+  -webkit-transition: right 0.5s;
 }
 #editor-helpbox-wrapper.visible {
   right: 10px;
@@ -235,7 +239,7 @@ menu li:hover > menu {
   color: #f33;
 }
 #track-list {
-  max-height: 8em;
+  max-height: 7.5em;
   overflow: auto;
 }
 #track-list .track.selected {

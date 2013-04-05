@@ -399,13 +399,15 @@ define [
   isModifierKey = (event) ->
     event.ctrlKey or event.altKey or event.metaKey
 
-  TriggerClient: class TriggerClient
+  class TriggerClient
     constructor: (@containerEl, @root, @options = {}) ->
       # TODO: Add Detector support.
       @objects = {}
       @pubsub = new pubsub.PubSub()
 
-      prefs = options.prefs or {
+      # TODO: Pick these up from root.prefs? (probably not root.user)
+      # Should be synced to localstorage or something.
+      prefs = options?.prefs or {
         audio: yes
         shadows: yes
         terrainhq: yes

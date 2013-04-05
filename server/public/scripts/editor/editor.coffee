@@ -7,7 +7,6 @@ define [
   'backbone-full'
   'THREE'
   'util/util'
-  'cs!client/client'
   'cs!client/misc'
   'client/car'
   'game/game'
@@ -22,7 +21,6 @@ define [
   Backbone
   THREE
   util
-  clientClient
   clientMisc
   clientCar
   gameGame
@@ -51,15 +49,10 @@ define [
     contains: (sel) ->
       @some (element) -> element.get('sel').object is sel.object
 
-  Editor = (app) ->
+  # TODO: Make this a real View with a template.
+  EditorView = (app, client) ->
     root = app.root
-    $container = $(window)
-    $statusbar = $('#editor-statusbar')  # TODO: Move to a StatusView belonging to App.
-    $view3d = $('#view3d')
-    $status = $statusbar.find('#status')
-
-    setStatus = (msg) -> $status.text msg
-    Backbone.on 'app:status', setStatus
+    # $view3d = $('#view3d')
 
     $(document).on 'click', 'a.login', (event) ->
       width = 1000
@@ -84,16 +77,6 @@ define [
         Backbone.trigger 'app:logout'
       false
 
-    # TODO: Move to a StatusBarView?
-    userView = null
-    do updateUserView = ->
-      userView?.destroy()
-      userView = new UserView
-        model: root.user
-        showStatus: yes
-      $('#editor-statusbar .userinfo').append userView.el
-    root.on 'change:user', updateUserView
-
     root.on 'change:user.tracks.', ->
       root.user.tracks.each (track) ->
         track.fetch()
@@ -106,7 +89,6 @@ define [
       terrainhq: yes
     }
     prefs.audio = no
-    client = new clientClient.TriggerClient $view3d[0], root, prefs: prefs
 
     client.camera.eulerOrder = 'ZYX'
     camPos = client.camera.position
@@ -131,13 +113,13 @@ define [
 
     doSave = _.debounce ->
       if root.user isnt root.track.user
-        return setStatus 'Read only'
-      setStatus 'Saving...'
+        return Backbone.trigger 'app:status', 'Read only'
+      Backbone.trigger 'app:status', 'Saving...'
       root.track.save null,
         success: (model, response, options) ->
-          setStatus 'OK'
+          Backbone.trigger 'app:status', 'OK'
         error: (model, xhr, options) ->
-          setStatus "ERROR: #{xhr.statusText} (#{xhr.status})"
+          Backbone.trigger 'app:status', "ERROR: #{xhr.statusText} (#{xhr.status})"
     , 1000
 
     root.on 'all', (event) ->
@@ -146,9 +128,9 @@ define [
       # console.log "Saving due to event: #{event}"
 
       if options?.dontSave
-        setStatus 'OK'
+        Backbone.trigger 'app:status', 'OK'
       else
-        setStatus 'Changed'
+        Backbone.trigger 'app:status', 'Changed'
         doSave()
 
     root.on 'change:track.id', ->
@@ -188,21 +170,6 @@ define [
         # TODO: Deallocate old startposCar, if any.
         renderCar = new clientCar.RenderCar startPos, mockVehicle, null
         renderCar.update()
-
-    layout = ->
-      #[$statusbar, $view3d].forEach (panel) ->
-        #panel.css 'position', 'absolute'
-        #panel.width $container.width()
-      statusbar_HEIGHT = $statusbar.height()
-      #$statusbar.height statusbar_HEIGHT
-      $view3d.height $container.height() - statusbar_HEIGHT
-      $view3d.css 'top', statusbar_HEIGHT
-      client.setSize $view3d.width(), $view3d.height()
-      return
-
-    layout()
-    $container.on 'resize', ->
-      layout()
 
     inspectorController = new inspector.Controller app, selection
 
