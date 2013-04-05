@@ -24,6 +24,7 @@ var User = new Schema({
     , terrainhq   : { type: Boolean, default: true }
   }
   , admin       : { type: Boolean, default: false }
+  , packs       : [ String ]
 }, { strict: true });
 
 User.virtual('id')

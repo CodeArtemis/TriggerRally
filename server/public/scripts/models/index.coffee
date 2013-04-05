@@ -1,7 +1,3 @@
-###
-# Copyright (C) 2012 jareiko / http://www.jareiko.net/
-###
-
 ((factory) ->
   if typeof define is "function" and define.amd
     # AMD. Register as an anonymous module.
@@ -23,13 +19,6 @@
       Object.defineProperty constructor::, prop,
         get: buildGetter prop
         set: buildSetter prop
-
-  # childChange = (parent, mdl) ->
-  #   return unless mdl? and mdl.on?
-  #   mdl.on 'change', ->
-  #     parent.trigger 'childchange', []
-  #   mdl.on 'childchange', (stack) ->
-  #     parent.trigger 'childchange', stack.concat mdl
 
   createAttributeMonitor = ->
     monitored = Object.create null
@@ -169,35 +158,24 @@
     all: new (Collection.extend model: @)
     buildProps @, [ 'config', 'name', 'user' ]
     urlRoot: '/v1/cars'
-    # relations: [
-    #   type: Backbone.HasOne
-    #   key: 'user'
-    #   relatedModel: 'User'
-    #   includeInJSON: 'id'
-    # ]
     toJSON: (options) ->
-      json = super
-      delete json.created
-      json.user = json.user.id if json.user?
-      json
+      data = super
+      delete data.created
+      data.user = data.user.id if data.user?
+      data
 
   class Env extends Model
     all: new (Collection.extend model: @)
     buildProps @, [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
     urlRoot: '/v1/envs'
-    #collection: EnvCollection
-    # defaults:
-    #   scenery: new TrackConfig
-    # relations: [
-    #   type: Backbone.HasMany
-    #   key: 'cars'
-    #   relatedModel: Car
-    #   includeInJSON: 'id'
-    # ]
     toJSON: (options) ->
-      json = super
-      json.cars = (car.id for car in json.cars) if json.cars?
-      json
+      data = super
+      data.cars = (car.id for car in data.cars) if data.cars?
+      if options?.restricted
+        delete data.cars
+        delete data.scenery
+        delete data.terrain
+      data
 
   class Track extends Model
     all: new (Collection.extend model: @)
@@ -243,11 +221,11 @@
       data.modified = data.created if data.created and not data.modified
       data
     toJSON: ->
-      json = super
-      json.env = json.env.id if json.env?
-      json.parent = json.parent.id if json.parent?
-      json.user = json.user.id if json.user?
-      json
+      data = super
+      data.env = data.env.id if data.env?
+      data.parent = data.parent.id if data.parent?
+      data.user = data.user.id if data.user?
+      data
 
   class User extends Model
     all: new (Collection.extend model: @)
@@ -278,14 +256,14 @@
         data.tracks = @tracks.update tracks
       data
     toJSON: (options) ->
-      json = super
-      delete json.created
-      delete json.email
+      data = super
+      delete data.created
+      delete data.email
       unless options?.authenticated
-        delete json.admin
-        delete json.prefs
-      json.tracks = (track.id for track in json.tracks.models) if json.tracks?
-      json
+        delete data.admin
+        delete data.prefs
+      data.tracks = (track.id for track in data.tracks.models) if data.tracks?
+      data
 
   class UserPassport extends Model
     buildProps @, [
@@ -293,11 +271,6 @@
       'user'
     ]
     bubbleAttribs: [ 'user' ]
-    # relations: [
-    #   type: Backbone.HasOne
-    #   key: 'user'
-    #   relatedModel: User
-    # ]
 
   models = {
     buildProps
