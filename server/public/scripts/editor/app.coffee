@@ -3,7 +3,7 @@ define [
   'backbone-full'
   'cs!models/index'
   'cs!views/unified'
-  'cs!editor/editor'
+  'cs!views/editor'
 ], (
   $
   Backbone

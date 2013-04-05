@@ -21,6 +21,7 @@ define [
       statusBarView.render()
 
       $window = $(window)
+      $document = $(document)
       $view3d = $('#view3d')
 
       client = @client = new TriggerClient $view3d[0], @app.root
@@ -31,6 +32,29 @@ define [
         $view3d.css 'top', statusbarHeight
         client.setSize $view3d.width(), $view3d.height()
       $window.on 'resize', layout
+
+      $document.on 'click', 'a.login', (event) ->
+        width = 1000
+        height = 700
+        left = (window.screen.width - width) / 2
+        top = (window.screen.height - height) / 2
+        popup = window.open "/login?popup=1",
+                            "Login",
+                            "width=#{width},height=#{height},left=#{left},top=#{top}"
+        if popup
+          timer = setInterval ->
+            if popup.closed
+              clearInterval timer
+              Backbone.trigger 'app:checklogin'
+          , 1000
+        # If the popup fails to open, allow the link to trigger as normal.
+        not popup
+
+      $document.on 'click', 'a.logout', (event) ->
+        $.ajax('/v1/auth/logout')
+        .done (data) ->
+          Backbone.trigger 'app:logout'
+        false
 
       @currentView = null
 
