@@ -45,7 +45,6 @@ function(THREE, async, uImg, quiver, util) {
       this.maps[k].q_map = new quiver.Node(this.maps[k]);
     }
 
-    console.log("Image source: creating seed buffers");
     // Create seed buffers. The pipeline will preserve their data types.
     uImg.createBuffer(this.maps.height, 1, 1, 1, Float32Array);
     uImg.createBuffer(this.maps.surface, 1, 1, 4, Uint8Array);

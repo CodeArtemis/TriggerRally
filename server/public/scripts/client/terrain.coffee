@@ -445,8 +445,6 @@ define [
           else throw 'Unknown type'
 
       createTexture = (buffer, mipmap) =>
-        console.log "createTexture: #{buffer.url}"
-        console.log (new Error).stack
         tex = new THREE.DataTexture(
             buffer.data,
             buffer.width,

@@ -49,20 +49,13 @@ define [
       root = @app.root
       $ = @$.bind @
 
+      # TODO: Move this to App?
       root.on 'change:user.tracks.', ->
         root.user.tracks.each (track) ->
           track.fetch()
       # root.on 'add:user.tracks.', (track) ->
       #   track.fetch()
 
-      #game = new gameGame.Game()
-      prefs = root.user?.prefs or {
-        shadows: no
-        terrainhq: yes
-      }
-      prefs.audio = no
-
-      client.camera.eulerOrder = 'ZYX'
       camPos = client.camera.position
       camAng = client.camera.rotation
       camVel = new Vec3
@@ -113,6 +106,8 @@ define [
         camAutoPos.y -= 20 * Math.sin(startposition.rot[2])
         camAutoPos.z += 40
         camAutoTimer = 0
+
+        Backbone.history.navigate "/track/#{@root.track.id}/edit"
 
       root.on 'change:track.name', ->
         document.title = "#{root.track.name} - Trigger Rally"
@@ -226,9 +221,6 @@ define [
           camAng.addSelf tmpVec3.copy(camAngVel).multiplyScalar delta
 
         camAng.x = Math.max 0, Math.min 2, camAng.x
-
-        client.update delta
-        client.render()
 
       addSelection = (sel) -> selection.add {sel}
 

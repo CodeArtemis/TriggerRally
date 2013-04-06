@@ -3,12 +3,14 @@ define [
   'backbone-full'
   'cs!models/index'
   'cs!views/unified'
+  'cs!views/home'
   'cs!views/editor'
 ], (
   $
   Backbone
   models
   UnifiedView
+  HomeView
   EditorView
 ) ->
   jsonClone = (obj) -> JSON.parse JSON.stringify obj
@@ -19,6 +21,11 @@ define [
 
     routes:
       "track/:trackId/edit": "trackEdit"
+      "": "home"
+
+    home: ->
+      uni = @app.unifiedView
+      uni.setView (new HomeView @app, uni.client).render()
 
     trackEdit: (trackId) ->
       uni = @app.unifiedView
@@ -26,6 +33,7 @@ define [
         uni.setView (new EditorView @app, uni.client).render()
       root = @app.root
 
+      # TODO: Let the editor do this itself?
       track = models.Track.findOrCreate trackId
       track.fetch
         success: ->
@@ -77,7 +85,6 @@ define [
       track.trigger 'change:config.course.checkpoints.'
       track.trigger 'change:config.course.startposition.'
       track.trigger 'change:config.scenery.'
-      Backbone.history.navigate "/track/#{@root.track.id}/edit" unless fromRouter
 
     checkUserLogin: ->
       $.ajax('/v1/auth/me')

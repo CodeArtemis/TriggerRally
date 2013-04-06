@@ -421,6 +421,7 @@ define [
 
       @scene = new THREE.Scene()
       @camera = new THREE.PerspectiveCamera 75, 1, 0.1, 10000000
+      @camera.idealFov = 75
       @camera.up.set 0, 0, 1
       @camera.position.set 110, 2530, 500
       @scene.add @camera
@@ -522,16 +523,18 @@ define [
       r.autoClear = false
       r
 
-    setSize: (@width, @height) ->
-      @renderer.setSize @width, @height
+    updateCamera: ->
       aspect = if @height > 0 then @width / @height else 1
       @camera.aspect = aspect
-      @camera.fov = 75 / Math.max 1, aspect / 1.777
+      @camera.fov = @camera.idealFov / Math.max 1, aspect / 1.777
       @camera.updateProjectionMatrix()
       @cameraHUD.left = -aspect
       @cameraHUD.right = aspect
       @cameraHUD.updateProjectionMatrix()
-      #@render()
+
+    setSize: (@width, @height) ->
+      @renderer.setSize @width, @height
+      @updateCamera()
       return
 
     addEditorCheckpoints: (track) ->

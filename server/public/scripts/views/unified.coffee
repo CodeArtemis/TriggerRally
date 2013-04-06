@@ -25,6 +25,7 @@ define [
       $view3d = $('#view3d')
 
       client = @client = new TriggerClient $view3d[0], @app.root
+      client.camera.eulerOrder = 'ZYX'
 
       $document.on 'keyup', (event) -> client.onKeyUp event
       $document.on 'keydown', (event) -> client.onKeyDown event
@@ -67,7 +68,12 @@ define [
     update: (time) =>
       lastTime or= time
       deltaTime = Math.max 0, Math.min 0.1, (time - lastTime) * 0.001
+
       @currentView?.update deltaTime, time
+
+      @client.update deltaTime
+      @client.render()
+
       requestAnimationFrame @update
 
     getView: -> @currentView

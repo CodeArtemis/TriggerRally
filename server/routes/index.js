@@ -42,6 +42,10 @@ exports.defaultParams = function(req, res, next) {
   next();
 };
 
+exports.unified = function(req, res) {
+  res.render('unified');
+};
+
 exports.index = function(req, res) {
   if (false) {
     req.jadeParams.recentTracks = null;
@@ -245,83 +249,6 @@ exports.trackDrive = function(req, res) {
     car = 'Arbusu';
   }
   res.redirect('/x/' + req.urlTrack.pub_id + '/' + car + '/drive');
-};
-
-exports.trackEdit = function(req, res) {
-  req.jadeParams.title = req.urlTrack.name;
-  req.jadeParams.trackData = sanitizeTrack(req.urlTrack.toObject({ getters:true }));
-  req.jadeParams.layout = 'layout-editor';
-  res.render('trackedit', req.jadeParams);
-};
-
-exports.trackCopy = function(req, res) {
-  if (!req.user) {
-    return res.redirect('/login');
-  }
-  var parentTrack = req.urlTrack;
-  var track = new Track({
-    parent: parentTrack.id,
-    user: req.user.user.id,
-    name: parentTrack.name + ' copy',
-    env: parentTrack.env,
-    config: parentTrack.config
-  });
-  track.save(function(err, newTrack) {
-    if (err) {
-      console.log('Error saving copied track:');
-      console.log(err);
-      res.send(500);
-    } else {
-      res.redirect('/track/' + newTrack.pub_id + '/edit');
-    }
-  });
-  parentTrack.count_copy += 1;
-  parentTrack.save();
-};
-
-exports.trackDelete = function(req, res) {
-  req.urlTrack.remove(function(err, track) {
-    if (err) {
-      console.log('Error deleting track:');
-      console.log(err);
-      return res.send(500);
-    }
-    res.send(200);
-  });
-};
-
-exports.trackJson = function(req, res) {
-  if (req.editing) {
-    req.jadeParams.title = req.urlTrack.name;
-    req.jadeParams.urlTrack = req.urlTrack;
-    req.jadeParams.editing = true;
-    req.jadeParams.validate = objects.validation.Track.validator;
-    res.render('trackjson', req.jadeParams);
-  } else {
-    res.contentType('json');
-    res.send(req.urlTrack.config);
-  }
-};
-
-exports.trackJsonSave = function(req, res) {
-  var track = req.urlTrack;
-  // TODO: Validate config.
-  // TODO: Verify that env, etc matches.
-  track.config = JSON.parse(req.body.config);
-  track.modified = new Date();
-  track.save(function(error) {
-    if (error) {
-      console.log('Error updating track:');
-      console.log(error);
-      res.send(500);
-    } else {
-      if (req.header('referer').match('/json/edit$')) {
-        res.redirect('/track/' + track.pub_id + '/json/edit');
-      } else {
-        res.send(200, null);
-      }
-    }
-  });
 };
 
 exports.car = function(req, res) {

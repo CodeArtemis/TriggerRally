@@ -92,8 +92,6 @@ define(function(require, exports, module) {
         return callback();
       }
       load(urlNode.url, function(err, image) {
-        console.log("loaded image from " + urlNode.url);
-        console.log(image);
         if (err) return callback(err);
         imgObject.img = image;
         callback();

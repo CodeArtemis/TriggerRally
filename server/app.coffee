@@ -333,7 +333,9 @@ app.get    '/logout', (req, res) ->
 
 app.get    '/closeme', routes.closeme
 
-app.get    '/', routes.index
+app.get    '/', routes.unified
+app.get    '/track/:idTrack/edit', routes.unified
+
 app.get    '/about', routes.about
 app.get    '/login', routes.login
 app.get    '/user/confirm', routes.userconfirm
@@ -342,14 +344,7 @@ app.get    '/user/:idUser/edit', loadUrlUser, editUser, routes.user
 app.post   '/user/:idUser/save', loadUrlUser, editUser, routes.userSave
 app.get    '/recenttracks', routes.recentTracks
 app.get    '/track/:idTrack', loadUrlTrack, routes.track
-app.delete '/track/:idTrack', loadUrlTrack, editTrack, routes.trackDelete
 app.get    '/track/:idTrack/drive', loadUrlTrack, routes.trackDrive
-app.get    '/track/:idTrack/edit', loadUrlTrack, routes.trackEdit
-app.post   '/track/:idTrack/copy', loadUrlTrack, routes.trackCopy
-app.get    '/track/:idTrack/json', loadUrlTrack, routes.trackJson
-app.get    '/track/:idTrack/json/edit', loadUrlTrack, editTrack, routes.trackJson
-app.post   '/track/:idTrack/json/save', loadUrlTrack, editTrack, routes.trackJsonSave
-app.put    '/track/:idTrack/json/save', loadUrlTrack, editTrack, routes.trackJsonSave
 app.get    '/car/:idCar', loadUrlCar, routes.car
 app.get    '/car/:idCar/json', loadUrlCar, routes.carJson
 app.get    '/car/:idCar/json/edit', loadUrlCar, editCar, routes.carJson
