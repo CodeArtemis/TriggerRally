@@ -87,12 +87,16 @@ define(function(require, exports, module) {
   exports.imageFromUrl = function() {
     return _oneToOne(function(urlNode, imgObject, callback) {
       var load = inNode ? _loadImageNode : _loadImageBrowser;
+      if (!urlNode.url) {
+        console.error("imageFromUrl: Missing or empty URL");
+        return callback();
+      }
       load(urlNode.url, function(err, image) {
-        if (err) callback(err);
-        else {
-          imgObject.img = image;
-          callback();
-        }
+        console.log("loaded image from " + urlNode.url);
+        console.log(image);
+        if (err) return callback(err);
+        imgObject.img = image;
+        callback();
       });
     });
   };

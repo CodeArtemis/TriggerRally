@@ -30,15 +30,12 @@ function(THREE, async, uImg, quiver, util) {
   exports.ImageSource = function() {
     this.maps = {
       "detail": {
-        "url": "",
         "scale": [ 1, 1, 1 ]
       },
       "height": {
-        "url": "",
         "scale": [ 1, 1, 1 ]
       },
       "surface": {
-        "url": "",
         "scale": [ 1, 1, 1 ]
       }
     };
@@ -48,9 +45,10 @@ function(THREE, async, uImg, quiver, util) {
       this.maps[k].q_map = new quiver.Node(this.maps[k]);
     }
 
+    console.log("Image source: creating seed buffers");
     // Create seed buffers. The pipeline will preserve their data types.
     uImg.createBuffer(this.maps.height, 1, 1, 1, Float32Array);
-    //uImg.createBuffer(maps.surface, 1, 1, 4, Uint8Array);
+    uImg.createBuffer(this.maps.surface, 1, 1, 4, Uint8Array);
     uImg.createBuffer(this.maps.detail, 1, 1, 4, Uint8Array);
 
     // Note to self: elevation data in 8-bit PNG seems to compress 20% better

@@ -61,6 +61,15 @@ define [
 
       @currentView = null
 
+      requestAnimationFrame @update
+
+    lastTime = null
+    update: (time) =>
+      lastTime or= time
+      deltaTime = Math.max 0, Math.min 0.1, (time - lastTime) * 0.001
+      @currentView?.update deltaTime, time
+      requestAnimationFrame @update
+
     getView: -> @currentView
 
     setView: (view) ->

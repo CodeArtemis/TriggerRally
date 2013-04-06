@@ -445,6 +445,8 @@ define [
           else throw 'Unknown type'
 
       createTexture = (buffer, mipmap) =>
+        console.log "createTexture: #{buffer.url}"
+        console.log (new Error).stack
         tex = new THREE.DataTexture(
             buffer.data,
             buffer.width,
@@ -489,12 +491,11 @@ define [
         uniforms.tDetailScale.value.z *= typeScale buffer.data
         done()
 
-      # We do a pull now because the rest of the pipeline may have already executed.
-      # If the images haven't loaded yet, we'll get a push again later.
+      # Do a pull only if the rest of the pipeline has already executed.
       # TODO: Implement optimized quiver multi-pull.
-      quiver.pull heightNode
-      quiver.pull surfaceNode
-      quiver.pull detailNode
+      quiver.pull heightNode if heightNode.updated
+      quiver.pull surfaceNode if surfaceNode.updated
+      quiver.pull detailNode if detailNode.updated
 
       return
 

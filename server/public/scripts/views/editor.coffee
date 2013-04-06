@@ -1,7 +1,3 @@
-###
-# Copyright (C) 2012 jareiko / http://www.jareiko.net/
-###
-
 define [
   'backbone-full'
   'THREE'
@@ -156,13 +152,7 @@ define [
 
       objSpinVel = 0
       lastTime = 0
-      update = (time) ->
-        requestId = 0
-        if lastTime
-          delta = Math.min 0.1, (time - lastTime) * 0.001
-        else
-          delta = 0.001
-
+      @update = (delta) ->
         terrainHeight = 0
         if client.track?
           terrainHeight = (client.track.terrain.getContactRayZ camPos.x, camPos.y).surfacePos.z
@@ -239,21 +229,6 @@ define [
 
         client.update delta
         client.render()
-
-        if camVel.length() > 0.1 or
-           camAngVel.length() > 0.01 or
-           objSpinVel isnt 0 or
-           true
-          lastTime = time
-          requestAnim()
-        else
-          lastTime = 0
-        return
-
-      requestAnim = ->
-        unless requestId then requestId = requestAnimationFrame update
-
-      setInterval requestAnim, 1000
 
       addSelection = (sel) -> selection.add {sel}
 

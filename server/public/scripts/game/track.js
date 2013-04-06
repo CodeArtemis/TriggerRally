@@ -246,6 +246,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
 
     var maps = this.source.maps;
 
+    // Splice drawTrack into the quiver graph.
     (function() {
       var heightNode = maps.height.q_map;
       var sourceNode = heightNode.inputs[0];
