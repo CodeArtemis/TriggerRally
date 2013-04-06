@@ -21,7 +21,9 @@ define [
       "track/:trackId/edit": "trackEdit"
 
     trackEdit: (trackId) ->
-      @app.unifiedView.setView @app.editorView
+      uni = @app.unifiedView
+      unless uni.getView() instanceof EditorView
+        uni.setView (new EditorView @app, uni.client).render()
       root = @app.root
 
       track = models.Track.findOrCreate trackId
@@ -52,9 +54,6 @@ define [
 
       @unifiedView = new UnifiedView @
       @unifiedView.render()
-
-      @editorView = new EditorView @, @unifiedView.client
-      @editorView.render()
 
       @router = new Router @
 

@@ -26,6 +26,9 @@ define [
 
       client = @client = new TriggerClient $view3d[0], @app.root
 
+      $document.on 'keyup', (event) -> client.onKeyUp event
+      $document.on 'keydown', (event) -> client.onKeyDown event
+
       do layout = ->
         statusbarHeight = statusBarView.height()
         $view3d.height $window.height() - statusbarHeight
@@ -58,13 +61,14 @@ define [
 
       @currentView = null
 
+    getView: -> @currentView
+
     setView: (view) ->
-      if @currentView isnt view
-        @currentView?.hide?()
-        container = $('#unified-child')
+      container = $('#unified-child')
+      if @currentView
+        @currentView.destroy()
         container.empty()
-        @currentView = view
-        if view
-          container.append view.el
-          view.show?()
+      @currentView = view
+      if view
+        container.append view.el
       return

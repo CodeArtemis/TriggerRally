@@ -3,7 +3,6 @@
 ###
 
 define [
-  'jquery'
   'backbone-full'
   'THREE'
   'util/util'
@@ -11,12 +10,10 @@ define [
   'client/car'
   'game/game'
   'cs!models/index'
-  'cs!models/sync'
   'cs!views/inspector'
   'cs!views/view'
   'jade!templates/editor'
 ], (
-  $
   Backbone
   THREE
   util
@@ -24,7 +21,6 @@ define [
   clientCar
   gameGame
   models
-  sync
   InspectorView
   View
   template
@@ -51,28 +47,11 @@ define [
     template: template
     constructor: (@app, @client) -> super()
 
-    show: ->
-      # TODO: Use backbone view delegateEvents?
-      $capture = $('#view3d')
-      $capture.on 'mousedown', @onMouseDown
-      $capture.on 'mouseup', @onMouseUp
-      $capture.on 'mouseout', @onMouseOut
-      $capture.on 'mousemove', @onMouseMove
-      $capture.on 'mousewheel', @onMouseWheel
-
-    hide: ->
-      # undelegateEvents?
-      $capture = $('#view3d')
-      $capture.off 'mousedown', @onMouseDown
-      $capture.off 'mouseup', @onMouseUp
-      $capture.off 'mouseout', @onMouseOut
-      $capture.off 'mousemove', @onMouseMove
-      $capture.off 'mousewheel', @onMouseWheel
-
     afterRender: ->
       app = @app
       client = @client
       root = @app.root
+      $ = @$.bind @
 
       root.on 'change:user.tracks.', ->
         root.user.tracks.each (track) ->
@@ -104,9 +83,6 @@ define [
       client.scene.add startPos
 
       client.addEditorCheckpoints()
-
-      #socket = io.connect '/api'
-      #models.Model::sync = sync.syncSocket socket
 
       doSave = _.debounce ->
         if root.user isnt root.track.user
@@ -168,7 +144,8 @@ define [
           renderCar = new clientCar.RenderCar startPos, mockVehicle, null
           renderCar.update()
 
-      inspectorController = new InspectorView @$('#editor-inspector'), app, selection
+      inspectorView = new InspectorView @$('#editor-inspector'), app, selection
+      inspectorView.render()
 
       # Hide the help window.
       $('#editor-helpbox-wrapper').removeClass 'visible'
@@ -278,9 +255,6 @@ define [
 
       setInterval requestAnim, 1000
 
-      $(document).on 'keyup', (event) -> client.onKeyUp event
-      $(document).on 'keydown', (event) -> client.onKeyDown event
-
       addSelection = (sel) -> selection.add {sel}
 
       handleSelAdd = (selModel) ->
@@ -340,9 +314,12 @@ define [
         buttons &= ~(1 << event.button)
         if event.button is 0 and not hasMoved
           selection.reset() unless event.shiftKey
-          if cursor and root.user is root.track.user
-            unless selection.contains cursor
-              addSelection cursor
+          if cursor
+            if root.user is root.track.user
+              unless selection.contains cursor
+                addSelection cursor
+            else
+              Backbone.trigger 'app:status', 'Read only'
         return
 
       @onMouseOut = (event) ->
@@ -425,7 +402,7 @@ define [
                 pos[1] += relMotion.y
                 pos[2] += relMotion.z
                 if sel.type isnt 'checkpoint'
-                  if inspectorController.snapToGround
+                  if inspectorView.snapToGround
                     tmp = new Vec3 pos[0], pos[1], -Infinity
                     contact = client.track.terrain.getContact tmp
                     pos[2] = contact.surfacePos.z
@@ -472,5 +449,23 @@ define [
 
       @onMouseWheel = (event) ->
         origEvent = event.originalEvent
-        deltaY = if origEvent.wheelDeltaY? then origEvent.wheelDeltaY else origEvent.deltaY
+        deltaY = origEvent.wheelDeltaY ? origEvent.deltaY
         scroll deltaY, event
+
+      # TODO: Use backbone view delegateEvents?
+      $capture = Backbone.$('#view3d')
+      $capture.on 'mousedown', @onMouseDown
+      $capture.on 'mouseup', @onMouseUp
+      $capture.on 'mouseout', @onMouseOut
+      $capture.on 'mousemove', @onMouseMove
+      $capture.on 'mousewheel', @onMouseWheel
+
+    destroy: ->
+      # undelegateEvents?
+      $capture = Backbone.$('#view3d')
+      $capture.off 'mousedown', @onMouseDown
+      $capture.off 'mouseup', @onMouseUp
+      $capture.off 'mouseout', @onMouseOut
+      $capture.off 'mousemove', @onMouseMove
+      $capture.off 'mousewheel', @onMouseWheel
+      super

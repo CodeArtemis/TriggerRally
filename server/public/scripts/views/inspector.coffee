@@ -3,14 +3,12 @@
 ###
 
 define [
-  'jquery'
   'cs!editor/ops'
   'cs!views/view'
   'cs!views/tracklist'
   'cs!views/user'
   'cs!models/index'
 ], (
-  $
   Ops
   View
   TrackListView
@@ -31,6 +29,7 @@ define [
     afterRender: ->
       app = @app
       selection = @selection
+      $ = @$.bind @
 
       $inspector = @$el
       $inspectorAttribs = $inspector.find('.attrib')
@@ -78,6 +77,14 @@ define [
           userView = new UserView
             model: root.track.user
           $('#user-track-owner .content').append userView.el
+
+      do compareUser = ->
+        isOwnTrack = root.track?.user is root.user
+        $cmdDeleteTrack.toggleClass 'hidden', not isOwnTrack
+        $("#track-ownership-warning").toggleClass 'hidden', isOwnTrack
+        $("#copy-login-prompt").toggleClass 'hidden', !! root.user
+      root.on 'change:track.user', compareUser
+      root.on 'change:user', compareUser
 
       onChangeEnv = ->
         return unless root.track.env.scenery?.layers
@@ -137,14 +144,6 @@ define [
             Backbone.trigger "app:settrack", newTrack
           error: (model, xhr) ->
             Backbone.trigger "app:status", "Copy failed: #{xhr.statusText} (#{xhr.status})"
-
-      compareUser = ->
-        isOwnTrack = root.track?.user is root.user
-        $cmdDeleteTrack.toggleClass 'hidden', not isOwnTrack
-        $("#track-ownership-warning").toggleClass 'hidden', isOwnTrack
-        $("#copy-login-prompt").toggleClass 'hidden', !! root.user
-      root.on 'change:track.user', compareUser
-      root.on 'change:user', compareUser
 
       cmdDeleteTrack.$content.click ->
         return unless window.confirm "Are you sure you want to DELETE this track? This can't be undone!"
