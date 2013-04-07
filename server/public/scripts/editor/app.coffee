@@ -37,12 +37,9 @@ define [
       track = models.Track.findOrCreate trackId
       track.fetch
         success: ->
-          # lastEnvId = track.env?.id
           track.env.fetch
             success: ->
               Backbone.trigger "app:settrack", track, yes
-              # if track.env.id isnt lastEnvId
-              #   track.trigger 'change:env'
 
   class RootModel extends models.Model
     models.buildProps @, [ 'track', 'user' ]

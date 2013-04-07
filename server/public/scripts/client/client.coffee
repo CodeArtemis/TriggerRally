@@ -423,7 +423,7 @@ define [
       @camera = new THREE.PerspectiveCamera 75, 1, 0.1, 10000000
       @camera.idealFov = 75
       @camera.up.set 0, 0, 1
-      @camera.position.set 110, 2530, 500
+      @camera.position.set 0, 0, 500
       @scene.add @camera
       @camControl = null
       @scene.fog = new THREE.FogExp2 0xdddddd, 0.0002

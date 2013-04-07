@@ -337,6 +337,7 @@ app.get    '/', routes.unified
 app.get    '/track/:idTrack/edit', routes.unified
 
 app.get    '/about', routes.about
+app.get    '/requirements', routes.requirements
 app.get    '/login', routes.login
 app.get    '/user/confirm', routes.userconfirm
 app.get    '/user/:idUser', loadUrlUser, routes.user

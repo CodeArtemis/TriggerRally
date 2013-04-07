@@ -24,10 +24,12 @@ define [
     constructor: (@app, @client) -> super()
 
     afterRender: ->
-      # track = models.Track.findOrCreate 'uUJTPz6M'  # Forest
-      # track.fetch
-      #   success: =>
-      #     Backbone.trigger 'app:settrack', track
+      track = models.Track.findOrCreate 'uUJTPz6M'  # Forest
+      track.fetch
+        success: ->
+          track.env.fetch
+            success: ->
+              Backbone.trigger 'app:settrack', track
 
       carModel = new models.Car id: 'ArbusuG'
       carModel.fetch
@@ -39,12 +41,12 @@ define [
                 pos: new Vec3(0,0,0)
                 ori: (new THREE.Quaternion(1,1,1,1)).normalize()
           obj = new THREE.Object3D
-          obj.position.z = 1000
+          obj.position.z = 430
           @client.scene.add obj
           renderCar = new clientCar.RenderCar obj, mockVehicle, null
           renderCar.update()
 
-      @client.camera.idealFov = 30
+      @client.camera.idealFov = 50
       @client.updateCamera()
 
     update: (deltaTime) ->
@@ -52,9 +54,10 @@ define [
       rot = cam.rotation
       pos = cam.position
 
-      rot.x = 1.7
+      rot.x = 1.5
       rot.z += deltaTime * 0.05
 
-      pos.x = Math.sin(rot.z) * 5
-      pos.y = Math.cos(rot.z) * -5
-      pos.z = 1000 + 0.5 + Math.cos(rot.x) * 5
+      radius = 4
+      pos.x = Math.sin(rot.x) * Math.sin(rot.z) * radius
+      pos.y = Math.sin(rot.x) * Math.cos(rot.z) * -radius
+      pos.z = 430 + 0.5 + Math.cos(rot.x) * radius

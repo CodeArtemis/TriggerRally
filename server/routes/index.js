@@ -99,6 +99,11 @@ exports.about = function(req, res) {
   res.render('about', req.jadeParams);
 };
 
+exports.requirements = function(req, res) {
+  req.jadeParams.title = 'Requirements';
+  res.render('requirements', req.jadeParams);
+};
+
 exports.down = function(req, res) {
   req.jadeParams.title = 'Down';
   res.statusCode = 503;
