@@ -560,9 +560,9 @@ define [
 
     render: ->
       delta = 0
-      @renderer.clear false, true
-      @renderer.render @scene, @camera
-      @renderer.render @sceneHUD, @cameraHUD
+      # @renderer.clear false, true
+      # @renderer.render @scene, @camera
+      # @renderer.render @sceneHUD, @cameraHUD
       return
 
     cubeMesh: ->

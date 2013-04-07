@@ -25,7 +25,10 @@ define [
 
       $window = $(window)
       $document = $(document)
-      $view3d = $('#view3d')
+      $view3d = @$('#view3d')
+      $child = @$('#unified-child')
+
+      @currentView = null
 
       client = @client = new TriggerClient $view3d[0], @app.root
       client.camera.eulerOrder = 'ZYX'
@@ -33,11 +36,15 @@ define [
       $document.on 'keyup', (event) -> client.onKeyUp event
       $document.on 'keydown', (event) -> client.onKeyDown event
 
-      do layout = ->
+      do layout = =>
         statusbarHeight = statusBarView.height()
-        $view3d.height $window.height() - statusbarHeight
         $view3d.css 'top', statusbarHeight
-        client.setSize $view3d.width(), $view3d.height()
+        $child.css 'top', statusbarHeight
+        width = $view3d.width()
+        height = $window.height() - statusbarHeight
+        $view3d.height height
+        client.setSize width, height
+        @currentView?.setSize? width, height
       $window.on 'resize', layout
 
       $document.on 'click', 'a.login', (event) ->
@@ -63,8 +70,6 @@ define [
           Backbone.trigger 'app:logout'
         false
 
-      @currentView = null
-
       requestAnimationFrame @update
 
     lastTime = null
@@ -88,5 +93,6 @@ define [
         container.empty()
       @currentView = view
       if view
+        view.setSize? @client.width, @client.height
         container.append view.el
       return

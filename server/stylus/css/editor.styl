@@ -60,7 +60,7 @@ input:checked + label
 
 #editor-helpbox-wrapper,
 #editor-inspector
-  top 40px
+  top 10px
 
 #editor-helpbox,
 #editor-inspector,
@@ -81,7 +81,7 @@ input:checked + label
 
 #editor-helpbox
   z-index 4
-  width 580px
+  width 600px
   height 510px
   overflow-y scroll
 
@@ -98,17 +98,17 @@ input:checked + label
 
 .close-tab
   z-index -1
-  //width 30px
+  width 80px
   //height 50px
   padding 5px
-  right 620px
+  right 600px
   top 20px
   cursor pointer
 
 #editor-inspector
   z-index 3
   left 10px
-  width 250px
+  width 270px
 
 #editor-inspector .warning
   font-size 80%
@@ -137,7 +137,7 @@ input:checked + label
 
 #editor-inspector .content
   position absolute
-  left 100px
+  left 110px
   width 150px
 
 .tooltip
@@ -171,38 +171,49 @@ menu
   position relative
 */
 
+#unified-child
+  position relative
+
 .overlay
-  position absolute
-  width 100%
-  height 100%
+  width 32em
+  height 18em
+  margin auto
+  position relative
+  // top 30px
+  // position absolute
+  // width 100%
+  // height 100%
 
 menu
   position absolute
-  top 100px
-  bottom 100px
-  left 100px
-  right 100px
+  width 100%
+  height 100%
+  background rgba(255,0,0,0.2)
   z-index 2
-  font-size 3em
+  font-size 1em
   text-shadow 0 0 0.5em white
-  -webkit-perspective 100px
+  // -webkit-perspective 100px
+  margin auto
+  padding 1em 3em
+  // text-align center
 
 menu li
   list-style none
   padding 0.5em
+  padding-left 2em
   margin 0.5em
   box-shadow 0 0 0.5em white
   background rgba(255, 255, 255, 0.5)
   border-radius 0.5em
   opacity 0.8
-  -webkit-transform translateZ(0)
+  -webkit-transform scale(1)
   transition -webkit-transform 0.2s
 
 menu li:hover
   //font-weight bold
   //background white
   //opacity 1
-  -webkit-transform translateZ(3px)
+  -webkit-transform scale(1.05)
 
 // menu menu
 //   display none

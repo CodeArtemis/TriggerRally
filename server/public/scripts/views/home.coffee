@@ -20,6 +20,7 @@ define [
   Vec3 = THREE.Vector3
 
   class HomeView extends View
+    className: 'overlay'
     template: template
     constructor: (@app, @client) -> super()
 
@@ -51,6 +52,14 @@ define [
 
       @client.camera.idealFov = 50
       @client.updateCamera()
+
+    setSize: (width, height) ->
+      cx = 32
+      cy = 18
+      targetAspect = cx / cy
+      aspect = width / height
+      fontSize = if aspect >= targetAspect then height / cy else width / cx
+      @$el.css "font-size", "#{fontSize}px"
 
     update: (deltaTime) ->
       cam = @client.camera
