@@ -145,11 +145,11 @@ passport.deserializeUser (id, done) ->
 app.use express.logger(format: '[:isodate] :status :response-time ms :method :url :referrer')
 app.disable 'x-powered-by'
 app.use express.compress()
-app.use express.static(__dirname + '/public')
 app.use stylus.middleware(
   src: __dirname + '/stylus'
   dest: __dirname + '/public'
 )
+app.use express.static(__dirname + '/public')
 app.set 'views', __dirname + '/views'
 app.set 'view engine', 'jade'
 app.use (req, res, next) ->

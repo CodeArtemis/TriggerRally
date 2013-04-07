@@ -3,16 +3,19 @@ define [
   'cs!views/view'
   'cs!views/statusbar'
   'cs!client/client'
+  'jade!templates/unified'
 ], (
   Backbone
   View
   StatusBarView
   TriggerClient
+  template
 ) ->
   $ = Backbone.$
 
   class UnifiedView extends View
-    # el: document.body
+    el: '#unified-container'
+    template: template
 
     constructor: (@app) -> super()
 

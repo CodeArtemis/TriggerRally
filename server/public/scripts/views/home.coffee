@@ -24,12 +24,18 @@ define [
     constructor: (@app, @client) -> super()
 
     afterRender: ->
-      track = models.Track.findOrCreate 'uUJTPz6M'  # Forest
+      @startpos = startpos = new THREE.Object3D
+      startpos.position.set 0, 0, 430
+      @client.scene.add startpos
+
+      track = models.Track.findOrCreate 'ac74h5uA'
       track.fetch
         success: ->
           track.env.fetch
             success: ->
               Backbone.trigger 'app:settrack', track
+              startpos.position.set track.config.course.startposition.pos...
+              startpos.rotation.set track.config.course.startposition.rot...
 
       carModel = new models.Car id: 'ArbusuG'
       carModel.fetch
@@ -40,10 +46,7 @@ define [
               interp:
                 pos: new Vec3(0,0,0)
                 ori: (new THREE.Quaternion(1,1,1,1)).normalize()
-          obj = new THREE.Object3D
-          obj.position.z = 430
-          @client.scene.add obj
-          renderCar = new clientCar.RenderCar obj, mockVehicle, null
+          renderCar = new clientCar.RenderCar startpos, mockVehicle, null
           renderCar.update()
 
       @client.camera.idealFov = 50
@@ -58,6 +61,7 @@ define [
       rot.z += deltaTime * 0.05
 
       radius = 4
-      pos.x = Math.sin(rot.x) * Math.sin(rot.z) * radius
-      pos.y = Math.sin(rot.x) * Math.cos(rot.z) * -radius
-      pos.z = 430 + 0.5 + Math.cos(rot.x) * radius
+      pos.copy @startpos.position
+      pos.x += Math.sin(rot.x) * Math.sin(rot.z) * radius
+      pos.y += Math.sin(rot.x) * Math.cos(rot.z) * -radius
+      pos.z += 0.5 + Math.cos(rot.x) * radius

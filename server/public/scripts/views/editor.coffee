@@ -107,15 +107,15 @@ define [
         camAutoPos.z += 40
         camAutoTimer = 0
 
-        Backbone.history.navigate "/track/#{@root.track.id}/edit"
+        Backbone.history.navigate "/track/#{root.track.id}/edit"
 
       root.on 'change:track.name', ->
         document.title = "#{root.track.name} - Trigger Rally"
 
       root.on 'change:track.config.course.startposition.', ->
         startposition = root.track.config.course.startposition
-        Vec3::set.apply startPos.position, startposition.pos
-        Vec3::set.apply startPos.rotation, startposition.rot
+        startPos.position.set startposition.pos...
+        startPos.rotation.set startposition.rot...
 
       #root.track.on 'all', -> console.log arguments
 

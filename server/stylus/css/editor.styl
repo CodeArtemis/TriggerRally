@@ -162,27 +162,55 @@ input:checked + label
 .tooltip:hover .tooltip-text
   display inline-block
 
-
+/*
 menu
   background rgba(255,255,255,0.8)
   cursor pointer
   margin 0
   padding 0
   position relative
+*/
+
+.overlay
+  position absolute
+  width 100%
+  height 100%
+
+menu
+  position absolute
+  top 100px
+  bottom 100px
+  left 100px
+  right 100px
+  z-index 2
+  font-size 3em
+  text-shadow 0 0 0.5em white
+  -webkit-perspective 100px
 
 menu li
   list-style none
   padding 0.5em
+  margin 0.5em
+  box-shadow 0 0 0.5em white
+  background rgba(255, 255, 255, 0.5)
+  border-radius 0.5em
+  opacity 0.8
+  -webkit-transform translateZ(0)
+  transition -webkit-transform 0.2s
 
 menu li:hover
-  background white
+  //font-weight bold
+  //background white
+  //opacity 1
+  -webkit-transform translateZ(3px)
 
-menu menu
-  display none
-  position absolute
+// menu menu
+//   display none
+//   position absolute
 
-menu li:hover > menu
-  display block
+// menu li:hover > menu
+//   display block
+
 
 #view3d
   background green
@@ -199,3 +227,4 @@ menu li:hover > menu
 
 #track-list .track.selected
   background #fec
+

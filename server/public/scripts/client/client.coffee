@@ -568,11 +568,7 @@ define [
     cubeMesh: ->
       path = "/a/textures/miramar-z-512/miramar_"
       format = '.jpg'
-      urls = [
-        path + 'rt' + format, path + 'lf' + format
-        path + 'ft' + format, path + 'bk' + format
-        path + 'up' + format, path + 'dn' + format
-      ]
+      urls = (path + part + format for part in ['rt','lf','ft','bk','up','dn'])
       textureCube = THREE.ImageUtils.loadTextureCube urls
       cubeShader = THREE.ShaderUtils.lib["cube"]
       cubeShader.uniforms["tCube"].value = textureCube
