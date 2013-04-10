@@ -3,10 +3,6 @@
 
 body
   background #888
-  padding 0
-  margin 0
-  font-family "Ubuntu", sans-serif
-  //font-size 0.8em
   -moz-user-select none
   -webkit-user-select none
   user-select none
@@ -110,8 +106,7 @@ input:checked + label
   left 10px
   width 270px
 
-#editor-inspector .warning
-  font-size 80%
+.warning
   font-weight bold
   color #d00
   border 1px solid #d00
@@ -119,6 +114,9 @@ input:checked + label
   background #fdd
   padding 0.5em
   margin 0.5em 0
+
+#editor-inspector .warning
+  font-size 80%
 
 #editor-inspector h3
   margin 0
@@ -173,46 +171,68 @@ menu
 
 #unified-child
   position relative
-
-.overlay
-  width 32em
+  width 24em
   height 18em
   margin auto
-  position relative
-  // top 30px
+  overflow auto
+
+.text-panel
+  -moz-user-select auto
+  -webkit-user-select auto
+  user-select auto
+  font-size 0.6em
+  background white
+  opacity 0.9
+  padding 1em
+
+img.github
+  float right
+  width 8em
+  height 8em
+  margin-top -1em
+  margin-right -1em
   // position absolute
-  // width 100%
-  // height 100%
+  // top 0
+  // right 0
+  // border 0
 
 menu
   position absolute
   width 100%
   height 100%
-  background rgba(255,0,0,0.2)
+  // background rgba(0,0,0,0.6)
   z-index 2
   font-size 1em
-  text-shadow 0 0 0.5em white
   // -webkit-perspective 100px
   margin auto
-  padding 1em 3em
-  // text-align center
+  padding 1em 0
+  text-align center
+
+menu a
+menu a:visited
+menu a:hover
+  color #6e0
+  // text-shadow 0 0 0.5em white
+  text-shadow 0 0 0.3em black
 
 menu li
   list-style none
-  padding 0.5em
-  padding-left 2em
-  margin 0.5em
-  box-shadow 0 0 0.5em white
-  background rgba(255, 255, 255, 0.5)
+  padding 0.3em
+  // padding-left 2em
+  margin 0.8em auto
+  width 60%
+  box-shadow 0 0 0.5em #370
+  background rgba(51, 119, 0, 0.5)
   border-radius 0.5em
-  opacity 0.8
+  opacity 0.6
   -webkit-transform scale(1)
-  transition -webkit-transform 0.2s
+  // transition -webkit-transform 0.1s
+  transition 0.1s
 
 menu li:hover
   //font-weight bold
   //background white
-  //opacity 1
+  opacity 1
   -webkit-transform scale(1.05)
 
 // menu menu
@@ -224,7 +244,7 @@ menu li:hover
 
 
 #view3d
-  background green
+  background gray
   position absolute
   width 100%
 
@@ -239,3 +259,9 @@ menu li:hover
 #track-list .track.selected
   background #fec
 
+#webgl-warning img.browserlogo
+  width 5em
+  height 5em
+
+table.credits td
+  vertical-align top

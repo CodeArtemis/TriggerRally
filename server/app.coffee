@@ -334,9 +334,9 @@ app.get    '/logout', (req, res) ->
 app.get    '/closeme', routes.closeme
 
 app.get    '/', routes.unified
+app.get    '/about', routes.unified
 app.get    '/track/:idTrack/edit', routes.unified
 
-app.get    '/about', routes.about
 app.get    '/requirements', routes.requirements
 app.get    '/login', routes.login
 app.get    '/user/confirm', routes.userconfirm

@@ -2,38 +2,54 @@ define [
   'jquery'
   'backbone-full'
   'cs!models/index'
-  'cs!views/unified'
-  'cs!views/home'
+  'cs!views/about'
   'cs!views/editor'
+  'cs!views/home'
+  'cs!views/spin'
+  'cs!views/unified'
 ], (
   $
   Backbone
   models
-  UnifiedView
-  HomeView
+  AboutView
   EditorView
+  HomeView
+  SpinView
+  UnifiedView
 ) ->
   jsonClone = (obj) -> JSON.parse JSON.stringify obj
 
   class Router extends Backbone.Router
     constructor: (@app) ->
+      @uni = @app.unifiedView
       super()
 
     routes:
       "track/:trackId/edit": "trackEdit"
       "": "home"
+      "about": "about"
+
+    setSpin: ->
+      unless @uni.getView3D() instanceof SpinView
+        @uni.setView3D (new SpinView @app, @uni.client).render()
 
     home: ->
-      uni = @app.unifiedView
-      uni.setView (new HomeView @app, uni.client).render()
+      @setSpin()
+      @uni.setViewChild (new HomeView @app, @uni.client).render()
+
+    about: ->
+      @setSpin()
+      @uni.setViewChild (new AboutView @app, @uni.client).render()
 
     trackEdit: (trackId) ->
-      uni = @app.unifiedView
-      unless uni.getView() instanceof EditorView
-        uni.setView (new EditorView @app, uni.client).render()
+      unless uni.getView3D() instanceof EditorView and
+             uni.getView3D() is uni.getViewChild()
+        view = (new EditorView @app, @uni.client).render()
+        @uni.setView3D view
+        @uni.setViewChild view
       root = @app.root
 
-      # TODO: Let the editor do this itself?
+      # TODO: Let the editor do this itself.
       track = models.Track.findOrCreate trackId
       track.fetch
         success: ->
@@ -57,8 +73,7 @@ define [
         user: null
         track: null
 
-      @unifiedView = new UnifiedView @
-      @unifiedView.render()
+      @unifiedView = (new UnifiedView @).render()
 
       @router = new Router @
 
@@ -68,6 +83,8 @@ define [
 
       @checkUserLogin()
       Backbone.history.start pushState: yes
+
+      Backbone.history.navigate '/about', trigger: yes unless @unifiedView.client.renderer
 
     setTrack: (track, fromRouter) ->
       lastTrack = @root.track

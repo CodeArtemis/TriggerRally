@@ -414,7 +414,7 @@ define [
       }
 
       @renderer = @createRenderer prefs.shadows
-      @containerEl.appendChild @renderer.domElement
+      @containerEl.appendChild @renderer.domElement if @renderer
 
       @sceneHUD = new THREE.Scene()
       @cameraHUD = new THREE.OrthographicCamera -1, 1, 1, -1, 1, -1
@@ -451,11 +451,12 @@ define [
 
       @track = new gameTrack.Track @root
 
-      @add new clientTerrain.RenderTerrain(
-          @scene, @track.terrain, @renderer.context, prefs.terrainhq)
       sceneLoader = new THREE.SceneLoader()
       loadFunc = (url, callback) -> sceneLoader.load url, callback
-      @add new clientScenery.RenderScenery @scene, @track.scenery, loadFunc, @renderer
+      if @renderer
+        @add new clientTerrain.RenderTerrain(
+            @scene, @track.terrain, @renderer.context, prefs.terrainhq)
+        @add new clientScenery.RenderScenery @scene, @track.scenery, loadFunc, @renderer
       @add new CamTerrainClipping(@camera, @track.terrain), 10
 
       # @game.on 'addvehicle', (car, progress) =>
@@ -510,18 +511,21 @@ define [
       obj
 
     createRenderer: (useShadows) ->
-      r = new THREE.WebGLRenderer
-        alpha: false
-        antialias: false
-        premultipliedAlpha: false
-        clearColor: 0xffffff
-      r.devicePixelRatio = Math.min 4/3, r.devicePixelRatio
-      if useShadows
-        r.shadowMapEnabled = true
-        r.shadowMapSoft = true
-        r.shadowMapCullFrontFaces = false
-      r.autoClear = false
-      r
+      try
+        r = new THREE.WebGLRenderer
+          alpha: false
+          antialias: false
+          premultipliedAlpha: false
+          clearColor: 0xffffff
+        r.devicePixelRatio = Math.min 4/3, r.devicePixelRatio
+        if useShadows
+          r.shadowMapEnabled = true
+          r.shadowMapSoft = true
+          r.shadowMapCullFrontFaces = false
+        r.autoClear = false
+        r
+      catch e
+        console.error e
 
     updateCamera: ->
       aspect = if @height > 0 then @width / @height else 1
@@ -533,9 +537,8 @@ define [
       @cameraHUD.updateProjectionMatrix()
 
     setSize: (@width, @height) ->
-      @renderer.setSize @width, @height
+      @renderer?.setSize @width, @height
       @updateCamera()
-      return
 
     addEditorCheckpoints: (track) ->
       @add @renderCheckpoints = new RenderCheckpointsEditor @scene, @root
@@ -548,7 +551,6 @@ define [
       if @audio?
         @audio.setGain 1
         @debouncedMuteAudio @audio
-      return
 
     update: (delta) ->
       @game?.sim.tick delta
@@ -556,14 +558,12 @@ define [
         for object in layer
           object.update @camera, delta
       @muteAudioIfStopped()
-      return
 
     render: ->
-      delta = 0
-      # @renderer.clear false, true
-      # @renderer.render @scene, @camera
-      # @renderer.render @sceneHUD, @cameraHUD
-      return
+      return unless @renderer
+      @renderer.clear false, true
+      @renderer.render @scene, @camera
+      @renderer.render @sceneHUD, @cameraHUD
 
     cubeMesh: ->
       path = "/a/textures/miramar-z-512/miramar_"
