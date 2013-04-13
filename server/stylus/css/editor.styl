@@ -212,39 +212,38 @@ menu
 menu a
 menu a:visited
 menu a:hover
+  display block
+  margin 0.4em auto
+  padding 0.3em
+  width 30%
   color #6e0
   // text-shadow 0 0 0.5em white
   text-shadow 0 0 0.3em black
-
-menu li
-  list-style none
-  padding 0.3em
-  // padding-left 2em
-  margin 0.8em auto
-  width 60%
-  // box-shadow 0 0 0.5em #370
-  // background rgba(51, 119, 0, 0.5)
-  box-shadow 0 0 0.5em #fff
   background rgba(255, 255, 255, 0.5)
   border-radius 0.5em
   opacity 0.6
   -webkit-transform scale(1)
   // transition -webkit-transform 0.1s
   transition 0.1s
+  position relative
 
-menu li:hover
-  //font-weight bold
-  //background white
+menu a:hover
   opacity 1
   -webkit-transform scale(1.05)
 
-// menu menu
-//   display none
-//   position absolute
+menu li
+  list-style none
 
-// menu li:hover > menu
-//   display block
-
+.new-marker
+  background red
+  border-radius 0.4em
+  color white
+  font-size 0.8em
+  left 0
+  padding 0 0.2em
+  position absolute
+  top 0
+  -webkit-transform rotate(-20deg)
 
 #view3d
   background gray

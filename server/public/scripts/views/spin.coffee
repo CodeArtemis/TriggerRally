@@ -50,7 +50,7 @@ define [
       pos = cam.position
 
       rot.x = 1.5
-      rot.z += deltaTime * 0.05
+      rot.z += deltaTime * 0.3
 
       radius = 4
       pos.copy @startpos.position

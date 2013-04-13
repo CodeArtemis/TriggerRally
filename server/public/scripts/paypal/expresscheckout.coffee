@@ -1,4 +1,5 @@
 NVPRequest = require './nvprequest'
+secret     = require './secret'
 
 ###
 
@@ -12,5 +13,3 @@ DoExpressCheckoutPayment
 https://developer.paypal.com/webapps/developer/docs/classic/express-checkout/gs_expresscheckout/
 
 ###
-
-

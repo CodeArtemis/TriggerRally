@@ -333,12 +333,15 @@ app.get    '/logout', (req, res) ->
 
 app.get    '/closeme', routes.closeme
 
-app.get    '/', routes.unified
-app.get    '/about', routes.unified
-app.get    '/track/:idTrack/drive', routes.unified
-app.get    '/track/:idTrack/edit', routes.unified
+unified = [
+  '/'
+  '/about'
+  '/ignition'
+  '/track/:idTrack/drive'
+  '/track/:idTrack/edit'
+]
+app.get path, routes.unified for path in unified
 
-app.get    '/requirements', routes.requirements
 app.get    '/login', routes.login
 app.get    '/user/confirm', routes.userconfirm
 app.get    '/user/:idUser', loadUrlUser, routes.user
