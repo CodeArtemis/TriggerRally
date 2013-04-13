@@ -42,9 +42,9 @@ define [
       client.camera.idealFov = 75
       client.updateCamera()
 
-      @$countdown = $('#countdown')
-      @$runTimer = $('#timer')
-      @$checkpoints = $('#checkpoints')
+      @$countdown = @$('#countdown')
+      @$runTimer = @$('#timer')
+      @$checkpoints = @$('#checkpoints')
 
       @game = null
 
@@ -92,7 +92,6 @@ define [
             @updateTimer = yes
             @$runTimer.addClass 'running'
             @game.restart()
-
       return
 
     setTrackId: (trackId) ->

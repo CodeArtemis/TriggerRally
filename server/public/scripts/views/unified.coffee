@@ -48,7 +48,7 @@ define [
         $view3d.height height
         client.setSize width, height
 
-        cx = 24
+        cx = 32
         cy = 18
         targetAspect = cx / cy
         aspect = width / height

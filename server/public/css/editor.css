@@ -66,6 +66,72 @@ a.disabled:visited {
 .hidden {
   display: none;
 }
+#checkpoints {
+  color: #000;
+  position: absolute;
+  top: 0.5em;
+  left: 1em;
+  font-size: 2em;
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  z-index: 2;
+}
+#timer {
+  color: #040;
+  position: absolute;
+  top: 0.5em;
+  right: 1em;
+  font-size: 2em;
+  -webkit-transition: -webkit-transform 2s;
+  -webkit-transform-origin: top right;
+  -webkit-transform: scale(2);
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  z-index: 2;
+}
+#timer.running {
+  color: #000;
+  -webkit-transform: scale(1);
+}
+#speedo {
+  position: absolute;
+  bottom: 1em;
+  left: 0;
+  font-size: 1em;
+  color: #040;
+  text-align: center;
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  -webkit-transform: scale(1);
+  width: 6em;
+  z-index: 2;
+}
+#countdown {
+  color: #000;
+  position: absolute;
+  top: 1em;
+  left: 0;
+  right: 0;
+  font-size: 4em;
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  text-align: center;
+  z-index: 2;
+  opacity: 1;
+  -webkit-transition: opacity 1s;
+}
+#countdown.fadeout {
+  opacity: 0;
+}
+#twitterlink {
+  display: none;
+  position: absolute;
+  top: 8em;
+  right: 5em;
+  font-size: 1em;
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  z-index: 3;
+}
+#twitterlink.visible {
+  display: block;
+  position: absolute;
+}
 body {
   background: #888;
   -moz-user-select: none;
@@ -224,7 +290,7 @@ menu
 */
 #unified-child {
   position: relative;
-  width: 24em;
+  width: 32em;
   height: 18em;
   margin: auto;
   overflow: auto;
