@@ -378,3 +378,7 @@ menu li {
 table.credits td {
   vertical-align: top;
 }
+img.paypal-express-checkout {
+  width: 7.25em;
+  height: 2.1em;
+}

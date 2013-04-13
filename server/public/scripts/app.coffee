@@ -6,6 +6,7 @@ define [
   'cs!views/drive'
   'cs!views/editor'
   'cs!views/home'
+  'cs!views/ignition'
   'cs!views/spin'
   'cs!views/unified'
 ], (
@@ -16,6 +17,7 @@ define [
   DriveView
   EditorView
   HomeView
+  IgnitionView
   SpinView
   UnifiedView
 ) ->
@@ -29,6 +31,7 @@ define [
     routes:
       "": "home"
       "about": "about"
+      "ignition": "ignition"
       "track/:trackId/edit": "trackEdit"
       "track/:trackId/drive": "trackDrive"
 
@@ -43,6 +46,11 @@ define [
     about: ->
       @setSpin()
       @uni.setViewChild (new AboutView @app, @uni.client).render()
+
+    ignition: ->
+      # TODO: Show Ignition car?
+      @setSpin()
+      @uni.setViewChild (new IgnitionView @app, @uni.client).render()
 
     trackEdit: (trackId) ->
       unless @uni.getView3D() instanceof EditorView and

@@ -44,7 +44,7 @@ Car = mongoose.model('Car')
 Track = mongoose.model('Track')
 Run = mongoose.model('Run')
 
-{ handleIPN } = require './ipn'
+# { handleIPN } = require './ipn'
 
 # Alternate DB connection
 # dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
