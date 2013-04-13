@@ -89,6 +89,7 @@ define [
     update: (time) =>
       lastTime or= time
       deltaTime = Math.max 0, Math.min 0.1, (time - lastTime) * 0.001
+      lastTime = time
 
       @currentView3D?.update? deltaTime, time
       if @currentViewChild isnt @currentView3D

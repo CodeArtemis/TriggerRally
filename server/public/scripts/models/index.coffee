@@ -94,6 +94,8 @@
   class PathCollection extends Collection
     url: "/v1/#{@path}"
 
+  class CarCollection extends PathCollection
+    path: 'cars'
   class EnvCollection extends PathCollection
     path: 'envs'
   class TrackCollection extends PathCollection
@@ -168,13 +170,27 @@
     all: new (Collection.extend model: @)
     buildProps @, [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
     urlRoot: '/v1/envs'
+    initialize: ->
+      @cars = new CarCollection
+      super
     toJSON: (options) ->
       data = super
-      data.cars = (car.id for car in data.cars) if data.cars?
-      if options?.restricted
-        delete data.cars
-        delete data.scenery
-        delete data.terrain
+      data.cars = (car.id for car in data.cars.models) if data.cars?
+      # if options?.restricted
+      #   delete data.cars
+      #   delete data.scenery
+      #   delete data.terrain
+      data
+    parse: (response, options) ->
+      data = super
+      if data.cars
+        cars = for car in data.cars
+          if typeof car is 'string'
+            Car.findOrCreate car
+          else
+            c = Car.findOrCreate car.id
+            c.set c.parse car
+        data.cars = @cars.update cars
       data
 
   class Track extends Model

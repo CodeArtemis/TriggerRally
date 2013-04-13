@@ -335,6 +335,7 @@ app.get    '/closeme', routes.closeme
 
 app.get    '/', routes.unified
 app.get    '/about', routes.unified
+app.get    '/track/:idTrack/drive', routes.unified
 app.get    '/track/:idTrack/edit', routes.unified
 
 app.get    '/requirements', routes.requirements
@@ -345,7 +346,6 @@ app.get    '/user/:idUser/edit', loadUrlUser, editUser, routes.user
 app.post   '/user/:idUser/save', loadUrlUser, editUser, routes.userSave
 app.get    '/recenttracks', routes.recentTracks
 app.get    '/track/:idTrack', loadUrlTrack, routes.track
-app.get    '/track/:idTrack/drive', loadUrlTrack, routes.trackDrive
 app.get    '/car/:idCar', loadUrlCar, routes.car
 app.get    '/car/:idCar/json', loadUrlCar, routes.carJson
 app.get    '/car/:idCar/json/edit', loadUrlCar, editCar, routes.carJson
@@ -353,7 +353,6 @@ app.post   '/car/:idCar/json/save', loadUrlCar, editCar, routes.carJsonSave
 app.get    '/run/:idRun', loadUrlRun, routes.run
 app.post   '/run/new', routes.runSave
 app.get    '/run/:idRun/replay', loadUrlRun, routes.runReplay
-app.get    '/x/:idTrack/:idCar/drive', loadUrlTrackIncDrive, loadUrlCar, routes.drive
 app.get    '/x/:idTrack/:idCar/top', loadUrlTrack, loadUrlCar, routes.top
 app.post   '/metrics', routes.metricsSave
 

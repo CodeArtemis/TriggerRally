@@ -9,7 +9,6 @@ define [
   'cs!client/misc'
   'cs!client/scenery'
   'cs!client/terrain'
-  'game/game'
   'game/track'
   'cs!game/synchro'
   'util/pubsub'
@@ -22,7 +21,6 @@ define [
   clientMisc
   clientScenery
   clientTerrain
-  gameGame
   gameTrack
   synchro
   pubsub
@@ -438,17 +436,6 @@ define [
       @audio?.loadBuffer '/a/sounds/checkpoint.wav', (buffer) ->
         checkpointBuffer = buffer
 
-      # onTrackCar = (track, car, progress) =>
-      #   unless car.cfg.isRemote
-      #     @add renderCheckpoints = new RenderCheckpointsDrive @scene, track.checkpoints
-      #     @add new RenderCheckpointArrows @camera, progress
-      #     progress.on 'advance', =>
-      #       renderCheckpoints.highlightCheckpoint progress.nextCpIndex
-      #       if checkpointBuffer?
-      #         @audio?.playSound checkpointBuffer, false, 1, 1
-
-      # deferredCars = []
-
       @track = new gameTrack.Track @root
 
       sceneLoader = new THREE.SceneLoader()
@@ -458,30 +445,6 @@ define [
             @scene, @track.terrain, @renderer.context, prefs.terrainhq)
         @add new clientScenery.RenderScenery @scene, @track.scenery, loadFunc, @renderer
       @add new CamTerrainClipping(@camera, @track.terrain), 10
-
-      # @game.on 'addvehicle', (car, progress) =>
-      #   audio = if car.cfg.isRemote then null else @audio
-      #   renderCar = new clientCar.RenderCar @scene, car, audio
-      #   progress._renderCar = renderCar
-      #   @add renderCar
-      #   unless car.cfg.isRemote
-      #     @add @camControl = new CamControl @camera, renderCar
-      #     @add new CarControl car, this
-      #     @add new RenderDials @sceneHUD, car
-      #   if @track
-      #     onTrackCar @track, car, progress
-      #   else
-      #     deferredCars.push [car, progress]
-      #   return
-
-      # @game.on 'deletevehicle', (progress) =>
-      #   renderCar = progress._renderCar
-      #   progress._renderCar = null
-      #   for layer in @objects
-      #     idx = layer.indexOf renderCar
-      #     if idx isnt -1
-      #       layer.splice idx, 1
-      #   renderCar.destroy()
 
       @keyDown = []
 
@@ -497,11 +460,39 @@ define [
           KEYCODE.SPACE
         ]
       return
+
     onKeyUp: (event) ->
       if keyWeCareAbout(event)
         @keyDown[event.keyCode] = false
         #event.preventDefault()
       return
+
+    setGame: (@game) ->
+      game.on 'addvehicle', (car, progress) =>
+        audio = if car.cfg.isRemote then null else @audio
+        renderCar = new clientCar.RenderCar @scene, car, audio
+        progress._renderCar = renderCar
+        @add renderCar
+        return if car.cfg.isRemote
+        @add @camControl = new CamControl @camera, renderCar
+        @add new CarControl car, this
+        @add new RenderDials @sceneHUD, car
+        @add renderCheckpoints = new RenderCheckpointsDrive @scene, @root
+        @add new RenderCheckpointArrows @camera, progress
+        progress.on 'advance', =>
+          renderCheckpoints.highlightCheckpoint progress.nextCpIndex
+          if checkpointBuffer?
+            @audio?.playSound checkpointBuffer, false, 1, 1
+        return
+
+      # game.on 'deletevehicle', (progress) =>
+      #   renderCar = progress._renderCar
+      #   progress._renderCar = null
+      #   for layer in @objects
+      #     idx = layer.indexOf renderCar
+      #     if idx isnt -1
+      #       layer.splice idx, 1
+      #   renderCar.destroy()
 
     on: (event, handler) -> @pubsub.subscribe event, handler
 

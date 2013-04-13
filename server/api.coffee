@@ -43,11 +43,11 @@ module.exports = (app) ->
   app.get "#{base}/envs/:env_id", (req, res) ->
     findEnv req.params['env_id'], (env) ->
       return jsonError 404, res unless env?
-      allowedEnvs = [ 'alp' ]
-      if req.user?
-        allowedEnvs = allowedEnvs.concat req.user.user.packs
-      restricted = env.id not in allowedEnvs
-      res.json env.toJSON { restricted }
+      # allowedEnvs = [ 'alp' ]
+      # if req.user?
+      #   allowedEnvs = allowedEnvs.concat req.user.user.packs
+      # restricted = env.id not in allowedEnvs
+      res.json env #.toJSON { restricted }
 
   app.post "#{base}/tracks", (req, res) ->
     return jsonError 401, res unless req.user?

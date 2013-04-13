@@ -17,8 +17,8 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
   var Vec3 = THREE.Vector3;
 
   // Track state of a vehicle within game/race.
-  exports.Progress = function(track, vehicle) {
-    this.checkpoints = track.checkpoints;
+  exports.Progress = function(checkpoints, vehicle) {
+    this.checkpoints = checkpoints;
     this.vehicle = vehicle;
     this.pubsub = new pubsub.PubSub();
     this.restart();
@@ -36,25 +36,24 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
   };
 
   exports.Progress.prototype.nextCheckpoint = function(i) {
-    return this.checkpoints[this.nextCpIndex + (i || 0)] || null;
+    return this.checkpoints.at(this.nextCpIndex + (i || 0)) || null;
   };
 
   exports.Progress.prototype.update = function() {
     var vehic = this.vehicle;
     var nextCp = this.nextCheckpoint(0);
-    if (nextCp) {
-      var cpVec = new Vec2(vehic.body.pos.x - nextCp.x, vehic.body.pos.y - nextCp.y);
-      var cpDistSq = cpVec.lengthSq();
-      var CP_TEST = 18*18;
-      if (cpDistSq < CP_TEST) {
-        var cpDist = Math.sqrt(cpDistSq);
-        var lastCpDist = Math.sqrt(this.lastCpDistSq);
-        var frac = (lastCpDist - Math.sqrt(CP_TEST)) / (lastCpDist - cpDist);
-        var time = vehic.sim.time - vehic.sim.timeStep * frac;
-        this.advanceCheckpoint(time);
-      }
-      this.lastCpDistSq = cpDistSq;
+    if (!nextCp) return;
+    var cpVec = new Vec2(vehic.body.pos.x - nextCp.x, vehic.body.pos.y - nextCp.y);
+    var cpDistSq = cpVec.lengthSq();
+    var CP_TEST = 18*18;
+    if (cpDistSq < CP_TEST) {
+      var cpDist = Math.sqrt(cpDistSq);
+      var lastCpDist = Math.sqrt(this.lastCpDistSq);
+      var frac = (lastCpDist - Math.sqrt(CP_TEST)) / (lastCpDist - cpDist);
+      var time = vehic.sim.time - vehic.sim.timeStep * frac;
+      this.advanceCheckpoint(time);
     }
+    this.lastCpDistSq = cpDistSq;
   };
 
   exports.Progress.prototype.finishTime = function() {
@@ -74,7 +73,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     // TODO: Use a more sensible time step.
     this.sim = new psim.Sim(1 / 150);
     this.sim.addStaticObject(this.track.terrain);
-    this.track.scenery && this.track.scenery.addToSim(this.sim);
+    this.track.scenery.addToSim(this.sim);
     this.startTime = 3;
     this.sim.pubsub.subscribe('step', this.onSimStep.bind(this));
   };
@@ -95,17 +94,6 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     return this.sim.interpolatedTime() - this.startTime;
   };
 
-  exports.Game.prototype.setTrackConfig = function(trackModel, callback) {
-    this.track.loadWithConfig(trackModel, function() {
-      this.sim.addStaticObject(this.track.terrain);
-
-      this.track.scenery && this.track.scenery.addToSim(this.sim);
-
-      if (callback) callback(null, this.track);
-      this.pubsub.publish('settrack', this.track);
-    }.bind(this));
-  };
-
   exports.Game.prototype.addCar = function(carUrl, callback) {
     http.get({path:carUrl}, function(err, result) {
       if (err) {
@@ -123,7 +111,8 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
 
     this.setupVehicle(vehicle);
 
-    var progress = new exports.Progress(this.track, vehicle);
+    var checkpoints = this.track.root.track.config.course.checkpoints;
+    var progress = new exports.Progress(checkpoints, vehicle);
     this.progs.push(progress);
     if (callback) callback(progress);
     this.pubsub.publish('addvehicle', vehicle, progress);
@@ -131,13 +120,10 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
 
   exports.Game.prototype.setupVehicle = function(vehicle) {
     vehicle.body.ori.set(1, 1, 1, 1).normalize();
-    vehicle.body.pos.set(
-        this.track.config.course.startposition.pos[0],
-        this.track.config.course.startposition.pos[1],
-        this.track.config.course.startposition.pos[2]);
+    var startpos = this.track.root.track.config.course.startposition;
+    vehicle.body.pos.set(startpos.pos[0], startpos.pos[1], startpos.pos[2]);
     var tmpQuat = new THREE.Quaternion().setFromAxisAngle(
-        new Vec3(0,0,1),
-        this.track.config.course.startposition.rot[2]);
+        new Vec3(0,0,1), startpos.rot[2]);
     vehicle.body.ori = tmpQuat.multiplySelf(vehicle.body.ori);
     vehicle.body.updateMatrices();
     vehicle.init();
@@ -152,8 +138,6 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
   };
 
   exports.Game.prototype.onSimStep = function() {
-    //console.log(this.progs[0].vehicle.body.pos.y);
-
     var disabled = (this.sim.time < this.startTime);
     this.progs.forEach(function(progress) {
       if (!disabled) progress.update();

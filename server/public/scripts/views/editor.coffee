@@ -4,7 +4,6 @@ define [
   'util/util'
   'cs!client/misc'
   'client/car'
-  'game/game'
   'cs!models/index'
   'cs!views/inspector'
   'cs!views/view'
@@ -15,7 +14,6 @@ define [
   util
   clientMisc
   clientCar
-  gameGame
   models
   InspectorView
   View
