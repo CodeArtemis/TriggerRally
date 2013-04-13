@@ -1,11 +1,6 @@
 ({
   baseUrl: "../public/scripts",
-  //dir: "../public/build-out",
   optimize: "none",
-
-//  insertRequire: [ "editor/editor-main" ],
-//  wrap: true,
-
   name: "../js/almond",
   out: "../public/build-out/editor-main.js",
   include: [ "editor/editor-main" ],

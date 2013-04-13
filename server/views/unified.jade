@@ -12,9 +12,9 @@ html
     //- script(src="/socket.io/socket.io.js")
 
     - if ('production' === process.env.NODE_ENV)
-      script(src="/build-v3/editor-main.js")
+      script(src="/build-v3/main.js")
     - else
-      script(data-main="/scripts/editor/editor-main", src="/js/require.js")
+      script(data-main="/scripts/main", src="/js/require.js")
 
     script(type='text/javascript')
       var _gaq = _gaq || [];

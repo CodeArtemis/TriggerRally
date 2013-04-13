@@ -48,7 +48,7 @@ require(
     }
   },
   [
-    'cs!editor/app'
+    'cs!app'
   ],
   function main(App) {
     var app = new App();
