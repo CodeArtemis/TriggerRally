@@ -339,7 +339,7 @@ menu a:hover {
   width: 30%;
   color: #6e0;
   text-shadow: 0 0 0.3em #000;
-  background: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.8);
   border-radius: 0.5em;
   opacity: 0.6;
   -webkit-transform: scale(1);
@@ -391,8 +391,14 @@ menu a:hover .new-marker {
   width: 5em;
   height: 5em;
 }
+table.credits {
+  border-spacing: 0;
+}
 table.credits td {
   vertical-align: top;
+}
+table.credits td:first-child {
+  padding-right: 3em;
 }
 .checkout-box {
   display: inline-block;
