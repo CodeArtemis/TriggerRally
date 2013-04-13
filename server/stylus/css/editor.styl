@@ -231,6 +231,9 @@ menu a:hover
   opacity 1
   -webkit-transform scale(1.05)
 
+menu a:active
+  -webkit-transform scale(0.95)
+
 menu li
   list-style none
 
@@ -244,6 +247,10 @@ menu li
   position absolute
   top 0
   -webkit-transform rotate(-20deg)
+  transition 0.1s
+
+menu a:hover .new-marker
+  -webkit-transform rotate(-10deg)
 
 #view3d
   background gray
@@ -268,6 +275,22 @@ menu li
 table.credits td
   vertical-align top
 
-img.paypal-express-checkout
+.checkout-box
+  display inline-block
+  margin 2em 5em
+  padding 1em
+  border 1px solid black
+
+a.paypal-checkout img
+  margin-left 1em
+  margin-bottom -0.8em
   width 145em * 0.05
   height 42em * 0.05
+
+img.codeartemis
+  float right
+  width (537/50)em
+  height (435/50)em
+
+.smaller
+  font-size 0.6em

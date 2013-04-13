@@ -10,12 +10,12 @@ API_VERSION = '78.0'
 # PWD
 # SIGNATURE
 
-module.exports = class NVPRequest
+module.exports = class NVPEndpoint
   constructor: (@params, opts) ->
-    @sandbox = opts.sandbox ? false
-    @version = opts.version ? API_VERSION
+    @sandbox = opts?.sandbox ? false
+    params.VERSION or= opts?.version or API_VERSION
 
-  send: (params, callback) ->
+  request: (params, callback) ->
     params = _.extend [], @params, params
     query = qs.stringify params
 
@@ -26,6 +26,6 @@ module.exports = class NVPRequest
     req = https.get req_opts, (res) ->
       buffer = ''
       res.on 'data', (chunk) -> buffer += chunk
-      res.on 'end', -> callback null, buffer
+      res.on 'end', -> callback null, qs.parse buffer
 
-    req.on 'error', (e) -> callback e
+    req.on 'error', (e) -> callback "#{e} (#{query})"

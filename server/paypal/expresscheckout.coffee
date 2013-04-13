@@ -1,15 +1,19 @@
-NVPRequest = require './nvprequest'
-secret     = require './secret'
+NVPEndpoint = require './nvp'
+secret      = require './secret'
 
-###
+sandbox = no
 
-Express Checkout flow:
+params = if sandbox then secret.sandbox else secret.prod
+opts = { sandbox }
 
-SetExpressCheckout
-[redirect to paypal]
-GetExpressCheckoutDetails
-DoExpressCheckoutPayment
+nvp = new NVPEndpoint params, opts
 
-https://developer.paypal.com/webapps/developer/docs/classic/express-checkout/gs_expresscheckout/
+module.exports =
+  request: (params, callback) ->
+    nvp.request params, callback
 
-###
+  redirectUrl: (TOKEN)->
+    if sandbox
+      "https://www.sandbox.paypal.com/incontext?token=#{TOKEN}"
+    else
+      "https://www.paypal.com/incontext?token=#{TOKEN}"

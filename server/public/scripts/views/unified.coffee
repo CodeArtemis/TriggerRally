@@ -4,12 +4,14 @@ define [
   'cs!views/statusbar'
   'cs!client/client'
   'jade!templates/unified'
+  'cs!util/popup'
 ], (
   Backbone
   View
   StatusBarView
   TriggerClient
   template
+  popup
 ) ->
   $ = Backbone.$
 
@@ -61,21 +63,8 @@ define [
         no
 
       $document.on 'click', 'a.login', (event) ->
-        width = 1000
-        height = 700
-        left = (window.screen.width - width) / 2
-        top = (window.screen.height - height) / 2
-        popup = window.open "/login?popup=1",
-                            "Login",
-                            "width=#{width},height=#{height},left=#{left},top=#{top}"
-        if popup
-          timer = setInterval ->
-            if popup.closed
-              clearInterval timer
-              Backbone.trigger 'app:checklogin'
-          , 1000
-        # If the popup fails to open, allow the link to trigger as normal.
-        not popup
+        not popup.create "/login?popup=1", "Login", ->
+          Backbone.trigger 'app:checklogin'
 
       $document.on 'click', 'a.logout', (event) ->
         $.ajax('/v1/auth/logout')

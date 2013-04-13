@@ -44,7 +44,7 @@ Car = mongoose.model('Car')
 Track = mongoose.model('Track')
 Run = mongoose.model('Run')
 
-# { handleIPN } = require './ipn'
+# { handleIPN } = require './paypal/ipn'
 
 # Alternate DB connection
 # dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
@@ -55,12 +55,13 @@ log "Base directory: #{__dirname}"
 
 app = module.exports = express()
 
-PORT = process.env.PORT or 80
 DOMAIN = process.env.DOMAIN or 'triggerrally.com'
 NODE_ENV = process.env.NODE_ENV
+PORT = process.env.PORT or 80
+PROTOCOL = process.env.PROTOCOL or 'http'
 PUBLIC_PORT = if NODE_ENV is 'production' then 80 else PORT
 PORT_SUFFIX = if PUBLIC_PORT is 80 then "" else ":#{PUBLIC_PORT}"
-URL_PREFIX = "http://#{DOMAIN}#{PORT_SUFFIX}"
+URL_PREFIX = "#{PROTOCOL}://#{DOMAIN}#{PORT_SUFFIX}"
 
 authenticateUser = (profile, done) ->
   passport_id = profile.identifier or (profile.provider + profile.id)
@@ -359,6 +360,97 @@ app.get    '/run/:idRun/replay', loadUrlRun, routes.runReplay
 app.get    '/x/:idTrack/:idCar/top', loadUrlTrack, loadUrlCar, routes.top
 app.post   '/metrics', routes.metricsSave
 
+ppec = require './paypal/expresscheckout'
+qs = require 'querystring'
+
+getPaymentParams = (productId) ->
+  products =
+    ignition:
+      cost: '5.00'
+      name: 'Trigger Rally Ignition'
+      description: 'An add-on pack for Trigger Rally.'
+      url: 'https://triggerrally.com/ignition'
+
+  product = products[productId]
+  return null unless product
+
+  PAYMENTREQUEST_0_CUSTOM: productId
+  PAYMENTREQUEST_0_PAYMENTACTION: 'Sale'
+  PAYMENTREQUEST_0_AMT: product.cost
+  PAYMENTREQUEST_0_ITEMAMT: product.cost  # Required for digital goods.
+  RETURNURL: "#{URL_PREFIX}/checkout/return"
+  CANCELURL: "#{URL_PREFIX}/closeme"
+  REQCONFIRMSHIPPING: 0
+  NOSHIPPING: 1
+  ALLOWNOTE: 0
+  # HDRIMG: "https://triggerrally.com/images/TODO-750x90.png"  # TODO
+  # HDRBORDERCOLOR
+  # HDRBACKCOLOR
+  # PAYFLOWCOLOR
+  # EMAIL: req.user.user.email
+  # LANDINGPAGE  # should test results of this
+  BUYEREMAILOPTINENABLE: 1
+  # BUYERUSERNAME  # May be useful to increase user confidence?
+  # BUYERREGISTRATIONDATE
+  # TAXIDTYPE and TAXID  # Required for Brazil ?!?!
+
+  L_PAYMENTREQUEST_0_ITEMCATEGORY0: 'Digital'
+  L_PAYMENTREQUEST_0_ITEMURL0: product.url
+  L_PAYMENTREQUEST_0_QTY0: 1
+  L_PAYMENTREQUEST_0_AMT0: product.cost
+  L_PAYMENTREQUEST_0_DESC0: product.description
+  L_PAYMENTREQUEST_0_NAME0: product.name
+
+app.get '/checkout', (req, res) ->
+  return res.send 401 unless req.user
+  productId = req.query.product
+
+  # TODO: Check that user doesn't already have this product.
+
+  params = getPaymentParams productId
+  return res.send 404 unless params
+  params.METHOD = 'SetExpressCheckout'
+  console.log "Calling: #{JSON.stringify params}"
+  ppec.request params, (err, nvp_res) ->
+    if err
+      console.log "#{params.METHOD} error: #{err}"
+      return res.send 500
+    console.log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
+    return res.send 500 if nvp_res.ACK isnt 'Success'
+    TOKEN = nvp_res.TOKEN
+    return res.send 500 unless TOKEN
+    res.redirect ppec.redirectUrl TOKEN
+
+app.get '/checkout/return', (req, res) ->
+  params =
+    METHOD: 'GetExpressCheckoutDetails'
+    TOKEN: req.query.token
+  console.log "Calling: #{JSON.stringify params}"
+  ppec.request params, (err, nvp_res) ->
+    if err
+      console.log "#{params.METHOD} error: #{err}"
+      return res.send 500
+    console.log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
+    return res.send 500 if nvp_res.ACK isnt 'Success'
+    productId = nvp_res.PAYMENTREQUEST_0_CUSTOM
+    params = getPaymentParams productId
+    return res.send 500 unless params
+    params.METHOD = 'DoExpressCheckoutPayment'
+    params.TOKEN = nvp_res.TOKEN
+    params.PAYERID = nvp_res.PAYERID
+    params.RETURNFMFDETAILS = 1
+    console.log "Calling: #{JSON.stringify params}"
+    ppec.request params, (err, nvp_res) ->
+      if err
+        console.log "#{params.METHOD} error: #{err}"
+        return res.send 500
+      console.log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
+      return res.send 500 if nvp_res.ACK isnt 'Success'
+      # TODO: Could also show a "Thank you!" interstitial page.
+      res.redirect '/yee-ha/closeme'
+
+# app.post '/paypal/ipn', handleIPN
+
 #
 #app.post('/login',
 #    passport.authenticate('local', { failureRedirect: '/login?status=failed' }),
@@ -369,8 +461,6 @@ app.post   '/metrics', routes.metricsSave
 # Backward compatibility.
 app.get '/drive', (req, res) ->
   res.redirect '/x/Preview/Arbusu/drive', 301
-
-app.post '/paypal/ipn', handleIPN
 
 server = http.createServer(app)
 # io = socketio.listen(server)
