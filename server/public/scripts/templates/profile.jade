@@ -1,4 +1,16 @@
 .profile-card
-  p Profile!
-  p= name
-  p= id
+  img.profile(src="/images/profile/1.jpg")
+  span &nbsp;
+  h1
+    div Rally License&nbsp;
+  span &nbsp;
+  .category Provisional 
+    a.route(href="/ignition") (Upgrade)
+  span &nbsp;
+  .user-id ID: #{id}
+  span &nbsp;
+  .user-name= name
+  span &nbsp;
+  .badges
+    .label Endorsements
+    img(src="/images/badges/ignition.svg", title="Ignition")

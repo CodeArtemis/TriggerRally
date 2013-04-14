@@ -1,0 +1,105 @@
+#editor-helpbox-wrapper,
+#editor-inspector
+  top 10px
+
+#editor-helpbox,
+#editor-inspector,
+.close-tab
+  padding 10px
+  border-radius 4px
+  opacity 0.9
+
+#editor-helpbox-wrapper
+  position absolute
+  z-index 4
+  width 600px
+  right -620px
+  -webkit-transition right 0.5s
+
+#editor-helpbox-wrapper.visible
+  right 10px
+
+#editor-helpbox
+  z-index 4
+  width 600px
+  height 510px
+  overflow-y scroll
+
+#editor-helpbox table
+  border-spacing 0
+
+#editor-helpbox td
+  border-bottom 1px solid rgba(0,0,0,0.3)
+  margin 0
+  vertical-align top
+
+#editor-helpbox td:first-child
+  padding-right 1em
+
+.close-tab
+  z-index -1
+  width 80px
+  //height 50px
+  padding 5px
+  right 600px
+  top 20px
+  cursor pointer
+
+#editor-inspector
+  z-index 3
+  left 10px
+  width 270px
+
+.warning
+  font-weight bold
+  color #d00
+  border 1px solid #d00
+  border-radius 4px
+  background #fdd
+  padding 0.5em
+  margin 0.5em 0
+
+#editor-inspector .warning
+  font-size 80%
+
+#editor-inspector h3
+  margin 0
+
+#editor-inspector hr
+  margin 0.3em 0
+
+#editor-inspector .attrib
+  display none
+
+#editor-inspector .attrib.visible
+  display block
+
+#editor-inspector .label
+  position relative
+
+#editor-inspector .content
+  position absolute
+  left 110px
+  width 150px
+
+.tooltip
+  border-bottom 1px dotted #333
+  position relative
+
+.tooltip .tooltip-text
+  display none
+  position absolute
+  opacity 0.95
+  left 2em
+  top 1em
+  background #ee9
+  font-size 80%
+  padding 0 12px
+  border 1px solid #440
+  color black
+  border-radius 4px
+  width 300px
+  z-index 3
+
+.tooltip:hover .tooltip-text
+  display inline-block

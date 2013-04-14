@@ -1,0 +1,88 @@
+
+.profile-card
+  background white
+  box-shadow inset 0 0 4em rgba(0,0,0,0.3), 0 0.3em 1em black
+  border-radius 0.8em
+  // font-size 0.5em
+  // padding 0.5em
+  position absolute
+  // Total space is 32em by 18em.
+  // Card size is 21 by 13.
+  cardWidth = 21em
+  cardHeight = 13em
+  top (18em - cardHeight) * 0.2
+  left (32em - cardWidth) * 0.5
+  width cardWidth
+  height cardHeight
+  border 0.3em solid #9b9
+  overflow hidden
+  // font-family monospace
+  // -moz-user-select auto
+  // -webkit-user-select auto
+  // user-select auto
+
+.profile-card > *
+  position absolute
+  font-size 0.77em
+  // border 0.1em dashed #ddd
+  margin 0
+  padding 0
+  z-index 2
+
+.profile-card img.profile
+  top 1em
+  left 1em
+  width 7em
+  height 7em
+  border 0.1em solid black
+  border-radius 0.4em
+
+.profile-card h1
+  left 9em
+  top 1em
+.profile-card h1 > div
+  font-size 1.7em
+
+.profile-card .category
+  left 9em
+  top 4em
+
+.profile-card .user-name
+  left 9em
+  right 1em
+  top 6em
+.profile-card div.user-name
+  cursor pointer
+  height 1em
+.profile-card input.user-name
+  height 1.2em
+
+.profile-card .user-id
+  right 1em
+  top 4em
+  color #aaa
+
+.profile-card .badges
+  top 9em
+  left 1em
+  right 1em
+  bottom 1em
+  // background #f99
+  // box-shadow inset 0 0 1em black
+  border 0.1em dashed #ddd
+  border-radius 0.4em
+  text-align center
+
+.profile-card .badges .label
+  position absolute
+  margin-top 0.3em
+  width 100%
+  z-index -1
+  text-align center
+  font-family monospace
+  font-size 3em
+  color #ddd
+
+.profile-card .badges img
+  width 6em
+  height 6em
