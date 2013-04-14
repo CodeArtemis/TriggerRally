@@ -340,14 +340,11 @@ unified = [
   '/ignition'
   '/track/:idTrack/drive'
   '/track/:idTrack/edit'
+  '/user/:idUser'
 ]
 app.get path, routes.unified for path in unified
 
 app.get    '/login', routes.login
-app.get    '/user/confirm', routes.userconfirm
-app.get    '/user/:idUser', loadUrlUser, routes.user
-app.get    '/user/:idUser/edit', loadUrlUser, editUser, routes.user
-app.post   '/user/:idUser/save', loadUrlUser, editUser, routes.userSave
 app.get    '/recenttracks', routes.recentTracks
 app.get    '/track/:idTrack', loadUrlTrack, routes.track
 app.get    '/car/:idCar', loadUrlCar, routes.car
