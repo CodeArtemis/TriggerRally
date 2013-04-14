@@ -43,7 +43,7 @@ exports.defaultParams = function(req, res, next) {
 };
 
 exports.unified = function(req, res) {
-  res.render('unified');
+  res.render('main');
 };
 
 exports.index = function(req, res) {

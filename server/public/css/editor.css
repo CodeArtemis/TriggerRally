@@ -395,6 +395,7 @@ table.credits {
   border-spacing: 0;
 }
 table.credits td {
+  padding-bottom: 0.7em;
   vertical-align: top;
 }
 table.credits td:first-child {

@@ -446,6 +446,7 @@ app.get '/checkout/return', (req, res) ->
         return res.send 500
       console.log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
       return res.send 500 if nvp_res.ACK isnt 'Success'
+      # TODO: Record transaction.
       # TODO: Could also show a "Thank you!" interstitial page.
       res.redirect '/yee-ha/closeme'
 
