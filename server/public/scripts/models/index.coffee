@@ -130,6 +130,7 @@
       super
     parse: (response, options) ->
       data = super
+      return data unless data
       if data.startposition
         @startposition.set @startposition.parse data.startposition
         data.startposition = @startposition
@@ -151,6 +152,7 @@
     #   @on 'all', (event) -> console.log 'TrackConfig: ' + event
     parse: (response, options) ->
       data = super
+      return data unless data
       if data.course
         course = @course
         data.course = course.set course.parse data.course
@@ -183,6 +185,7 @@
       data
     parse: (response, options) ->
       data = super
+      return data unless data
       if data.cars
         cars = for car in data.cars
           if typeof car is 'string'
@@ -262,6 +265,7 @@
     urlRoot: '/v1/users'
     parse: (response, options) ->
       data = super
+      return data unless data
       if data.tracks
         tracks = for track in data.tracks
           if typeof track is 'string'
@@ -273,7 +277,7 @@
       data
     toJSON: (options) ->
       data = super
-      delete data.created
+      # delete data.created
       delete data.email
       unless options?.authenticated
         delete data.admin

@@ -118,8 +118,6 @@ module.exports = (bb) ->
             return error model, "Couldn't find track #{model.id}", options unless track
             success model, parseTrack(track), options
       update: (model, success, error, options) ->
-        # console.log "Saving track:"
-        # console.log JSON.stringify model
         unless model.config?
           console.error "Saving track: NO CONFIG!"
           console.log JSON.stringify model
@@ -128,6 +126,7 @@ module.exports = (bb) ->
           .findOne(pub_id: model.id)
           .exec (err, track) ->
             data = jsonClone model
+            # TODO: Check if it's safe to just copy everything from the model.
             _.extend track, _.pick data, [
               'config'
               'count_copy'
@@ -166,3 +165,18 @@ module.exports = (bb) ->
               parsed = parseMongoose user
               parsed.tracks = (track.pub_id for track in tracks when track.env)
               success model, parsed, options
+    update: (model, success, error, options) ->
+      mo.User
+        .findOne(pub_id: model.id)
+        .exec (err, user) ->
+          data = jsonClone model
+          # TODO: Check if it's safe to just copy everything from the model.
+          _.extend user, _.pick data, [
+            'name'
+            'picture'
+          ]
+          user.save (err) ->
+            if err
+              console.log "Error saving user: #{err}"
+              return error model, null, options
+            success model, null, options

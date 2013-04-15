@@ -1,4 +1,6 @@
-.profile-card
+extraClass = editable ? "user-owned" : ""
+
+div(class="profile-card #{extraClass}")
   img.profile(src="/images/profile/1.jpg")
   span &nbsp;
   h1
@@ -11,6 +13,8 @@
   span &nbsp;
   .user-name= name
   span &nbsp;
+  .issued Issue date: #{created}
+  span &nbsp;
   .badges
     .label Endorsements
-    img(src="/images/badges/ignition.svg", title="Ignition")
+    img(src="/images/packs/ignition.svg", title="Ignition")

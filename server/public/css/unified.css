@@ -16,6 +16,9 @@ h2 {
   font-weight: bold;
   margin: 0;
 }
+input {
+  font-family: 'Ubuntu', sans-serif;
+}
 .version {
   opacity: 0.3;
 }
@@ -282,24 +285,39 @@ a.disabled:visited {
 }
 .profile-card .category {
   left: 9em;
-  top: 4em;
+  top: 6em;
+}
+.profile-card .category a {
+  display: none;
+}
+.profile-card.user-owned .category a {
+  display: initial;
 }
 .profile-card .user-name {
   left: 9em;
   right: 1em;
-  top: 6em;
+  top: 4em;
 }
-.profile-card div.user-name {
+.profile-card.user-owned div.user-name {
   cursor: pointer;
   height: 1em;
+}
+.profile-card.user-owned div.user-name:hover::after {
+  content: ' (click to edit)';
+  font-size: 0.6em;
+  opacity: 0.3;
 }
 .profile-card input.user-name {
   height: 1.2em;
 }
 .profile-card .user-id {
   right: 1em;
-  top: 4em;
+  top: 6em;
   color: #aaa;
+}
+.profile-card .issued {
+  left: 9em;
+  top: 7em;
 }
 .profile-card .badges {
   top: 9em;
@@ -476,10 +494,25 @@ table.credits td:first-child {
   margin: 2em 5em;
   padding: 1em;
   border: 1px solid #000;
+  border-radius: 0.5em;
+  background-color: #fff;
+  background-image: -webkit-radial-gradient(66% 68%, circle cover, #fff, #a8c5e0);
+  background-image: radial-gradient(66% 68%, circle cover, #fff, #a8c5e0);
+}
+.checkout-box table {
+  text-align: center;
+  border-spacing: 0;
+  padding-right: 0.6em;
+}
+.checkout-box img.pack {
+  width: 4em;
+  height: 4em;
+}
+.checkout-box .price {
+  display: inline-block;
+  padding: 0.8em 1em;
 }
 a.paypal-checkout img {
-  margin-left: 1em;
-  margin-bottom: -0.8em;
   width: 7.25em;
   height: 2.1em;
 }

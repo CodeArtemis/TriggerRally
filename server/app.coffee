@@ -338,6 +338,7 @@ unified = [
   '/'
   '/about'
   '/ignition'
+  '/license'
   '/track/:idTrack/drive'
   '/track/:idTrack/edit'
   '/user/:idUser'

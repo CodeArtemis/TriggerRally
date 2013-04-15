@@ -6,6 +6,7 @@ define [
   'cs!views/editor'
   'cs!views/home'
   'cs!views/ignition'
+  'cs!views/license'
   'cs!views/profile'
   'cs!views/spin'
 ], (
@@ -16,6 +17,7 @@ define [
   EditorView
   HomeView
   IgnitionView
+  LicenseView
   ProfileView
   SpinView
 ) ->
@@ -28,6 +30,7 @@ define [
       "": "home"
       "about": "about"
       "ignition": "ignition"
+      "license": "license"
       "track/:trackId/edit": "trackEdit"
       "track/:trackId/drive": "trackDrive"
       "user/:userId": "profile"
@@ -36,18 +39,28 @@ define [
       unless @uni.getView3D() instanceof SpinView
         @uni.setView3D (new SpinView @app, @uni.client).render()
 
-    home: ->
-      @setSpin()
-      @uni.setViewChild (new HomeView @app, @uni.client).render()
-
     about: ->
       @setSpin()
       @uni.setViewChild (new AboutView @app, @uni.client).render()
+
+    home: ->
+      @setSpin()
+      @uni.setViewChild (new HomeView @app, @uni.client).render()
 
     ignition: ->
       # TODO: Show Ignition car?
       @setSpin()
       @uni.setViewChild (new IgnitionView @app, @uni.client).render()
+
+    license: ->
+      @setSpin()
+      @uni.setViewChild (new LicenseView @app, @uni.client).render()
+
+    profile: (userId) ->
+      @setSpin()
+      user = models.User.findOrCreate userId
+      view = (new ProfileView user, @app, @uni.client).render()
+      @uni.setViewChild view
 
     trackEdit: (trackId) ->
       unless @uni.getView3D() instanceof EditorView and
@@ -74,9 +87,3 @@ define [
         @uni.setViewChild view
       root = @app.root
       view.setTrackId trackId
-
-    profile: (userId) ->
-      @setSpin()
-      user = models.User.findOrCreate userId
-      view = (new ProfileView user, @app, @uni.client).render()
-      @uni.setViewChild view

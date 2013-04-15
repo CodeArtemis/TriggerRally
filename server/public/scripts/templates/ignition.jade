@@ -4,7 +4,15 @@
     span.highlight Ignition
   p The Ignition Pack is awesome. You should buy it now.
   .checkout-box
-    span.price $5 USD
-    a.paypal-checkout(href="/checkout?product=ignition")
-      img(src="https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif")
+    table
+      tr
+        td: img.pack(src="/images/packs/ignition.svg")
+        td Ignition Pack
+      tr
+        td: span.price $5 USD
+        td: a.paypal-checkout(href="/checkout?product=ignition")
+          img(src="https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif")
+  p Use is subject to the 
+    a.route(href="/license") License and Terms of Use
+    | .
   .clear-both
