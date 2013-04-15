@@ -19,7 +19,6 @@ Run `server/build/build.sh` to build production-mode JS bundles.
 Copyright & License
 -------------------
 
-Code copyright (c) 2012 [jareiko](https://github.com/jareiko) unless otherwise attributed
-and released under the [GPL v3](http://www.gnu.org/licenses/gpl-3.0.html)
+Copyright (c) 2012-2013 [Code Artemis](https://github.com/CodeArtemis) unless otherwise attributed.
 
-Non-code assets have mixed ownership and licensing.
+See [LICENSE.md](LICENSE.md).

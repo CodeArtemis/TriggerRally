@@ -14,7 +14,17 @@ define [
     template: template
     constructor: (@app, @client) -> super()
 
+    initialize: ->
+      @listenTo @app.root, 'change:user', => @render()
+      @listenTo @app.root, 'change:user.products', => @render()
+
+    viewModel: ->
+      products = @app.root.user?.products ? []
+      purchased: 'ignition' in products
+      user: @app.root.user
+
     afterRender: ->
-      @$('a.paypal-checkout').on 'click', (event) ->
+      root = @app.root
+      @$('a.paypal-checkout').on 'click', ->
         not popup.create @href, "Checkout", ->
-          alert 'done! TODO: reload page?'
+          root.user.fetch force: yes

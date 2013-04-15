@@ -1,4 +1,6 @@
 span.user
   a.route(href="/user/#{user.pub_id || user.id}")
-    img(src="https://secure.gravatar.com/avatar/#{user.gravatar_hash}?s=40&d=#{randomSmiley()}")
+    img_src = user.picture ? user.picture : "blank"
+    img_src = "/images/profile/" + img_src + ".jpg"
+    img(src=img_src)
     span.username #{user.name}

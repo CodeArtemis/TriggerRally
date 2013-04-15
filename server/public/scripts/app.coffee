@@ -36,6 +36,7 @@ define [
       Backbone.on 'app:settrack', @setTrack, @
       Backbone.on 'app:checklogin', @checkUserLogin, @
       Backbone.on 'app:logout', @logout, @
+      Backbone.on 'app:settitle', @setTitle, @
 
       @checkUserLogin()
       Backbone.history.start pushState: yes
@@ -70,3 +71,7 @@ define [
     logout: ->
       @root.user = null
       Backbone.trigger 'app:status', 'Logged out'
+
+    setTitle: (title) ->
+      main = "Trigger Rally"
+      document.title = if title then "#{title} - #{main}" else main

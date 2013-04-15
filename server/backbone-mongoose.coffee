@@ -174,6 +174,7 @@ module.exports = (bb) ->
           _.extend user, _.pick data, [
             'name'
             'picture'
+            'products'
           ]
           user.save (err) ->
             if err

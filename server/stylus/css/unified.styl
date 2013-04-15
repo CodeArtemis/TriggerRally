@@ -9,6 +9,7 @@ body
   -moz-user-select none
   -webkit-user-select none
   user-select none
+  cursor default
 
   // Disable scrolling
   overflow hidden
@@ -41,10 +42,10 @@ input:checked + label
   width 100%
 
 #statusbar > table td
-  width 33.3%
+  width 25%
 
-#statusbar > table td:nth-child(2)
-  text-align center
+// #statusbar > table td:nth-child(3)
+//   text-align center
 
 #statusbar > table td:last-child
   text-align right
@@ -62,8 +63,9 @@ input:checked + label
   user-select auto
   font-size 0.6em
   background white
-  opacity 0.9
+  opacity 0.95
   padding 1em
+  cursor auto
 
 img.github
   float right
@@ -166,8 +168,9 @@ table.credits td:first-child
   border 1px solid black
   border-radius 0.5em
   background-color:#ffffff;
-  background-image: -webkit-radial-gradient(66% 68%, circle cover, #ffffff, rgb(168, 197, 224));
-  background-image: radial-gradient(66% 68%, circle cover, #ffffff, rgb(168, 197, 224))
+  background-image: -moz-radial-gradient(66% 65%, circle cover, #ffffff 30%, rgb(168, 197, 224));
+  background-image: -webkit-radial-gradient(66% 65%, circle cover, #ffffff 30%, rgb(168, 197, 224));
+  background-image: radial-gradient(66% 65%, circle cover, #ffffff 30%, rgb(168, 197, 224))
 
 .checkout-box table
   text-align center
@@ -183,6 +186,9 @@ table.credits td:first-child
   // padding-bottom 0.8em
   // padding-right 1em
   padding 0.8em 1em
+
+// .checkout-box .purchased
+//   text-align left
 
 a.paypal-checkout img
   // margin-left 1em

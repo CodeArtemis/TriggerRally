@@ -249,20 +249,22 @@
   class User extends Model
     all: new (Collection.extend model: @)
     buildProps @, [
-      'bio'
+      # 'bio'
       'created'
-      'email'
-      'gravatar_hash'
-      'location'
       'name'
-      'tracks'  # NOTE: computed attribute, not currently present in DB.
-      'website'
+      'picture'
+      'products'
+      'tracks'
     ]
     bubbleAttribs: [ 'tracks' ]
+    urlRoot: '/v1/users'
     initialize: ->
       @tracks = new TrackCollection
       super
-    urlRoot: '/v1/users'
+    validate: ->
+      if @name.length < 3 then return "name too short"
+      if @name.length > 20 then return "name too long"
+      # unless 0 <= @picture <= 5 then return "invalid picture"
     parse: (response, options) ->
       data = super
       return data unless data
@@ -277,8 +279,14 @@
       data
     toJSON: (options) ->
       data = super
-      # delete data.created
+      # Stuff that may still be used in Mongoose layer.
+      # TODO: Delete it from Mongoose layer.
+      delete data.admin unless data.admin
+      delete data.bio
       delete data.email
+      delete data.gravatar_hash
+      delete data.location
+      delete data.website
       unless options?.authenticated
         delete data.admin
         delete data.prefs

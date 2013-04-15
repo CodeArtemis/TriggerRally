@@ -1,20 +1,24 @@
 extraClass = editable ? "user-owned" : ""
 
 div(class="profile-card #{extraClass}")
-  img.profile(src="/images/profile/1.jpg")
+  img.profile(src=pic_src)
   span &nbsp;
   h1
-    div Rally License&nbsp;
+    div #{title}&nbsp;
   span &nbsp;
-  .category Provisional 
-    a.route(href="/ignition") (Upgrade)
-  span &nbsp;
-  .user-id ID: #{id}
+  //- .category Provisional 
+  //-   a.route(href="/ignition") (Upgrade)
+  //- span &nbsp;
+  .user-id= id
   span &nbsp;
   .user-name= name
   span &nbsp;
-  .issued Issue date: #{created}
+  .user-name-error
+  span &nbsp;
+  .issued Issued: #{issueDate}
   span &nbsp;
   .badges
     .label Endorsements
-    img(src="/images/packs/ignition.svg", title="Ignition")
+    each badge in badges
+      a.route(href=badge.href)
+        img(src=badge.img_src, title=badge.img_title)

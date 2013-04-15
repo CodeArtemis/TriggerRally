@@ -260,6 +260,7 @@ a.disabled:visited {
   height: 13em;
   border: 0.3em solid #9b9;
   overflow: hidden;
+  opacity: 0.95;
 }
 .profile-card > * {
   position: absolute;
@@ -275,6 +276,12 @@ a.disabled:visited {
   height: 7em;
   border: 0.1em solid #000;
   border-radius: 0.4em;
+}
+.profile-card.user-owned img.profile {
+  cursor: pointer;
+}
+.profile-card.user-owned img.profile:hover {
+  box-shadow: 0 0 0.4em #6f1;
 }
 .profile-card h1 {
   left: 9em;
@@ -297,18 +304,25 @@ a.disabled:visited {
   left: 9em;
   right: 1em;
   top: 4em;
+  height: 1em;
 }
 .profile-card.user-owned div.user-name {
   cursor: pointer;
-  height: 1em;
 }
-.profile-card.user-owned div.user-name:hover::after {
-  content: ' (click to edit)';
-  font-size: 0.6em;
-  opacity: 0.3;
+.profile-card.user-owned div.user-name:hover {
+  text-shadow: 0 0 0.2em #6f1;
 }
 .profile-card input.user-name {
-  height: 1.2em;
+  height: 1.3em;
+}
+.profile-card input.user-name.invalid {
+  background: #fbb;
+}
+.profile-card .user-name-error {
+  left: 9em;
+  right: 1em;
+  top: 3em;
+  color: #800;
 }
 .profile-card .user-id {
   right: 1em;
@@ -317,7 +331,7 @@ a.disabled:visited {
 }
 .profile-card .issued {
   left: 9em;
-  top: 7em;
+  top: 6em;
 }
 .profile-card .badges {
   top: 9em;
@@ -347,6 +361,7 @@ body {
   -moz-user-select: none;
   -webkit-user-select: none;
   user-select: none;
+  cursor: default;
   overflow: hidden;
   position: fixed;
   width: 100%;
@@ -377,10 +392,7 @@ input:checked + label {
   width: 100%;
 }
 #statusbar > table td {
-  width: 33.3%;
-}
-#statusbar > table td:nth-child(2) {
-  text-align: center;
+  width: 25%;
 }
 #statusbar > table td:last-child {
   text-align: right;
@@ -398,8 +410,9 @@ input:checked + label {
   user-select: auto;
   font-size: 0.6em;
   background: #fff;
-  opacity: 0.9;
+  opacity: 0.95;
   padding: 1em;
+  cursor: auto;
 }
 img.github {
   float: right;
@@ -496,8 +509,9 @@ table.credits td:first-child {
   border: 1px solid #000;
   border-radius: 0.5em;
   background-color: #fff;
-  background-image: -webkit-radial-gradient(66% 68%, circle cover, #fff, #a8c5e0);
-  background-image: radial-gradient(66% 68%, circle cover, #fff, #a8c5e0);
+  background-image: -moz-radial-gradient(66% 65%, circle cover, #fff 30%, #a8c5e0);
+  background-image: -webkit-radial-gradient(66% 65%, circle cover, #fff 30%, #a8c5e0);
+  background-image: radial-gradient(66% 65%, circle cover, #fff 30%, #a8c5e0);
 }
 .checkout-box table {
   text-align: center;

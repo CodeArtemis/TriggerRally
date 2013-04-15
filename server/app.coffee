@@ -2,24 +2,27 @@
 
 "use strict"
 
-connect = require('connect')
-cookie = require('cookie')
-express = require('express')
-http = require('http')
-mongoose = require('mongoose')
-mongoskin = require('mongoskin')
-session_mongoose = require('session-mongoose')
-socketio = require('socket.io')
-stylus = require('stylus')
-passport = require('passport')
-FacebookStrategy = require('passport-facebook').Strategy
-GoogleStrategy = require('passport-google').Strategy
-TwitterStrategy = require('passport-twitter').Strategy
-LocalStrategy = require('passport-local').Strategy
+connect           = require 'connect'
+cookie            = require 'cookie'
+express           = require 'express'
+http              = require 'http'
+mongoose          = require 'mongoose'
+mongoskin         = require 'mongoskin'
+session_mongoose  = require 'session-mongoose'
+socketio          = require 'socket.io'
+stylus            = require 'stylus'
+passport          = require 'passport'
+FacebookStrategy  = require('passport-facebook').Strategy
+GoogleStrategy    = require('passport-google').Strategy
+TwitterStrategy   = require('passport-twitter').Strategy
+LocalStrategy     = require('passport-local').Strategy
 
-config = require('./config')
-routes = require('./routes')
-objects = require('./objects')
+# This has to come first to set up Mongoose schemas.
+objects           = require './objects'
+
+api               = require './api'
+config            = require './config'
+routes            = require './routes'
 
 getIsodate = -> new Date().toISOString()
 express.logger.format 'isodate', (req, res) -> getIsodate()
@@ -313,7 +316,7 @@ app.get    '/v1/auth/logout', (req, res) ->
   req.logOut()
   res.json status: "ok"
 
-require('./api') app, passport
+api.setup app, passport
 
 app.get    '/auth/facebook', passport.authenticate('facebook')
 app.get    '/auth/facebook/callback', passport.authenticate('facebook',
@@ -403,7 +406,8 @@ app.get '/checkout', (req, res) ->
   return res.send 401 unless req.user
   productId = req.query.product
 
-  # TODO: Check that user doesn't already have this product.
+  # Check that user doesn't already have this product.
+  return res.send 403 if productId in req.user.user.products
 
   params = getPaymentParams productId
   return res.send 404 unless params
@@ -411,7 +415,7 @@ app.get '/checkout', (req, res) ->
   console.log "Calling: #{JSON.stringify params}"
   ppec.request params, (err, nvp_res) ->
     if err
-      console.log "#{params.METHOD} error: #{err}"
+      console.error "#{params.METHOD} error: #{err}"
       return res.send 500
     console.log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
     return res.send 500 if nvp_res.ACK isnt 'Success'
@@ -420,33 +424,45 @@ app.get '/checkout', (req, res) ->
     res.redirect ppec.redirectUrl TOKEN
 
 app.get '/checkout/return', (req, res) ->
-  params =
-    METHOD: 'GetExpressCheckoutDetails'
-    TOKEN: req.query.token
-  console.log "Calling: #{JSON.stringify params}"
-  ppec.request params, (err, nvp_res) ->
-    if err
-      console.log "#{params.METHOD} error: #{err}"
-      return res.send 500
-    console.log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
-    return res.send 500 if nvp_res.ACK isnt 'Success'
-    productId = nvp_res.PAYMENTREQUEST_0_CUSTOM
-    params = getPaymentParams productId
-    return res.send 500 unless params
-    params.METHOD = 'DoExpressCheckoutPayment'
-    params.TOKEN = nvp_res.TOKEN
-    params.PAYERID = nvp_res.PAYERID
-    params.RETURNFMFDETAILS = 1
+  failure = (code, msg) ->
+    console.error "PURCHASE FAILED: (#{code}) #{msg}"
+    res.send code
+  return failure 401 unless req.user
+  api.findUser req.user.user.pub_id, (bbUser) ->
+    return failure 500 unless bbUser
+    params =
+      METHOD: 'GetExpressCheckoutDetails'
+      TOKEN: req.query.token
     console.log "Calling: #{JSON.stringify params}"
-    ppec.request params, (err, nvp_res) ->
-      if err
-        console.log "#{params.METHOD} error: #{err}"
-        return res.send 500
-      console.log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
-      return res.send 500 if nvp_res.ACK isnt 'Success'
-      # TODO: Record transaction.
-      # TODO: Could also show a "Thank you!" interstitial page.
-      res.redirect '/yee-ha/closeme'
+    ppec.request params, (err, nvp_res, raw) ->
+      return failure 500, "#{params.METHOD} error: #{err}" if err
+      console.log "#{params.METHOD} response: #{raw}"
+      return failure 500 if nvp_res.ACK isnt 'Success'
+      productId = nvp_res.PAYMENTREQUEST_0_CUSTOM
+      return failure 403 if productId in (bbUser.products ? [])
+      params = getPaymentParams productId
+      return failure 500 unless params
+      params.METHOD = 'DoExpressCheckoutPayment'
+      params.TOKEN = nvp_res.TOKEN
+      params.PAYERID = nvp_res.PAYERID
+      params.RETURNFMFDETAILS = 1
+      console.log "Calling: #{JSON.stringify params}"
+      # ppec.request params, (err, nvp_res) ->
+      console.log "OMIT CALL"
+      if true
+        # return failure 500, "#{params.METHOD} error: #{err}" if err
+        # console.log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
+        return failure 500 if nvp_res.ACK isnt 'Success'
+        products = bbUser.products ? []
+        # We use concat instead of push to create a new array object.
+        products = products.concat productId
+        bbUser.save { products },
+          success: ->
+            # TODO: Show a "Thank you!" interstitial page?
+            console.log "PURCHASE COMPLETE for user #{bbUser.id}"
+            res.redirect '/closeme'
+          error: ->
+            failure 500, "COMPLETE BUT FAILED TO RECORD - VERY BAD!! user: #{JSON.stringify bbUser}"
 
 # app.post '/paypal/ipn', handleIPN
 

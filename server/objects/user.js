@@ -14,17 +14,18 @@ var validate = require('./validate');
 var User = new Schema({
     pub_id      : { type: String, index: { unique: true } }
   , name        : { type: String, trim: true, validate: [validate.goosify(validate.required), 'name'] }
-  , location    : { type: String, default: '', trim: true }
-  , website     : { type: String, default: '', trim: true }
-  , bio         : { type: String, default: '', trim: true }
-  , email       : { type: String, default: '', trim: true }
+  , location    : { type: String, default: '', trim: true } // DEPRECATED
+  , website     : { type: String, default: '', trim: true } // DEPRECATED
+  , bio         : { type: String, default: '', trim: true } // DEPRECATED
+  , email       : { type: String, default: '', trim: true } // DEPRECATED
   , prefs       : {
       shadows     : { type: Boolean, default: true }
     , audio       : { type: Boolean, default: true }
     , terrainhq   : { type: Boolean, default: true }
   }
   , admin       : { type: Boolean, default: false }
-  , packs       : [ String ]
+  , picture     : String
+  , products    : [ String ]
 }, { strict: true });
 
 User.virtual('id')
@@ -37,7 +38,7 @@ User.virtual('created')
     return new Date(parseInt(this.id.substring(0, 8), 16) * 1000);
   });
 
-User.virtual('gravatar_hash')
+User.virtual('gravatar_hash') // DEPRECATED
   .get(function() {
     var email = this.email || '';
     return common.makeHashMD5((email).toLowerCase());

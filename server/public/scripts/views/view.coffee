@@ -18,6 +18,7 @@ define [
     afterRender: ->
 
     destroy: ->
+      @stopListening()
       @undelegateEvents()
       @$el.removeData().unbind()
       @remove()

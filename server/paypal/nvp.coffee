@@ -26,6 +26,6 @@ module.exports = class NVPEndpoint
     req = https.get req_opts, (res) ->
       buffer = ''
       res.on 'data', (chunk) -> buffer += chunk
-      res.on 'end', -> callback null, qs.parse buffer
+      res.on 'end', -> callback null, qs.parse(buffer), buffer
 
     req.on 'error', (e) -> callback "#{e} (#{query})"

@@ -1,10 +1,11 @@
 License and Terms of Use
+========================
 
-License version 2013-04-15.1
+License version 2013-04-15.2
 
 (1) Trigger Rally has two components: Source Code and Content. Everything is copyright © 2012-2013 Code Artemis unless otherwise attributed.
 
-(2) The Source Code is the executable code for Trigger Rally. It can be found on GitHub.
+(2) The Source Code is the preferred modifiable form of the executable code for Trigger Rally. It can be found on GitHub.
 
 (2.1) The Source Code may be used under the terms of the GPL v3.
 

@@ -40,19 +40,23 @@ define [
         @uni.setView3D (new SpinView @app, @uni.client).render()
 
     about: ->
+      Backbone.trigger 'app:settitle', 'About'
       @setSpin()
       @uni.setViewChild (new AboutView @app, @uni.client).render()
 
     home: ->
+      Backbone.trigger 'app:settitle', null
       @setSpin()
       @uni.setViewChild (new HomeView @app, @uni.client).render()
 
     ignition: ->
+      Backbone.trigger 'app:settitle', 'Ignition Pack'
       # TODO: Show Ignition car?
       @setSpin()
       @uni.setViewChild (new IgnitionView @app, @uni.client).render()
 
     license: ->
+      Backbone.trigger 'app:settitle', 'License and Terms of Use'
       @setSpin()
       @uni.setViewChild (new LicenseView @app, @uni.client).render()
 
