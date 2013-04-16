@@ -1,11 +1,14 @@
 table
   tr
     td
-      h2 Trigger Rally
+      h2
+        a.route(href="/") Trigger Rally
     td
       a.route(href="/") Home
       | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       a.route(href="/about") About
+      | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      a.reload(href="javascript:location.reload()") Reload
     td
       span Status:&nbsp;
       span#status Loading

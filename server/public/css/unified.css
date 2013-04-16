@@ -144,6 +144,9 @@ a.disabled:visited {
   display: block;
   position: absolute;
 }
+#editor-container {
+  font-size: initial;
+}
 #editor-helpbox-wrapper,
 #editor-inspector {
   top: 10px;
@@ -398,6 +401,9 @@ input:checked + label {
   text-align: right;
 }
 #unified-child {
+  position: relative;
+}
+.gui-container {
   position: relative;
   width: 32em;
   height: 18em;

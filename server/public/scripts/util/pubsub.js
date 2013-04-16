@@ -8,24 +8,31 @@ define([
 function(util) {
   var exports = {};
 
-  exports.PubSub = function() {
-    this.handlers = [];
-  };
-
-  exports.PubSub.prototype.subscribe = function(topic, fn) {
-    var handler = this.handlers[topic] || (this.handlers[topic] = []);
+  var on = function(topic, fn) {
+    var handlers = this._handlers || (this._handlers = {});
+    var handler = handlers[topic] || (handlers[topic] = []);
     handler.push(fn);
   };
 
-  exports.PubSub.prototype.publish = function(topic) {
-    var handler = this.handlers[topic];
+  var trigger = function(topic) {
+    var handlers = this._handlers;
+    if (!handlers) return;
+    var handler = handlers[topic];
+    if (!handler) return;
     var args = util.arraySlice(arguments, 1);
-    if (handler) {
-      handler.forEach(function(fn) {
-        fn.apply(null, args);
-      });
-    }
+    handler.forEach(function(fn) {
+      fn.apply(null, args);
+    });
   };
+
+  exports.PubSub = function() {};
+  exports.PubSub.mixin = function(obj) {
+    obj.on = on;
+    obj.subscribe = on;
+    obj.trigger = trigger;
+    obj.publish = trigger;
+  };
+  exports.PubSub.mixin(exports.PubSub.prototype);
 
   return exports;
 });

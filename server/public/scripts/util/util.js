@@ -47,6 +47,10 @@ function(THREE) {
     else
       return 0;
   };
+  exports.cubic = function(value) {
+    var val2 = value * value;
+    return 3 * val2 - 2 * val2 * value;
+  };
   exports.Vec3FromArray = function(arr) {
     return new Vec3(arr[0], arr[1], arr[2]);
   };

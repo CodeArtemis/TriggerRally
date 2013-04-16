@@ -14,6 +14,8 @@ define [
   class Spin
     constructor: (@app, @client) ->
 
+    destroy: ->
+
     render: ->
       @startpos = startpos = new THREE.Object3D
       startpos.position.set 0, 0, 430

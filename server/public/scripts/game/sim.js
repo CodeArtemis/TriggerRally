@@ -178,7 +178,7 @@ function(THREE, pubsub, util) {
     this.angMassInv = new Vec3();
     this.setMassCuboid(1, new Vec3(1,1,1));
 
-    // Linear and angular velocity.
+    // Linear and angular velocity in world space.
     this.linVel = new Vec3();
     this.angVel = new Vec3();
     this.angMom = new Vec3();  // angVel is derived from this.
@@ -255,6 +255,18 @@ function(THREE, pubsub, util) {
     return this.linVel;
   };
 
+  exports.RigidBody.prototype.getLocLinearVel = function() {
+    return this.getWorldToLocVector(this.linVel);
+  };
+
+  exports.RigidBody.prototype.getAngularVel = function() {
+    return this.angVel;
+  };
+
+  exports.RigidBody.prototype.getLocAngularVel = function() {
+    return this.getWorldToLocVector(this.angVel);
+  };
+
   exports.RigidBody.prototype.addForce = function(frc) {
     this.accumForce.addSelf(frc);
   };
@@ -309,9 +321,6 @@ function(THREE, pubsub, util) {
 
     this.pos.addSelf(tmpVec3a.copy(this.linVel).multiplyScalar(delta));
 
-    //this.accumTorque.x = 0;
-    //this.accumTorque.y = 0;
-
     // Integrate angular momentum.
     this.angMom.addSelf(this.accumTorque.multiplyScalar(delta));
 
@@ -333,12 +342,12 @@ function(THREE, pubsub, util) {
     this.ori.y += spin.y;
     this.ori.z += spin.z;
     this.ori.w += spin.w;
-    //this.ori.normalize();
+    //this.ori.normalize();  // Done in updateMatrices.
     this.updateMatrices();
 
     // Reset accumulators.
-    this.accumForce.x = this.accumForce.y = this.accumForce.z = 0;
-    this.accumTorque.x = this.accumTorque.y = this.accumTorque.z = 0;
+    this.accumForce.set(0,0,0);
+    this.accumTorque.set(0,0,0);
   };
 
   return exports;

@@ -63,7 +63,6 @@ define [
         car.fetch
           success: =>
             @game.addCarConfig car.config, (progress) =>
-              console.log 'fetched car config'
               followProgress = progress
               followProgress.on 'advance', =>
                 cpNext = followProgress.nextCpIndex
@@ -95,7 +94,7 @@ define [
       return
 
     setTrackId: (trackId) ->
-      track = models.Track.findOrCreate 'ac74h5uA'
+      track = models.Track.findOrCreate trackId
       track.fetch
         success: =>
           track.env.fetch

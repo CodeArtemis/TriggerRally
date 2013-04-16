@@ -1,195 +1,196 @@
-#editor-helpbox-wrapper.visible
-  .close-tab Toggle Help
-  #editor-helpbox
-    h2 Welcome to the Trigger Rally track editor!
-    p Tracks have a series of <b>checkpoints</b>, represented by green circles.
-     | You can select them by left clicking in their center, and move them by
-     | dragging the mouse.
-    p Each checkpoint has properties that determine the shape and appearance
-     | of the track in their vicinity. When you select one or more checkpoints
-     | you can edit their properties in the panel on the left.
-    p Most <b>scenery</b> is automatically generated (ie. the trees)
-     | but you can create, edit or delete additional scenery.
-    p You can also move the <b>start position</b> indicated by the car.
+#editor-container
+  #editor-helpbox-wrapper.visible
+    .close-tab Toggle Help
+    #editor-helpbox
+      h2 Welcome to the Trigger Rally track editor!
+      p Tracks have a series of <b>checkpoints</b>, represented by green circles.
+       | You can select them by left clicking in their center, and move them by
+       | dragging the mouse.
+      p Each checkpoint has properties that determine the shape and appearance
+       | of the track in their vicinity. When you select one or more checkpoints
+       | you can edit their properties in the panel on the left.
+      p Most <b>scenery</b> is automatically generated (ie. the trees)
+       | but you can create, edit or delete additional scenery.
+      p You can also move the <b>start position</b> indicated by the car.
 
-    table
-      tr
-        td(colspan=2)
-          h3 Camera Controls
-      tr
-        td Left drag
-        td Pan
-      tr
-        td Middle drag <em>or</em><br>
-          | Left drag + Alt
-        td Rotate
-      tr
-        td Scroll wheel
-        td Zoom
-      tr
-        td(colspan=2)
-          h3 Manipulate selected object(s)
-      tr
-        td Left click
-        td Select object or place marker
-      tr
-        td Left click + Shift
-        td Select multiple objects
-      tr
-        td Left drag
-        td Move object horizontally
-      tr
-        td Left drag + Shift
-        td Move object vertically<br>
-          em (For scenery, turn off ground snapping first.)
-      tr
-        td Middle drag <em>or</em><br>
-          | Left drag + Alt
-        td Rotate object
+      table
+        tr
+          td(colspan=2)
+            h3 Camera Controls
+        tr
+          td Left drag
+          td Pan
+        tr
+          td Middle drag <em>or</em><br>
+            | Left drag + Alt
+          td Rotate
+        tr
+          td Scroll wheel
+          td Zoom
+        tr
+          td(colspan=2)
+            h3 Manipulate selected object(s)
+        tr
+          td Left click
+          td Select object or place marker
+        tr
+          td Left click + Shift
+          td Select multiple objects
+        tr
+          td Left drag
+          td Move object horizontally
+        tr
+          td Left drag + Shift
+          td Move object vertically<br>
+            em (For scenery, turn off ground snapping first.)
+        tr
+          td Middle drag <em>or</em><br>
+            | Left drag + Alt
+          td Rotate object
 
-    p This editor is a work in progress. Have a suggestion or bug to report? Please 
-      a(href="https://github.com/CodeArtemis/TriggerRally/issues") file an issue on GitHub
-      | !
-    p
+      p This editor is a work in progress. Have a suggestion or bug to report? Please 
+        a(href="https://github.com/CodeArtemis/TriggerRally/issues") file an issue on GitHub
+        | !
+      p
 
-#editor-inspector
-  //-h3 Property inspector
+  #editor-inspector
+    //-h3 Property inspector
 
-  details(open)
-    summary My Tracks
+    details(open)
+      summary My Tracks
 
-    #track-list
-      //-.track.selected: a(href="#") Track 3
+      #track-list
+        //-.track.selected: a(href="#") Track 3
 
-  hr
+    hr
 
-  details(open)
-    summary Track info
+    details(open)
+      summary Track info
 
-    #user-track-owner
-      span.label Owner
+      #user-track-owner
+        span.label Owner
+        span.content
+
+      #track-ownership-warning.warning.hidden
+        | You cannot modify this track because it belongs to another
+        | user, but you can make your own copy using the <b>Copy Track</b> button below.
+        span#copy-login-prompt
+          br
+          br
+          | You'll need to <a href="/login" title="Login popup" class="login">log in</a> first.
+
+      #title
+        span.label Track name:
+        input.content(type="text")
+
+      div
+        span.label &nbsp;
+        a.content(href="drive")
+          | Drive this track
+
+      div
+        span.label &nbsp;
+        a.content(href=".")
+          | Track info page
+
+      #cmd-copy-track
+        span.label Action
+        button.content Copy Track
+
+      #cmd-delete-track.hidden
+        span.label Action
+        button.content Delete Track
+
+      #flag-publish
+        label
+          input(type="checkbox")
+          | Publish this track
+
+    hr
+
+    details(open)
+      summary Editor options
+
+      #flag-snap
+        label
+          input(type="checkbox", checked)
+          | Snap objects to ground
+
+    hr
+
+    #sel-type
+      span.label Selection:
       span.content
 
-    #track-ownership-warning.warning.hidden
-      | You cannot modify this track because it belongs to another
-      | user, but you can make your own copy using the <b>Copy Track</b> button below.
-      span#copy-login-prompt
-        br
-        br
-        | You'll need to <a href="/login" title="Login popup" class="login">log in</a> first.
+    .attrib#scale
+      span.label Scale:
+      input.content(type="range", min=-1, max=1, step="any")
 
-    #title
-      span.label Track name:
-      input.content(type="text")
+    .attrib#disp-radius
+      span.tooltip T width:
+        div.tooltip-text
+          h4 Track width
+          p Controls the width of the track embankment or ditch.
+          p: em Tip: use Shift to raise or lower track checkpoints.
+      input.content(type="range", min=0, max=80, step="any")
 
-    div
-      span.label &nbsp;
-      a.content(href="drive")
-        | Drive this track
+    .attrib#disp-hardness
+      span.tooltip T shape:
+        div.tooltip-text
+          h4 Track shape
+          p Controls the shape of the track embankment or ditch.
+          p High values give a squarer profile, low values a more
+            | curved profile.
+      input.content(type="range", min=0, max=1, step="any")
 
-    div
-      span.label &nbsp;
-      a.content(href=".")
-        | Track info page
+    .attrib#disp-strength
+      span.tooltip T strength:
+        div.tooltip-text
+          h4 Track strength
+          p Controls the degree to which the track overrides
+           | the shape of the underlying terrain, creating an
+           | embankment or ditch.
+      input.content(type="range", min=0, max=1, step="any")
 
-    #cmd-copy-track
+    .attrib#surf-radius
+      span.tooltip D width:
+        div.tooltip-text
+          h4 Dirt width
+          p Controls the width of the dirt area along the track.
+          p Dirt is smoother than other kinds of terrain,
+            | making it easier to drive, and trees are removed from this area.
+      input.content(type="range", min=0, max=80, step="any")
+
+    .attrib#surf-hardness
+      span.tooltip D sharp:
+        div.tooltip-text
+          h4 Dirt sharpness
+          p Controls how quickly the edges of the track transition from
+            | dirt to moss/rock.
+      input.content(type="range", min=0, max=1, step="any")
+
+    .attrib#surf-strength
+      span.tooltip D amount:
+        div.tooltip-text
+          h4 Dirt amount
+          p Controls the quantity of dirt on the track.
+      input.content(type="range", min=0, max=1, step="any")
+
+    .attrib#scenery-type
+      span.label Scenery
+      select.content
+
+    .attrib#cmd-add
+      hr
       span.label Action
-      button.content Copy Track
+      button.content Add Scenery
 
-    #cmd-delete-track.hidden
+    .attrib#cmd-copy
+      hr
       span.label Action
-      button.content Delete Track
+      button.content Copy
 
-    #flag-publish
-      label
-        input(type="checkbox")
-        | Publish this track
-
-  hr
-
-  details(open)
-    summary Editor options
-
-    #flag-snap
-      label
-        input(type="checkbox", checked)
-        | Snap objects to ground
-
-  hr
-
-  #sel-type
-    span.label Selection:
-    span.content
-
-  .attrib#scale
-    span.label Scale:
-    input.content(type="range", min=-1, max=1, step="any")
-
-  .attrib#disp-radius
-    span.tooltip T width:
-      div.tooltip-text
-        h4 Track width
-        p Controls the width of the track embankment or ditch.
-        p: em Tip: use Shift to raise or lower track checkpoints.
-    input.content(type="range", min=0, max=80, step="any")
-
-  .attrib#disp-hardness
-    span.tooltip T shape:
-      div.tooltip-text
-        h4 Track shape
-        p Controls the shape of the track embankment or ditch.
-        p High values give a squarer profile, low values a more
-          | curved profile.
-    input.content(type="range", min=0, max=1, step="any")
-
-  .attrib#disp-strength
-    span.tooltip T strength:
-      div.tooltip-text
-        h4 Track strength
-        p Controls the degree to which the track overrides
-         | the shape of the underlying terrain, creating an
-         | embankment or ditch.
-    input.content(type="range", min=0, max=1, step="any")
-
-  .attrib#surf-radius
-    span.tooltip D width:
-      div.tooltip-text
-        h4 Dirt width
-        p Controls the width of the dirt area along the track.
-        p Dirt is smoother than other kinds of terrain,
-          | making it easier to drive, and trees are removed from this area.
-    input.content(type="range", min=0, max=80, step="any")
-
-  .attrib#surf-hardness
-    span.tooltip D sharp:
-      div.tooltip-text
-        h4 Dirt sharpness
-        p Controls how quickly the edges of the track transition from
-          | dirt to moss/rock.
-    input.content(type="range", min=0, max=1, step="any")
-
-  .attrib#surf-strength
-    span.tooltip D amount:
-      div.tooltip-text
-        h4 Dirt amount
-        p Controls the quantity of dirt on the track.
-    input.content(type="range", min=0, max=1, step="any")
-
-  .attrib#scenery-type
-    span.label Scenery
-    select.content
-
-  .attrib#cmd-add
-    hr
-    span.label Action
-    button.content Add Scenery
-
-  .attrib#cmd-copy
-    hr
-    span.label Action
-    button.content Copy
-
-  .attrib#cmd-delete
-    hr
-    span.label Action
-    button.content Delete
+    .attrib#cmd-delete
+      hr
+      span.label Action
+      button.content Delete

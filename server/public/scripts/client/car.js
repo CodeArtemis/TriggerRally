@@ -38,26 +38,35 @@ function(THREE, util) {
     this.loadWithVehicle = function(vehicle, callback) {
       this.vehic = vehicle;
       this.config = vehicle.cfg;
-      this.loadPartsJSON(this.config.meshes.body,
-                         this.config.meshes.wheel,
-                         callback);
+      this.loadPartsJSON(this.config.meshes, callback);
     };
 
-    this.loadPartsJSON = function(bodyURL, wheelURL, callback) {
+    this.loadPartsJSON = function(meshes, callback) {
       var loader = new THREE.JSONLoader();
+      var sceneLoader = new THREE.SceneLoader();
       var texturePath = '/a/textures';
       async.parallel({
         body: function(cb) {
-          loader.load(bodyURL, function() { cb(null, arguments); }, texturePath);
+          if (meshes.body) {
+            loader.load(meshes.body, function() { cb(null, arguments); }, texturePath);
+          } else if (meshes.scene) {
+            sceneLoader.load(meshes.scene, function() { cb(null, arguments); });
+          } else {
+            throw new Error("Invalid car config");
+          }
         },
         wheel: function(cb) {
-          loader.load(wheelURL, function() { cb(null, arguments); }, texturePath);
+          loader.load(meshes.wheel, function() { cb(null, arguments); }, texturePath);
         }
       }, function(err, data) {
         if (err) throw err;
         else {
-          this.bodyGeometry = data.body[0];
-          this.bodyMaterials = data.body[1];
+          if (data.body.length == 1) {
+            this.loadedData = data.body[0];
+          } else {
+            this.bodyGeometry = data.body[0];
+            this.bodyMaterials = data.body[1];
+          }
           this.wheelGeometry = data.wheel[0];
           this.wheelMaterials = data.wheel[1];
           this.createCar();
@@ -91,6 +100,19 @@ function(THREE, util) {
         wheel.mesh.rotation.x = vWheel.spinPos;
       }
 
+      if (this.config.wings && this.meshes) {
+        var fold = this.vehic.wingFold;
+        // console.log(fold);
+        var meshes = this.meshes;
+        var angI = util.cubic(fold);
+        var tmp = fold - 1;
+        var angO = 1 - tmp * tmp * tmp * tmp;
+        meshes.WingLI.rotation.z = angI;
+        meshes.WingLO.rotation.z = angO;
+        meshes.WingRI.rotation.z = -angI;
+        meshes.WingRO.rotation.z = -angO;
+      }
+
       if (this.aud) {
         if (this.sourceEngine) {
           this.sourceEngine.gain.value = this.vehic.controller.output.throttle * 0.2 + 0.4;
@@ -121,6 +143,15 @@ function(THREE, util) {
               this.buffersCrash[Math.floor(Math.random() * this.buffersCrash.length)],
               false, Math.log(1 + cnl), 0.99 + Math.random() * 0.02);
         }
+        for (var k in this.vehic.events) {
+          var type = this.vehic.events[k].type;
+          if (type == 'sfx:hydraulic' && this.bufferHydraulic) {
+            this.aud.playSound(this.bufferHydraulic, false, 1, 1);
+          } else if (type == 'sfx:slam' && this.bufferSlam) {
+            this.aud.playSound(this.bufferSlam, false, 1, 1);
+          }
+        }
+        this.vehic.events = [];
       }
     };
 
@@ -130,21 +161,42 @@ function(THREE, util) {
       var i;
       var center = Vec3FromArray(this.config.center);
 
-      // rig the car
-
       var s = this.config.scale || 1;
 
-      // body
+      if (this.loadedData) {
+        var scene = this.loadedData.scene;
+        // this.root.add(scene);
+        var meshes = {};
+        var children = scene.children;
+        for (var k in children) {
+          var mesh = children[k]
+          meshes[children[k].name] = mesh;
+          mesh.useQuaternion = false;
+        }
+        this.root.add(meshes.Body);
+        meshes.Body.rotation.x = -Math.PI/2;
+        meshes.Body.add(meshes.BodyNR);
+        meshes.Body.add(meshes.Glass);
+        meshes.Body.add(meshes.WingLI);
+        meshes.Body.add(meshes.WingRI);
+        if (this.config.wings) {
+          meshes.WingLI.add(meshes.WingLO);
+          meshes.WingLO.position.subSelf(meshes.WingLI.position);
+          meshes.WingRI.add(meshes.WingRO);
+          meshes.WingRO.position.subSelf(meshes.WingRI.position);
+        }
+        this.meshes = meshes;
+      } else {
+        this.bodyMesh = new THREE.Mesh(this.bodyGeometry, this.bodyMaterials[0]);
+        this.bodyMesh.material.ambient.copy(this.bodyMesh.material.color);
+        this.bodyMesh.material.map.flipY = false;
+        this.bodyMesh.position.subSelf(center);
+        this.bodyMesh.scale.set(s, s, s);
+        this.bodyMesh.castShadow = true;
+        this.bodyMesh.receiveShadow = true;
 
-      this.bodyMesh = new THREE.Mesh(this.bodyGeometry, this.bodyMaterials[0]);
-      this.bodyMesh.material.ambient.copy(this.bodyMesh.material.color);
-      this.bodyMesh.material.map.flipY = false;
-      this.bodyMesh.position.subSelf(center);
-      this.bodyMesh.scale.set(s, s, s);
-      this.bodyMesh.castShadow = true;
-      this.bodyMesh.receiveShadow = true;
-
-      this.root.add( this.bodyMesh );
+        this.root.add( this.bodyMesh );
+      }
 
       for (i = 0; i < this.config.wheels.length; ++i) {
         var cfg = this.config.wheels[i];
@@ -182,6 +234,14 @@ function(THREE, util) {
         for (var c = 0; c < sounds.crash.length; ++c) {
           this.aud.loadBuffer(sounds.crash[c], function(c, buffer) {
             this.buffersCrash[c] = buffer;
+          }.bind(this, c));
+        }
+        if (this.config.wings) {
+          this.aud.loadBuffer(sounds.hydraulic, function(c, buffer) {
+            this.bufferHydraulic = buffer;
+          }.bind(this, c));
+          this.aud.loadBuffer(sounds.slam, function(c, buffer) {
+            this.bufferSlam = buffer;
           }.bind(this, c));
         }
       }
