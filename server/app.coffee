@@ -375,6 +375,8 @@ getPaymentParams = (productId) ->
   product = products[productId]
   return null unless product
 
+  # TODO: Hide these details inside expresscheckout module.
+
   PAYMENTREQUEST_0_CUSTOM: productId
   PAYMENTREQUEST_0_PAYMENTACTION: 'Sale'
   PAYMENTREQUEST_0_AMT: product.cost
@@ -393,7 +395,6 @@ getPaymentParams = (productId) ->
   BUYEREMAILOPTINENABLE: 1
   # BUYERUSERNAME  # May be useful to increase user confidence?
   # BUYERREGISTRATIONDATE
-  # TAXIDTYPE and TAXID  # Required for Brazil ?!?!
 
   L_PAYMENTREQUEST_0_ITEMCATEGORY0: 'Digital'
   L_PAYMENTREQUEST_0_ITEMURL0: product.url
@@ -447,11 +448,11 @@ app.get '/checkout/return', (req, res) ->
       params.PAYERID = nvp_res.PAYERID
       params.RETURNFMFDETAILS = 1
       console.log "Calling: #{JSON.stringify params}"
-      # ppec.request params, (err, nvp_res) ->
-      console.log "OMIT CALL"
-      if true
-        # return failure 500, "#{params.METHOD} error: #{err}" if err
-        # console.log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
+      # console.log "OMIT CALL"
+      # if true
+      ppec.request params, (err, nvp_res) ->
+        return failure 500, "#{params.METHOD} error: #{err}" if err
+        console.log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
         return failure 500 if nvp_res.ACK isnt 'Success'
         products = bbUser.products ? []
         # We use concat instead of push to create a new array object.
@@ -462,7 +463,8 @@ app.get '/checkout/return', (req, res) ->
             console.log "PURCHASE COMPLETE for user #{bbUser.id}"
             res.redirect '/closeme'
           error: ->
-            failure 500, "COMPLETE BUT FAILED TO RECORD - VERY BAD!! user: #{JSON.stringify bbUser}"
+            console.log "user: #{JSON.stringify bbUser}"
+            failure 500, "COMPLETE BUT FAILED TO RECORD - VERY BAD!!"
 
 # app.post '/paypal/ipn', handleIPN
 

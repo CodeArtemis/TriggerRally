@@ -1,8 +1,17 @@
 .text-panel
   img.codeartemis(src="/images/codeartemis.svg")
+
   h2 Trigger Rally 
     span.highlight Ignition
-  p The Ignition Pack is awesome. You should buy it now.
+
+  p The Ignition Pack is the first expansion pack for Trigger Rally.
+  ul
+    li New car
+    li Support development of Trigger Rally
+
+  if purchased
+    p Thank you for purchasing the Ignition Pack!
+
   .checkout-box
     table
       tr
@@ -23,6 +32,9 @@
         else
           td: span.price $5 USD
           td: a.login(href="/login") Log in
+
+  if purchased
+    p TODO: Add a link to play something in the new pack.
 
   if purchased
     p

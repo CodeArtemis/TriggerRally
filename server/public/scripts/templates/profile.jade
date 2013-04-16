@@ -22,3 +22,4 @@ div(class="profile-card #{extraClass}")
     each badge in badges
       a.route(href=badge.href)
         img(src=badge.img_src, title=badge.img_title)
+        //- object(data=badge.img_src)
