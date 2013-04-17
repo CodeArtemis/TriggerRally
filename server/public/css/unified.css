@@ -413,6 +413,7 @@ input:checked + label {
   position: absolute;
 }
 #statusbar {
+  top: 0;
   width: 100%;
   z-index: 2;
 }
@@ -425,6 +426,34 @@ input:checked + label {
 }
 #statusbar > table td:last-child {
   text-align: right;
+}
+.dropdownmenu {
+  position: relative;
+}
+.dropdownmenu > menu {
+  position: absolute;
+  left: -1em;
+  top: 100%;
+  width: 15em;
+  background: rgba(255,221,170,0.9);
+  margin: 0;
+  padding: 0;
+  padding-top: 1em;
+  display: none;
+  border-radius: 0 0 0.4em 0.4em;
+}
+.dropdownmenu:hover > menu {
+  display: inline-block;
+}
+.dropdownmenu > menu > li {
+  padding: 0 1em;
+  border-radius: 0.4em;
+}
+.dropdownmenu > menu > li:hover {
+  background: #fda;
+}
+.dropdownmenu > menu > hr {
+  margin: 0.4em 1em;
 }
 #unified-child {
   position: relative;
@@ -453,7 +482,7 @@ img.github {
   margin-top: -1em;
   margin-right: -1em;
 }
-menu {
+.gui-container menu {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -463,9 +492,9 @@ menu {
   padding: 1em 0;
   text-align: center;
 }
-menu a,
-menu a:visited,
-menu a:hover {
+.gui-container menu a,
+.gui-container menu a:visited,
+.gui-container menu a:hover {
   display: block;
   margin: 0.4em auto;
   padding: 0.3em;
@@ -479,17 +508,18 @@ menu a:hover {
   transition: 0.1s;
   position: relative;
 }
-menu a:hover {
+.gui-container menu a:hover {
   opacity: 1;
   -webkit-transform: scale(1.05);
 }
-menu a:active {
+.gui-container menu a:active {
   -webkit-transform: scale(0.95);
 }
 menu li {
   list-style: none;
+  display: block;
 }
-.new-marker {
+.gui-container .new-marker {
   background: #f00;
   border-radius: 0.4em;
   color: #fff;
@@ -501,7 +531,7 @@ menu li {
   -webkit-transform: rotate(-20deg);
   transition: 0.1s;
 }
-menu a:hover .new-marker {
+.gui-container a:hover .new-marker {
   -webkit-transform: rotate(-10deg);
 }
 #view3d {

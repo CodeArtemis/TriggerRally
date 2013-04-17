@@ -89,6 +89,7 @@ function(THREE, util) {
       if (!vehic) return;
 
       var chassisState = vehic.body.interp;
+      if (!chassisState) return;
       this.root.position.copy(chassisState.pos);
       this.root.quaternion.copy(chassisState.ori);
 

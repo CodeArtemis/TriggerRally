@@ -18,9 +18,9 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
 
   // Track state of a vehicle within game/race.
   exports.Progress = function(checkpoints, vehicle) {
+    pubsub.PubSub.mixin(this);
     this.checkpoints = checkpoints;
     this.vehicle = vehicle;
-    this.pubsub = new pubsub.PubSub();
     this.restart();
   };
 
@@ -28,11 +28,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     this.nextCpIndex = 0;
     this.lastCpDistSq = 0;
     this.cpTimes = [];
-    this.pubsub.publish('advance');
-  };
-
-  exports.Progress.prototype.on = function(event, callback) {
-    this.pubsub.subscribe(event, callback);
+    this.trigger('advance');
   };
 
   exports.Progress.prototype.nextCheckpoint = function(i) {
@@ -63,7 +59,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
   exports.Progress.prototype.advanceCheckpoint = function(time) {
     ++this.nextCpIndex;
     this.cpTimes.push(time);
-    this.pubsub.publish('advance');
+    this.trigger('advance');
   };
 
   exports.Game = function(track) {

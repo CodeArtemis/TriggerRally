@@ -68,9 +68,9 @@ define [
       meshPos = @mesh.position
       pull = delta * 2
       pull = 1 if @current is 0
-      meshPos.x = PULLTOWARD meshPos.x, targetCp[0] + @initPos.x, pull
-      meshPos.y = PULLTOWARD meshPos.y, targetCp[1] + @initPos.y, pull
-      meshPos.z = PULLTOWARD meshPos.z, targetCp[2] + @initPos.z, pull
+      meshPos.x = PULLTOWARD meshPos.x, targetCp.pos[0] + @initPos.x, pull
+      meshPos.y = PULLTOWARD meshPos.y, targetCp.pos[1] + @initPos.y, pull
+      meshPos.z = PULLTOWARD meshPos.z, targetCp.pos[2] + @initPos.z, pull
 
     highlightCheckpoint: (i) ->
       @current = i
@@ -104,13 +104,13 @@ define [
     update: (camera, delta) ->
       vehic = @vehic
       convertKMH = 3.6
-      # @revMeter.rotation.z = -2.5 - 4.5 *
-      #     ((vehic.engineAngVelSmoothed - vehic.engineIdle) /
-      #         (vehic.engineRedline - vehic.engineIdle))
-      # speed = Math.abs(vehic.differentialAngVel) * vehic.avgDriveWheelRadius * convertKMH
-      # Just use real speed instead.
-      speed = convertKMH * vehic.body.getLinearVel().length()
+      @revMeter.rotation.z = -2.5 - 4.5 *
+          ((vehic.engineAngVelSmoothed - vehic.engineIdle) /
+              (vehic.engineRedline - vehic.engineIdle))
+      speed = Math.abs(vehic.differentialAngVel) * vehic.avgDriveWheelRadius * convertKMH
       @speedMeter.rotation.z = -2.5 - 4.5 * speed * 0.0035
+      # Use actual speed for the digital indicator.
+      speed = vehic.body.getLinearVel().length() * convertKMH
       @$digital.text speed.toFixed(0) + " km/h"
       return
 
@@ -153,16 +153,16 @@ define [
       camMatrixEl = camera.matrixWorld.elements
       @meshArrow.visible = nextCp?
       if nextCp
-        cpVec = new Vec2(nextCp.x - carPos.x,
-                         nextCp.y - carPos.y)
+        cpVec = new Vec2(nextCp.pos[0] - carPos.x,
+                         nextCp.pos[1] - carPos.y)
         cpVecCamSpace = new Vec2(
             cpVec.x * camMatrixEl[1] + cpVec.y * camMatrixEl[9],
             cpVec.x * camMatrixEl[0] + cpVec.y * camMatrixEl[8])
         @meshArrow.rotation.y = Math.atan2(cpVecCamSpace.y, cpVecCamSpace.x)
       @meshArrow2.visible = nextCp2?
       if nextCp2
-        cpVec = new Vec2(nextCp2.x - carPos.x,
-                         nextCp2.y - carPos.y)
+        cpVec = new Vec2(nextCp2.pos[0] - carPos.x,
+                         nextCp2.pos[1] - carPos.y)
         cpVecCamSpace = new Vec2(
             cpVec.x * camMatrixEl[1] + cpVec.y * camMatrixEl[9],
             cpVec.x * camMatrixEl[0] + cpVec.y * camMatrixEl[8])
@@ -404,7 +404,7 @@ define [
       # TODO: Pick these up from root.prefs? (probably not root.user)
       # Should be synced to localstorage or something.
       prefs = options?.prefs or {
-        audio: yes
+        audio: no
         shadows: yes
         terrainhq: yes
       }
@@ -429,10 +429,13 @@ define [
 
       @add new SunLight @scene, prefs.shadows
 
-      @audio = new clientAudio.WebkitAudio() if prefs.audio
-      checkpointBuffer = null
-      @audio?.loadBuffer '/a/sounds/checkpoint.wav', (buffer) ->
-        checkpointBuffer = buffer
+      @audio = new clientAudio.WebkitAudio()
+      @audio.mute() unless root.prefs.audio
+      @checkpointBuffer = null
+      @audio.loadBuffer '/a/sounds/checkpoint.ogg', (buffer) =>
+        @checkpointBuffer = buffer
+      root.on 'change:prefs.audio', (prefs, audio) =>
+        if audio then @audio.unmute() else @audio.mute()
 
       @track = new gameTrack.Track @root
 
@@ -479,8 +482,7 @@ define [
         @add new RenderCheckpointArrows @camera, progress
         progress.on 'advance', =>
           renderCheckpoints.highlightCheckpoint progress.nextCpIndex
-          if checkpointBuffer?
-            @audio?.playSound checkpointBuffer, false, 1, 1
+          @audio?.playSound @checkpointBuffer, false, 1, 1 if @checkpointBuffer?
         return
 
       # game.on 'deletevehicle', (progress) =>

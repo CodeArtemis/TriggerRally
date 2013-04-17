@@ -14,8 +14,8 @@ define [
   jsonClone = (obj) -> JSON.parse JSON.stringify obj
 
   class RootModel extends models.Model
-    models.buildProps @, [ 'track', 'user' ]
-    bubbleAttribs: [ 'track', 'user' ]
+    models.buildProps @, [ 'track', 'user', 'prefs' ]
+    bubbleAttribs: [ 'track', 'user', 'prefs' ]
     # initialize: ->
     #   super
     #   @on 'all', (event) ->
@@ -23,11 +23,19 @@ define [
     #     console.log "RootModel: \"#{event}\""
     #     # console.log "RootModel: " + JSON.stringify arguments
 
+  class PrefsModel extends models.Model
+    models.buildProps @, [ 'audio', 'shadows', 'terrainhq' ]
+    defaults:
+      audio: no
+      shadows: yes
+      terrainhq: yes
+
   class App
     constructor: ->
       @root = new RootModel
         user: null
         track: null
+        prefs: new PrefsModel
 
       @unifiedView = (new UnifiedView @).render()
 

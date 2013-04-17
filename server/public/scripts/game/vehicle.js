@@ -470,20 +470,20 @@ function(THREE, psim, collision, util) {
                                oami.y + (wami.y - oami.y) * wingFactor,
                                oami.z + (wami.z - oami.z) * wingFactor);
       // TODO: Transfer all this stuff to config.
-      var lift = wingFactor * 200;
+      var lift = wingFactor * 150;
       var linDragX = 0.2 * wingFactor;
       var linDragY = 0.2 * wingFactor;
       var linDragZ = 0.2 * wingFactor;
       var angDrag = 100 * wingFactor;
       var finEffectX = 200 * wingFactor;
-      var finEffectY = 100 * wingFactor;
+      var finEffectY = 200 * wingFactor;
       var finEffectZ = 30 * wingFactor;
       var llv = this.body.getLocLinearVel();
       var locLinVelX = llv.x;
       var locLinVelY = llv.y;
       var locLinVelZ = llv.z;
       var locAngVel = this.body.getLocAngularVel();  // overwrites llv.
-      var logFwdVel = Math.log(Math.abs(locLinVelZ) + 1);
+      var logFwdVel = Math.log(Math.abs(locLinVelZ) + 0.5);
       var turnSpeed = 4;
       var turnRateA = 60 * wingFactor;  // Speed independent turn thrust.
       var turnRateB = 2000 * wingFactor;  // More realistic control surface turn rate.
@@ -491,7 +491,7 @@ function(THREE, psim, collision, util) {
       var input = this.controller.input;
       var turn = this.wheelTurnPos;
       tmpVec3a.set(0.5 * (input.throttle - input.brake),
-                   turn * 0.2, -turn).multiplyScalar(turnSpeed);
+                   turn * 0.1, -turn).multiplyScalar(turnSpeed);
       tmpVec3b.copy(tmpVec3a).multiplyScalar(turnRateA);
       this.body.addLocTorque(tmpVec3b);
       tmpVec3a.subSelf(locAngVel).multiplyScalar(logFwdVel * turnRateB);

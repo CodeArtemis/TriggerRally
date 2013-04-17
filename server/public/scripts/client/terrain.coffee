@@ -445,8 +445,7 @@ define [
           else throw 'Unknown type'
 
       createTexture = (buffer, mipmap) =>
-        console.log "createTexture"
-        console.log buffer
+        console.log "createTexture " + buffer.url
         tex = new THREE.DataTexture(
             buffer.data,
             buffer.width,
@@ -493,9 +492,12 @@ define [
 
       # Do a pull only if the rest of the pipeline has already executed.
       # TODO: Implement optimized quiver multi-pull.
-      quiver.pull heightNode if heightNode.updated
-      quiver.pull surfaceNode if surfaceNode.updated
-      quiver.pull detailNode if detailNode.updated
+      console.log maps.height.q_map
+      console.log maps.surface.q_map
+      console.log maps.detail.q_map
+      quiver.pull heightNode if maps.height.q_map.updated
+      quiver.pull surfaceNode if maps.surface.q_map.updated
+      quiver.pull detailNode if maps.detail.q_map.updated
 
       return
 

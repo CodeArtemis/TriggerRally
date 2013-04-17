@@ -18,20 +18,41 @@ function(util) {
 
     // Map from url to buffer.
     this.buffers = {};
+    // Two gain values allow independent volume control and muting.
+    this.gain = 1;
+    this.muteGain = 1;
+    // TODO: Find a way to save CPU when set to zero gain.
   };
 
-  exports.WebkitAudio.prototype.setGain = function(gain) {
+  var prot = exports.WebkitAudio.prototype;
+
+  prot._updateGain = function() {
     if (!this.audio) return;
-    this.master.gain.value = gain;
+    this.master.gain.value = this.gain * this.muteGain;
+  };
+
+  prot.mute = function() {
+    this.muteGain = 0;
+    this._updateGain();
+  };
+
+  prot.unmute = function() {
+    this.muteGain = 1;
+    this._updateGain();
+  };
+
+  prot.setGain = function(gain) {
+    this.gain = gain;
+    this._updateGain();
   };
 
   // Return buffer iff already loaded.
-  exports.WebkitAudio.prototype.getBuffer = function(url) {
+  prot.getBuffer = function(url) {
     var buffer = this.buffers[url];
     return (buffer instanceof CallbackQueue) ? null : buffer || null;
   };
 
-  exports.WebkitAudio.prototype.loadBuffer = function(url, callback) {
+  prot.loadBuffer = function(url, callback) {
     if (url in this.buffers) {
       var buffer = this.buffers[url];
       if (buffer instanceof CallbackQueue) {
@@ -55,7 +76,7 @@ function(util) {
     request.send();
   };
 
-  exports.WebkitAudio.prototype.playSound = function(buffer, loop, gain, rate) {
+  prot.playSound = function(buffer, loop, gain, rate) {
     var source = this.audio.createBufferSource();
     source.buffer = buffer;
     source.connect(this.master);

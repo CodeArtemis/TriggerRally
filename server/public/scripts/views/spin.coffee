@@ -35,7 +35,7 @@ define [
       renderCar = null
       do updateCar = =>
         products = @app.root.user?.products
-        return unless products?  # Don't start loading the Arbusu only to change it immediately afterwards.
+        return unless products?  # Wait until we know which car to load.
         purchasedIgnition = 'ignition' in products
         carId = if purchasedIgnition then 'Icarus' else 'ArbusuG'
 
@@ -48,7 +48,7 @@ define [
                 interp:
                   pos: new Vec3(0,0,0)
                   ori: (new THREE.Quaternion(1,1,1,1)).normalize()
-            renderCar.destroy() if renderCar?
+            renderCar?.destroy()
             renderCar = new clientCar.RenderCar startpos, mockVehicle, null
             renderCar.update()
 

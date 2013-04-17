@@ -7,8 +7,27 @@ table
       a.route(href="/") Home
       | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       a.route(href="/about") About
+      //- | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      //- a(href="javascript:location.reload()") Reload
       | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      a.reload(href="javascript:location.reload()") Reload
+      span.dropdownmenu Settings
+        menu
+          li: label
+            input#pref-audio(type="checkbox", checked=prefs.audio)
+            | Sound
+          li: label
+            input#pref-shadows(type="checkbox", checked=prefs.shadows)
+            | Shadows
+          li: label
+            input#pref-terrainhq(type="checkbox", checked=prefs.terrainhq)
+            | High quality terrain
+          hr
+          li: label
+            input(type="radio", name="car")
+            | Arbusu G
+          li: label
+            input(type="radio", name="car")
+            | Icarus
     td
       span Status:&nbsp;
       span#status Loading
