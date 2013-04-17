@@ -1,12 +1,13 @@
-menu.gui-container
-  h2 Trigger Rally 
-    span.smaller by Code Artemis
-  li
-    a.route(href="/track/v3-base-1/drive") Play
-  li
-    a(href="/recenttracks") User tracks
-  li
-    a.route(href="/about") About
-  li
-    a.route(href="/ignition") Ignition
-      .new-marker New!
+.gui-container
+  menu
+    h2 Trigger Rally 
+      span.smaller by Code Artemis
+    li
+      a.route(href="/track/v3-base-1/drive") Play
+    li
+      a(href="/recenttracks") User tracks
+    li
+      a.route(href="/about") About
+    li.ignition-promo.hidden
+      a.route(href="/ignition") Ignition
+        .new-marker New!

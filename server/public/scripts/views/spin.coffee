@@ -13,8 +13,10 @@ define [
 
   class Spin
     constructor: (@app, @client) ->
+      _.extend @, Backbone.Events
 
     destroy: ->
+      @stopListening()
 
     render: ->
       @startpos = startpos = new THREE.Object3D
@@ -30,17 +32,28 @@ define [
               startpos.position.set track.config.course.startposition.pos...
               startpos.rotation.set track.config.course.startposition.rot...
 
-      carModel = new models.Car id: 'ArbusuG'
-      carModel.fetch
-        success: =>
-          mockVehicle =
-            cfg: carModel.config
-            body:
-              interp:
-                pos: new Vec3(0,0,0)
-                ori: (new THREE.Quaternion(1,1,1,1)).normalize()
-          renderCar = new clientCar.RenderCar startpos, mockVehicle, null
-          renderCar.update()
+      renderCar = null
+      do updateCar = =>
+        products = @app.root.user?.products
+        return unless products?  # Don't start loading the Arbusu only to change it immediately afterwards.
+        purchasedIgnition = 'ignition' in products
+        carId = if purchasedIgnition then 'Icarus' else 'ArbusuG'
+
+        carModel = new models.Car id: carId
+        carModel.fetch
+          success: =>
+            mockVehicle =
+              cfg: carModel.config
+              body:
+                interp:
+                  pos: new Vec3(0,0,0)
+                  ori: (new THREE.Quaternion(1,1,1,1)).normalize()
+            renderCar.destroy() if renderCar?
+            renderCar = new clientCar.RenderCar startpos, mockVehicle, null
+            renderCar.update()
+
+      @listenTo @app.root, 'change:user', updateCar
+      @listenTo @app.root, 'change:user.products', updateCar
 
       @client.camera.idealFov = 50
       @client.updateCamera()

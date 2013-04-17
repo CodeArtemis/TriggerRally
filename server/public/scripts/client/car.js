@@ -85,73 +85,76 @@ function(THREE, util) {
 
     this.update = function() {
       // Update graphics and audio state from physics.
-      if (!this.vehic) return;
+      var vehic = this.vehic;
+      if (!vehic) return;
 
-      var chassisState = this.vehic.body.interp;
+      var chassisState = vehic.body.interp;
       this.root.position.copy(chassisState.pos);
       this.root.quaternion.copy(chassisState.ori);
 
       for (var w = 0; w < this.wheels.length; ++w) {
         var wheel = this.wheels[w];
-        var vWheel = this.vehic.wheels[w];
+        var vWheel = vehic.wheels[w];
         wheel.root.position.y = wheel.cfg.pos[1] -
                                 this.config.center[1] + vWheel.ridePos;
-        wheel.root.rotation.y = this.vehic.getWheelTurnPos(vWheel);
+        wheel.root.rotation.y = vehic.getWheelTurnPos(vWheel);
         wheel.mesh.rotation.x = vWheel.spinPos;
       }
 
       if (this.config.wings && this.meshes) {
-        var fold = this.vehic.wingFold;
+        var fold = vehic.wingFold;
         // console.log(fold);
         var meshes = this.meshes;
-        var angI = util.cubic(fold);
+        var foldI = util.cubic(fold);
         var tmp = fold - 1;
-        var angO = 1 - tmp * tmp * tmp * tmp;
-        meshes.WingLI.rotation.z = angI;
-        meshes.WingLO.rotation.z = angO;
-        meshes.WingRI.rotation.z = -angI;
-        meshes.WingRO.rotation.z = -angO;
+        var foldO = 1 - tmp * tmp * tmp * tmp;
+        var liftFlex = 0.000002 * vehic.liftForce;
+        var aileron = 0.3 * vehic.wheelTurnPos;
+        meshes.WingLI.rotation.set(liftFlex, -liftFlex, foldI);
+        meshes.WingLO.rotation.set(liftFlex + aileron, -liftFlex, foldO);
+        meshes.WingRI.rotation.set(liftFlex, liftFlex, -foldI);
+        meshes.WingRO.rotation.set(liftFlex - aileron, liftFlex, -foldO);
       }
 
       if (this.aud) {
         if (this.sourceEngine) {
-          this.sourceEngine.gain.value = this.vehic.controller.output.throttle * 0.2 + 0.4;
-          this.sourceEngine.playbackRate.value = this.vehic.engineAngVelSmoothed /
+          this.sourceEngine.gain.value = vehic.controller.output.throttle * 0.2 + 0.4;
+          this.sourceEngine.playbackRate.value = vehic.engineAngVelSmoothed /
               (this.config.sounds.engineRpm * Math.PI / 30);
         }
         if (this.sourceTransmission) {
-          var transmissionRate = this.vehic.differentialAngVel /
+          var transmissionRate = vehic.differentialAngVel /
               (this.config.sounds.transmissionRpm * Math.PI / 30);
-          this.sourceTransmission.gain.value = Math.min(1, transmissionRate) * this.vehic.controller.output.throttle * 0.08;
+          this.sourceTransmission.gain.value = Math.min(1, transmissionRate) * vehic.controller.output.throttle * 0.08;
           this.sourceTransmission.playbackRate.value = transmissionRate;
         }
         if (this.sourceWind) {
-          var linVel = this.vehic.body.linVel;
+          var linVel = vehic.body.linVel;
           var windRate = linVel.length() / this.config.sounds.windSpeed;
           this.sourceWind.gain.value = Math.min(1.4, windRate) * 1.4;
           this.sourceWind.playbackRate.value = windRate + 0.5;
         }
         if (this.sourceSkid) {
-          var skidLev = this.vehic.skidLevel * 0.0001;
+          var skidLev = vehic.skidLevel * 0.0001;
           this.sourceSkid.gain.value = Math.log(1 + skidLev) * 0.6;
           this.sourceSkid.playbackRate.value = Math.log(1 + skidLev) * 0.2 + 0.7;
         }
 
-        var cnl = this.vehic.getCrashNoiseLevel() * 0.000005;
+        var cnl = vehic.getCrashNoiseLevel() * 0.000005;
         if (cnl > 0 && this.buffersCrash.length > 0) {
           this.aud.playSound(
               this.buffersCrash[Math.floor(Math.random() * this.buffersCrash.length)],
               false, Math.log(1 + cnl), 0.99 + Math.random() * 0.02);
         }
-        for (var k in this.vehic.events) {
-          var type = this.vehic.events[k].type;
+        for (var k in vehic.events) {
+          var type = vehic.events[k].type;
           if (type == 'sfx:hydraulic' && this.bufferHydraulic) {
             this.aud.playSound(this.bufferHydraulic, false, 1, 1);
           } else if (type == 'sfx:slam' && this.bufferSlam) {
             this.aud.playSound(this.bufferSlam, false, 1, 1);
           }
         }
-        this.vehic.events = [];
+        vehic.events = [];
       }
     };
 
@@ -172,9 +175,12 @@ function(THREE, util) {
           var mesh = children[k]
           meshes[children[k].name] = mesh;
           mesh.useQuaternion = false;
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
         }
         this.root.add(meshes.Body);
         meshes.Body.rotation.x = -Math.PI/2;
+        meshes.Body.position.subSelf(center);
         meshes.Body.add(meshes.BodyNR);
         meshes.Body.add(meshes.Glass);
         meshes.Body.add(meshes.WingLI);

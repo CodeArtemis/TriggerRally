@@ -265,6 +265,9 @@ a.disabled:visited {
   overflow: hidden;
   opacity: 0.95;
 }
+.profile-card.purchased {
+  border-color: #e21;
+}
 .profile-card > * {
   position: absolute;
   font-size: 0.77em;
@@ -272,19 +275,42 @@ a.disabled:visited {
   padding: 0;
   z-index: 2;
 }
-.profile-card img.profile {
+.profile-card .picture {
   top: 1em;
   left: 1em;
   width: 7em;
   height: 7em;
   border: 0.1em solid #000;
   border-radius: 0.4em;
+  background-size: cover;
 }
-.profile-card.user-owned img.profile {
+.profile-card.editable.purchased .picture {
   cursor: pointer;
 }
-.profile-card.user-owned img.profile:hover {
+.profile-card.editable.purchased .picture:hover {
   box-shadow: 0 0 0.4em #6f1;
+}
+.profile-card .picture .img-overlay {
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0%;
+  padding: 0.5em;
+  text-align: center;
+  pointer-events: none;
+  transition: 1s;
+}
+.profile-card .picture .img-overlay a {
+  pointer-events: initial;
+}
+.profile-card.editable.purchased .picture .img-overlay {
+  top: 40%;
+  opacity: 0;
+}
+.profile-card.editable.purchased .picture:hover .img-overlay {
+  top: 100%;
+  opacity: 1;
 }
 .profile-card h1 {
   left: 9em;
@@ -300,7 +326,7 @@ a.disabled:visited {
 .profile-card .category a {
   display: none;
 }
-.profile-card.user-owned .category a {
+.profile-card.editable .category a {
   display: initial;
 }
 .profile-card .user-name {
@@ -309,10 +335,10 @@ a.disabled:visited {
   top: 4em;
   height: 1em;
 }
-.profile-card.user-owned div.user-name {
+.profile-card.editable div.user-name {
   cursor: pointer;
 }
-.profile-card.user-owned div.user-name:hover {
+.profile-card.editable div.user-name:hover {
   text-shadow: 0 0 0.2em #6f1;
 }
 .profile-card input.user-name {

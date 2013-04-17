@@ -258,6 +258,7 @@ function(THREE, psim, collision, util) {
       this.wingAngMass = new Vec3(guess, guess * 2, guess);
       guess = 1 / guess;
       this.wingAngMassInv = new Vec3(guess, guess * 2, guess);
+      this.liftForce = 0;
     }
   };
 
@@ -468,46 +469,50 @@ function(THREE, psim, collision, util) {
       this.body.angMassInv.set(oami.x + (wami.x - oami.x) * wingFactor,
                                oami.y + (wami.y - oami.y) * wingFactor,
                                oami.z + (wami.z - oami.z) * wingFactor);
-      var lift = wingFactor * 100;
-      var linDragX = 5 * wingFactor;
-      var linDragY = 5 * wingFactor;
-      var linDragZ = 5 * wingFactor;
+      // TODO: Transfer all this stuff to config.
+      var lift = wingFactor * 200;
+      var linDragX = 0.2 * wingFactor;
+      var linDragY = 0.2 * wingFactor;
+      var linDragZ = 0.2 * wingFactor;
       var angDrag = 100 * wingFactor;
       var finEffectX = 200 * wingFactor;
       var finEffectY = 100 * wingFactor;
-      var angVel = this.body.getAngularVel().clone();
-      var locLinVel = this.body.getLocLinearVel().clone();
-      var locAngVel = this.body.getLocAngularVel().clone();
-      var fwdVel = locLinVel.z;
-      var turnSpeed = 3;
-      var turnRateA = 60 * wingFactor;
-      var turnRateB = 60 * wingFactor;
+      var finEffectZ = 30 * wingFactor;
+      var llv = this.body.getLocLinearVel();
+      var locLinVelX = llv.x;
+      var locLinVelY = llv.y;
+      var locLinVelZ = llv.z;
+      var locAngVel = this.body.getLocAngularVel();  // overwrites llv.
+      var logFwdVel = Math.log(Math.abs(locLinVelZ) + 1);
+      var turnSpeed = 4;
+      var turnRateA = 60 * wingFactor;  // Speed independent turn thrust.
+      var turnRateB = 2000 * wingFactor;  // More realistic control surface turn rate.
 
       var input = this.controller.input;
-      tmpVec3a.set(input.throttle - input.brake,
-                   input.turn * 0.2, -input.turn).multiplyScalar(turnSpeed);
+      var turn = this.wheelTurnPos;
+      tmpVec3a.set(0.5 * (input.throttle - input.brake),
+                   turn * 0.2, -turn).multiplyScalar(turnSpeed);
       tmpVec3b.copy(tmpVec3a).multiplyScalar(turnRateA);
       this.body.addLocTorque(tmpVec3b);
-      tmpVec3a.subSelf(locAngVel).multiplyScalar(fwdVel * turnRateB);
+      tmpVec3a.subSelf(locAngVel).multiplyScalar(logFwdVel * turnRateB);
       this.body.addLocTorque(tmpVec3a);
 
       // Fin effect (torque due to drag).
-      // TODO: Offset/balance this so that the car flies level.
       this.body.addLocTorque(tmpVec3a.set(
-                -locLinVel.y * finEffectX,
-                locLinVel.x * finEffectY,
+                -locLinVelY * finEffectX - locLinVelZ * finEffectZ,
+                locLinVelX * finEffectY,
                 0));
 
       // Angular drag.
-      angVel.multiplyScalar(-angDrag);
-      this.body.addTorque(angVel);
+      tmpVec3a.copy(this.body.getAngularVel()).multiplyScalar(-angDrag);
+      this.body.addTorque(tmpVec3a);
 
       // Linear drag and lift.
-      // TODO: abs(fwd)?
-      tmpVec3a.x = -linDragX * locLinVel.x;
-      tmpVec3a.y = -(linDragY + lift * fwdVel) * locLinVel.y;
-      tmpVec3a.z = -linDragZ * locLinVel.z;
+      tmpVec3a.x = -linDragX * locLinVelX * Math.abs(locLinVelX);
+      tmpVec3a.y = -(linDragY + lift * logFwdVel) * locLinVelY * Math.abs(locLinVelY);
+      tmpVec3a.z = -linDragZ * locLinVelZ * Math.abs(locLinVelZ);
       this.body.addLocForce(tmpVec3a);
+      this.liftForce = tmpVec3a.y;
     }
 
     this.hasContact = false;

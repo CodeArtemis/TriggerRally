@@ -445,6 +445,8 @@ define [
           else throw 'Unknown type'
 
       createTexture = (buffer, mipmap) =>
+        console.log "createTexture"
+        console.log buffer
         tex = new THREE.DataTexture(
             buffer.data,
             buffer.width,

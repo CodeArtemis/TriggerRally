@@ -81,8 +81,6 @@ define [
                 #    # We can't save the run, but show a Twitter link.
                 #    showTwitterLink()
 
-      $(document).on 'keydown', (event) -> client.onKeyDown event
-      $(document).on 'keyup', (event) -> client.onKeyUp event
       client.on 'keydown', (event) =>
         switch event.keyCode
           when KEYCODE['C']

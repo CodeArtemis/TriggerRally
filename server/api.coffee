@@ -154,6 +154,8 @@ module.exports =
       res.json user.toJSON { authenticated }
 
     app.put "#{base}/users/:user_id", editUrlUser, (req, res) ->
+      products = req.fromUrl.user.products ? []
+      return jsonError 403, res if 'picture' of req.body and 'ignition' not in products
       allowedKeys = [ 'name', 'picture' ]
       filterAndSaveIfModified req.fromUrl.user, allowedKeys, req, res
 

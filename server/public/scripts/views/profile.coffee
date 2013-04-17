@@ -25,6 +25,7 @@ define [
       @model.fetch()
 
     editable: -> @model.id is @app.root.user?.id
+    purchased: -> 'ignition' in (@model.products ? [])
 
     loadingText = '...'
     pictureSrc = (picture) ->
@@ -40,15 +41,17 @@ define [
     viewModel: ->
       loading = '...'
       data = super
+      data.loaded = data.name?
       data.issueDate = issueDate data.created
       data.name ?= loading
-      data.pic_src = pictureSrc data.picture
+      data.noPicture = not data.picture?
+      # data.pic_src = pictureSrc data.picture
       data.editable = @editable()
-      data.title = 'Provisional License'
+      data.purchased = @purchased()
+      data.title = if data.purchased then 'Rally License' else 'Provisional License'
       data.badges = []
       products = data.products ? []
       if 'ignition' in products
-        data.title = 'Rally License'
         data.badges.push
           href: '/ignition'
           img_src: '/images/packs/ignition.svg'
@@ -58,14 +61,16 @@ define [
     afterRender: ->
       $created = @$('div.issued')
       $name = @$('div.user-name')
-      $pic = @$('img.profile')
+      $pic = @$('.picture')
       $nameError = @$('div.user-name-error')
+
+      $pic.css 'background-image', "url(#{pictureSrc @model.picture})"
 
       @listenTo @model, 'change:name', (model, value) =>
         $name.text value
 
       @listenTo @model, 'change:picture', (model, value) =>
-        $pic.attr 'src', pictureSrc value
+        $pic.css 'background-image', "url(#{pictureSrc @model.picture})"
 
       @listenTo @model, 'change:created', (model, value) =>
         $created.text issueDate value
@@ -101,6 +106,7 @@ define [
         $name.parent().append $input
         $input.focus()
 
-      $pic.click (event) =>
-        picture = parseInt(@model.picture ? -1, 10)
-        @model.save { picture: (picture + 1) % 6 }
+      if @purchased()
+        $pic.click (event) =>
+          picture = parseInt(@model.picture ? -1, 10)
+          @model.save { picture: (picture + 1) % 6 }

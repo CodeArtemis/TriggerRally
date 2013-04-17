@@ -103,15 +103,13 @@ define [
 
     update: (camera, delta) ->
       vehic = @vehic
-      @revMeter.rotation.z = -2.5 - 4.5 *
-          ((vehic.engineAngVelSmoothed - vehic.engineIdle) /
-              (vehic.engineRedline - vehic.engineIdle))
-      # I'm not sure where or how this factor has crept in. It's suspiciously close to the
-      # first gear ratio though (3.636).
-      # Approx max speed of ArbusuG measured as 7678m / 112s = 246.8 km/h,
-      # while this magic number shows a max speed of 250km/h which is close enough for now.
-      MAGIC_CONVERSION = 3.6
-      speed = Math.abs(vehic.differentialAngVel) * vehic.avgDriveWheelRadius * MAGIC_CONVERSION
+      convertKMH = 3.6
+      # @revMeter.rotation.z = -2.5 - 4.5 *
+      #     ((vehic.engineAngVelSmoothed - vehic.engineIdle) /
+      #         (vehic.engineRedline - vehic.engineIdle))
+      # speed = Math.abs(vehic.differentialAngVel) * vehic.avgDriveWheelRadius * convertKMH
+      # Just use real speed instead.
+      speed = convertKMH * vehic.body.getLinearVel().length()
       @speedMeter.rotation.z = -2.5 - 4.5 * speed * 0.0035
       @$digital.text speed.toFixed(0) + " km/h"
       return

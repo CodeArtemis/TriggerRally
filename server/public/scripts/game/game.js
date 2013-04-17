@@ -43,7 +43,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     var vehic = this.vehicle;
     var nextCp = this.nextCheckpoint(0);
     if (!nextCp) return;
-    var cpVec = new Vec2(vehic.body.pos.x - nextCp.x, vehic.body.pos.y - nextCp.y);
+    var cpVec = new Vec2(vehic.body.pos.x - nextCp.pos[0], vehic.body.pos.y - nextCp.pos[1]);
     var cpDistSq = cpVec.lengthSq();
     var CP_TEST = 18*18;
     if (cpDistSq < CP_TEST) {

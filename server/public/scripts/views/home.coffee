@@ -23,3 +23,11 @@ define [
     className: 'overlay'
     template: template
     constructor: (@app, @client) -> super()
+
+    afterRender: ->
+      do updatePromo = =>
+        products = @app.root.user?.products ? []
+        @$('.ignition-promo').toggleClass 'hidden', 'ignition' in products
+
+      @listenTo @app.root, 'change:user', updatePromo
+      @listenTo @app.root, 'change:user.products', updatePromo

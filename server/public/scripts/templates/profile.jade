@@ -1,7 +1,25 @@
 .gui-container
-  extraClass = editable ? "user-owned" : ""
-  div(class="profile-card #{extraClass}")
-    img.profile(src=pic_src)
+  classes = [ 'profile-card' ]
+  if editable
+    - classes.push('editable');
+  if purchased
+    - classes.push('purchased');
+  div(class="#{classes.join(' ')}")
+    .badges
+      .label Endorsements
+      each badge in badges
+        a.route(href=badge.href)
+          img(src=badge.img_src, title=badge.img_title)
+          //- object(data=badge.img_src)
+    span &nbsp;
+    .picture
+      if loaded
+        if purchased
+          .img-overlay Click to choose your avatar
+        else
+          .img-overlay Buy the 
+            a.route(href="/ignition") Ignition Pack
+            |  to choose your avatar!
     span &nbsp;
     h1
       div #{title}&nbsp;
@@ -16,10 +34,3 @@
     .user-name-error
     span &nbsp;
     .issued Issued: #{issueDate}
-    span &nbsp;
-    .badges
-      .label Endorsements
-      each badge in badges
-        a.route(href=badge.href)
-          img(src=badge.img_src, title=badge.img_title)
-          //- object(data=badge.img_src)

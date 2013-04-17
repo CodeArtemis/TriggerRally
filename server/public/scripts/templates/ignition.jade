@@ -1,49 +1,55 @@
-.text-panel.gui-container
-  img.codeartemis(src="/images/codeartemis.svg")
+.gui-container
+  .text-panel
+    img.codeartemis(src="/images/codeartemis.svg")
 
-  h2 Trigger Rally 
-    span.highlight Ignition
+    h2 Trigger Rally 
+      span.highlight Ignition
 
-  p The Ignition Pack is the first expansion pack for Trigger Rally.
-  ul
-    li New car
-    li Support development of Trigger Rally
+    p The Ignition Pack is an expansion for Trigger Rally.
+    ul
+      li Get the <b>Icarus</b> car with <b>Extreme Aerial Control&trade;</b>
+      li Upgrade to <b>Rally License</b> and choose your avatar
+      li <b>Support</b> the development of Trigger Rally
 
-  if purchased
-    p Thank you for purchasing the Ignition Pack!
+    if purchased
+      p
+        strong Thank you for purchasing the Ignition Pack.
+        |  Now take your 
+        a.route(href="/user/#{user.id}") upgraded license
+        |  and 
+        a(href="/track/blah/drive") go play!
 
-  .checkout-box
-    table
-      tr
-        td: img.pack(src="/images/packs/ignition.svg")
-        td Ignition Pack
-      tr
-        if purchased
-          td
-          td
-            .purchased Purchased.
-              br
-              | Thank you!
-        else if user
-          td: span.price $5 USD
-          td
-            a.paypal-checkout(href="/checkout?product=ignition")
-              img(src="https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif")
-        else
-          td: span.price $5 USD
-          td: a.login(href="/login") Log in
+    .checkout-box
+      table
+        tr
+          td: img.pack(src="/images/packs/ignition.svg")
+          td Ignition Pack
+        tr
+          if purchased
+            td
+            td
+              .purchased Purchased.
+                br
+                | Thank you!
+          else if user
+            td: span.price $5 USD
+            td
+              a.paypal-checkout(href="/checkout?product=ignition")
+                img(src="https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif")
+          else
+            td: span.price $5 USD
+            td: a.login(href="/login") Log in
 
-  if purchased
-    p TODO: Add a link to play something in the new pack.
+    if purchased
+      p
+        | If you need help with your purchase,
+        | please contact sup<span class="hidden">.remove.</span>port@codeartemis.com
+    else if user
+      p Purchase will be credited to user ID #{user.id} (#{user.name}).
 
-  if purchased
-    p
-      | If you need help with your purchase,
-      | please contact sup<span class="hidden">.remove.</span>port@codeartemis.com
-  else if user
-    p Purchase will be credited to user ID #{user.id} (#{user.name}).
+    p Want to buy for someone else? Please contact sup<span class="hidden">.remove.</span>port@codeartemis.com
 
-  p Use is subject to the 
-    a.route(href="/license") License and Terms of Use
-    | .
-  .clear-both
+    p Use is subject to the 
+      a.route(href="/license") License and Terms of Use
+      | .
+    .clear-both
