@@ -356,29 +356,28 @@ define [
       return
 
   class SunLight
-    constructor: (scene, useShadows) ->
+    constructor: (scene) ->
       sunLight = @sunLight = new THREE.DirectionalLight( 0xffe0bb )
       sunLight.intensity = 1.3
       @sunLightPos = new Vec3 -6, 7, 10
       sunLight.position.copy @sunLightPos
 
-      sunLight.castShadow = useShadows
+      sunLight.castShadow = yes
 
-      if useShadows
-        sunLight.shadowCameraNear = -20
-        sunLight.shadowCameraFar = 60
-        sunLight.shadowCameraLeft = -24
-        sunLight.shadowCameraRight = 24
-        sunLight.shadowCameraTop = 24
-        sunLight.shadowCameraBottom = -24
+      sunLight.shadowCameraNear = -20
+      sunLight.shadowCameraFar = 60
+      sunLight.shadowCameraLeft = -24
+      sunLight.shadowCameraRight = 24
+      sunLight.shadowCameraTop = 24
+      sunLight.shadowCameraBottom = -24
 
-        #sunLight.shadowCameraVisible = true
+      #sunLight.shadowCameraVisible = true
 
-        #sunLight.shadowBias = -0.001
-        sunLight.shadowDarkness = 0.5
+      #sunLight.shadowBias = -0.001
+      sunLight.shadowDarkness = 0.5
 
-        sunLight.shadowMapWidth = 1024
-        sunLight.shadowMapHeight = 1024
+      sunLight.shadowMapWidth = 1024
+      sunLight.shadowMapHeight = 1024
 
       scene.add sunLight
       return
@@ -401,16 +400,14 @@ define [
       @objects = {}
       @pubsub = new pubsub.PubSub()
 
-      # TODO: Pick these up from root.prefs? (probably not root.user)
-      # Should be synced to localstorage or something.
-      prefs = options?.prefs or {
-        audio: no
-        shadows: yes
-        terrainhq: yes
-      }
+      prefs = root.prefs
 
       @renderer = @createRenderer prefs.shadows
       @containerEl.appendChild @renderer.domElement if @renderer
+      # This may be unexpected and unwelcome behavior.
+      # prefs.on 'change:shadows', ->
+      #   # We have to reload because shadow code is baked into the shaders.
+      #   window.location.reload()
 
       @sceneHUD = new THREE.Scene()
       @cameraHUD = new THREE.OrthographicCamera -1, 1, 1, -1, 1, -1
@@ -427,14 +424,14 @@ define [
       @scene.add new THREE.AmbientLight 0x446680
       @scene.add @cubeMesh()
 
-      @add new SunLight @scene, prefs.shadows
+      @add new SunLight @scene
 
       @audio = new clientAudio.WebkitAudio()
-      @audio.mute() unless root.prefs.audio
+      @audio.mute() unless prefs.audio
       @checkpointBuffer = null
       @audio.loadBuffer '/a/sounds/checkpoint.ogg', (buffer) =>
         @checkpointBuffer = buffer
-      root.on 'change:prefs.audio', (prefs, audio) =>
+      prefs.on 'change:audio', (prefs, audio) =>
         if audio then @audio.unmute() else @audio.mute()
 
       @track = new gameTrack.Track @root
@@ -509,10 +506,9 @@ define [
           premultipliedAlpha: false
           clearColor: 0xffffff
         r.devicePixelRatio = Math.min 4/3, r.devicePixelRatio
-        if useShadows
-          r.shadowMapEnabled = true
-          r.shadowMapSoft = true
-          r.shadowMapCullFrontFaces = false
+        r.shadowMapEnabled = useShadows
+        r.shadowMapSoft = true
+        r.shadowMapCullFrontFaces = false
         r.autoClear = false
         r
       catch e

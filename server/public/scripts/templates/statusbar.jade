@@ -17,10 +17,11 @@ table
             | Sound
           li: label
             input#pref-shadows(type="checkbox", checked=prefs.shadows)
-            | Shadows
+            | Shadows *
           li: label
             input#pref-terrainhq(type="checkbox", checked=prefs.terrainhq)
-            | High quality terrain
+            | High quality terrain *
+          .label * Requires reload
           hr
           li: label
             input(type="radio", name="car")

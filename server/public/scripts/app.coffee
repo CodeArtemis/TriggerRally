@@ -13,6 +13,17 @@ define [
 ) ->
   jsonClone = (obj) -> JSON.parse JSON.stringify obj
 
+  syncLocalStorage = (method, model, options) ->
+    key = model.constructor.name
+    switch method
+      when 'read'
+        data = JSON.parse localStorage.getItem key
+        data ?= { id: 1 }
+        model.set data
+      when 'update'
+        localStorage.setItem key, JSON.stringify model
+    return
+
   class RootModel extends models.Model
     models.buildProps @, [ 'track', 'user', 'prefs' ]
     bubbleAttribs: [ 'track', 'user', 'prefs' ]
@@ -29,6 +40,7 @@ define [
       audio: no
       shadows: yes
       terrainhq: yes
+    sync: syncLocalStorage
 
   class App
     constructor: ->
@@ -36,6 +48,9 @@ define [
         user: null
         track: null
         prefs: new PrefsModel
+
+      @root.prefs.fetch()
+      @root.prefs.on 'change', => @root.prefs.save()
 
       @unifiedView = (new UnifiedView @).render()
 
