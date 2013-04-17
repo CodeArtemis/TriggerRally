@@ -37,6 +37,10 @@ define [
     template: template
     constructor: (@app, @client) -> super()
 
+    destroy: ->
+      @client.setGame null
+      super
+
     afterRender: ->
       client = @client
       client.camera.idealFov = 75
@@ -48,7 +52,7 @@ define [
 
       @game = null
 
-      @app.root.on 'change:track.id', =>
+      @listenTo @app.root, 'change:track.id', =>
 
         # TODO: Delete any old game / progress / cars.
 

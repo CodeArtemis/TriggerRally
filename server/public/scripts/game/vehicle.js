@@ -471,9 +471,9 @@ function(THREE, psim, collision, util) {
                                oami.z + (wami.z - oami.z) * wingFactor);
       // TODO: Transfer all this stuff to config.
       var lift = wingFactor * 150;
-      var linDragX = 0.2 * wingFactor;
-      var linDragY = 0.2 * wingFactor;
-      var linDragZ = 0.2 * wingFactor;
+      var linDragX = 0.5 * wingFactor;
+      var linDragY = 0.5 * wingFactor;
+      var linDragZ = 0.5 * wingFactor;
       var angDrag = 100 * wingFactor;
       var finEffectX = 200 * wingFactor;
       var finEffectY = 200 * wingFactor;

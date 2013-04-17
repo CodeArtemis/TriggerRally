@@ -51,6 +51,10 @@ define [
 
       root.on 'change:track.config.course.checkpoints.', reset
 
+      @destroy = ->
+        for mesh in meshes
+          scene.remove mesh
+
     update: (camera, delta) ->
 
   class RenderCheckpointsDrive
@@ -60,6 +64,9 @@ define [
       @initPos = @mesh.position.clone()
       @current = 0
       scene.add @mesh
+
+    destroy: ->
+      @mesh.parent.remove @mesh
 
     update: (camera, delta) ->
       targetCp = @root.track.config.course.checkpoints.at @current
@@ -100,6 +107,10 @@ define [
       scene.add @speedMeter
 
       @$digital = $("#speedo")
+
+    destroy: ->
+      @revMeter.parent.remove @revMeter
+      @speedMeter.parent.remove @speedMeter
 
     update: (camera, delta) ->
       vehic = @vehic
@@ -145,6 +156,9 @@ define [
       @meshArrow2.position.set(0, 0, 0.8)
       scene.add @meshArrow
       @meshArrow.add @meshArrow2
+
+    destroy: ->
+      @meshArrow.parent.remove @meshArrow
 
     update: (camera, delta) ->
       nextCp = @progress.nextCheckpoint 0
@@ -402,7 +416,7 @@ define [
 
       prefs = root.prefs
 
-      @renderer = @createRenderer prefs.shadows
+      @renderer = @createRenderer prefs
       @containerEl.appendChild @renderer.domElement if @renderer
       # This may be unexpected and unwelcome behavior.
       # prefs.on 'change:shadows', ->
@@ -465,8 +479,17 @@ define [
         #event.preventDefault()
       return
 
-    setGame: (@game) ->
-      game.on 'addvehicle', (car, progress) =>
+    setGame: (game) ->
+      if @game
+        # Clean up
+        for k, layer of @objects
+          @objects[k] = _.without layer, @gameCleanup...
+        for obj in @gameCleanup
+          obj.destroy?()
+        @gameCleanup = null
+      @game = game
+      if game then game.on 'addvehicle', (car, progress) =>
+        @gameCleanup = []
         audio = if car.cfg.isRemote then null else @audio
         renderCar = new clientCar.RenderCar @scene, car, audio
         progress._renderCar = renderCar
@@ -496,9 +519,10 @@ define [
     add: (obj, priority = 0) ->
       layer = @objects[priority] ?= []
       layer.push obj
+      @gameCleanup?.push obj
       obj
 
-    createRenderer: (useShadows) ->
+    createRenderer: (prefs) ->
       try
         r = new THREE.WebGLRenderer
           alpha: false
@@ -506,8 +530,7 @@ define [
           premultipliedAlpha: false
           clearColor: 0xffffff
         r.devicePixelRatio = Math.min 4/3, r.devicePixelRatio
-        r.shadowMapEnabled = useShadows
-        r.shadowMapSoft = true
+        r.shadowMapEnabled = prefs.shadows
         r.shadowMapCullFrontFaces = false
         r.autoClear = false
         r

@@ -10,12 +10,13 @@
 ) (exports, Backbone) ->
 
   # http://www.narrativescience.com/blog/automatically-creating-getterssetters-for-backbone-models/
-  buildProps = (constructor, propNames) ->
+  buildProps = (constructor, attribNames) ->
+    # constructor::attribNames = attribNames
     buildGetter = (name) ->
       -> @get name
     buildSetter = (name) ->
       (value) -> @set name, value
-    for prop in propNames
+    for prop in attribNames
       Object.defineProperty constructor::, prop,
         get: buildGetter prop
         set: buildSetter prop
@@ -292,6 +293,11 @@
         delete data.prefs
       data.tracks = (track.id for track in data.tracks.models) if data.tracks?
       data
+    cars: ->
+      carIds = [ 'ArbusuG' ]
+      products = @products ? []
+      carIds.push 'Icarus' if 'ignition' in products
+      carIds
 
   class UserPassport extends Model
     buildProps @, [

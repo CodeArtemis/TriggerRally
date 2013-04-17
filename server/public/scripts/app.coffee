@@ -35,9 +35,10 @@ define [
     #     # console.log "RootModel: " + JSON.stringify arguments
 
   class PrefsModel extends models.Model
-    models.buildProps @, [ 'audio', 'shadows', 'terrainhq' ]
+    models.buildProps @, [ 'audio', 'car', 'shadows', 'terrainhq' ]
     defaults:
-      audio: no
+      audio: yes
+      car: 'ArbusuG'
       shadows: yes
       terrainhq: yes
     sync: syncLocalStorage
@@ -49,7 +50,7 @@ define [
         track: null
         prefs: new PrefsModel
 
-      @root.prefs.fetch()
+      @root.prefs.fetch()  # Assume sync because it's localStorage.
       @root.prefs.on 'change', => @root.prefs.save()
 
       @unifiedView = (new UnifiedView @).render()
