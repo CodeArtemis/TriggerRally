@@ -337,6 +337,18 @@ app.get    '/logout', (req, res) ->
 
 app.get    '/closeme', routes.closeme
 
+# Backward compatibility.
+app.get '/drive', (req, res) ->
+  res.redirect '/x/Preview/Arbusu/drive', 301
+app.get '/x/Preview/Arbusu/drive', (req, res) ->
+  req.params.idTrack = 'Preview'
+  req.params.idCar = 'Arbusu'
+  loadUrlTrack req, res, ->
+    loadUrlCar req, res, ->
+      routes.top req, res
+app.get '/x/:idTrack/:idCar/drive', (req, res) ->
+  res.redirect "/track/#{idTrack}/drive", 301
+
 unified = [
   '/'
   '/about'
@@ -474,10 +486,6 @@ app.get '/checkout/return', (req, res) ->
 #    authenticationSuccessful
 #);
 #
-
-# Backward compatibility.
-app.get '/drive', (req, res) ->
-  res.redirect '/x/Preview/Arbusu/drive', 301
 
 server = http.createServer(app)
 # io = socketio.listen(server)

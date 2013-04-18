@@ -2,8 +2,8 @@
   baseUrl: "../public/scripts",
   optimize: "none",
   name: "../js/almond",
-  out: "../public/build-out/editor-main.js",
-  include: [ "editor/editor-main" ],
+  out: "../public/build-out/main.js",
+  include: [ "main" ],
   exclude: [ "coffee-script" ],
 
   shim: {

@@ -102,7 +102,7 @@ define [
         camAutoAng.z = startposition.rot[2] - Math.PI / 2
         camAutoPos.x -= 20 * Math.cos(startposition.rot[2])
         camAutoPos.y -= 20 * Math.sin(startposition.rot[2])
-        camAutoPos.z += 40
+        camAutoPos.z += 30
         camAutoTimer = 0
 
         Backbone.history.navigate "/track/#{root.track.id}/edit"

@@ -34,12 +34,7 @@ define [
 
       renderCar = null
       do updateCar = =>
-        products = @app.root.user?.products
-        return unless products?  # Wait until we know which car to load.
-        purchasedIgnition = 'ignition' in products
-        carId = if purchasedIgnition then 'Icarus' else 'ArbusuG'
-
-        carModel = new models.Car id: carId
+        carModel = models.Car.findOrCreate @app.root.getCarId()
         carModel.fetch
           success: =>
             mockVehicle =
@@ -54,6 +49,7 @@ define [
 
       @listenTo @app.root, 'change:user', updateCar
       @listenTo @app.root, 'change:user.products', updateCar
+      @listenTo @app.root, 'change:prefs.car', updateCar
 
       @client.camera.idealFov = 50
       @client.updateCamera()

@@ -13,11 +13,15 @@
 
     if purchased
       p
-        strong Thank you for purchasing the Ignition Pack.
-        |  Now take your 
-        a.route(href="/user/#{user.id}") upgraded license
-        |  and 
-        a(href="/track/blah/drive") go play!
+        strong Thank you for purchasing the Ignition Pack!
+        |  Your support is very much appreciated.
+        br
+        | Now you can:
+        ul
+          li
+            a.route(href="/user/#{user.id}") Choose an avatar
+            |  and
+          li Drive the <b>Icarus</b> (see Settings menu)
 
     .checkout-box
       table

@@ -148,11 +148,12 @@ function(THREE, util) {
               false, Math.log(1 + cnl), 0.99 + Math.random() * 0.02);
         }
         for (var k in vehic.events) {
-          var type = vehic.events[k].type;
-          if (type == 'sfx:hydraulic' && this.bufferHydraulic) {
+          var event = vehic.events[k];
+          if (event.type == 'sfx:hydraulic' && this.bufferHydraulic) {
             this.aud.playSound(this.bufferHydraulic, false, 1, 1);
-          } else if (type == 'sfx:slam' && this.bufferSlam) {
-            this.aud.playSound(this.bufferSlam, false, 1, 1);
+          } else if (event.type == 'sfx:slam' && this.bufferSlam) {
+            var gain = event.gain === undefined ? 1 : event.gain;
+            this.aud.playSound(this.bufferSlam, false, gain, 1);
           }
         }
         vehic.events = [];

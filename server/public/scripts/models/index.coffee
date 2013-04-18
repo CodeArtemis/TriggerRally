@@ -294,8 +294,9 @@
       data.tracks = (track.id for track in data.tracks.models) if data.tracks?
       data
     cars: ->
-      carIds = [ 'ArbusuG' ]
       products = @products ? []
+      return null unless products?
+      carIds = [ 'ArbusuG' ]
       carIds.push 'Icarus' if 'ignition' in products
       carIds
 

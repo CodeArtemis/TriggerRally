@@ -2,7 +2,7 @@ define [
   'backbone-full'
   'cs!views/view'
   'jade!templates/statusbar'
-  'jade!templates/partial/statusbarcar'
+  'jade!templates/statusbarcar'
   'cs!views/user'
   'cs!models/index'
 ], (

@@ -33,12 +33,16 @@ define [
     #     return unless event.startsWith 'change:track.config'
     #     console.log "RootModel: \"#{event}\""
     #     # console.log "RootModel: " + JSON.stringify arguments
+    getCarId: ->
+      cars = @user?.cars()
+      return 'ArbusuG' unless cars? and @prefs.car in cars
+      @prefs.car
 
   class PrefsModel extends models.Model
     models.buildProps @, [ 'audio', 'car', 'shadows', 'terrainhq' ]
     defaults:
       audio: yes
-      car: 'ArbusuG'
+      car: 'Icarus'
       shadows: yes
       terrainhq: yes
     sync: syncLocalStorage
@@ -65,7 +69,10 @@ define [
       @checkUserLogin()
       Backbone.history.start pushState: yes
 
-      Backbone.history.navigate '/about', trigger: yes unless @unifiedView.client.renderer
+      unless @unifiedView.client.renderer
+        # WebGL failed to initialize.
+        if location.pathname isnt '/about'
+          Backbone.history.navigate '/about', trigger: yes
 
     setTrack: (track, fromRouter) ->
       lastTrack = @root.track

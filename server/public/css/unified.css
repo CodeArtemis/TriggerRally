@@ -437,8 +437,7 @@ input:checked + label {
   width: 15em;
   background: rgba(255,221,170,0.9);
   margin: 0;
-  padding: 0;
-  padding-top: 1em;
+  padding: 1em 0 0.4em;
   display: none;
   border-radius: 0 0 0.4em 0.4em;
 }
@@ -450,7 +449,7 @@ input:checked + label {
   border-radius: 0.4em;
 }
 .dropdownmenu > menu > li:hover {
-  background: #fda;
+  background: #fec;
 }
 .dropdownmenu > menu > hr {
   margin: 0.4em 1em;
@@ -469,6 +468,10 @@ input:checked + label {
   height: 18em;
   margin: auto;
   overflow: auto;
+}
+.gui-container h1 {
+  margin: 0.3em 0;
+  text-shadow: 0 1px 0 #fff, 0 0 0.2em #fff, 0 0 0.4em #fff;
 }
 .text-panel {
   -moz-user-select: auto;
@@ -533,6 +536,7 @@ menu li {
   padding: 0 0.2em;
   position: absolute;
   top: 0;
+  left: -1em;
   -webkit-transform: rotate(-20deg);
   transition: 0.1s;
 }
@@ -571,7 +575,7 @@ table.credits td:first-child {
 }
 .checkout-box {
   display: inline-block;
-  margin: 2em 5em;
+  margin: 1em 5em;
   padding: 1em;
   border: 1px solid #000;
   border-radius: 0.5em;

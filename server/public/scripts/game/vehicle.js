@@ -425,7 +425,7 @@ function(THREE, psim, collision, util) {
         if (this.foldTimer < timeOut) {
           this.foldTimer += delta;
           if (this.foldTimer >= timeOut) {
-            this.events.push({type:'sfx:hydraulic'});
+            this.events.push({type:'sfx:hydraulic', gain: 0.5});
           }
         }
         if (this.foldTimer >= timeOut) {
@@ -441,20 +441,20 @@ function(THREE, psim, collision, util) {
             this.wingFold += delta * 3;
             if (this.wingFold >= 1) {
               this.wingFold = 1;
-              this.events.push({type:'sfx:slam'});
+              this.events.push({type:'sfx:slam', gain: 0.3});
             }
           }
         }
       } else {
         if (this.foldTimer >= timeOut) {
-          this.events.push({type:'sfx:hydraulic'});
+          this.events.push({type:'sfx:hydraulic', gain: 0.5});
         }
         this.foldTimer = 0;
         if (this.wingFold < 1) {
           this.wingFold += delta * 3;
           if (this.wingFold >= 1) {
             this.wingFold = 1;
-            this.events.push({type:'sfx:slam'});
+            this.events.push({type:'sfx:slam', gain: 0.3});
           }
         }
       }

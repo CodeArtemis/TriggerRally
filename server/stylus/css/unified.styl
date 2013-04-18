@@ -16,6 +16,7 @@ body
   position fixed
   width 100%
 
+// WTF?
 h2
   display inline
 
@@ -60,9 +61,7 @@ input:checked + label
   width 15em
   background rgba(255, 221, 170, 0.9)
   margin 0
-  padding 0
-  padding-top 1em
-  // padding 1em
+  padding 1em 0 0.4em
   display none
   border-radius 0 0 0.4em 0.4em
 .dropdownmenu:hover > menu
@@ -71,7 +70,7 @@ input:checked + label
   padding 0 1em
   border-radius 0.4em
 .dropdownmenu > menu > li:hover
-  background #fda
+  background #fec
 .dropdownmenu > menu > hr
   margin 0.4em 1em
 .dropdownmenu > menu > .label
@@ -88,6 +87,10 @@ input:checked + label
   height 18em
   margin auto
   overflow auto
+
+.gui-container h1
+  margin 0.3em 0
+  text-shadow 0 1px 0 white, 0 0 0.2em white, 0 0 0.4em white
 
 .text-panel
   -moz-user-select auto
@@ -160,6 +163,7 @@ menu li
   padding 0 0.2em
   position absolute
   top 0
+  left -1em
   -webkit-transform rotate(-20deg)
   transition 0.1s
 
@@ -196,7 +200,7 @@ table.credits td:first-child
 
 .checkout-box
   display inline-block
-  margin 2em 5em
+  margin 1em 5em
   padding 1em
   border 1px solid black
   border-radius 0.5em
