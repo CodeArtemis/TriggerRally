@@ -421,8 +421,17 @@ input:checked + label {
   border-spacing: 0;
   width: 100%;
 }
-#statusbar > table td {
-  width: 25%;
+#statusbar > table td:nth-child(1) {
+  width: 20%;
+}
+#statusbar > table td:nth-child(2) {
+  width: 20%;
+}
+#statusbar > table td:nth-child(3) {
+  width: 30%;
+}
+#statusbar > table td:nth-child(4) {
+  width: 30%;
 }
 #statusbar > table td:last-child {
   text-align: right;
@@ -601,10 +610,14 @@ a.paypal-checkout img {
   width: 7.25em;
   height: 2.1em;
 }
-img.codeartemis {
+.ignition-promo-image {
+  display: inline-block;
   float: right;
-  width: 10.74em;
-  height: 8.7em;
+  width: 21em;
+  height: 13.325em;
+  background-image: url("/images/ignition-promo.jpg");
+  background-size: cover;
+  border-radius: 0.5em;
 }
 .smaller {
   font-size: 0.6em;

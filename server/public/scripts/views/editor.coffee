@@ -124,14 +124,19 @@ define [
             pos: new Vec3(0,0,0)
             ori: (new THREE.Quaternion(1,1,1,1)).normalize()
 
-      # We always use an ArbusuG to represent the start position, for now.
-      arbusuModel = new models.Car id: 'ArbusuG'
-      arbusuModel.fetch
-        success: ->
-          mockVehicle.cfg = arbusuModel.config
-          # TODO: Deallocate old startposCar, if any.
-          renderCar = new clientCar.RenderCar startPos, mockVehicle, null
-          renderCar.update()
+      renderCar = null
+      do updateCar = =>
+        carModel = models.Car.findOrCreate root.getCarId()
+        carModel.fetch
+          success: =>
+            mockVehicle.cfg = carModel.config
+            renderCar?.destroy()
+            renderCar = new clientCar.RenderCar startPos, mockVehicle, null
+            renderCar.update()
+
+      @listenTo root, 'change:user', updateCar
+      @listenTo root, 'change:user.products', updateCar
+      @listenTo root, 'change:prefs.car', updateCar
 
       inspectorView = new InspectorView @$('#editor-inspector'), app, selection
       inspectorView.render()

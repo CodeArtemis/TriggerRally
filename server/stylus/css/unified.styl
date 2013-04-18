@@ -43,8 +43,14 @@ input:checked + label
   border-spacing 0
   width 100%
 
-#statusbar > table td
-  width 25%
+#statusbar > table td:nth-child(1)
+  width 20%
+#statusbar > table td:nth-child(2)
+  width 20%
+#statusbar > table td:nth-child(3)
+  width 30%
+#statusbar > table td:nth-child(4)
+  width 30%
 
 // #statusbar > table td:nth-child(3)
 //   text-align center
@@ -234,10 +240,14 @@ a.paypal-checkout img
   width 145em * 0.05
   height 42em * 0.05
 
-img.codeartemis
+.ignition-promo-image
+  display inline-block
   float right
-  width (537/50)em
-  height (435/50)em
+  width (1680/80)em
+  height (1066/80)em
+  background-image url(/images/ignition-promo.jpg)
+  background-size cover
+  border-radius 0.5em
 
 .smaller
   font-size 0.6em

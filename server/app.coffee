@@ -345,7 +345,7 @@ app.get '/x/Preview/Arbusu/drive', (req, res) ->
   req.params.idCar = 'Arbusu'
   loadUrlTrack req, res, ->
     loadUrlCar req, res, ->
-      routes.top req, res
+      routes.trackDrive req, res
 app.get '/x/:idTrack/:idCar/drive', (req, res) ->
   res.redirect "/track/#{idTrack}/drive", 301
 

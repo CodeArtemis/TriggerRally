@@ -143,7 +143,9 @@ define [
             root.user.tracks.add newTrack
             Backbone.trigger "app:settrack", newTrack
           error: (model, xhr) ->
-            Backbone.trigger "app:status", "Copy failed: #{xhr.statusText} (#{xhr.status})"
+            data = JSON.parse xhr.responseText
+            msg = data?.error ? xhr.statusText
+            Backbone.trigger "app:status", "Copy failed: #{msg} (#{xhr.status})"
 
       cmdDeleteTrack.$content.click ->
         return unless window.confirm "Are you sure you want to DELETE this track? This can't be undone!"
