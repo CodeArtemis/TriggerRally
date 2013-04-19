@@ -35,7 +35,7 @@ define [
     #     # console.log "RootModel: " + JSON.stringify arguments
     getCarId: ->
       cars = @user?.cars()
-      return 'ArbusuG' unless cars? and @prefs.car in cars
+      return null unless cars? and @prefs.car in cars
       @prefs.car
 
   class PrefsModel extends models.Model
@@ -96,6 +96,10 @@ define [
           user.set user.parse data.user
           @root.user = user
           Backbone.trigger 'app:status', 'Logged in'
+          user.tracks.each (track) ->
+            track.fetch()
+          # @listenTo root, 'add:user.tracks.', (track) ->
+          #   track.fetch()
         else
           @logout()
 

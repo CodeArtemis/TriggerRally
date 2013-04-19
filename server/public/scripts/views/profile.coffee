@@ -21,6 +21,7 @@ define [
       Backbone.trigger 'app:settitle', @model.name
       @listenTo @model, 'change:name', => Backbone.trigger 'app:settitle', @model.name
       @listenTo @model, 'change:id', => @render()
+      @listenTo @model, 'change:products', => @render()
       @listenTo @app.root, 'change:user', => @render()
       @model.fetch()
 
@@ -35,7 +36,8 @@ define [
       isoDate = (d) ->
         d = new Date d
         z = (n) -> (if n < 10 then "0" else "") + n
-        "#{d.getFullYear()}-#{z d.getMonth()}-#{z d.getDay()}"
+        # Note that this will use local time.
+        "#{d.getFullYear()}-#{z d.getMonth()+1}-#{z d.getDate()}"
       if created? then isoDate(created) else loadingText
 
     viewModel: ->

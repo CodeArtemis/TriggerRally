@@ -57,16 +57,39 @@ define [
       @$el.on 'change', '.statusbarcar input:radio', (event) ->
         prefs.car = @value
 
-      $carSection = @$('hr.car-section')
+      $carSection = @$('.car-section')
       do addCars = =>
         cars = root.user?.cars() or [ 'ArbusuG' ]
         # cars = (models.Car.findOrCreate car for car in cars)
-        @$('li.statusbarcar').remove()
+        @$('.statusbarcar').remove()
         if cars.length >= 2
           for car in cars.reverse()
             checked = prefs.car is car
             $li = $ templateCar { car, checked }
             $li.insertAfter $carSection
+          $('<hr class="statusbarcar">').insertAfter $carSection
       @listenTo root, 'change:user', addCars
+
+      $trackInfo = @$ '.trackinfo'
+      $trackName = $trackInfo.find '.name'
+      $trackAuthor = $trackInfo.find '.author'
+      $trackLinkDrive = $trackInfo.find '.drive'
+      $trackLinkEdit = $trackInfo.find '.edit'
+
+      @listenTo root, 'change:track.id', ->
+        id = root.track.id
+        $trackLinkDrive.attr 'href', "/track/#{id}/drive"
+        $trackLinkEdit.attr 'href', "/track/#{id}/edit"
+      @listenTo root, 'change:track.name', ->
+        $trackName.text root.track.name
+      trackUserView = null
+      @listenTo root, 'change:track.user', ->
+        return if root.track.user is trackUserView?.model
+        trackUserView?.destroy()
+        if root.track.user?
+          trackUserView = new UserView
+            model: root.track.user
+          $trackAuthor.empty()
+          $trackAuthor.append trackUserView.el
 
     height: -> @$el.height()

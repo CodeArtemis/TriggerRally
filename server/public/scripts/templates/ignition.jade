@@ -4,23 +4,21 @@
 
     h2: span.highlight Ignition Icarus
 
-    p The Ignition Icarus is a new car for Trigger Rally.
+    p The Ignition Icarus is a new car for Trigger Rally:
     ul
-      li <b>Extreme Aerial Control&trade;</b> with automatic unfolding wings
+      li More powerful and <b>faster</b> than the Arbusu
+      li Retractable <b>wings</b> for controlled gliding
       li Includes an upgrade to <b>Rally License</b> so you can choose your avatar
       //- li <b>Support</b> the development of Trigger Rally
 
     if purchased
       p
-        strong Thank you for purchasing the Ignition Pack!
+        strong Thank you for purchasing the Ignition Icarus!
         |  Your support is very much appreciated.
         br
-        | Now you can:
-        ul
-          li
-            a.route(href="/user/#{user.id}") Choose an avatar
-            |  and
-          li Drive the <b>Icarus</b> (see Settings menu)
+        | Don't forget you can now also 
+        a.route(href="/user/#{user.id}") choose an avatar
+        | .
 
     .checkout-box
       table

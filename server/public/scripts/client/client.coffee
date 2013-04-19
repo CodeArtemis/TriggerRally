@@ -433,7 +433,7 @@ define [
       @camera.position.set 0, 0, 500
       @scene.add @camera
       @camControl = null
-      @scene.fog = new THREE.FogExp2 0xdddddd, 0.0002
+      @scene.fog = new THREE.FogExp2 0xddeeff, 0.0002
 
       @scene.add new THREE.AmbientLight 0x446680
       @scene.add @cubeMesh()
@@ -563,7 +563,9 @@ define [
         @debouncedMuteAudio @audio
 
     update: (delta) ->
-      @game?.sim.tick delta
+      # Pause simulation while track is updating.
+      if @track.ready
+        @game?.sim.tick delta
       for priority, layer of @objects
         for object in layer
           object.update @camera, delta

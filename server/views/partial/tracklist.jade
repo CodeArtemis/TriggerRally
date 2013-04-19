@@ -15,8 +15,7 @@ table.list
       td
         a(href="/track/#{track.pub_id}") Details
       td
-        if track.env
-          a(href="/track/#{track.pub_id}/edit") Edit
+        a(href="/track/#{track.pub_id}/edit") Edit
       td
         user = track.user
         include user

@@ -41,6 +41,12 @@ define [
       $document.on 'keyup', (event) -> client.onKeyUp event
       $document.on 'keydown', (event) -> client.onKeyDown event
 
+      $view3d.on 'mousedown', (event) -> @currentView3D?.onMouseDown? event
+      $view3d.on 'mousemove', (event) -> @currentView3D?.onMouseMove? event
+      $view3d.on 'mouseout', (event) -> @currentView3D?.onMouseOut? event
+      $view3d.on 'mouseup', (event) -> @currentView3D?.onMouseUp? event
+      $view3d.on 'mousewheel', (event) -> @currentView3D?.onMouseWheel? event
+
       do layout = ->
         statusbarHeight = statusBarView.height()
         $view3d.css 'top', statusbarHeight

@@ -3,17 +3,16 @@
   background white
   box-shadow inset 0 0 4em rgba(0,0,0,0.3), 0 0.3em 1em black
   border-radius 0.8em
-  // font-size 0.5em
+  scale = 0.75
+  font-size scale * 1em
   // padding 0.5em
   position absolute
   // Total space is 32em by 18em.
   // Card size is 21 by 13.
-  cardWidth = 21em
-  cardHeight = 13em
-  top (18em - cardHeight) * 0.2
-  left (32em - cardWidth) * 0.5
-  width cardWidth
-  height cardHeight
+  width 21em
+  height 13em
+  top (18/scale * 1em - @height) * 0.1
+  left (32/scale * 1em - @width) * 0.5
   border 0.3em solid #9b9
   overflow hidden
   // font-family monospace

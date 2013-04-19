@@ -1,0 +1,109 @@
+extends layout
+
+block body
+  userLoggedIn = user
+  include partial/header
+
+  .content
+
+    div
+      a(href="/track/#{urlTrack.pub_id}")= urlTrack.name
+      span  by 
+      user = urlTrack.user
+      include partial/user
+
+      if (runs[0])
+        span &nbsp;&nbsp;&nbsp;&nbsp; Current leader: 
+          user = runs[0].user
+          include partial/user
+          | 
+          a(href="/run/#{runs[0].pub_id}") #{runs[0].time_readable}
+          |  &mdash; 
+          a(href="/run/#{runs[0].pub_id}/replay") watch replay
+
+    br
+
+    .frame3d
+      .loading
+        div(style="height: 6em")
+        h1 Trigger Rally
+        div(style="height: 3em")
+        h2.loading Loading&hellip;
+
+      <div id="checkpoints"></div>
+      <div id="timer" class="running"></div>
+      <div id="countdown"></div>
+      <div id="speedo"></div>
+      <a id="twitterlink" href="#">Share your time on Twitter</a>
+
+    p
+      a(href="#")#fullscreenlink Full screen
+
+    if userLoggedIn
+      p#replays
+
+    p.note Controls: arrow keys to drive, space for handbrake, C for camera.
+      if urlTrack.config.gameversion >= 3
+        span  R to restart. See 
+          a(href="https://github.com/CodeArtemis/TriggerRally/wiki/Controllers") this page
+          |  for info on gamepad support.
+
+    if userLoggedIn
+      p.note You can configure graphics and audio preferences on your <a href="/user/#{userLoggedIn.pub_id}/edit">user page</a>.
+    else
+      p.note You can configure graphics and audio preferences on your <a href="/login">user page</a>.
+
+    p.note Game code version #{urlTrack.config.gameversion}
+
+    include partial/footer
+
+  - if (urlTrack.config.gameversion === 1)
+    script(src="/js/Three.js")
+  script(src="/js/Detector.js")
+  //script(src="/js/Stats.js")
+  - if (urlTrack.config.gameversion >= 2)
+    script(src="/socket.io/socket.io.js")
+
+  - if (urlTrack.config.gameversion === 3)
+    script
+      TRIGGER = {
+        TRACK: !{JSON.stringify(trackData)},
+        CAR: {
+          ID: '#{urlCar.pub_id}',
+          NAME: '#{urlCar.name}',
+          CONFIG: !{JSON.stringify(urlCar.config)}
+        }
+      };
+  - else
+    script
+      TRIGGER = {
+        TRACK: {
+          ID: '#{urlTrack.pub_id}',
+          NAME: '#{urlTrack.name}',
+          CONFIG: !{JSON.stringify(urlTrack.config)}
+        },
+        CAR: {
+          ID: '#{urlCar.pub_id}',
+          NAME: '#{urlCar.name}',
+          CONFIG: !{JSON.stringify(urlCar.config)}
+        },
+        METRICS: false
+      };
+
+  if userLoggedIn
+    script
+      TRIGGER.USER_LOGGED_IN = "#{userLoggedIn.pub_id}";
+      TRIGGER.USER = {
+        id: "#{userLoggedIn.pub_id}",
+        prefs: #{userLoggedIn.prefs}
+      };
+
+  if urlTrack.config.gameversion === 1
+    script(src="/build-v1/trigger.js")
+  else if urlTrack.config.gameversion === 2
+    script(data-main="/build-v2/drive-main", src="/js/require.js")
+  else
+    - if ('production' === process.env.NODE_ENV)
+      script(data-main="/build-v3/drive-main", src="/js/require.js")
+    - else
+      script(data-main="/scripts/drive-main", src="/js/require.js")

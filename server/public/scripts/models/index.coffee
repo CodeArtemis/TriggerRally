@@ -1,13 +1,13 @@
 ((factory) ->
   if typeof define is "function" and define.amd
     # AMD. Register as an anonymous module.
-    define ["exports", "backbone-full"], factory
+    define ["exports", "backbone-full", "underscore"], factory
   else if typeof exports is "object"
     # CommonJS.
-    factory exports, require("backbone")
+    factory exports, require("backbone"), require("underscore")
   else
     throw new Error "Couldn't determine module type."
-) (exports, Backbone) ->
+) (exports, Backbone, _) ->
 
   # http://www.narrativescience.com/blog/automatically-creating-getterssetters-for-backbone-models/
   buildProps = (constructor, attribNames) ->
@@ -65,9 +65,8 @@
       xhr = @fetchXHR
       if xhr
         # Bind handlers to in-progress fetch.
-        xhr
-        .done (data, textStatus, jqXHR) => options.success? @, data, options
-        .fail (data, textStatus, errorThrown) => options.error? @, xhr, options
+        xhr.done (data, textStatus, jqXHR) => options.success? @, data, options
+        xhr.fail (data, textStatus, errorThrown) => options.error? @, xhr, options
       else
         xhr = @fetchXHR = super
         xhr?.always => @fetchXHR = null
@@ -101,15 +100,6 @@
     path: 'envs'
   class TrackCollection extends PathCollection
     path: 'tracks'
-    comparator: 'name'
-    # url: (models) ->
-    #   if models?
-    #     ids = _.pluck(models, 'id').join('+')
-    #     "/v1/tracks/#{ids}"
-    #   else
-    #     "/v1/tracks"
-    # parse: (response, options) ->
-    #   response
   class UserCollection extends PathCollection
     path: 'users'
 
@@ -125,10 +115,9 @@
   class Course extends Model
     buildProps @, [ 'checkpoints', 'startposition' ]
     bubbleAttribs: [ 'checkpoints', 'startposition' ]
-    initialize: ->
-      @startposition = new StartPos
-      @checkpoints = new CheckpointsCollection
-      super
+    defaults: ->
+      startposition: new StartPos
+      checkpoints: new CheckpointsCollection
     parse: (response, options) ->
       data = super
       return data unless data
@@ -147,10 +136,8 @@
   class TrackConfig extends Model
     buildProps @, [ 'course', 'gameversion', 'scenery' ]  # TODO: Remove gameversion.
     bubbleAttribs: [ 'course' ]
-    initialize: ->
-      @course = new Course
-      super
-    #   @on 'all', (event) -> console.log 'TrackConfig: ' + event
+    defaults: ->
+      course: new Course
     parse: (response, options) ->
       data = super
       return data unless data
@@ -161,21 +148,28 @@
 
   class Car extends Model
     all: new (Collection.extend model: @)
-    buildProps @, [ 'config', 'name', 'user' ]
+    buildProps @, [ 'config', 'name', 'user', 'product' ]
     urlRoot: '/v1/cars'
     toJSON: (options) ->
       data = super
       delete data.created
       data.user = data.user.id if data.user?
+      if data.product? and data.config?
+        unless data.product in (options?.products ? [])
+          data.config = _.pick data.config, [
+            'dimensions'
+            'meshes'
+            'scale'
+            'wheels'
+          ]
       data
 
   class Env extends Model
     all: new (Collection.extend model: @)
     buildProps @, [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
     urlRoot: '/v1/envs'
-    initialize: ->
-      @cars = new CarCollection
-      super
+    defaults: ->
+      cars: new CarCollection
     toJSON: (options) ->
       data = super
       data.cars = (car.id for car in data.cars.models) if data.cars?
@@ -214,10 +208,10 @@
     ]
     bubbleAttribs: [ 'config', 'env' ]
     urlRoot: '/v1/tracks'
-    initialize: ->
-      # @config = new TrackConfig
-      super
-      # @on 'all', (event) -> console.log 'Track: ' + event
+    # initialize: ->
+    #   # @config = new TrackConfig
+    #   super
+    #   # @on 'all', (event) -> console.log 'Track: ' + event
     parse: (response, options) ->
       data = super
       return data unless data
@@ -247,6 +241,32 @@
       data.user = data.user.id if data.user?
       data
 
+  class TrackSet extends Model
+    all: new (Collection.extend model: @)
+    buildProps @, [
+      'name'
+      'tracks'
+    ]
+    urlRoot: '/v1/tracksets'
+    defaults: ->
+      tracks: new TrackCollection
+    parse: ->
+      data = super
+      return data unless data
+      if data.tracks
+        tracks = for track in data.tracks
+          if typeof track is 'string'
+            Track.findOrCreate track
+          else
+            t = Track.findOrCreate track.id
+            t.set t.parse track
+        data.tracks = @tracks.update tracks
+      data
+    toJSON: (options) ->
+      data = super
+      data.tracks = (track.id for track in data.tracks.models) if data.tracks?
+      data
+
   class User extends Model
     all: new (Collection.extend model: @)
     buildProps @, [
@@ -259,9 +279,8 @@
     ]
     bubbleAttribs: [ 'tracks' ]
     urlRoot: '/v1/users'
-    initialize: ->
-      @tracks = new TrackCollection
-      super
+    defaults: ->
+      tracks: new TrackCollection { comparator: 'name' }
     validate: ->
       if @name.length < 3 then return "name too short"
       if @name.length > 20 then return "name too long"
@@ -282,15 +301,16 @@
       data = super
       # Stuff that may still be used in Mongoose layer.
       # TODO: Delete it from Mongoose layer.
-      delete data.admin unless data.admin
       delete data.bio
       delete data.email
       delete data.gravatar_hash
       delete data.location
+      delete data.prefs
       delete data.website
+
+      delete data.admin unless data.admin
       unless options?.authenticated
         delete data.admin
-        delete data.prefs
       data.tracks = (track.id for track in data.tracks.models) if data.tracks?
       data
     cars: ->
@@ -321,6 +341,7 @@
     StartPos
     Track
     TrackConfig
+    TrackSet
     User
     UserPassport
   }

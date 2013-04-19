@@ -8,6 +8,8 @@ define [
   templateWithStatus
 ) ->
   class UserView extends View
+    tagName: 'span'
+
     initialize: ->
       super
       @render()

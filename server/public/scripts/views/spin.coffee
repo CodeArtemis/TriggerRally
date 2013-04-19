@@ -34,7 +34,8 @@ define [
 
       renderCar = null
       do updateCar = =>
-        carModel = models.Car.findOrCreate @app.root.getCarId()
+        carId = @app.root.getCarId() ? 'ArbusuG'
+        carModel = models.Car.findOrCreate carId
         carModel.fetch
           success: =>
             mockVehicle =
@@ -57,6 +58,7 @@ define [
 
     update: (deltaTime) ->
       cam = @client.camera
+      cam.useQuaternion = no
       rot = cam.rotation
       pos = cam.position
 

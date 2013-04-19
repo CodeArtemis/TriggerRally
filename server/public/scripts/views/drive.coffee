@@ -1,4 +1,5 @@
 define [
+  'jquery'
   'backbone-full'
   'THREE'
   'util/util'
@@ -9,6 +10,7 @@ define [
   'cs!views/view'
   'jade!templates/drive'
 ], (
+  $
   Backbone
   THREE
   util
@@ -52,38 +54,55 @@ define [
 
       @game = null
 
-      @listenTo @app.root, 'change:track.id', =>
+      root = @app.root
+
+      notifyDrive = ->
+        # TODO: Make Track responsible for doing this.
+        $.ajax "/v1/tracks/#{root.track.id}/drive", type: 'POST'
+
+      @listenTo root, 'change:track.id', =>
 
         # TODO: Delete any old game / progress / cars.
 
         @lastRaceTime = 0
         @updateTimer = yes
         followProgress = null
-        @game = new gameGame.Game @client.track
+        # @game = new gameGame.Game @client.track
 
-        @client.setGame @game
+        # @client.setGame @game
 
-        car = @app.root.track.env.cars.at(0)
-        car.fetch
-          success: =>
-            @game.addCarConfig car.config, (progress) =>
-              followProgress = progress
-              followProgress.on 'advance', =>
-                cpNext = followProgress.nextCpIndex
-                cpTotal = @app.root.track.config.course.checkpoints.length
-                @$checkpoints.html "#{cpNext} / #{cpTotal}"
+        do updateCar = =>
+          carId = root.getCarId() ? 'ArbusuG'
+          carModel = models.Car.findOrCreate carId
+          carModel.fetch
+            success: =>
+              @game = new gameGame.Game @client.track
+              @client.setGame @game
+              @updateTimer = yes
+              notifyDrive()
 
-                return if followProgress.nextCheckpoint(0)
+              @game.addCarConfig carModel.config, (progress) =>
+                followProgress = progress
+                followProgress.on 'advance', =>
+                  cpNext = followProgress.nextCpIndex
+                  cpTotal = root.track.config.course.checkpoints.length
+                  @$checkpoints.html "#{cpNext} / #{cpTotal}"
 
-                # Race complete.
-                @updateTimer = no
-                @$runTimer.removeClass 'running'
-                #if !TRIGGER.RUN
-                #  if TRIGGER.USER_LOGGED_IN
-                #    _.delay(uploadRun, 1000)
-                #  else
-                #    # We can't save the run, but show a Twitter link.
-                #    showTwitterLink()
+                  return if followProgress.nextCheckpoint(0)
+
+                  # Race complete.
+                  @updateTimer = no
+                  @$runTimer.removeClass 'running'
+                  #if !TRIGGER.RUN
+                  #  if TRIGGER.USER_LOGGED_IN
+                  #    _.delay(uploadRun, 1000)
+                  #  else
+                  #    # We can't save the run, but show a Twitter link.
+                  #    showTwitterLink()
+
+        @listenTo root, 'change:user', updateCar
+        @listenTo root, 'change:user.products', updateCar
+        @listenTo root, 'change:prefs.car', updateCar
 
       client.on 'keydown', (event) =>
         switch event.keyCode
@@ -92,7 +111,8 @@ define [
           when KEYCODE['R']
             @updateTimer = yes
             @$runTimer.addClass 'running'
-            @game.restart()
+            @game?.restart()
+            notifyDrive()
       return
 
     setTrackId: (trackId) ->

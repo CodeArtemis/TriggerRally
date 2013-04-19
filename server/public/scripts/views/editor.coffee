@@ -47,12 +47,8 @@ define [
       root = @app.root
       $ = @$.bind @
 
-      # TODO: Move this to App?
-      root.on 'change:user.tracks.', ->
-        root.user.tracks.each (track) ->
-          track.fetch()
-      # root.on 'add:user.tracks.', (track) ->
-      #   track.fetch()
+      client.camera.idealFov = 75
+      client.updateCamera()
 
       camPos = client.camera.position
       camAng = client.camera.rotation
@@ -82,7 +78,7 @@ define [
             Backbone.trigger 'app:status', "ERROR: #{xhr.statusText} (#{xhr.status})"
       , 1000
 
-      root.on 'all', (event) ->
+      @listenTo root, 'all', (event) ->
         options = arguments[arguments.length - 1]
         return unless event.startsWith 'change:track'
         # console.log "Saving due to event: #{event}"
@@ -93,7 +89,7 @@ define [
           Backbone.trigger 'app:status', 'Changed'
           doSave()
 
-      root.on 'change:track.id', ->
+      @listenTo root, 'change:track.id', ->
         selection.reset()
 
         startposition = root.track.config.course.startposition
@@ -107,15 +103,13 @@ define [
 
         Backbone.history.navigate "/track/#{root.track.id}/edit"
 
-      root.on 'change:track.name', ->
+      @listenTo root, 'change:track.name', ->
         document.title = "#{root.track.name} - Trigger Rally"
 
-      root.on 'change:track.config.course.startposition.', ->
+      @listenTo root, 'change:track.config.course.startposition.', ->
         startposition = root.track.config.course.startposition
         startPos.position.set startposition.pos...
         startPos.rotation.set startposition.rot...
-
-      #root.track.on 'all', -> console.log arguments
 
       mockVehicle =
         cfg: null
@@ -126,7 +120,8 @@ define [
 
       renderCar = null
       do updateCar = =>
-        carModel = models.Car.findOrCreate root.getCarId()
+        carId = root.getCarId() ? 'ArbusuG'
+        carModel = models.Car.findOrCreate carId
         carModel.fetch
           success: =>
             mockVehicle.cfg = carModel.config
@@ -421,21 +416,3 @@ define [
         origEvent = event.originalEvent
         deltaY = origEvent.wheelDeltaY ? origEvent.deltaY
         scroll deltaY, event
-
-      # TODO: Use backbone view delegateEvents?
-      $capture = Backbone.$('#view3d')
-      $capture.on 'mousedown', @onMouseDown
-      $capture.on 'mouseup', @onMouseUp
-      $capture.on 'mouseout', @onMouseOut
-      $capture.on 'mousemove', @onMouseMove
-      $capture.on 'mousewheel', @onMouseWheel
-
-    destroy: ->
-      # undelegateEvents?
-      $capture = Backbone.$('#view3d')
-      $capture.off 'mousedown', @onMouseDown
-      $capture.off 'mouseup', @onMouseUp
-      $capture.off 'mouseout', @onMouseOut
-      $capture.off 'mousemove', @onMouseMove
-      $capture.off 'mousewheel', @onMouseWheel
-      super

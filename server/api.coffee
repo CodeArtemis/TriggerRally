@@ -13,10 +13,11 @@ findModel = (Model, pub_id, done) ->
     success: -> done model
     error:   -> done null
 
-findCar   = -> findModel(bb.Car,   arguments...)
-findEnv   = -> findModel(bb.Env,   arguments...)
-findTrack = -> findModel(bb.Track, arguments...)
-findUser  = -> findModel(bb.User,  arguments...)
+findCar      = -> findModel(bb.Car,      arguments...)
+findEnv      = -> findModel(bb.Env,      arguments...)
+findTrack    = -> findModel(bb.Track,    arguments...)
+findTrackSet = -> findModel(bb.TrackSet, arguments...)
+findUser     = -> findModel(bb.User,     arguments...)
 
 # This public-facing API is responsible for validating requests and data.
 
@@ -45,8 +46,12 @@ module.exports =
         req.fromUrl[attrib] = obj
         next()
 
-    loadUrlTrack = (req, res, next) -> loadUrl findTrack, 'track_id', 'track', req, res, next
-    loadUrlUser  = (req, res, next) -> loadUrl findUser, 'user_id', 'user', req, res, next
+    loadUrlTrack = (req, res, next) ->
+      loadUrl findTrack, 'track_id', 'track', req, res, next
+    loadUrlTrackSet = (req, res, next) ->
+      loadUrl findTrackSet, 'trackset_id', 'trackSet', req, res, next
+    loadUrlUser = (req, res, next) ->
+      loadUrl findUser, 'user_id', 'user', req, res, next
 
     editUrlTrack = (req, res, next) ->
       loadUrlTrack req, res, ->
@@ -85,7 +90,8 @@ module.exports =
     app.get "#{base}/cars/:car_id", (req, res) ->
       findCar req.params['car_id'], (car) ->
         return jsonError 404, res unless car?
-        res.json car
+        products = req.user?.user.products
+        res.json car.toJSON { products }
 
     app.get "#{base}/envs/:env_id", (req, res) ->
       findEnv req.params['env_id'], (env) ->
@@ -143,6 +149,11 @@ module.exports =
       allowedKeys = [ 'config', 'name', 'published' ]
       filterAndSaveIfModified req.fromUrl.track, allowedKeys, req, res
 
+    app.post "#{base}/tracks/:track_id/drive", loadUrlTrack, (req, res) ->
+      res.send 200
+      track = req.fromUrl.track
+      track.save { count_drive: track.count_drive + 1 }
+
     app.delete "#{base}/tracks/:track_id", editUrlTrack, (req, res) ->
       req.fromUrl.track.destroy
         success: -> res.json {}
@@ -168,6 +179,10 @@ module.exports =
         res.json user: null
       return
 
+    app.get "#{base}/tracksets/:trackset_id", loadUrlTrackSet, (req, res) ->
+      res.json req.fromUrl.trackSet
+
+    # Give a JSON 404 response for any unknown path under /v1/.
     app.get "#{base}/*", (req, res) -> jsonError 404, res
 
     return

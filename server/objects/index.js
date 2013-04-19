@@ -25,6 +25,7 @@ var Car = new Schema({
   , name      : { type: String, trim: true, validate: [validate.goosify(validate.required), 'name'] }
   , user      : { type: Schema.ObjectId, ref: 'User' }
   , config    : Schema.Types.Mixed
+  , product   : String
 }, { strict: true });
 
 Car.virtual('created')

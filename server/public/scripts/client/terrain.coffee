@@ -492,6 +492,8 @@ define [
 
       # Do a pull only if the rest of the pipeline has already executed.
       # TODO: Implement optimized quiver multi-pull.
+      console.log "maps:"
+      console.log maps
       quiver.pull heightNode if maps.height.q_map.updated
       quiver.pull surfaceNode if maps.surface.q_map.updated
       quiver.pull detailNode if maps.detail.q_map.updated

@@ -339,15 +339,17 @@ app.get    '/closeme', routes.closeme
 
 # Backward compatibility.
 app.get '/drive', (req, res) ->
-  res.redirect '/x/Preview/Arbusu/drive', 301
+  res.redirect '/', 301
 app.get '/x/Preview/Arbusu/drive', (req, res) ->
-  req.params.idTrack = 'Preview'
-  req.params.idCar = 'Arbusu'
-  loadUrlTrack req, res, ->
-    loadUrlCar req, res, ->
-      routes.trackDrive req, res
+  # req.params.idTrack = 'Preview'
+  # req.params.idCar = 'Arbusu'
+  # loadUrlTrack req, res, ->
+  #   loadUrlCar req, res, ->
+  #     routes.drive req, res
+  # Preview is broken, so just redirect to home.
+  res.redirect '/', 301
 app.get '/x/:idTrack/:idCar/drive', (req, res) ->
-  res.redirect "/track/#{idTrack}/drive", 301
+  res.redirect "/track/#{req.params.idTrack}/drive", 301
 
 unified = [
   '/'
@@ -356,22 +358,23 @@ unified = [
   '/license'
   '/track/:idTrack/drive'
   '/track/:idTrack/edit'
+  '/tracklist/:idTrackSet'
   '/user/:idUser'
 ]
 app.get path, routes.unified for path in unified
 
 app.get    '/login', routes.login
 app.get    '/recenttracks', routes.recentTracks
-app.get    '/track/:idTrack', loadUrlTrack, routes.track
-app.get    '/car/:idCar', loadUrlCar, routes.car
-app.get    '/car/:idCar/json', loadUrlCar, routes.carJson
-app.get    '/car/:idCar/json/edit', loadUrlCar, editCar, routes.carJson
-app.post   '/car/:idCar/json/save', loadUrlCar, editCar, routes.carJsonSave
-app.get    '/run/:idRun', loadUrlRun, routes.run
-app.post   '/run/new', routes.runSave
-app.get    '/run/:idRun/replay', loadUrlRun, routes.runReplay
-app.get    '/x/:idTrack/:idCar/top', loadUrlTrack, loadUrlCar, routes.top
-app.post   '/metrics', routes.metricsSave
+# app.get    '/track/:idTrack', loadUrlTrack, routes.track
+# app.get    '/car/:idCar', loadUrlCar, routes.car
+# app.get    '/car/:idCar/json', loadUrlCar, routes.carJson
+# app.get    '/car/:idCar/json/edit', loadUrlCar, editCar, routes.carJson
+# app.post   '/car/:idCar/json/save', loadUrlCar, editCar, routes.carJsonSave
+# app.get    '/run/:idRun', loadUrlRun, routes.run
+# app.post   '/run/new', routes.runSave
+# app.get    '/run/:idRun/replay', loadUrlRun, routes.runReplay
+# app.get    '/x/:idTrack/:idCar/top', loadUrlTrack, loadUrlCar, routes.top
+# app.post   '/metrics', routes.metricsSave
 
 ppec = require './paypal/expresscheckout'
 qs = require 'querystring'

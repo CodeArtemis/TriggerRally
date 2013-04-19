@@ -26,6 +26,7 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
     this.scenery = new gameScenery.Scenery(this);
     this.setupQuiver();
     this.watchConfig();
+    this.ready = false;
   };
 
   exports.Track.prototype.watchConfig = function() {
@@ -36,9 +37,12 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
     // TODO: on change, scenery.refresh()
 
     // TOOD: Listen for individual checkpoint changes, update just relevant region.
-    var updateCheckpoints = _.debounce(function() {
+    var debounced = _.debounce(function() {
       quiver.push(this.checkpointsNode);
     }.bind(this), 200);
+    var updateCheckpoints = function() {
+      debounced();
+    }.bind(this);
     this.root.on('change:track.config.course.checkpoints.', updateCheckpoints);
     this.root.on('add:track.config.course.checkpoints.', updateCheckpoints);
     this.root.on('remove:track.config.course.checkpoints.', updateCheckpoints);
@@ -50,6 +54,11 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
     // this.root.on('change:track.config.course.checkpoints.', updateScenery);
     // this.root.on('add:track.config.course.checkpoints.', updateScenery);
     // this.root.on('remove:track.config.course.checkpoints.', updateScenery);
+
+    this.root.on('change:track', function() {
+      console.log('setting not ready');
+      this.ready = false;
+    }.bind(this));
   };
 
   exports.Track.prototype.setupQuiver = function() {
@@ -58,6 +67,8 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
       var surf = outs[1];
       var checkpointsCfg = this.root.track.config.course.checkpoints.toJSON();
       var checkpoints = [];
+
+      this.ready = false;
 
       dst.width = src.width;
       dst.height = src.height;
@@ -266,6 +277,15 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
       this.checkpointsNode = new quiver.Node();
       quiver.connect(this.checkpointsNode,
                      drawTrackNode);
+      var finished = function(ins, outs, done) {
+        console.log('finished');
+        this.ready = true;
+        done();
+      }.bind(this);
+      // For some reason this doesn't work if connected to all three.
+      // quiver.connect(maps.height.q_map, finished);
+      quiver.connect(maps.surface.q_map, finished);
+      // quiver.connect(maps.detail.q_map, finished);
     }).call(this);
 
     var scenery = this.scenery;

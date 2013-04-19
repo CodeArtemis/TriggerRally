@@ -151,6 +151,42 @@ module.exports = (bb) ->
                 return error model, null, options
               success model, null, options
 
+  bb.TrackSet::sync = do ->
+    alpEnvId = new mongoose.Types.ObjectId '506754342668a4626133ccd7'
+    makeSync
+      read: (model, success, error, options) ->
+        switch model.id
+          when 'featured'
+            response =
+              name: 'Featured tracks'
+              tracks: [
+                'uUJTPz6M'
+                'Alpina'
+                'pRNGozkY'
+                'Z7SkazUF'
+                '8wuycma7'
+              ]
+            success model, response, options
+          when 'recent'
+            query =
+              env: alpEnvId  # TODO: Remove this filter.
+              published: yes
+            mo.Track
+              .find(query)
+              .sort({modified: -1})
+              .limit(20)
+              #.populate('user')  # Is this too slow?
+              .exec (err, tracks) ->
+                if err
+                  console.log "Error fetching tracks: #{err}"
+                  return error model, null, options
+                response =
+                  name: 'Recent tracks'
+                  tracks: (track.pub_id for track in tracks)
+                success model, response, options
+          else
+            error model, null, options
+
   bb.User::sync = makeSync
     read: (model, success, error, options) ->
       mo.User

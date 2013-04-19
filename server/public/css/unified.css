@@ -256,11 +256,12 @@ a.disabled:visited {
   background: #fff;
   box-shadow: inset 0 0 4em rgba(0,0,0,0.3), 0 0.3em 1em #000;
   border-radius: 0.8em;
+  font-size: 0.75em;
   position: absolute;
-  top: 1em;
-  left: 5.5em;
   width: 21em;
   height: 13em;
+  top: 1.1em;
+  left: 10.833333333333332em;
   border: 0.3em solid #9b9;
   overflow: hidden;
   opacity: 0.95;
@@ -385,6 +386,18 @@ a.disabled:visited {
   width: 6em;
   height: 6em;
 }
+table.tracksetcollection {
+  border-spacing: 0.1em;
+}
+table.tracksetcollection tr {
+  background: #eee;
+}
+table.tracksetcollection tr:first-child {
+  background: #ddd;
+}
+table.tracksetcollection td {
+  padding: 0 0.7em;
+}
 body {
   background: #888;
   -moz-user-select: none;
@@ -422,19 +435,16 @@ input:checked + label {
   width: 100%;
 }
 #statusbar > table td:nth-child(1) {
-  width: 20%;
+  width: 12em;
 }
 #statusbar > table td:nth-child(2) {
-  width: 20%;
-}
-#statusbar > table td:nth-child(3) {
-  width: 30%;
-}
-#statusbar > table td:nth-child(4) {
-  width: 30%;
+  width: 27em;
 }
 #statusbar > table td:last-child {
   text-align: right;
+}
+#statusbar > table td.navigation > * {
+  margin: 0 0.5em;
 }
 .dropdownmenu {
   position: relative;
@@ -443,7 +453,7 @@ input:checked + label {
   position: absolute;
   left: -1em;
   top: 100%;
-  width: 15em;
+  width: 18em;
   background: rgba(255,221,170,0.9);
   margin: 0;
   padding: 1em 0 0.4em;
@@ -453,20 +463,25 @@ input:checked + label {
 .dropdownmenu:hover > menu {
   display: inline-block;
 }
+.dropdownmenu > menu > * {
+  padding: 0.1em 1em;
+}
 .dropdownmenu > menu > li {
-  padding: 0 1em;
   border-radius: 0.4em;
 }
 .dropdownmenu > menu > li:hover {
   background: #fec;
 }
 .dropdownmenu > menu > hr {
+  padding: 0;
   margin: 0.4em 1em;
 }
 .dropdownmenu > menu > .label {
-  margin: 0 1em;
   font-style: italic;
   opacity: 0.5;
+}
+.dropdownmenu > menu > ul {
+  padding-left: 2.5em;
 }
 #unified-child {
   position: relative;
@@ -532,7 +547,7 @@ img.github {
 .gui-container menu a:active {
   -webkit-transform: scale(0.95);
 }
-menu li {
+menu > li {
   list-style: none;
   display: block;
 }

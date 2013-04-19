@@ -9,6 +9,7 @@ define [
   'cs!views/license'
   'cs!views/profile'
   'cs!views/spin'
+  'cs!views/trackset'
 ], (
   Backbone
   models
@@ -20,6 +21,7 @@ define [
   LicenseView
   ProfileView
   SpinView
+  TrackSetView
 ) ->
   class Router extends Backbone.Router
     constructor: (@app) ->
@@ -29,11 +31,13 @@ define [
     routes:
       "": "home"
       "about": "about"
+      "tracklist/:setId": "trackset"
       "ignition": "ignition"
       "license": "license"
       "track/:trackId/edit": "editor"
       "track/:trackId/drive": "drive"
       "user/:userId": "profile"
+      # "user/:userId/tracks": "usertracks"
 
     setSpin: ->
       unless @uni.getView3D() instanceof SpinView
@@ -45,6 +49,7 @@ define [
       @uni.setViewChild (new AboutView @app, @uni.client).render()
 
     drive: (trackId) ->
+      console.log 'route drive ' + trackId
       view = @uni.getView3D()
       unless view instanceof DriveView and
              view is @uni.getViewChild()
@@ -84,10 +89,25 @@ define [
     license: ->
       Backbone.trigger 'app:settitle', 'License and Terms of Use'
       @setSpin()
-      @uni.setViewChild (new LicenseView @app, @uni.client).render()
+      view = new LicenseView @app, @uni.client
+      @uni.setViewChild view.render()
 
     profile: (userId) ->
       @setSpin()
       user = models.User.findOrCreate userId
-      view = (new ProfileView user, @app, @uni.client).render()
-      @uni.setViewChild view
+      view = new ProfileView user, @app, @uni.client
+      @uni.setViewChild view.render()
+
+    trackset: (setId) ->
+      trackSet = models.TrackSet.findOrCreate setId
+      @setSpin()
+      view = new TrackSetView trackSet, @app, @uni.client
+      @uni.setViewChild view.render()
+
+    # TODO: Implement this.
+    # usertracks: (userId) ->
+    #   @setSpin()
+    #   user = models.User.findOrCreate userId
+    #   @setSpin()
+    #   view = new TrackSetView trackSet, @app, @uni.client
+    #   @uni.setViewChild view.render()

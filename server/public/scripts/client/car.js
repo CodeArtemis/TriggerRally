@@ -256,8 +256,14 @@ function(THREE, util) {
     };
 
     this.destroy = function() {
-      // TODO: More complete clean-up. (renderer.deallocateObject)
       scene.remove(this.root);
+
+      // FIXME: Doesn't stop sounds that haven't finished loading at this point.
+
+      if (this.sourceEngine) this.sourceEngine.stop(0);
+      if (this.sourceTransmission) this.sourceTransmission.stop(0);
+      if (this.sourceWind) this.sourceWind.stop(0);
+      if (this.sourceSkid) this.sourceSkid.stop(0);
     };
 
     // TODO: Clean up this control flow.

@@ -3,13 +3,21 @@ table
     td
       h2
         a.route(href="/") Trigger Rally
-    td
+    td.navigation
+      a(href="javascript:history.back()") &blacktriangleleft; Back
       a.route(href="/") Home
-      | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       a.route(href="/about") About
       //- | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       //- a(href="javascript:location.reload()") Reload
-      | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      span.dropdownmenu Track &blacktriangledown;
+        menu.trackinfo
+          li
+            span.name
+            |  by 
+            span.author
+          hr
+          li: a.route.drive Drive track
+          li: a.route.edit Edit track
       span.dropdownmenu Settings &blacktriangledown;
         menu
           li: label
@@ -21,8 +29,30 @@ table
           li: label
             input#pref-terrainhq(type="checkbox", checked=prefs.terrainhq)
             | High quality terrain *
-          hr.car-section
+          //- each pd in pixdens
+          //-   li: label
+          //-     input.pixeldensity(type="radio", value=pd.id, checked=pd.checked)
+          //-     | #{pd.label}
           .label * Requires reload
+          .car-section
+      //- span.dropdownmenu Share &blacktriangledown;
+      //-   menu
+      //-     li
+      //-       <a href="https://twitter.com/share" class="twitter-share-button" data-via="TriggerRally" data-size="large" data-related="jareiko" data-dnt="true">Tweet</a>
+      //-       <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+      span.dropdownmenu Help &blacktriangledown;
+        menu
+          li: a(target="_blank", href="http://blog.triggerrally.com") Trigger Rally news
+          li: a(target="_blank", href="https://twitter.com/TriggerRally") Follow us on twitter
+          hr
+          div Controls:
+          ul
+            li Arrow keys to drive
+            li Space for handbrake
+            li C to change camera
+            li R to restart race
+          div Gamepads and wheels are supported in Chrome 
+            a(target="_blank", href="https://github.com/CodeArtemis/TriggerRally/wiki/Controllers") (more info)
     td
       span Status:&nbsp;
       span#status Loading
