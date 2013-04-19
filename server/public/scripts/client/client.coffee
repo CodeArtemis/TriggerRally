@@ -488,8 +488,8 @@ define [
           obj.destroy?()
         @gameCleanup = null
       @game = game
-      if game then game.on 'addvehicle', (car, progress) =>
-        @gameCleanup = []
+      @gameCleanup = [] if game?
+      game?.on? 'addvehicle', (car, progress) =>
         audio = if car.cfg.isRemote then null else @audio
         renderCar = new clientCar.RenderCar @scene, car, audio
         progress._renderCar = renderCar
@@ -550,8 +550,8 @@ define [
       @renderer?.setSize @width, @height
       @updateCamera()
 
-    addEditorCheckpoints: (track) ->
-      @add @renderCheckpoints = new RenderCheckpointsEditor @scene, @root
+    addEditorCheckpoints: (parent) ->
+      @add @renderCheckpoints = new RenderCheckpointsEditor parent, @root
 
     debouncedMuteAudio: _.debounce((audio) ->
       audio.setGain 0
@@ -565,7 +565,7 @@ define [
     update: (delta) ->
       # Pause simulation while track is updating.
       if @track.ready
-        @game?.sim.tick delta
+        @game?.sim?.tick delta
       for priority, layer of @objects
         for object in layer
           object.update @camera, delta

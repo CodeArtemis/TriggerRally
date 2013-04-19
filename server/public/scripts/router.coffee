@@ -53,18 +53,20 @@ define [
       view = @uni.getView3D()
       unless view instanceof DriveView and
              view is @uni.getViewChild()
-        view = (new DriveView @app, @uni.client).render()
+        view = new DriveView @app, @uni.client
         @uni.setView3D view
         @uni.setViewChild view
+        view.render()
       root = @app.root
       view.setTrackId trackId
 
     editor: (trackId) ->
       unless @uni.getView3D() instanceof EditorView and
              @uni.getView3D() is @uni.getViewChild()
-        view = (new EditorView @app, @uni.client).render()
+        view = new EditorView @app, @uni.client
         @uni.setView3D view
         @uni.setViewChild view
+        view.render()
       root = @app.root
 
       # TODO: Let the editor do this itself.

@@ -56,53 +56,8 @@ define [
 
       root = @app.root
 
-      notifyDrive = ->
-        # TODO: Make Track responsible for doing this.
-        $.ajax "/v1/tracks/#{root.track.id}/drive", type: 'POST'
-
-      @listenTo root, 'change:track.id', =>
-
-        # TODO: Delete any old game / progress / cars.
-
-        @lastRaceTime = 0
-        @updateTimer = yes
-        followProgress = null
-        # @game = new gameGame.Game @client.track
-
-        # @client.setGame @game
-
-        do updateCar = =>
-          carId = root.getCarId() ? 'ArbusuG'
-          carModel = models.Car.findOrCreate carId
-          carModel.fetch
-            success: =>
-              @game = new gameGame.Game @client.track
-              @client.setGame @game
-              @updateTimer = yes
-              notifyDrive()
-
-              @game.addCarConfig carModel.config, (progress) =>
-                followProgress = progress
-                followProgress.on 'advance', =>
-                  cpNext = followProgress.nextCpIndex
-                  cpTotal = root.track.config.course.checkpoints.length
-                  @$checkpoints.html "#{cpNext} / #{cpTotal}"
-
-                  return if followProgress.nextCheckpoint(0)
-
-                  # Race complete.
-                  @updateTimer = no
-                  @$runTimer.removeClass 'running'
-                  #if !TRIGGER.RUN
-                  #  if TRIGGER.USER_LOGGED_IN
-                  #    _.delay(uploadRun, 1000)
-                  #  else
-                  #    # We can't save the run, but show a Twitter link.
-                  #    showTwitterLink()
-
-        @listenTo root, 'change:user', updateCar
-        @listenTo root, 'change:user.products', updateCar
-        @listenTo root, 'change:prefs.car', updateCar
+      # @startGame()
+      # @listenTo root, 'change:track.id', => @startGame()
 
       client.on 'keydown', (event) =>
         switch event.keyCode
@@ -113,7 +68,54 @@ define [
             @$runTimer.addClass 'running'
             @game?.restart()
             notifyDrive()
-      return
+
+      @lastRaceTime = 0
+      @updateTimer = yes
+      followProgress = null
+
+      notifyDrive = ->
+        # TODO: Make Track model responsible for doing this.
+        # Will require some kind of special sync code.
+        $.ajax "/v1/tracks/#{root.track.id}/drive", type: 'POST'
+
+      do createGame = =>
+        return unless root.track?
+        carId = root.getCarId() ? 'ArbusuG'
+        carModel = models.Car.findOrCreate carId
+        console.log "createGame: Fetching #{carId}"
+        carModel.fetch
+          success: =>
+            console.log "createGame: creating game"
+            @game = new gameGame.Game @client.track
+            @client.setGame @game
+            @updateTimer = yes
+            notifyDrive()
+
+            @game.addCarConfig carModel.config, (progress) =>
+              console.log "createGame: adding car"
+              followProgress = progress
+              followProgress.on 'advance', =>
+                cpNext = followProgress.nextCpIndex
+                cpTotal = root.track.config.course.checkpoints.length
+                @$checkpoints.html "#{cpNext} / #{cpTotal}"
+
+                return if followProgress.nextCheckpoint(0)
+
+                # Race complete.
+                @updateTimer = no
+                @$runTimer.removeClass 'running'
+                #if !TRIGGER.RUN
+                #  if TRIGGER.USER_LOGGED_IN
+                #    _.delay(uploadRun, 1000)
+                #  else
+                #    # We can't save the run, but show a Twitter link.
+                #    showTwitterLink()
+
+      @listenTo root, 'change:track', createGame
+      # Also recreate game if user or car changes.
+      @listenTo root, 'change:user', createGame
+      @listenTo root, 'change:user.products', createGame
+      @listenTo root, 'change:prefs.car', createGame
 
     setTrackId: (trackId) ->
       track = models.Track.findOrCreate trackId

@@ -56,7 +56,6 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
     // this.root.on('remove:track.config.course.checkpoints.', updateScenery);
 
     this.root.on('change:track', function() {
-      console.log('setting not ready');
       this.ready = false;
     }.bind(this));
   };
@@ -278,7 +277,6 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
       quiver.connect(this.checkpointsNode,
                      drawTrackNode);
       var finished = function(ins, outs, done) {
-        console.log('finished');
         this.ready = true;
         done();
       }.bind(this);

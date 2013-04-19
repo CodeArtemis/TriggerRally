@@ -47,6 +47,11 @@ define [
       root = @app.root
       $ = @$.bind @
 
+      # Set a dummy game object so that client will start collecting objects.
+      # This lets us clean them up in destroy().
+      # TODO: Come up with a cleaner way to do this.
+      client.setGame {}
+
       client.camera.idealFov = 75
       client.updateCamera()
 
@@ -62,10 +67,13 @@ define [
 
       selection = new Selection()
 
-      startPos = new THREE.Object3D()
-      client.scene.add startPos
+      @editorObjects = editorObjects = new THREE.Object3D
+      client.scene.add editorObjects
 
-      client.addEditorCheckpoints()
+      startPos = new THREE.Object3D()
+      editorObjects.add startPos
+
+      client.addEditorCheckpoints editorObjects
 
       doSave = _.debounce ->
         if root.user isnt root.track.user
@@ -89,7 +97,8 @@ define [
           Backbone.trigger 'app:status', 'Changed'
           doSave()
 
-      @listenTo root, 'change:track.id', ->
+      do onChangeTrackId = ->
+        return unless root.track
         selection.reset()
 
         startposition = root.track.config.course.startposition
@@ -102,14 +111,19 @@ define [
         camAutoTimer = 0
 
         Backbone.history.navigate "/track/#{root.track.id}/edit"
+      @listenTo root, 'change:track.id', onChangeTrackId
 
-      @listenTo root, 'change:track.name', ->
+      do onChangeTrackName = ->
+        return unless root.track
         document.title = "#{root.track.name} - Trigger Rally"
+      @listenTo root, 'change:track.name', -> onChangeTrackName
 
-      @listenTo root, 'change:track.config.course.startposition.', ->
-        startposition = root.track.config.course.startposition
+      do onChangeStartPosition = ->
+        startposition = root.track?.config?.course.startposition
+        return unless startposition
         startPos.position.set startposition.pos...
         startPos.rotation.set startposition.rot...
+      @listenTo root, 'change:track.config.course.startposition.', onChangeStartPosition
 
       mockVehicle =
         cfg: null
@@ -232,11 +246,11 @@ define [
             radius = 4
         sel.mesh.scale.multiplyScalar radius
         sel.mesh.position.set pos[0], pos[1], pos[2]
-        client.scene.add sel.mesh
+        editorObjects.add sel.mesh
 
       handleSelRemove = (selModel) ->
         mesh = selModel.get('sel').mesh
-        client.scene.remove mesh
+        editorObjects.remove mesh
 
       selection.on 'add', handleSelAdd
       selection.on 'remove', handleSelRemove
@@ -249,7 +263,7 @@ define [
       mouseY = 0
       cursor = null
       cursorMesh = clientMisc.selectionMesh()
-      client.scene.add cursorMesh
+      editorObjects.add cursorMesh
       buttons = 0
       MB =
         LEFT: 1
@@ -416,3 +430,7 @@ define [
         origEvent = event.originalEvent
         deltaY = origEvent.wheelDeltaY ? origEvent.deltaY
         scroll deltaY, event
+
+    destroy: ->
+      @client.scene.remove @editorObjects
+      @client.setGame null
