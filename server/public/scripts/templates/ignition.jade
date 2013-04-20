@@ -2,9 +2,10 @@
   .text-panel
     .ignition-promo-image
 
-    h2: span.highlight Ignition Icarus
+    h2 Ignition 
+      span.highlight Icarus
 
-    p The Ignition Icarus is a new car for Trigger Rally:
+    p The Icarus is a new car for Trigger Rally:
     ul
       li More powerful and <b>faster</b> than the Arbusu
       li Retractable <b>wings</b> for controlled gliding
@@ -12,12 +13,13 @@
       //- li <b>Support</b> the development of Trigger Rally
 
     if purchased
-      p
-        strong Thank you for purchasing the Ignition Icarus!
-        |  Your support is very much appreciated.
+      p.purchased-thanks
+        strong Thank you for purchasing the Icarus!
+        br
+        | Switch between cars using the <b>Settings</b> menu.
         br
         | Don't forget you can now also 
-        a.route(href="/user/#{user.id}") choose an avatar
+        a.route(href="/user/#{user.id}") choose an <b>avatar</b>
         | .
 
     .checkout-box
@@ -41,14 +43,14 @@
             td: span.price $5 USD
             td: a.login(href="/login") Log in
 
-    if purchased
-      p
-        | If you need help with your purchase,
-        | please contact sup<span class="hidden">.remove.</span>port@codeartemis.com
-    else if user
-      p Purchase will be credited to user ID #{user.id} (#{user.name}).
+    //- if purchased
+    //-   p
+    //-     | If you need help with your purchase,
+    //-     | please contact sup<span class="hidden">.remove.</span>port@codeartemis.com
+    //- else if user
+    //-   p Purchase will be credited to user ID #{user.id} (#{user.name}).
 
-    p Want to buy for someone else? Please contact sup<span class="hidden">.remove.</span>port@codeartemis.com
+    p Need help? Please email <b>sup<span class="hidden">.remove.</span>port@codeartemis.com</b>
 
     p Use is subject to the 
       a.route(href="/license") License and Terms of Use

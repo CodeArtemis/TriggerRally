@@ -39,6 +39,7 @@ input:checked + label
   top 0
   width 100%
   z-index 2
+  font-weight bold
 
 #statusbar > table
   border-spacing 0
@@ -47,7 +48,7 @@ input:checked + label
 #statusbar > table td:nth-child(1)
   width 12em
 #statusbar > table td:nth-child(2)
-  width 27em
+  width 30em
 // #statusbar > table td:nth-child(3)
 //   width 25%
 // #statusbar > table td:nth-child(4)
@@ -57,18 +58,22 @@ input:checked + label
 //   text-align center
 
 #statusbar > table td:last-child
-  text-align right
+  text-align center
+
+#statusbar .status
+  font-weight initial
 
 #statusbar > table td.navigation > *
   margin 0 0.5em
 .dropdownmenu
   position relative
 .dropdownmenu > menu
+  font-weight initial
   position absolute
   left -1em
   top 100%
   width 18em
-  background rgba(255, 221, 170, 0.9)
+  background rgba(255, 221, 170, 0.95)
   margin 0
   padding 1em 0 0.4em
   display none
@@ -145,12 +150,14 @@ img.github
   margin 0.4em auto
   padding 0.3em
   width 30%
-  color #6e0
+  // color #6e0
+  color black
   // text-shadow 0 0 0.5em white
-  text-shadow 0 0 0.3em black
-  background rgba(255, 255, 255, 0.8)
+  // text-shadow 0 0 0.3em black
+  text-shadow 0 0 0.3em #6f1
+  background white //rgba(255, 255, 255, 0.8)
   border-radius 0.5em
-  opacity 0.6
+  opacity 0.8
   -webkit-transform scale(1)
   // transition -webkit-transform 0.1s
   transition 0.1s
@@ -212,11 +219,15 @@ table.credits td:first-child
   padding-right 3em
 
 .checkout-box
+.purchased-thanks
   display inline-block
-  margin 1em 5em
+  background #dfd
+  border-radius 0.5em
   padding 1em
   border 1px solid black
-  border-radius 0.5em
+
+.checkout-box
+  margin 1em 5em
   background-color:#ffffff;
   background-image: -moz-radial-gradient(66% 65%, circle cover, #ffffff 30%, rgb(168, 197, 224));
   background-image: -webkit-radial-gradient(66% 65%, circle cover, #ffffff 30%, rgb(168, 197, 224));

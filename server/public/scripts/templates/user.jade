@@ -1,5 +1,5 @@
 span.user
-  a.route(href="/user/#{user.pub_id || user.id}")
+  a.route(href="/user/#{user.id}")
     img_src = user.picture ? user.picture : "blank"
     img_src = "/images/profile/" + img_src + ".jpg"
     img(src=img_src)

@@ -16,6 +16,7 @@ define [
       _.extend @, Backbone.Events
 
     destroy: ->
+      @renderCar?.destroy()
       @stopListening()
 
     render: ->
@@ -23,7 +24,7 @@ define [
       startpos.position.set 0, 0, 430
       @client.scene.add startpos
 
-      track = models.Track.findOrCreate 'ac74h5uA'
+      track = models.Track.findOrCreate 'uUJTPz6M'
       track.fetch
         success: ->
           track.env.fetch
@@ -32,7 +33,7 @@ define [
               startpos.position.set track.config.course.startposition.pos...
               startpos.rotation.set track.config.course.startposition.rot...
 
-      renderCar = null
+      @renderCar = null
       do updateCar = =>
         carId = @app.root.getCarId() ? 'ArbusuG'
         carModel = models.Car.findOrCreate carId
@@ -44,9 +45,9 @@ define [
                 interp:
                   pos: new Vec3(0,0,0)
                   ori: (new THREE.Quaternion(1,1,1,1)).normalize()
-            renderCar?.destroy()
-            renderCar = new clientCar.RenderCar startpos, mockVehicle, null
-            renderCar.update()
+            @renderCar?.destroy()
+            @renderCar = new clientCar.RenderCar startpos, mockVehicle, null
+            @renderCar.update()
 
       @listenTo @app.root, 'change:user', updateCar
       @listenTo @app.root, 'change:user.products', updateCar

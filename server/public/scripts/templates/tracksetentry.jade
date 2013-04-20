@@ -1,12 +1,7 @@
 td
   a.route(href="/track/#{id}/drive") Drive 
     strong= name
-td
-  if user
-    //- TODO: Use a full UserView here.
-    a.route(href="/user/#{user}") (user)
-td
-  a.route(href="/track/#{id}/edit") Edit
+td.trackuser
 td= modified_ago
 td= count_drive
 td= count_copy

@@ -165,6 +165,7 @@ module.exports = (bb) ->
                 'pRNGozkY'
                 'Z7SkazUF'
                 '8wuycma7'
+                'KaXCxxFv'
               ]
             success model, response, options
           when 'recent'
@@ -181,7 +182,7 @@ module.exports = (bb) ->
                   console.log "Error fetching tracks: #{err}"
                   return error model, null, options
                 response =
-                  name: 'Recent tracks'
+                  name: 'Recent published tracks'
                   tracks: (track.pub_id for track in tracks)
                 success model, response, options
           else

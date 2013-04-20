@@ -22,12 +22,13 @@ input {
 .version {
   opacity: 0.3;
 }
-.user img {
-  width: 20px;
-  height: 20px;
-  margin-right: 5px;
+.user img,
+img.inline {
+  width: 1.3em;
+  height: 1.3em;
+  margin-right: 0.32em;
   vertical-align: -20%;
-  border-radius: 2px;
+  border-radius: 0.13em;
 }
 img.emoji {
   width: 1em;
@@ -40,7 +41,7 @@ img.profilepic {
 }
 a,
 a:visited {
-  color: #370;
+  color: #140;
   text-decoration: none;
 }
 a:hover {
@@ -429,6 +430,7 @@ input:checked + label {
   top: 0;
   width: 100%;
   z-index: 2;
+  font-weight: bold;
 }
 #statusbar > table {
   border-spacing: 0;
@@ -438,10 +440,13 @@ input:checked + label {
   width: 12em;
 }
 #statusbar > table td:nth-child(2) {
-  width: 27em;
+  width: 30em;
 }
 #statusbar > table td:last-child {
-  text-align: right;
+  text-align: center;
+}
+#statusbar .status {
+  font-weight: initial;
 }
 #statusbar > table td.navigation > * {
   margin: 0 0.5em;
@@ -450,11 +455,12 @@ input:checked + label {
   position: relative;
 }
 .dropdownmenu > menu {
+  font-weight: initial;
   position: absolute;
   left: -1em;
   top: 100%;
   width: 18em;
-  background: rgba(255,221,170,0.9);
+  background: rgba(255,221,170,0.95);
   margin: 0;
   padding: 1em 0 0.4em;
   display: none;
@@ -531,11 +537,11 @@ img.github {
   margin: 0.4em auto;
   padding: 0.3em;
   width: 30%;
-  color: #6e0;
-  text-shadow: 0 0 0.3em #000;
-  background: rgba(255,255,255,0.8);
+  color: #000;
+  text-shadow: 0 0 0.3em #6f1;
+  background: #fff;
   border-radius: 0.5em;
-  opacity: 0.6;
+  opacity: 0.8;
   -webkit-transform: scale(1);
   transition: 0.1s;
   position: relative;
@@ -597,12 +603,16 @@ table.credits td {
 table.credits td:first-child {
   padding-right: 3em;
 }
-.checkout-box {
+.checkout-box,
+.purchased-thanks {
   display: inline-block;
-  margin: 1em 5em;
+  background: #dfd;
+  border-radius: 0.5em;
   padding: 1em;
   border: 1px solid #000;
-  border-radius: 0.5em;
+}
+.checkout-box {
+  margin: 1em 5em;
   background-color: #fff;
   background-image: -moz-radial-gradient(66% 65%, circle cover, #fff 30%, #a8c5e0);
   background-image: -webkit-radial-gradient(66% 65%, circle cover, #fff 30%, #a8c5e0);

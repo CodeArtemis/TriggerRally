@@ -51,6 +51,6 @@ require(
     'cs!app'
   ],
   function main(App) {
-    var app = new App();
+    new App();
   }
 );

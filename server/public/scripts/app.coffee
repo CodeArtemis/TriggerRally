@@ -65,6 +65,8 @@ define [
       Backbone.on 'app:checklogin', @checkUserLogin, @
       Backbone.on 'app:logout', @logout, @
       Backbone.on 'app:settitle', @setTitle, @
+      Backbone.on 'app:webglerror', ->
+        Backbone.history.navigate '/about', trigger: yes
 
       @checkUserLogin()
       Backbone.history.start pushState: yes
@@ -72,7 +74,7 @@ define [
       unless @unifiedView.client.renderer
         # WebGL failed to initialize.
         if location.pathname isnt '/about'
-          Backbone.history.navigate '/about', trigger: yes
+          Backbone.trigger 'app:webglerror'
 
     setTrack: (track, fromRouter) ->
       lastTrack = @root.track

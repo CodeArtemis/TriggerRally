@@ -91,7 +91,10 @@ define [
         @currentViewChild?.update? deltaTime, time
 
       @client.update deltaTime
-      @client.render()
+      try
+        @client.render()
+      catch e
+        Backbone.trigger 'app:webglerror'
 
       requestAnimationFrame @update
 

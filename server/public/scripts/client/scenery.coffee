@@ -29,6 +29,7 @@ define [
 
     createTile: (layer, tx, ty, skipFadeIn) ->
       entities = layer.src.getTile(tx, ty)
+      return null unless entities
       renderConfig = layer.src.config.render
       tile = new THREE.Object3D
       tile.position.x = (tx + 0.5) * layer.src.cache.gridSize
@@ -82,7 +83,7 @@ define [
       # TODO: Remove layers that have disappeared from @scenery.
 
       for layer in @layers
-        continue unless layer.meshes?  # Check that we have something to draw.
+        continue unless layer.meshes.length > 0  # Check that we have something to draw.
         visibleTiles = {}
         txCenter = Math.floor(camera.position.x / layer.src.cache.gridSize)
         tyCenter = Math.floor(camera.position.y / layer.src.cache.gridSize)
@@ -92,13 +93,15 @@ define [
             visibleTiles[key] = yes
             tile = layer.tiles[key]
             if not tile and (addAll or not added)
+              tile = @createTile layer, tx, ty, addAll
               added = yes
-              tile = layer.tiles[key] = @createTile layer, tx, ty, addAll
-              @scene.add tile
+              if tile
+                layer.tiles[key] = tile
+                @scene.add tile
             if tile and tile.opacity < 1
-                tile.opacity = Math.min 1, tile.opacity + fadeAmount
-                for mesh in tile.children
-                  mesh.material.opacity = tile.opacity
+              tile.opacity = Math.min 1, tile.opacity + fadeAmount
+              for mesh in tile.children
+                mesh.material.opacity = tile.opacity
         toRemove = (key for key of layer.tiles when not visibleTiles[key])
         for key in toRemove
           tile = layer.tiles[key]

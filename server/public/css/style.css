@@ -22,12 +22,13 @@ input {
 .version {
   opacity: 0.3;
 }
-.user img {
-  width: 20px;
-  height: 20px;
-  margin-right: 5px;
+.user img,
+img.inline {
+  width: 1.3em;
+  height: 1.3em;
+  margin-right: 0.32em;
   vertical-align: -20%;
-  border-radius: 2px;
+  border-radius: 0.13em;
 }
 img.emoji {
   width: 1em;
@@ -40,7 +41,7 @@ img.profilepic {
 }
 a,
 a:visited {
-  color: #370;
+  color: #140;
   text-decoration: none;
 }
 a:hover {

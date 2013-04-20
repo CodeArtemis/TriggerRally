@@ -4,12 +4,14 @@ define [
   'cs!views/view_collection'
   'jade!templates/trackset'
   'jade!templates/tracksetentry'
+  'cs!views/user'
 ], (
   Backbone
   View
   ViewCollection
   template
   templateEntry
+  UserView
 ) ->
   class TrackSetEntryView extends View
     template: templateEntry
@@ -26,7 +28,21 @@ define [
       data.user ?= null
       data
     afterRender: ->
-      @listenTo @model, 'change', @render, @
+      track = @model
+      @listenTo track, 'change', @render, @
+
+      $trackuser = @$ '.trackuser'
+      @userView = null
+      do updateUserView = =>
+        @userView?.destroy()
+        @userView = track.user and new UserView
+          model: track.user
+        $trackuser.empty()
+        $trackuser.append @userView.el if @userView
+      @listenTo track, 'change:user', updateUserView
+    destroy: ->
+      @userView.destroy()
+      super
 
   class TrackSetCollectionView extends ViewCollection
     view: TrackSetEntryView

@@ -277,13 +277,17 @@ function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
       quiver.connect(this.checkpointsNode,
                      drawTrackNode);
       var finished = function(ins, outs, done) {
+        // console.log('track ready');
+        // console.log('height: ' + maps.height.q_map.updated);
+        // console.log('surface: ' + maps.surface.q_map.updated);
+        // console.log('detail: ' + maps.detail.q_map.updated);
         this.ready = true;
         done();
       }.bind(this);
       // For some reason this doesn't work if connected to all three.
       // quiver.connect(maps.height.q_map, finished);
       quiver.connect(maps.surface.q_map, finished);
-      // quiver.connect(maps.detail.q_map, finished);
+      quiver.connect(maps.detail.q_map, finished);
     }).call(this);
 
     var scenery = this.scenery;

@@ -182,6 +182,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
   };
 
   exports.Layer.prototype.getTile = function(tX, tY) {
+    if (!this.scenery.track.ready) return null;
     var tile = this.cache.getTile(tX, tY);
     if (tile) return tile;
     tile = this.createTile(tX, tY);

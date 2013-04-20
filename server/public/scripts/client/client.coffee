@@ -40,10 +40,12 @@ define [
     constructor: (scene, root) ->
       meshes = []
 
-      reset = ->
+      do reset = ->
         for mesh in meshes
           scene.remove mesh
-        meshes = for cp in root.track.config.course.checkpoints.models
+        checkpoints = root.track?.config?.course.checkpoints.models
+        return unless checkpoints
+        meshes = for cp in checkpoints
           mesh = clientMisc.checkpointMesh()
           Vec3::set.apply mesh.position, cp.pos
           scene.add mesh

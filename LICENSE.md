@@ -1,7 +1,7 @@
 License and Terms of Use
 ========================
 
-License version 2013-04-15.2
+License version 2013-04-19.1
 
 (1) Trigger Rally has two components: Source Code and Content. Everything is copyright © 2012-2013 Code Artemis unless otherwise attributed.
 
@@ -13,7 +13,7 @@ License version 2013-04-15.2
 
 (3.1) You may use the Content to play the original Trigger Rally as served from triggerrally.com, and you may cache or copy it locally. However, you may not modify or redistribute the Content for any purpose unless you have a separate license from the owner(s) to do so. To enable local testing and experimenting, you may use the Content with versions of Trigger Rally that you yourself have modified, but not if the modifications were made by someone else.
 
-(3.2) Paid Content is Content that requires payment to use. The Ignition pack is Paid Content. You may not use Paid Content unless you have bought the appropriate license. The terms for Content also apply to Paid Content.
+(3.2) Paid Content is Content that requires payment to use. You may not use Paid Content unless you have bought the appropriate license. The terms for Content also apply to Paid Content.
 
 (6) FAQ about this License:
 

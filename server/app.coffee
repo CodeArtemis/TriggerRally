@@ -350,6 +350,8 @@ app.get '/x/Preview/Arbusu/drive', (req, res) ->
   res.redirect '/', 301
 app.get '/x/:idTrack/:idCar/drive', (req, res) ->
   res.redirect "/track/#{req.params.idTrack}/drive", 301
+app.get '/track/:idTrack', (req, res) ->
+  res.redirect "/track/#{req.params.idTrack}/drive", 301
 
 unified = [
   '/'
