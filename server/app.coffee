@@ -385,8 +385,8 @@ getPaymentParams = (productId) ->
   products =
     ignition:
       cost: '5.00'
-      name: 'Trigger Rally Ignition'
-      description: 'An add-on pack for Trigger Rally.'
+      name: 'Trigger Rally Icarus Ignition'
+      description: 'A new car for Trigger Rally.'
       url: 'https://triggerrally.com/ignition'
 
   product = products[productId]

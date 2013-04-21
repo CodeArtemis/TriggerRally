@@ -49,7 +49,6 @@ define [
       @uni.setViewChild (new AboutView @app, @uni.client).render()
 
     drive: (trackId) ->
-      console.log 'route drive ' + trackId
       view = @uni.getView3D()
       unless view instanceof DriveView and
              view is @uni.getViewChild()

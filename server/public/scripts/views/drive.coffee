@@ -82,17 +82,14 @@ define [
         return unless root.track?
         carId = root.getCarId() ? 'ArbusuG'
         carModel = models.Car.findOrCreate carId
-        console.log "createGame: Fetching #{carId}"
         carModel.fetch
           success: =>
-            console.log "createGame: creating game"
             @game = new gameGame.Game @client.track
             @client.setGame @game
             @updateTimer = yes
             notifyDrive()
 
             @game.addCarConfig carModel.config, (progress) =>
-              console.log "createGame: adding car"
               followProgress = progress
               followProgress.on 'advance', =>
                 cpNext = followProgress.nextCpIndex
