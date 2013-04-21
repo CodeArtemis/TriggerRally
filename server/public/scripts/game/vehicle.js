@@ -117,7 +117,7 @@ function(THREE, psim, collision, util) {
     var currentPower = getEnginePower(vehicle.engineAngVel, powerband);
     var currentTorque = currentPower * vehicle.gearRatios[output.gear] / vehicle.engineAngVel;
     if (this.shiftTimer <= 0) {
-      if (output.clutch && output.gear >= 1) {
+      if (output.clutch >= 0.5 && output.gear >= 1) {
         var nextGearRel = 0;
         if (output.gear > 1 &&
             GetTorque(output.gear - 1) > currentTorque) {
@@ -156,7 +156,7 @@ function(THREE, psim, collision, util) {
     output.clutch = 1;
 
     // Disengage clutch when using handbrake.
-    if (output.handbrake >= 0.5) output.clutch = 0;
+    if (output.handbrake >= 0.5 && !vehicle.cfg.wings) output.clutch = 0;
   };
 
   exports.Vehicle = function(sim, config) {
@@ -421,40 +421,45 @@ function(THREE, psim, collision, util) {
 
     if (this.cfg.wings) {
       var timeOut = 0.5;
-      if (!this.hasContact) {
-        if (this.foldTimer < timeOut) {
-          this.foldTimer += delta;
-          if (this.foldTimer >= timeOut) {
-            this.events.push({type:'sfx:hydraulic', gain: 0.5});
-          }
-        }
-        if (this.foldTimer >= timeOut) {
-          if (this.wingFold > 0) {
-            this.wingFold -= delta * 3;
-            if (this.wingFold <= 0) {
-              this.wingFold = 0;
-              this.events.push({type:'sfx:slam'});
-            }
-          }
-        } else {
-          if (this.wingFold < 1) {
-            this.wingFold += delta * 3;
-            if (this.wingFold >= 1) {
-              this.wingFold = 1;
-              this.events.push({type:'sfx:slam', gain: 0.3});
-            }
-          }
-        }
-      } else {
+      var wingsShouldFold = true;
+
+      if (this.hasContact) {
         if (this.foldTimer >= timeOut) {
           this.events.push({type:'sfx:hydraulic', gain: 0.5});
         }
         this.foldTimer = 0;
+        wingsShouldFold = true;
+      } else {
+        if (this.foldTimer < timeOut) {
+          this.foldTimer += delta;
+          if (this.foldTimer >= timeOut)
+            wingsShouldFold = false;
+        }
+        if (this.foldTimer >= timeOut)
+          wingsShouldFold = false;
+        else
+          wingsShouldFold = true;
+      }
+      if (controls.handbrake > 0.5) wingsShouldFold = false;
+
+      if (wingsShouldFold) {
+        if (this.wingFold == 0)
+          this.events.push({type:'sfx:hydraulic', gain: 0.5});
         if (this.wingFold < 1) {
           this.wingFold += delta * 3;
           if (this.wingFold >= 1) {
             this.wingFold = 1;
             this.events.push({type:'sfx:slam', gain: 0.3});
+          }
+        }
+      } else {
+        if (this.wingFold == 1)
+          this.events.push({type:'sfx:hydraulic', gain: 0.5});
+        if (this.wingFold > 0) {
+          this.wingFold -= delta * 3;
+          if (this.wingFold <= 0) {
+            this.wingFold = 0;
+            this.events.push({type:'sfx:slam'});
           }
         }
       }
@@ -490,8 +495,17 @@ function(THREE, psim, collision, util) {
 
       var input = this.controller.input;
       var turn = this.wheelTurnPos;
-      tmpVec3a.set(0.5 * (input.throttle - input.brake),
-                   turn * 0.1, -turn).multiplyScalar(turnSpeed);
+      var oriMat = this.body.oriMat;
+      var plusZ = new Vec3(0,0,1);
+
+      tmpVec3b.copy(oriMat.getColumnY()).crossSelf(plusZ);
+      var ang1 = Math.acos(tmpVec3b.dot(oriMat.getColumnX()));
+
+      // tmpVec3a.set(0.5 * (input.throttle - input.brake),
+      //              turn * 0.1, -turn).multiplyScalar(turnSpeed);
+      tmpVec3a.set(0, //CLAMP((targetSpeed - locLinVelZ) * 0.2, -1, 1),
+                   0,
+                   CLAMP(ang1, -1, 1)).multiplyScalar(turnSpeed);
       tmpVec3b.copy(tmpVec3a).multiplyScalar(turnRateA);
       this.body.addLocTorque(tmpVec3b);
       tmpVec3a.subSelf(locAngVel).multiplyScalar(logFwdVel * turnRateB);
@@ -515,6 +529,8 @@ function(THREE, psim, collision, util) {
       this.liftForce = tmpVec3a.y;
     }
 
+    var handbrake = this.cfg.wings ? 0 : controls.handbrake;
+
     this.hasContact = false;
     for (c = 0; c < this.wheels.length; ++c) {
       var wheel = this.wheels[c];
@@ -529,7 +545,7 @@ function(THREE, psim, collision, util) {
       wheel.spinVel += 0.13 * wheelTorque * delta;
       var brake =
           controls.brake * (wheel.cfg.brake || 0) +
-          controls.handbrake * (wheel.cfg.handbrake || 0);
+          handbrake * (wheel.cfg.handbrake || 0);
       if (brake > 0) {
         wheel.spinVel = MOVETOWARD(wheel.spinVel, 0, brake * delta);
       }
