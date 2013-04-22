@@ -464,10 +464,13 @@ input:checked + label {
   margin: 0;
   padding: 1em 0 0.4em;
   display: none;
+  opacity: 0;
   border-radius: 0 0 0.4em 0.4em;
+  transition: 0.5s;
 }
 .dropdownmenu:hover > menu {
   display: inline-block;
+  opacity: 1;
 }
 .dropdownmenu > menu > * {
   padding: 0.1em 1em;

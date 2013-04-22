@@ -14,6 +14,17 @@ function(util) {
     handler.push(fn);
   };
 
+  var off = function(topic, fn) {
+    var handlers = this._handlers;
+    if (!handlers) return;
+    var handler = handlers[topic];
+    if (!handler) return;
+    var idx;
+    while ((idx = handler.indexOf(fn)) != -1) {
+      handler.splice(idx, 1);
+    };
+  };
+
   var trigger = function(topic) {
     var handlers = this._handlers;
     if (!handlers) return;
@@ -28,8 +39,11 @@ function(util) {
   exports.PubSub = function() {};
   exports.PubSub.mixin = function(obj) {
     obj.on = on;
-    obj.subscribe = on;
+    obj.off = off;
     obj.trigger = trigger;
+
+    // Deprecated methods.
+    obj.subscribe = on;
     obj.publish = trigger;
   };
   exports.PubSub.mixin(exports.PubSub.prototype);

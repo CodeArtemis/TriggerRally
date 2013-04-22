@@ -43,6 +43,21 @@ define [
       @client.setGame null
       super
 
+    notifyDrive: ->
+      # TODO: Make Track model responsible for doing this.
+      # Will require some kind of special sync code.
+      $.ajax "/v1/tracks/#{@app.root.track.id}/drive", type: 'POST'
+
+    onKeyDown: (event) ->
+      switch event.keyCode
+        when KEYCODE['C']
+          @client.camControl?.nextMode()
+        when KEYCODE['R']
+          @updateTimer = yes
+          @$runTimer.addClass 'running'
+          @game?.restart()
+          @notifyDrive()
+
     afterRender: ->
       client = @client
       client.camera.idealFov = 75
@@ -59,24 +74,9 @@ define [
       # @startGame()
       # @listenTo root, 'change:track.id', => @startGame()
 
-      client.on 'keydown', (event) =>
-        switch event.keyCode
-          when KEYCODE['C']
-            client.camControl?.nextMode()
-          when KEYCODE['R']
-            @updateTimer = yes
-            @$runTimer.addClass 'running'
-            @game?.restart()
-            notifyDrive()
-
       @lastRaceTime = 0
       @updateTimer = yes
       followProgress = null
-
-      notifyDrive = ->
-        # TODO: Make Track model responsible for doing this.
-        # Will require some kind of special sync code.
-        $.ajax "/v1/tracks/#{root.track.id}/drive", type: 'POST'
 
       do createGame = =>
         return unless root.track?
@@ -87,11 +87,11 @@ define [
             @game = new gameGame.Game @client.track
             @client.setGame @game
             @updateTimer = yes
-            notifyDrive()
+            @notifyDrive()
 
             @game.addCarConfig carModel.config, (progress) =>
               followProgress = progress
-              followProgress.on 'advance', =>
+              @listenTo followProgress, 'advance', =>
                 cpNext = followProgress.nextCpIndex
                 cpTotal = root.track.config.course.checkpoints.length
                 @$checkpoints.html "#{cpNext} / #{cpTotal}"
