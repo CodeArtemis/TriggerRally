@@ -25,6 +25,11 @@ define [
     constructor: (@app, @client) -> super()
 
     afterRender: ->
+      do updateDriveButton = =>
+        trackId = @app.root.track?.id
+        @$('.drivebutton').attr 'href', "/track/#{trackId}/drive" if trackId
+      @listenTo @app.root, 'change:track.', updateDriveButton
+
       do updatePromo = =>
         products = @app.root.user?.products ? []
         @$('.ignition-promo').toggleClass 'hidden', 'ignition' in products

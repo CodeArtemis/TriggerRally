@@ -78,7 +78,10 @@ define [
 
     setTrack: (track, fromRouter) ->
       lastTrack = @root.track
-      return if track is lastTrack
+      if track is lastTrack
+        # Just notify that track has been reset.
+        track.trigger 'change'
+        return
       @root.track = track
       # TODO: Deep comparison with lastTrack to find out which events to fire.
       track.trigger 'change:env' if track.env isnt lastTrack?.env
@@ -89,6 +92,7 @@ define [
       track.trigger 'change:config.course.checkpoints.'
       track.trigger 'change:config.course.startposition.'
       track.trigger 'change:config.scenery.'
+      track.trigger 'change'
 
     checkUserLogin: ->
       $.ajax('/v1/auth/me')
