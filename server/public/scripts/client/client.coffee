@@ -390,7 +390,7 @@ define [
       #sunLight.shadowCameraVisible = true
 
       #sunLight.shadowBias = -0.001
-      sunLight.shadowDarkness = 0.5
+      sunLight.shadowDarkness = 0.3
 
       sunLight.shadowMapWidth = 1024
       sunLight.shadowMapHeight = 1024
@@ -438,6 +438,7 @@ define [
       @scene.fog = new THREE.FogExp2 0xddeeff, 0.0002
 
       @scene.add new THREE.AmbientLight 0x446680
+      # @scene.add new THREE.AmbientLight 0x6699C0
       @scene.add @cubeMesh()
 
       @add new SunLight @scene
