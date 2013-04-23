@@ -25,9 +25,9 @@ function(THREE, psim, collision, util) {
   // TODO: Transfer these to config.
   var CLIP_CONSTANT = 200000;
   var CLIP_DAMPING = 8000;
-  var SUSP_CONSTANT = 70000;
-  var SUSP_DAMPING = 50;
-  var SUSP_MAX = 0.13;
+  var SUSP_CONSTANT = 80000;
+  var SUSP_DAMPING = 200;
+  var SUSP_MAX = 0.14;
   var WHEEL_MASS = 15;
   var ENGINE_BRAKE_REGION = 0.5;
   var ENGINE_BRAKE_TORQUE = 0.1;
@@ -38,6 +38,7 @@ function(THREE, psim, collision, util) {
   var FRICTION_STATIC_CHASSIS = 1.2 * 0.9;
   var FRICTION_DYNAMIC_WHEEL = 0.9 * 1.2;
   var FRICTION_STATIC_WHEEL = 1.2 * 1.2;
+  var WHEEL_LATERAL_FEEDBACK = -0.02;
 
   var tmpVec3a = new Vec3();
   var tmpVec3b = new Vec3();
@@ -358,8 +359,9 @@ function(THREE, psim, collision, util) {
     var wheelLateralForce = 0;
     for (c = 0; c < this.wheels.length; ++c) {
       var wheel = this.wheels[c];
-      differentialAngVel += wheel.spinVel * (wheel.cfg.drive || 0);
-      wheelLateralForce += wheel.frictionForce.x;
+      var turnFactor = wheel.cfg.drive || 0;
+      differentialAngVel += wheel.spinVel * turnFactor;
+      wheelLateralForce += wheel.frictionForce.x * turnFactor;
     }
     differentialAngVel /= this.totalDrive;
     this.differentialAngVel = differentialAngVel;
@@ -419,6 +421,7 @@ function(THREE, psim, collision, util) {
       }
     }
 
+    var angDrag = 20;
     if (this.cfg.wings) {
       var timeOut = 0.5;
       var wingsShouldFold = true;
@@ -479,7 +482,7 @@ function(THREE, psim, collision, util) {
       var linDragX = 0.3 * wingFactor;
       var linDragY = 0.3 * wingFactor;
       var linDragZ = 0.3 * wingFactor;
-      var angDrag = 100 * wingFactor;
+      angDrag += 80 * wingFactor;
       var finEffectX = 200 * wingFactor;
       var finEffectY = 200 * wingFactor;
       var finEffectZ = 30 * wingFactor;
@@ -505,7 +508,7 @@ function(THREE, psim, collision, util) {
       //              turn * 0.1, -turn).multiplyScalar(turnSpeed);
       tmpVec3a.set(0, //CLAMP((targetSpeed - locLinVelZ) * 0.2, -1, 1),
                    0,
-                   CLAMP(ang1, -1, 1)).multiplyScalar(turnSpeed);
+                   0);//CLAMP(ang1, -1, 1)).multiplyScalar(turnSpeed);
       tmpVec3b.copy(tmpVec3a).multiplyScalar(turnRateA);
       this.body.addLocTorque(tmpVec3b);
       tmpVec3a.subSelf(locAngVel).multiplyScalar(logFwdVel * turnRateB);
@@ -517,10 +520,6 @@ function(THREE, psim, collision, util) {
                 locLinVelX * finEffectY,
                 0));
 
-      // Angular drag.
-      tmpVec3a.copy(this.body.getAngularVel()).multiplyScalar(-angDrag);
-      this.body.addTorque(tmpVec3a);
-
       // Linear drag and lift.
       tmpVec3a.x = -linDragX * locLinVelX * Math.abs(locLinVelX);
       tmpVec3a.y = -(linDragY + lift * logFwdVel) * locLinVelY * Math.abs(locLinVelY);
@@ -528,6 +527,10 @@ function(THREE, psim, collision, util) {
       this.body.addLocForce(tmpVec3a);
       this.liftForce = tmpVec3a.y;
     }
+
+    // Angular drag.
+    tmpVec3a.copy(this.body.getAngularVel()).multiplyScalar(-angDrag);
+    this.body.addTorque(tmpVec3a);
 
     var handbrake = this.cfg.wings ? 0 : controls.handbrake;
 
@@ -569,7 +572,7 @@ function(THREE, psim, collision, util) {
     var wheelTurnVelTarget =
         (controls.desiredTurnPos - this.wheelTurnPos) * 400 +
         this.wheelTurnVel * -20.0 +
-        wheelLateralForce * -0.01;
+        wheelLateralForce * WHEEL_LATERAL_FEEDBACK;
     wheelTurnVelTarget = CLAMP(wheelTurnVelTarget, -8, 8);
     this.wheelTurnVel = PULLTOWARD(this.wheelTurnVel,
                                    wheelTurnVelTarget,

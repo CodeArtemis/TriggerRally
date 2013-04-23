@@ -3,11 +3,15 @@
     div Code Artemis presents
     h1 Trigger Rally
     li
-      a.route.highlight(href="/tracklist/featured") &gt; Play &lt;
+      a.route.highlight.drivebutton(href="/tracklist/featured") &gt; Drive &lt;
+    li
+      a.route(href="/tracklist/featured") Featured tracks
     li
       a.route(href="/tracklist/recent") More tracks
     //- li
     //-   a.route(href="/instructions") Instructions
-    li.ignition-promo.hidden
-      a.route(href="/ignition") Icarus Car
-        .new-marker New!
+    //- li.ignition-promo.hidden
+    //-   a.route(href="/ignition") Icarus Car
+    //-     .new-marker New!
+    li
+      a.route(href="/track/v3-base-1/edit") Create a track

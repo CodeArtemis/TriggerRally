@@ -380,6 +380,10 @@ define [
 
       sunLight.castShadow = yes
 
+      # sunLight.shadowCascade = yes
+      # sunLight.shadowCascadeCount = 3
+      # sunLight.shadowCascadeOffset = 10
+
       sunLight.shadowCameraNear = -20
       sunLight.shadowCameraFar = 60
       sunLight.shadowCameraLeft = -24
@@ -390,7 +394,7 @@ define [
       #sunLight.shadowCameraVisible = true
 
       #sunLight.shadowBias = -0.001
-      sunLight.shadowDarkness = 0.5
+      sunLight.shadowDarkness = 0.3
 
       sunLight.shadowMapWidth = 1024
       sunLight.shadowMapHeight = 1024
@@ -420,10 +424,10 @@ define [
 
       @renderer = @createRenderer prefs
       @containerEl.appendChild @renderer.domElement if @renderer
-      # This may be unexpected and unwelcome behavior.
-      # prefs.on 'change:shadows', ->
-      #   # We have to reload because shadow code is baked into the shaders.
-      #   window.location.reload()
+
+      prefs.on 'change:pixeldensity', =>
+        @renderer?.devicePixelRatio = prefs.pixeldensity
+        @renderer?.setSize @width, @height
 
       @sceneHUD = new THREE.Scene()
       @cameraHUD = new THREE.OrthographicCamera -1, 1, 1, -1, 1, -1
@@ -438,6 +442,7 @@ define [
       @scene.fog = new THREE.FogExp2 0xddeeff, 0.0002
 
       @scene.add new THREE.AmbientLight 0x446680
+      # @scene.add new THREE.AmbientLight 0x6699C0
       @scene.add @cubeMesh()
 
       @add new SunLight @scene
@@ -531,7 +536,7 @@ define [
           antialias: false
           premultipliedAlpha: false
           clearColor: 0xffffff
-        r.devicePixelRatio = Math.min 4/3, r.devicePixelRatio
+        r.devicePixelRatio = prefs.pixeldensity
         r.shadowMapEnabled = prefs.shadows
         r.shadowMapCullFrontFaces = false
         r.autoClear = false

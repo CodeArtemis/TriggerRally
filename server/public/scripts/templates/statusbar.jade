@@ -32,10 +32,12 @@ table
           li: label
             input#pref-terrainhq(type="checkbox", checked=prefs.terrainhq)
             | High detail terrain
-          //- each pd in pixdens
-          //-   li: label
-          //-     input.pixeldensity(type="radio", value=pd.id, checked=pd.checked)
-          //-     | #{pd.label}
+          hr
+          .label Resolution
+          each pd in pixdens
+            li: label.pixeldensity
+              input(type="radio", name="pixdens", value=pd.value, checked=pd.checked)
+              | #{pd.label}
           .car-section
       //- span.dropdownmenu Share &blacktriangledown;
       //-   menu
@@ -44,18 +46,19 @@ table
       //-       <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
       span.dropdownmenu Help &blacktriangledown;
         menu
+          .label Links to our social network pages:
           li: a(target="_blank", href="http://blog.triggerrally.com")
             img.inline(src="/images/tumblr_64.png")
-            | Trigger Rally news
+            | Tumblr
           li: a(target="_blank", href="https://twitter.com/TriggerRally")
             img.inline(src="/images/twitter_64.png")
-            | Follow us on Twitter
+            | Twitter
           li: a(target="_blank", href="https://www.facebook.com/TriggerRally")
             img.inline(src="/images/facebook_64.png")
-            | Like us on Facebook
+            | Facebook
           li: a(target="_blank", href="https://plus.google.com/104685285638239390202")
             img.inline(src="/images/google_64.png")
-            | Circle us on Google+
+            | Google+
           hr
           div Controls:
           ul

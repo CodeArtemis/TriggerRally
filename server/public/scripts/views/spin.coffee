@@ -24,14 +24,22 @@ define [
       startpos.position.set 0, 0, 430
       @client.scene.add startpos
 
-      track = models.Track.findOrCreate 'uUJTPz6M'
-      track.fetch
-        success: ->
-          track.env.fetch
-            success: ->
-              Backbone.trigger 'app:settrack', track
-              startpos.position.set track.config.course.startposition.pos...
-              startpos.rotation.set track.config.course.startposition.rot...
+      root = @app.root
+      do updateStartPos = =>
+        return unless root.track
+        startposition = root.track.config.course.startposition
+        startpos.position.set startposition.pos...
+        startpos.rotation.set startposition.rot...
+      @listenTo root, 'change:track.', updateStartPos
+
+      unless root.track
+        track = models.Track.findOrCreate 'uUJTPz6M'
+        track.fetch
+          success: =>
+            track.env.fetch
+              success: =>
+                return if root.track
+                Backbone.trigger 'app:settrack', track
 
       @renderCar = null
       do updateCar = =>

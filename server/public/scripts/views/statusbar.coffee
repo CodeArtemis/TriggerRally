@@ -20,7 +20,16 @@ define [
     constructor: (@app) -> super()
 
     viewModel: ->
-      prefs: @app.root.prefs
+      prefs = @app.root.prefs
+      pixdens = [
+        { value: 2, label: '1:2' }
+        { value: 1, label: '1:1' }
+        { value: 0.5, label: '2:1' }
+        { value: 0.25, label: '4:1' }
+      ]
+      for pd in pixdens
+        pd.checked = (pd.value is prefs.pixeldensity)
+      { prefs, pixdens }
 
     afterRender: ->
       root = @app.root
@@ -56,6 +65,10 @@ define [
 
       @$el.on 'change', '.statusbarcar input:radio', (event) ->
         prefs.car = @value
+
+      @$el.on 'change', '.pixeldensity input:radio', (event) ->
+        console.log @value
+        prefs.pixeldensity = @value
 
       $carSection = @$('.car-section')
       do addCars = =>
