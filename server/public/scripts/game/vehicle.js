@@ -504,11 +504,11 @@ function(THREE, psim, collision, util) {
       tmpVec3b.copy(oriMat.getColumnY()).crossSelf(plusZ);
       var ang1 = Math.acos(tmpVec3b.dot(oriMat.getColumnX()));
 
-      // tmpVec3a.set(0.5 * (input.throttle - input.brake),
-      //              turn * 0.1, -turn).multiplyScalar(turnSpeed);
-      tmpVec3a.set(0, //CLAMP((targetSpeed - locLinVelZ) * 0.2, -1, 1),
-                   0,
-                   0);//CLAMP(ang1, -1, 1)).multiplyScalar(turnSpeed);
+      tmpVec3a.set(0.5 * (input.throttle - input.brake),
+                   turn * 0.1, -turn).multiplyScalar(turnSpeed);
+      // tmpVec3a.set(0, //CLAMP((targetSpeed - locLinVelZ) * 0.2, -1, 1),
+      //              0,
+      //              0);//CLAMP(ang1, -1, 1)).multiplyScalar(turnSpeed);
       tmpVec3b.copy(tmpVec3a).multiplyScalar(turnRateA);
       this.body.addLocTorque(tmpVec3b);
       tmpVec3a.subSelf(locAngVel).multiplyScalar(logFwdVel * turnRateB);

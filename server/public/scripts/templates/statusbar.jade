@@ -32,6 +32,9 @@ table
           li: label
             input#pref-terrainhq(type="checkbox", checked=prefs.terrainhq)
             | High detail terrain
+          li: label
+            input#pref-antialias(type="checkbox", checked=prefs.antialias)
+            | Antialiasing
           hr
           .label Resolution
           each pd in pixdens
@@ -46,7 +49,7 @@ table
       //-       <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
       span.dropdownmenu Help &blacktriangledown;
         menu
-          .label Links to our social network pages:
+          .label Get news and updates on these sites:
           li: a(target="_blank", href="http://blog.triggerrally.com")
             img.inline(src="/images/tumblr_64.png")
             | Tumblr

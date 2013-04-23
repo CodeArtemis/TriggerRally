@@ -533,7 +533,7 @@ define [
       try
         r = new THREE.WebGLRenderer
           alpha: false
-          antialias: false
+          antialias: prefs.antialias
           premultipliedAlpha: false
           clearColor: 0xffffff
         r.devicePixelRatio = prefs.pixeldensity

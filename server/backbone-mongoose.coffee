@@ -175,8 +175,7 @@ module.exports = (bb) ->
             mo.Track
               .find(query)
               .sort({modified: -1})
-              .limit(20)
-              #.populate('user')  # Is this too slow?
+              .limit(30)
               .exec (err, tracks) ->
                 if err
                   console.log "Error fetching tracks: #{err}"

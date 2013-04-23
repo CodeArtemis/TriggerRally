@@ -22,13 +22,14 @@ define [
     viewModel: ->
       prefs = @app.root.prefs
       pixdens = [
-        { value: 2, label: '1:2' }
+        { value: 2, label: '2:1' }
         { value: 1, label: '1:1' }
-        { value: 0.5, label: '2:1' }
-        { value: 0.25, label: '4:1' }
+        { value: 0.5, label: '1:2' }
+        { value: 0.25, label: '1:4' }
+        { value: 0.125, label: '1:8' }
       ]
       for pd in pixdens
-        pd.checked = (pd.value is prefs.pixeldensity)
+        pd.checked = ('' + pd.value is prefs.pixeldensity)
       { prefs, pixdens }
 
     afterRender: ->
@@ -48,6 +49,7 @@ define [
       $prefAudio = @$('#pref-audio')
       $prefShadows = @$('#pref-shadows')
       $prefTerrainhq = @$('#pref-terrainhq')
+      $prefAntialias = @$('#pref-antialias')
 
       prefs = root.prefs
 
@@ -57,17 +59,19 @@ define [
         prefs.shadows = $prefShadows[0].checked
       $prefTerrainhq.on 'change', ->
         prefs.terrainhq = $prefTerrainhq[0].checked
+      $prefAntialias.on 'change', ->
+        prefs.antialias = $prefAntialias[0].checked
 
       @listenTo root, 'change:prefs.', ->
         $prefAudio[0].checked = prefs.audio
         $prefShadows[0].checked = prefs.shadows
         $prefTerrainhq[0].checked = prefs.terrainhq
+        $prefAntialias[0].checked = prefs.antialias
 
       @$el.on 'change', '.statusbarcar input:radio', (event) ->
         prefs.car = @value
 
       @$el.on 'change', '.pixeldensity input:radio', (event) ->
-        console.log @value
         prefs.pixeldensity = @value
 
       $carSection = @$('.car-section')

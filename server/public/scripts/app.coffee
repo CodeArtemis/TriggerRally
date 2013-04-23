@@ -39,8 +39,9 @@ define [
       @prefs.car
 
   class PrefsModel extends models.Model
-    models.buildProps @, [ 'audio', 'car', 'pixeldensity', 'shadows', 'terrainhq' ]
+    models.buildProps @, [ 'antialias', 'audio', 'car', 'pixeldensity', 'shadows', 'terrainhq' ]
     defaults:
+      antialias: yes
       audio: yes
       car: 'Icarus'
       pixeldensity: 1
@@ -103,8 +104,8 @@ define [
           user.set user.parse data.user
           @root.user = user
           Backbone.trigger 'app:status', 'Logged in'
-          user.tracks.each (track) ->
-            track.fetch()
+          # user.tracks.each (track) ->
+          #   track.fetch()
           # @listenTo root, 'add:user.tracks.', (track) ->
           #   track.fetch()
         else

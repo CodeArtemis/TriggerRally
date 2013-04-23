@@ -60,8 +60,13 @@
       # console.log "findOrCreate #{@::constructor.name}:#{id} isNew = #{isNew}"
       model
 
+    cacheExpirySecs: 30
+
     fetch: (options = {}) ->
-      return options.success? @, null, options if @lastSync and not options?.force
+      if @lastSync and not options?.force
+        timeSinceLast = Date.now() - @lastSync
+        if timeSinceLast < @cacheExpirySecs * 1000
+          return options.success? @, null, options
       xhr = @fetchXHR
       if xhr
         # Bind handlers to in-progress fetch.
@@ -215,6 +220,7 @@
     parse: (response, options) ->
       data = super
       return data unless data
+      # console.log data
       if data.config
         config = @config or new TrackConfig
         data.config = config.set config.parse data.config
@@ -230,8 +236,11 @@
         data.parent = Track.findOrCreate parentId
       if data.user
         user = data.user
-        userId = if typeof user is 'string' then user else user.id
-        data.user = User.findOrCreate userId
+        if typeof user is 'string'
+          data.user = User.findOrCreate user
+        else
+          data.user = User.findOrCreate user.id
+          data.user.set data.user.parse user
       data.modified = data.created if data.created and not data.modified
       data
     toJSON: ->
@@ -290,6 +299,7 @@
       return data unless data
       if data.tracks
         tracks = for track in data.tracks
+          continue unless track?
           if typeof track is 'string'
             Track.findOrCreate track
           else
