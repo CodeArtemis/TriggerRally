@@ -257,6 +257,7 @@
       'tracks'
     ]
     urlRoot: '/v1/tracksets'
+    cacheExpirySecs: 10
     defaults: ->
       tracks: new TrackCollection
     parse: ->

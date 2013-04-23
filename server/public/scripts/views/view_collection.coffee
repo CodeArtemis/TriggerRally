@@ -7,6 +7,10 @@ define [
     #collection: new Backbone.Collection()
     #view: View  # The type of child views to create.
 
+    # The number of fixed (non-model) child elements to ignore.
+    # This could be used to ignore a header <tr> in a table, for example.
+    childOffset: 0
+
     initialize: (options) ->
       super
       @views = {}  # keyed by model.cid
@@ -24,14 +28,14 @@ define [
       super
 
     onAdd: (model, collection, options) =>
+      @addModel model, collection.indexOf model
+
+    addModel: (model, index) ->
       view = @createView model
       view.render()
-      if options.at?
-        $target = @$el.children().eq(options.at)
-        if $target.length > 0
-          @$el.children().eq(options.at).before view.el
-        else
-          @$el.append view.el
+      $target = @$el.children().eq index + @childOffset
+      if $target.length > 0
+        $target.before view.el
       else
         @$el.append view.el
       @views[model.cid] = view
@@ -70,7 +74,7 @@ define [
     createView: (model) -> new @view { model, parent: @ }
 
     addAll: ->
-      @collection.each @onAdd
+      @collection.each @addModel, @
       @
 
     destroyAll: ->

@@ -46,6 +46,7 @@ define [
 
   class TrackSetCollectionView extends ViewCollection
     view: TrackSetEntryView
+    childOffset: 1  # Ignore header <tr>.
 
   class TrackSetView extends View
     className: 'overlay'
