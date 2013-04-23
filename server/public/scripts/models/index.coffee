@@ -134,7 +134,7 @@
           c = new Checkpoint
           c.set c.parse checkpoint
           c
-        @checkpoints.update checkpoints
+        @checkpoints.reset checkpoints
         data.checkpoints = @checkpoints
       data
 
@@ -193,7 +193,7 @@
           else
             c = Car.findOrCreate car.id
             c.set c.parse car
-        data.cars = @cars.update cars
+        data.cars = @cars.reset cars
       data
 
   class Track extends Model
@@ -270,7 +270,7 @@
           else
             t = Track.findOrCreate track.id
             t.set t.parse track
-        data.tracks = @tracks.update tracks
+        data.tracks = @tracks.reset tracks
       data
     toJSON: (options) ->
       data = super
@@ -306,7 +306,7 @@
           else
             t = Track.findOrCreate track.id
             t.set t.parse track
-        data.tracks = @tracks.update tracks
+        data.tracks = @tracks.reset tracks
       data
     toJSON: (options) ->
       data = super
