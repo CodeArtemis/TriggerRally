@@ -6372,8 +6372,16 @@ THREE.Projector = function() {
 
 	function painterSort( a, b ) {
 
-		return b.z - a.z;
+  // MODIFIED 2013-04-24
+		if ( a.z !== b.z ) {
 
+			return b.z - a.z;
+
+		} else {
+
+			return a.id - b.id;
+
+		}
 	}
 
 	function clipLine( s1, s2 ) {

@@ -3,12 +3,14 @@ define [
   'backbone-full'
   'cs!models/index'
   'cs!router'
+  'cs!views/notfound'
   'cs!views/unified'
 ], (
   $
   Backbone
   models
   Router
+  NotFoundView
   UnifiedView
 ) ->
   jsonClone = (obj) -> JSON.parse JSON.stringify obj
@@ -69,14 +71,20 @@ define [
       Backbone.on 'app:settitle', @setTitle, @
       Backbone.on 'app:webglerror', ->
         Backbone.history.navigate '/about', trigger: yes
+      Backbone.on 'app:notfound', @notFound, @
 
       @checkUserLogin()
-      Backbone.history.start pushState: yes
+      found = Backbone.history.start pushState: yes
+      Backbone.trigger 'app:notfound' unless found
 
       unless @unifiedView.client.renderer
         # WebGL failed to initialize.
         if location.pathname isnt '/about'
           Backbone.trigger 'app:webglerror'
+
+    notFound: ->
+      @router.setSpin()
+      @router.uni.setViewChild (new NotFoundView).render()
 
     setTrack: (track, fromRouter) ->
       lastTrack = @root.track

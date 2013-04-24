@@ -23,6 +23,8 @@ define [
       super()
       # We maintain 2 view references, one for 3D and one for DOM.
       # They may be the same or different.
+      # This is fragile, requiring careful bookkeeping in setView* methods.
+      # TODO: Find a better solution.
       @currentView3D = null     # Controls 3D rendering.
       @currentViewChild = null  # Controls DOM.
 
@@ -112,6 +114,7 @@ define [
     setView3D: (view) ->
       if @currentView3D
         @currentView3D.destroy()
+      @currentViewChild = null if @currentView3D is @currentViewChild
       @currentView3D = view
       return
 
@@ -120,6 +123,7 @@ define [
       if @currentViewChild
         @currentViewChild.destroy()
         container.empty()
+      @currentView3D = null if @currentView3D is @currentViewChild
       @currentViewChild = view
       container.append view.el if view
       return

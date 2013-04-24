@@ -16,8 +16,10 @@ define [
   class TrackSetEntryView extends View
     template: templateEntry
     tagName: 'tr'
+
     initialize: ->
       @model.fetch()
+
     viewModel: ->
       data = super
       loading = '...'
@@ -27,6 +29,7 @@ define [
       data.count_copy ?= loading
       data.user ?= null
       data
+
     afterRender: ->
       track = @model
       @listenTo track, 'change', @render, @
@@ -40,6 +43,7 @@ define [
         $trackuser.empty()
         $trackuser.append @userView.el if @userView
       @listenTo track, 'change:user', updateUserView
+
     destroy: ->
       @userView.destroy()
       super
@@ -53,9 +57,6 @@ define [
     template: template
     constructor: (model, @app, @client) -> super { model }
 
-    initialize: ->
-      @model.fetch()
-
     afterRender: ->
       trackSetCollectionView = new TrackSetCollectionView
         collection: @model.tracks
@@ -64,3 +65,4 @@ define [
 
       @listenTo @model, 'change:name', (m, name) =>
         @$('.tracksetname').text name
+        Backbone.trigger 'app:settitle', name

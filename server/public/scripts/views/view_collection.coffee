@@ -48,28 +48,19 @@ define [
       @addAll()
 
     onSort: (collection, options) =>
-      throw new Error 'implement onSort'
-      #   @sort collection
-
-    # sort: (collection) ->
-    #   console.log 'sorting'
-    #   console.log @el
-    #   @$el.children().sort (a, b) -> Math.floor(Math.random() * 3) - 1
-    #   return
-    #   oldViews = @views
-    #   view.$el.detach() for cid, view of oldViews
-    #   oldModels = _.pluck oldViews, 'model'
-    #   @views = for model in collection.models
-    #     i = oldModels.indexOf model
-    #     console.log "sort index #{i}"
-    #     newView = if i is -1
-    #       @createView model
-    #     else
-    #       oldViews[i]
-    #     @$el.append newView.el
-    #     newView
-    #   @destroyView view for view in oldViews when view not in @views
-    #   @
+      # TODO: Only touch views that have moved?
+      @$el.children().slice(@childOffset).detach()
+      for model in collection.models
+        view = @views[model.cid]
+        @$el.append view.$el
+      # removed = {}
+      # $children = @$el.children()
+      # for model, index in collection.models
+      #   $child = $children.eq index
+      #   view = @views[model.cid]
+      #   if $child[0] isnt view.el
+      #     $child.detach()
+      #     removed.push $child
 
     createView: (model) -> new @view { model, parent: @ }
 

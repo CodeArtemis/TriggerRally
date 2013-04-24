@@ -23,7 +23,9 @@ define [
       @listenTo @model, 'change:id', => @render()
       @listenTo @model, 'change:products', => @render()
       @listenTo @app.root, 'change:user', => @render()
-      @model.fetch()
+      @model.fetch
+        error: ->
+          Backbone.trigger 'app:notfound'
 
     editable: -> @model.id is @app.root.user?.id
     purchased: -> 'ignition' in (@model.products ? [])
@@ -61,8 +63,8 @@ define [
       data
 
     afterRender: ->
-      $created = @$('div.issued')
-      $name = @$('div.user-name')
+      $created = @$('.issuedate')
+      $name = @$('.user-name')
       $pic = @$('.picture')
       $nameError = @$('div.user-name-error')
 

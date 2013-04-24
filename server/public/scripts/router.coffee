@@ -7,6 +7,7 @@ define [
   'cs!views/home'
   'cs!views/ignition'
   'cs!views/license'
+  # 'cs!views/notfound'
   'cs!views/profile'
   'cs!views/spin'
   'cs!views/trackset'
@@ -19,6 +20,7 @@ define [
   HomeView
   IgnitionView
   LicenseView
+  # NotFoundView
   ProfileView
   SpinView
   TrackSetView
@@ -37,16 +39,20 @@ define [
       "track/:trackId/edit": "editor"
       "track/:trackId/drive": "drive"
       "user/:userId": "profile"
-      # "user/:userId/tracks": "usertracks"
+      "user/:userId/tracks": "usertracks"
 
     setSpin: ->
       unless @uni.getView3D() instanceof SpinView
-        @uni.setView3D (new SpinView @app, @uni.client).render()
+        view = new SpinView @app, @uni.client
+        @uni.setView3D view
+        view.render()
 
     about: ->
       Backbone.trigger 'app:settitle', 'About'
       @setSpin()
-      @uni.setViewChild (new AboutView @app, @uni.client).render()
+      view = new AboutView @app, @uni.client
+      @uni.setViewChild view
+      view.render()
 
     drive: (trackId) ->
       view = @uni.getView3D()
@@ -75,17 +81,22 @@ define [
           track.env.fetch
             success: ->
               Backbone.trigger "app:settrack", track, yes
+              Backbone.trigger 'app:settitle', "Edit #{track.name}"
 
     home: ->
       Backbone.trigger 'app:settitle', null
       @setSpin()
-      @uni.setViewChild (new HomeView @app, @uni.client).render()
+      view = new HomeView @app, @uni.client
+      @uni.setViewChild view
+      view.render()
 
     ignition: ->
       Backbone.trigger 'app:settitle', 'Ignition Pack'
       # TODO: Show Ignition car?
       @setSpin()
-      @uni.setViewChild (new IgnitionView @app, @uni.client).render()
+      view = new IgnitionView @app, @uni.client
+      @uni.setViewChild view
+      view.render()
 
     license: ->
       Backbone.trigger 'app:settitle', 'License and Terms of Use'
@@ -100,15 +111,22 @@ define [
       @uni.setViewChild view.render()
 
     trackset: (setId) ->
-      trackSet = models.TrackSet.findOrCreate setId
       @setSpin()
+      trackSet = models.TrackSet.findOrCreate setId
+      trackSet.fetch()
       view = new TrackSetView trackSet, @app, @uni.client
       @uni.setViewChild view.render()
 
-    # TODO: Implement this.
-    # usertracks: (userId) ->
-    #   @setSpin()
-    #   user = models.User.findOrCreate userId
-    #   @setSpin()
-    #   view = new TrackSetView trackSet, @app, @uni.client
-    #   @uni.setViewChild view.render()
+    usertracks: (userId) ->
+      @setSpin()
+      user = models.User.findOrCreate userId
+      user.fetch
+        success: =>
+          trackSet = new models.TrackSet
+            name: "Tracks by #{user.name}"
+            tracks: new models.TrackCollectionSortModified user.tracks.models
+          trackSet.tracks.on 'change:modified', -> trackSet.tracks.sort()
+          view = new TrackSetView trackSet, @app, @uni.client
+          @uni.setViewChild view.render()
+        error: ->
+          Backbone.trigger 'app:notfound'

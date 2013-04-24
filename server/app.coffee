@@ -192,8 +192,9 @@ app.use routes.defaultParams
 
 app.use app.router
 
-app.use (req, res) ->
-  res.send 404, "Sorry, we couldn't find a page with this address."
+# Send any path not otherwise handled to the unified app.
+# TODO: Make the app show a 404 as appropriate.
+app.use routes.unified
 
 app.configure 'development', ->
   app.use (err, req, res, next) ->
@@ -210,96 +211,56 @@ app.configure 'production', ->
 
 mongoose.connect config.MONGOOSE_URL
 
-loadUrlUser = (req, res, next) ->
-  User
-    .findOne(pub_id: req.params.idUser)
-    .exec (error, urlUser) ->
-      if error then done error
-      else
-        if urlUser
-          urlUser.isAuthenticated = req.user?.user?.id is urlUser.id
-          req.urlUser = urlUser
-          next()
-        else
-          res.send 404
+# loadUrlTrackInternal = (find, req, res, next) ->
+#   find
+#     .populate('user')
+#     .populate('env')
+#     .populate('parent', {'pub_id':1, 'name':1})
+#     .exec (error, urlTrack) ->
+#       if error then return next error
+#       unless urlTrack then return res.send 404
+#       urlTrack.isAuthenticated = req.user?.user?.id is urlTrack.user.id
+#       req.urlTrack = urlTrack
+#       unless urlTrack.env then return next()
+#       Car
+#         .find()
+#         .where('_id')
+#         .in(urlTrack.env.cars)
+#         .exec (error, cars) ->
+#           if error then return next error
+#           # Horrible workaround because we can't populate env.cars directly.
+#           # See Environment model for the rest of the hack.
+#           req.urlTrack.env.populatedCars = cars
+#           next()
 
+# loadUrlTrack = (req, res, next) ->
+#   find = Track.findOne
+#     pub_id: req.params.idTrack
+#   loadUrlTrackInternal find, req, res, next
 
-loadUrlTrackInternal = (find, req, res, next) ->
-  find
-    .populate('user')
-    .populate('env')
-    .populate('parent', {'pub_id':1, 'name':1})
-    .exec (error, urlTrack) ->
-      if error then return next error
-      unless urlTrack then return res.send 404
-      urlTrack.isAuthenticated = req.user?.user?.id is urlTrack.user.id
-      req.urlTrack = urlTrack
-      unless urlTrack.env then return next()
-      Car
-        .find()
-        .where('_id')
-        .in(urlTrack.env.cars)
-        .exec (error, cars) ->
-          if error then return next error
-          # Horrible workaround because we can't populate env.cars directly.
-          # See Environment model for the rest of the hack.
-          req.urlTrack.env.populatedCars = cars
-          next()
+# loadUrlCar = (req, res, next) ->
+#   Car
+#     .findOne(pub_id: req.params.idCar)
+#     .populate('user')
+#     .exec (error, urlCar) ->
+#       if error then return next error
+#       unless urlCar then return res.send 404
+#       urlCar.isAuthenticated = req.user?.user?.id is urlCar.user.id
+#       req.urlCar = urlCar
+#       next()
 
-loadUrlTrack = (req, res, next) ->
-  find = Track.findOne
-    pub_id: req.params.idTrack
-  loadUrlTrackInternal find, req, res, next
-
-loadUrlTrackIncDrive = (req, res, next) ->
-  find = Track.findOneAndUpdate
-    pub_id: req.params.idTrack
-  ,
-    $inc: { count_drive: 1 }
-  loadUrlTrackInternal find, req, res, next
-
-loadUrlCar = (req, res, next) ->
-  Car
-    .findOne(pub_id: req.params.idCar)
-    .populate('user')
-    .exec (error, urlCar) ->
-      if error then return next error
-      unless urlCar then return res.send 404
-      urlCar.isAuthenticated = req.user?.user?.id is urlCar.user.id
-      req.urlCar = urlCar
-      next()
-
-loadUrlRun = (req, res, next) ->
-  Run
-    .findOne(pub_id: req.params.idRun)
-    .populate('user')
-    .populate('car')
-    .populate('track')
-    .exec (error, urlRun) ->
-      if error then return next error
-      unless urlRun then return res.send 404
-      urlRun.isAuthenticated = req.user?.user?.id is urlRun.user.id
-      req.urlRun = urlRun
-      next()
-
-editTrack = (req, res, next) ->
-  unless req.urlTrack.isAuthenticated
-    return res.send 403
-  # TODO: mark just the track as editable, not the whole request.
-  req.editing = true
-  next()
-
-editCar = (req, res, next) ->
-  unless req.urlCar.isAuthenticated
-    return res.send 403
-  req.editing = true
-  next()
-
-editUser = (req, res, next) ->
-  unless req.urlUser.isAuthenticated
-    return res.send 403
-  req.editing = true
-  next()
+# loadUrlRun = (req, res, next) ->
+#   Run
+#     .findOne(pub_id: req.params.idRun)
+#     .populate('user')
+#     .populate('car')
+#     .populate('track')
+#     .exec (error, urlRun) ->
+#       if error then return next error
+#       unless urlRun then return res.send 404
+#       urlRun.isAuthenticated = req.user?.user?.id is urlRun.user.id
+#       req.urlRun = urlRun
+#       next()
 
 app.get    '/v1/auth/facebook', passport.authenticate('facebook/v1')
 app.get    '/v1/auth/facebook/callback', passport.authenticate('facebook/v1',
@@ -353,30 +314,7 @@ app.get '/x/:idTrack/:idCar/drive', (req, res) ->
 app.get '/track/:idTrack', (req, res) ->
   res.redirect "/track/#{req.params.idTrack}/drive", 301
 
-unified = [
-  '/'
-  '/about'
-  '/ignition'
-  '/license'
-  '/track/:idTrack/drive'
-  '/track/:idTrack/edit'
-  '/tracklist/:idTrackSet'
-  '/user/:idUser'
-]
-app.get path, routes.unified for path in unified
-
 app.get    '/login', routes.login
-app.get    '/recenttracks', routes.recentTracks
-# app.get    '/track/:idTrack', loadUrlTrack, routes.track
-# app.get    '/car/:idCar', loadUrlCar, routes.car
-# app.get    '/car/:idCar/json', loadUrlCar, routes.carJson
-# app.get    '/car/:idCar/json/edit', loadUrlCar, editCar, routes.carJson
-# app.post   '/car/:idCar/json/save', loadUrlCar, editCar, routes.carJsonSave
-# app.get    '/run/:idRun', loadUrlRun, routes.run
-# app.post   '/run/new', routes.runSave
-# app.get    '/run/:idRun/replay', loadUrlRun, routes.runReplay
-# app.get    '/x/:idTrack/:idCar/top', loadUrlTrack, loadUrlCar, routes.top
-# app.post   '/metrics', routes.metricsSave
 
 ppec = require './paypal/expresscheckout'
 qs = require 'querystring'

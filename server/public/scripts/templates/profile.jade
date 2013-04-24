@@ -30,4 +30,7 @@
     span &nbsp;
     .user-name-error
     span &nbsp;
-    .issued Issued: #{issueDate}
+    .issued Issued: 
+      span.issuedate= issueDate
+    span &nbsp;
+    a.route.tracks(href="/user/#{id}/tracks") Tracks

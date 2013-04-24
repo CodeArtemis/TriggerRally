@@ -121,6 +121,7 @@ define [
           track.env.fetch
             success: =>
               Backbone.trigger 'app:settrack', track
+              Backbone.trigger 'app:settitle', "Drive #{track.name}"
 
     update: (delta) ->
       if @updateTimer and @game

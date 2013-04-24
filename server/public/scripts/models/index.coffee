@@ -108,6 +108,15 @@
   class UserCollection extends PathCollection
     path: 'users'
 
+  class TrackCollectionSortName extends TrackCollection
+    comparator: 'name'
+
+  class TrackCollectionSortModified extends TrackCollection
+    comparator: (a, b) ->
+      if not a.modified? or not b.modified? or a.modified is b.modified
+        if a.cid > b.cid then 1 else -1
+      else if a.modified < b.modified then 1 else -1
+
   class Checkpoint extends Model
     buildProps @, [ 'disp', 'pos', 'surf' ]
 
@@ -218,11 +227,16 @@
     #   super
     #   # @on 'all', (event) -> console.log 'Track: ' + event
     parse: (response, options) ->
+      # Regression detection.
+      if @config and @config not instanceof TrackConfig
+        console.error "Raw track.config detected in Track.parse()"
+
       data = super
       return data unless data
       # console.log data
       if data.config
-        config = @config or new TrackConfig
+        config = @config
+        config = new TrackConfig unless config instanceof TrackConfig
         data.config = config.set config.parse data.config
       if data.env
         data.env = if typeof data.env is 'string'
@@ -259,7 +273,7 @@
     urlRoot: '/v1/tracksets'
     cacheExpirySecs: 10
     defaults: ->
-      tracks: new TrackCollection
+      tracks: new TrackCollectionSortModified
     parse: ->
       data = super
       return data unless data
@@ -290,7 +304,7 @@
     bubbleAttribs: [ 'tracks' ]
     urlRoot: '/v1/users'
     defaults: ->
-      tracks: new TrackCollection { comparator: 'name' }
+      tracks: new TrackCollectionSortName
     validate: ->
       if @name.length < 3 then return "name too short"
       if @name.length > 20 then return "name too long"
@@ -355,6 +369,8 @@
     TrackSet
     User
     UserPassport
+
+    TrackCollectionSortModified
   }
   exports[k] = v for k, v of models
   exports
