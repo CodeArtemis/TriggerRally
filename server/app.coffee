@@ -452,9 +452,9 @@ app.get '/checkout/return', (req, res) ->
       METHOD: 'GetExpressCheckoutDetails'
       TOKEN: req.query.token
     console.log "Calling: #{JSON.stringify params}"
-    ppec.request params, (err, nvp_res, raw) ->
+    ppec.request params, (err, nvp_res) ->
       return failure 500, "#{params.METHOD} error: #{err}" if err
-      console.log "#{params.METHOD} response: #{raw}"
+      console.log "#{params.METHOD} response: #{nvp_res}"
       return failure 500 if nvp_res.ACK isnt 'Success'
       productId = nvp_res.PAYMENTREQUEST_0_CUSTOM
       return failure 403 if productId in (bbUser.products ? [])
