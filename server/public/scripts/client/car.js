@@ -12,7 +12,7 @@ function(THREE, util) {
 
   var Vec3FromArray = util.Vec3FromArray;
 
-  exports.RenderCar = function(scene, vehic, audio) {
+  exports.RenderCar = function(scene, vehic, audio, dust) {
     this.bodyGeometry = null;
     this.wheelGeometry = null;
 
@@ -100,6 +100,8 @@ function(THREE, util) {
                                 this.config.center[1] + vWheel.ridePos;
         wheel.root.rotation.y = vehic.getWheelTurnPos(vWheel);
         wheel.mesh.rotation.x = vWheel.spinPos;
+
+        dust.spawn(vehic.body.getLocToWorldPoint(wheel.root.position));
       }
 
       if (this.config.wings && this.meshes) {

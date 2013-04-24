@@ -53,6 +53,7 @@ define [
           material.opacity = tile.opacity
           # Force all objects to be transparent so we can fade them in and out.
           material.transparent = yes
+          # material.blending = THREE.NormalBlending
           mesh = new THREE.Mesh mergedGeom, material
           mesh.doubleSided = object.doubleSided
           mesh.castShadow = object.castShadow

@@ -29,6 +29,7 @@ define [
 ) ->
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
+  Vec4 = THREE.Vector4
   PULLTOWARD = util.PULLTOWARD
   MAP_RANGE = util.MAP_RANGE
   KEYCODE = util.KEYCODE
@@ -409,6 +410,74 @@ define [
       @sunLight.target.updateMatrixWorld()
       return
 
+  class Dust
+    vertexShader = """
+      attribute vec4 aColor;
+
+      varying vec4 vColor;
+
+      void main() {
+        vColor = aColor;
+        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+        gl_Position = projectionMatrix * mvPosition;
+        gl_PointSize = 1000.0 / gl_Position.w;
+      }
+      """
+    fragmentShader = """
+      uniform sampler2D tMap;
+
+      varying vec4 vColor;
+
+      void main() {
+        vec2 uv = vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y);
+        vec4 map = texture2D(tMap, uv);
+        vec4 hmm = vec4(1.0,0.0,0.0,1.0);
+        gl_FragColor = vColor * map;
+      }
+      """
+    constructor: (scene) ->
+      uniforms =
+        tMap:
+          type: 't'
+          value: THREE.ImageUtils.loadTexture "/a/textures/dust.png"
+      attributes =
+        aColor:
+          type: 'v4'
+          value: []
+      @geom = new THREE.Geometry()
+      @colors = attributes.aColor
+      for i in [0...100]
+        @geom.vertices.push new Vec3
+        @colors.value.push new Vec4
+      params = { uniforms, attributes, vertexShader, fragmentShader }
+      params.transparent = yes
+      params.depthWrite = no
+      mat = new THREE.ShaderMaterial params
+      particles = new THREE.ParticleSystem @geom, mat
+      particles.sortParticles = yes
+      scene.add particles
+      @idx = 0
+
+    spawn: (pos) ->
+      return unless Math.random() < 0.2
+      verts = @geom.vertices
+      idx = @idx
+      verts[idx].copy pos
+      @colors.value[idx].set(
+        0.75 + 0.2 * Math.random(),
+        0.55 + 0.2 * Math.random(),
+        0.35 + 0.2 * Math.random(),
+        1)
+      @idx = (idx + 1) % verts.length
+
+    update: (camera, delta) ->
+      # for vert in @geom.vertices
+      #   vert.z += delta
+      for color in @colors.value
+        color.w -= delta * 0.3
+      @geom.verticesNeedUpdate = yes
+      @colors.needsUpdate = yes
+
   keyWeCareAbout = (event) ->
     event.keyCode <= 255
   isModifierKey = (event) ->
@@ -446,6 +515,8 @@ define [
       @scene.add @cubeMesh()
 
       @add new SunLight @scene
+
+      @add (@dust = new Dust @scene)
 
       @audio = new clientAudio.WebkitAudio()
       @audio.mute() unless prefs.audio
@@ -498,7 +569,7 @@ define [
       @gameCleanup = [] if game?
       game?.on? 'addvehicle', (car, progress) =>
         audio = if car.cfg.isRemote then null else @audio
-        renderCar = new clientCar.RenderCar @scene, car, audio
+        renderCar = new clientCar.RenderCar @scene, car, audio, @dust
         progress._renderCar = renderCar
         @add renderCar
         return if car.cfg.isRemote
