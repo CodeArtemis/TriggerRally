@@ -4,8 +4,7 @@
   "private": true,
   "dependencies": {
     "async": "*",
-    "backbone": "~0.9.10",
-    "backbone-relational": "~0.7.0",
+    "backbone": "~1.0.0",
     "canvas": "*",
     "express": ">= 3",
     "http-proxy": "*",

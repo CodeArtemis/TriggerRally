@@ -200,7 +200,7 @@ app.configure 'development', ->
     console.error err
     res.json 500,
       error: "Internal Server Error"
-      call_stack: err.stack.split('\n')
+      call_stack: err.stack?.split('\n')
 
 app.configure 'production', ->
   app.use (err, req, res, next) ->

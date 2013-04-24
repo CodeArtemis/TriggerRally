@@ -42,7 +42,7 @@ makeSync = (handlers) ->
     else
       err = "Method '#{method}' not implemented for #{model.constructor.name}."
       console.log err
-      error model, err, options
+      error err
     # TODO: return a Promise object of some sort.
     null
 
@@ -53,27 +53,27 @@ module.exports = (bb) ->
         .findOne(pub_id: model.id)
         .populate('user', 'pub_id')
         .exec (err, car) ->
-          return error model, err, options if err
-          return error model, "Couldn't find env #{model.id}", options unless car
+          return error err if err
+          return error "Couldn't find env #{model.id}" unless car
           parsed = parseMongoose car
           parsed.user = parsed.user.id if parsed.user
-          success model, parsed, options
+          success parsed
 
   bb.Env::sync = makeSync
     read: (model, success, error, options) ->
       mo.Env
         .findOne(pub_id: model.id)
         .exec (err, env) ->
-          return error model, err, options if err
-          return error model, "Couldn't find env #{model.id}", options unless env
+          return error err if err
+          return error "Couldn't find env #{model.id}" unless env
           mo.Car
             .find(_id: { $in: env.cars })
             .select('pub_id')
             .exec (err, cars) ->
-              return error model, err, options if err
+              return error err if err
               parsed = parseMongoose env
               parsed.cars = (car.pub_id for car in cars)
-              success model, parsed, options
+              success parsed
 
   bb.Track::sync = do ->
     parseTrack = (track) ->
@@ -89,8 +89,8 @@ module.exports = (bb) ->
           .findOne(pub_id: model.parent.id)
           .populate('env', 'pub_id')
           .exec (err, parentTrack) ->
-            return error model, err, options if err
-            return error model, "Couldn't find track #{model.parent.id}", options unless parentTrack
+            return error err if err
+            return error "Couldn't find track #{model.parent.id}" unless parentTrack
             track = new mo.Track
               parent: parentTrack.id
               user: options.user.id
@@ -100,13 +100,13 @@ module.exports = (bb) ->
             track.save (err) ->
               if err
                 console.log "Error creating track: #{err}"
-                return error model, null, options
+                return error null
               parsed = parseTrack(track)
               # Hacky workaround for Mongoose population/ext ref problem.
               # It would be nice to get rid of Mongoose.
               parsed.user = options.user.pub_id
               parsed.env = parentTrack.env.pub_id
-              success model, parsed, options
+              success parsed
       read: (model, success, error, options) ->
         mo.Track
           .findOne(pub_id: model.id)
@@ -114,14 +114,14 @@ module.exports = (bb) ->
           .populate('parent', 'pub_id')
           .populate('user', 'pub_id')
           .exec (err, track) ->
-            return error model, err, options if err
-            return error model, "Couldn't find track #{model.id}", options unless track
-            success model, parseTrack(track), options
+            return error err if err
+            return error "Couldn't find track #{model.id}" unless track
+            success parseTrack(track)
       update: (model, success, error, options) ->
         unless model.config?
           console.error "Saving track: NO CONFIG!"
           console.log JSON.stringify model
-          return error model, null, options
+          return error null
         mo.Track
           .findOne(pub_id: model.id)
           .exec (err, track) ->
@@ -139,8 +139,8 @@ module.exports = (bb) ->
             track.save (err) ->
               if err
                 console.log "Error saving track: #{err}"
-                return error model, null, options
-              success model, null, options
+                return error null
+              success null
       delete: (model, success, error, options) ->
         mo.Track
           .findOne(pub_id: model.id)
@@ -148,8 +148,8 @@ module.exports = (bb) ->
             track.remove (err) ->
               if err
                 console.log "Error deleting track: #{err}"
-                return error model, null, options
-              success model, null, options
+                return error null
+              success null
 
   bb.TrackSet::sync = do ->
     alpEnvId = new mongoose.Types.ObjectId '506754342668a4626133ccd7'
@@ -167,7 +167,7 @@ module.exports = (bb) ->
                 '8wuycma7'
                 'KaXCxxFv'
               ]
-            success model, response, options
+            success response
           when 'recent'
             query =
               env: alpEnvId  # TODO: Remove this filter.
@@ -179,28 +179,28 @@ module.exports = (bb) ->
               .exec (err, tracks) ->
                 if err
                   console.log "Error fetching tracks: #{err}"
-                  return error model, null, options
+                  return error null
                 response =
                   name: 'Recent published tracks'
                   tracks: (track.pub_id for track in tracks)
-                success model, response, options
+                success response
           else
-            error model, null, options
+            error null
 
   bb.User::sync = makeSync
     read: (model, success, error, options) ->
       mo.User
         .findOne(pub_id: model.id)
         .exec (err, user) ->
-          return error model, err, options if err or not user?
+          return error err if err or not user?
           mo.Track
             .find(user: user.id)
             .select('pub_id env')
             .exec (err, tracks) ->
-              return error model, err, options if err
+              return error err if err
               parsed = parseMongoose user
               parsed.tracks = (track.pub_id for track in tracks when track.env)
-              success model, parsed, options
+              success parsed
     update: (model, success, error, options) ->
       mo.User
         .findOne(pub_id: model.id)
@@ -215,5 +215,5 @@ module.exports = (bb) ->
           user.save (err) ->
             if err
               console.log "Error saving user: #{err}"
-              return error model, null, options
-            success model, null, options
+              return error null
+            success null
