@@ -9,6 +9,9 @@ mo = do ->
   Track: mongoose.model 'Track'
   User:  mongoose.model 'User'
 
+alpEnvId = new mongoose.Types.ObjectId '506754342668a4626133ccd7'
+# alpEnvId = '506754342668a4626133ccd7'
+
 jsonClone = (obj) -> JSON.parse JSON.stringify obj
 
 parseMongoose = (doc) ->
@@ -152,7 +155,6 @@ module.exports = (bb) ->
               success null
 
   bb.TrackSet::sync = do ->
-    alpEnvId = new mongoose.Types.ObjectId '506754342668a4626133ccd7'
     makeSync
       read: (model, success, error, options) ->
         switch model.id
@@ -199,7 +201,8 @@ module.exports = (bb) ->
             .exec (err, tracks) ->
               return error err if err
               parsed = parseMongoose user
-              parsed.tracks = (track.pub_id for track in tracks when track.env)
+              console.log tracks
+              parsed.tracks = (track.pub_id for track in tracks when track.env?.equals alpEnvId)
               success parsed
     update: (model, success, error, options) ->
       mo.User

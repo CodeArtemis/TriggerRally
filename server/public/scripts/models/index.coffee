@@ -114,7 +114,7 @@
   class TrackCollectionSortModified extends TrackCollection
     comparator: (a, b) ->
       if not a.modified? or not b.modified? or a.modified is b.modified
-        if a.cid > b.cid then 1 else -1
+        a.cid - b.cid
       else if a.modified < b.modified then 1 else -1
 
   class Checkpoint extends Model
@@ -273,7 +273,7 @@
     urlRoot: '/v1/tracksets'
     cacheExpirySecs: 10
     defaults: ->
-      tracks: new TrackCollectionSortModified
+      tracks: new TrackCollection
     parse: ->
       data = super
       return data unless data
@@ -323,6 +323,7 @@
         data.tracks = @tracks.reset tracks
       data
     toJSON: (options) ->
+      authenticated = options?.authenticated
       data = super
       # Stuff that may still be used in Mongoose layer.
       # TODO: Delete it from Mongoose layer.
@@ -334,9 +335,11 @@
       delete data.website
 
       delete data.admin unless data.admin
-      unless options?.authenticated
+      unless authenticated
         delete data.admin
-      data.tracks = (track.id for track in data.tracks.models) if data.tracks?
+      if data.tracks? then data.tracks = for track in data.tracks.models
+        # continue unless track.env.id is 'alp' or authenticated
+        track.id
       data
     cars: ->
       products = @products ? []
