@@ -25,8 +25,9 @@ function(THREE, psim, collision, util) {
   // TODO: Transfer these to config.
   var CLIP_CONSTANT = 200000;
   var CLIP_DAMPING = 8000;
-  var SUSP_CONSTANT = 80000;
-  var SUSP_DAMPING = 200;
+  var SUSP_CONSTANT = 120000;
+  var SUSP_DAMPING_1 = 100;
+  var SUSP_DAMPING_2 = 20000;
   var SUSP_MAX = 0.14;
   var WHEEL_MASS = 15;
   var ENGINE_BRAKE_REGION = 0.5;
@@ -38,7 +39,7 @@ function(THREE, psim, collision, util) {
   var FRICTION_STATIC_CHASSIS = 1.2 * 0.9;
   var FRICTION_DYNAMIC_WHEEL = 0.9 * 1.2;
   var FRICTION_STATIC_WHEEL = 1.2 * 1.2;
-  var WHEEL_LATERAL_FEEDBACK = -0.02;
+  var WHEEL_LATERAL_FEEDBACK = -0.025;
 
   var tmpVec3a = new Vec3();
   var tmpVec3b = new Vec3();
@@ -361,8 +362,9 @@ function(THREE, psim, collision, util) {
     var wheelLateralForce = 0;
     for (c = 0; c < this.wheels.length; ++c) {
       var wheel = this.wheels[c];
-      var turnFactor = wheel.cfg.drive || 0;
-      differentialAngVel += wheel.spinVel * turnFactor;
+      var driveFactor = wheel.cfg.drive || 0;
+      differentialAngVel += wheel.spinVel * driveFactor;
+      var turnFactor = wheel.cfg.turn || 0;
       wheelLateralForce += wheel.frictionForce.x * turnFactor;
     }
     differentialAngVel /= this.totalDrive;
@@ -651,7 +653,7 @@ function(THREE, psim, collision, util) {
     // F = m.a, a = F / m
     wheel.rideVel -= suspensionForce / WHEEL_MASS * delta;
     // We apply suspension damping semi-implicitly.
-    wheel.rideVel *= 1 / (1 + SUSP_DAMPING * delta);
+    wheel.rideVel *= 1 / (1 + SUSP_DAMPING_1 * delta);
     wheel.ridePos += wheel.rideVel * delta;
 
     wheel.spinPos += wheel.spinVel * delta;
@@ -690,29 +692,30 @@ function(THREE, psim, collision, util) {
       contactVelSurf.y += wheelSurfaceVel;
       // This is wrong if there are multiple contacts.
       contactVel.addSelf(tmpVec3b.copy(surf.v).multiplyScalar(wheelSurfaceVel));
-      // console.log(contactVelSurf.z);
 
-      // Damped spring model for perpendicular contact force.
-      // TODO: Apply suspension damping here, not CLIP_DAMPING.
-      // TODO: Recompute suspensionForce at this point.
-      var perpForce = suspensionForce - contactVelSurf.z * CLIP_DAMPING;
       wheel.ridePos += contact.depth;
 
-      if (wheel.ridePos > SUSP_MAX) {
-        // Suspension has bottomed out. Switch to hard clipping.
+      var perpForce;
+      if (wheel.ridePos <= SUSP_MAX) {
+        wheel.rideVel = Math.max(wheel.rideVel, -contactVelSurf.z);
+
+        // Damped spring model for perpendicular contact force.
+        // Recompute suspension force given new ridePos.
+        perpForce = wheel.ridePos * SUSP_CONSTANT +
+                    wheel.rideVel * SUSP_DAMPING_2;
+      } else {
+        // Suspension has bottomed out. Add hard clipping force.
         var overDepth = wheel.ridePos - SUSP_MAX;
 
         wheel.ridePos = SUSP_MAX;
         wheel.rideVel = 0;
 
-        perpForce = contact.depth * CLIP_CONSTANT -
+        perpForce = SUSP_MAX * SUSP_CONSTANT +
+                    overDepth * CLIP_CONSTANT -
                     contactVelSurf.z * CLIP_DAMPING;
       }
 
-      if (wheel.rideVel < -contactVelSurf.z)
-        wheel.rideVel = -contactVelSurf.z;
-
-      // Make sure the objects are pushing apart.
+      // Only interact further if there's a positive normal force.
       if (perpForce > 0) {
         // TODO: Reexamine this friction algorithm.
         var friction = tmpVec2a.set(-contactVelSurf.x, -contactVelSurf.y).
