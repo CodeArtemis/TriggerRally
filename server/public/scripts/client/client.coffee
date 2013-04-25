@@ -419,6 +419,7 @@ define [
 
       """
     vertexShader = varying + """
+      uniform float fScale;
       attribute vec4 aColor;
       attribute vec2 aAngSize;
 
@@ -429,9 +430,10 @@ define [
         vRotation = mat2(right.x, right.y, -right.y, right.x);
         float size = aAngSize.y;
         //vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+        // Vertices are already in world space.
         vec4 mvPosition = viewMatrix * vec4( position, 1.0 );
         gl_Position = projectionMatrix * mvPosition;
-        gl_PointSize = size * 1000.0 / gl_Position.w;
+        gl_PointSize = fScale * size / gl_Position.w;
       }
       """
     fragmentShader = varying + """
@@ -441,12 +443,14 @@ define [
         vec2 uv = vec2(gl_PointCoord.x - 0.5, 0.5 - gl_PointCoord.y);
         vec2 uvRotated = vRotation * uv + vec2(0.5, 0.5);
         vec4 map = texture2D(tMap, uvRotated);
-        vec4 hmm = vec4(1.0,0.0,0.0,1.0);
         gl_FragColor = vColor * map;
       }
       """
     constructor: (scene) ->
-      uniforms =
+      @uniforms =
+        fScale:
+          type: 'f'
+          value: 1000
         tMap:
           type: 't'
           value: THREE.ImageUtils.loadTexture "/a/textures/dust.png"
@@ -461,7 +465,7 @@ define [
       @aColor = attributes.aColor
       @aAngSize = attributes.aAngSize
       @other = []
-      @length = 100
+      @length = 200
       for i in [0...@length]
         @geom.vertices.push new Vec3
         @aColor.value.push new Vec4
@@ -469,7 +473,7 @@ define [
         @other.push
           angVel: 0
           linVel: new Vec3
-      params = { uniforms, attributes, vertexShader, fragmentShader }
+      params = { @uniforms, attributes, vertexShader, fragmentShader }
       params.transparent = yes
       params.depthWrite = no
       mat = new THREE.ShaderMaterial params
@@ -489,18 +493,23 @@ define [
         1)
       ang = Math.random() * Math.PI * 2
       @aAngSize.value[idx].set ang, 0.2
-      @other[idx].angVel = Math.random() - 0.5
-      @other[idx].linVel.copy vel
+      other = @other[idx]
+      other.angVel = Math.random() - 0.5
+      other.linVel.copy vel
+      other.linVel.z += 0.5
       @idx = (idx + 1) % verts.length
 
     update: (camera, delta) ->
+      @uniforms.fScale.value = 100 / camera.degreesPerPixel
       @particleSystem.position.copy camera.position
       vertices = @geom.vertices
       aColor = @aColor.value
       aAngSize = @aAngSize.value
       other = @other
       linVelScale = 1 / (1 + delta * 0.5)
-      for idx in [0...@length]
+      idx = 0
+      length = @length
+      while idx < length
         linVel = other[idx].linVel
         linVel.multiplyScalar linVelScale
         vertices[idx].addSelf tmpVec3a.copy(linVel).multiplyScalar(delta)
@@ -510,6 +519,7 @@ define [
           aAngSize[idx].y = 0
         else
           aAngSize[idx].y += delta * 0.5
+        idx++
       @geom.verticesNeedUpdate = yes
       @aColor.needsUpdate = yes
       @aAngSize.needsUpdate = yes
@@ -532,7 +542,7 @@ define [
 
       prefs.on 'change:pixeldensity', =>
         @renderer?.devicePixelRatio = prefs.pixeldensity
-        @renderer?.setSize @width, @height
+        @setSize @width, @height
 
       @sceneHUD = new THREE.Scene()
       @cameraHUD = new THREE.OrthographicCamera -1, 1, 1, -1, 1, -1
@@ -540,6 +550,7 @@ define [
       @scene = new THREE.Scene()
       @camera = new THREE.PerspectiveCamera 75, 1, 0.1, 10000000
       @camera.idealFov = 75
+      @camera.degreesPerPixel = 1
       @camera.up.set 0, 0, 1
       @camera.position.set 0, 0, 500
       @scene.add @camera
@@ -655,6 +666,7 @@ define [
       aspect = if @height > 0 then @width / @height else 1
       @camera.aspect = aspect
       @camera.fov = @camera.idealFov / Math.max 1, aspect / 1.777
+      @camera.degreesPerPixel = @camera.fov / (@height * @renderer.devicePixelRatio)
       @camera.updateProjectionMatrix()
       @cameraHUD.left = -aspect
       @cameraHUD.right = aspect
