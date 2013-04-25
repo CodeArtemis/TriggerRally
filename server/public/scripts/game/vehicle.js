@@ -215,6 +215,8 @@ function(THREE, psim, collision, util) {
       wheel.spinPos = 0;
       wheel.spinVel = 0;
       wheel.frictionForce = new Vec2();
+      wheel.contactVel = new Vec3();
+      wheel.clipPos = new Vec3();
       var drive = wheel.cfg.drive || 0;
       this.totalDrive += drive;
       this.avgDriveWheelRadius += wheel.cfg.radius * drive;
@@ -657,20 +659,27 @@ function(THREE, psim, collision, util) {
 
     // TICK STUFF ABOVE HERE
 
-    var clipPos = this.body.getLocToWorldPoint(wheel.pos);
+    var clipPos = wheel.clipPos.copy(this.body.getLocToWorldPoint(wheel.pos));
 
-    var sideways = this.body.oriMat.getColumnX();
-    tmpVec3a.cross(sideways, plusZVec3);
-    tmpVec3b.cross(tmpVec3a, sideways);
+    // var sideways = this.body.oriMat.getColumnX();
+    // tmpVec3a.cross(sideways, plusZVec3);
+    // tmpVec3b.cross(tmpVec3a, sideways);
+    var wheelRight = this.getWheelRightVector(wheel);
+    tmpVec3a.cross(wheelRight, plusZVec3);
+    tmpVec3b.cross(tmpVec3a, wheelRight);
+    var wheelUp = tmpVec3a.copy(tmpVec3b);
     tmpVec3b.multiplyScalar(wheel.ridePos - wheel.cfg.radius);
     clipPos.addSelf(tmpVec3b);
-    var contactVel = this.body.getLinearVelAtPoint(clipPos);
     var contacts = this.sim.collidePoint(clipPos);
-    if (contacts.length > 0) this.hasContact = true;
+    if (contacts.length == 0) return;
+    var contactVel = wheel.contactVel.copy(this.body.getLinearVelAtPoint(clipPos));
+    var wheelSurfaceVel = wheel.spinVel * wheel.cfg.radius;
+    // tmpVec3b.cross(wheelUp, wheelRight).multiplyScalar(wheelSurfaceVel);
+    // contactVel.addSelf(tmpVec3b);
+    this.hasContact = true;
     for (var c = 0; c < contacts.length; ++c) {
       var contact = contacts[c];
-      var surf = getSurfaceBasis(contact.normal,
-                                 this.getWheelRightVector(wheel));
+      var surf = getSurfaceBasis(contact.normal, wheelRight);
 
       // Local velocity in surface space.
       var contactVelSurf = tmpVec3a.set(
@@ -678,9 +687,14 @@ function(THREE, psim, collision, util) {
           contactVel.dot(surf.v),
           contactVel.dot(surf.w));
 
-      contactVelSurf.y += wheel.spinVel * wheel.cfg.radius;
+      contactVelSurf.y += wheelSurfaceVel;
+      // This is wrong if there are multiple contacts.
+      contactVel.addSelf(tmpVec3b.copy(surf.v).multiplyScalar(wheelSurfaceVel));
+      // console.log(contactVelSurf.z);
 
       // Damped spring model for perpendicular contact force.
+      // TODO: Apply suspension damping here, not CLIP_DAMPING.
+      // TODO: Recompute suspensionForce at this point.
       var perpForce = suspensionForce - contactVelSurf.z * CLIP_DAMPING;
       wheel.ridePos += contact.depth;
 

@@ -12,6 +12,8 @@ function(THREE, util) {
 
   var Vec3FromArray = util.Vec3FromArray;
 
+  var tmpVec3a = new THREE.Vector3();
+
   exports.RenderCar = function(scene, vehic, audio, dust) {
     this.bodyGeometry = null;
     this.wheelGeometry = null;
@@ -101,7 +103,12 @@ function(THREE, util) {
         wheel.root.rotation.y = vehic.getWheelTurnPos(vWheel);
         wheel.mesh.rotation.x = vWheel.spinPos;
 
-        dust.spawn(vehic.body.getLocToWorldPoint(wheel.root.position));
+        if (vWheel.frictionForce.length() > 1000 + 1000 * Math.random()) {
+          tmpVec3a.x *= Math.random() + 0.5;
+          tmpVec3a.y *= Math.random() + 0.5;
+          tmpVec3a.z *= Math.random() + 0.5;
+          dust.spawn(vWheel.clipPos, tmpVec3a);
+        }
       }
 
       if (this.config.wings && this.meshes) {

@@ -37,6 +37,8 @@ define [
 
   projector = new THREE.Projector
 
+  tmpVec3a = new Vec3
+
   class RenderCheckpointsEditor
     constructor: (scene, root) ->
       meshes = []
@@ -411,26 +413,34 @@ define [
       return
 
   class Dust
-    vertexShader = """
-      attribute vec4 aColor;
-
+    varying = """
       varying vec4 vColor;
+      varying mat2 vRotation;
+
+      """
+    vertexShader = varying + """
+      attribute vec4 aColor;
+      attribute vec2 aAngSize;
 
       void main() {
         vColor = aColor;
-        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+        float angle = aAngSize.x;
+        vec2 right = vec2(cos(angle), sin(angle));
+        vRotation = mat2(right.x, right.y, -right.y, right.x);
+        float size = aAngSize.y;
+        //vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+        vec4 mvPosition = viewMatrix * vec4( position, 1.0 );
         gl_Position = projectionMatrix * mvPosition;
-        gl_PointSize = 1000.0 / gl_Position.w;
+        gl_PointSize = size * 1000.0 / gl_Position.w;
       }
       """
-    fragmentShader = """
+    fragmentShader = varying + """
       uniform sampler2D tMap;
 
-      varying vec4 vColor;
-
       void main() {
-        vec2 uv = vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y);
-        vec4 map = texture2D(tMap, uv);
+        vec2 uv = vec2(gl_PointCoord.x - 0.5, 0.5 - gl_PointCoord.y);
+        vec2 uvRotated = vRotation * uv + vec2(0.5, 0.5);
+        vec4 map = texture2D(tMap, uvRotated);
         vec4 hmm = vec4(1.0,0.0,0.0,1.0);
         gl_FragColor = vColor * map;
       }
@@ -444,39 +454,65 @@ define [
         aColor:
           type: 'v4'
           value: []
+        aAngSize:
+          type: 'v2'
+          value: []
       @geom = new THREE.Geometry()
-      @colors = attributes.aColor
-      for i in [0...100]
+      @aColor = attributes.aColor
+      @aAngSize = attributes.aAngSize
+      @other = []
+      @length = 100
+      for i in [0...@length]
         @geom.vertices.push new Vec3
-        @colors.value.push new Vec4
+        @aColor.value.push new Vec4
+        @aAngSize.value.push new Vec2
+        @other.push
+          angVel: 0
+          linVel: new Vec3
       params = { uniforms, attributes, vertexShader, fragmentShader }
       params.transparent = yes
       params.depthWrite = no
       mat = new THREE.ShaderMaterial params
-      particles = new THREE.ParticleSystem @geom, mat
-      particles.sortParticles = yes
-      scene.add particles
+      @particleSystem = new THREE.ParticleSystem @geom, mat
+      @particleSystem.sortParticles = yes
+      scene.add @particleSystem
       @idx = 0
 
-    spawn: (pos) ->
-      return unless Math.random() < 0.2
+    spawn: (pos, vel) ->
       verts = @geom.vertices
       idx = @idx
       verts[idx].copy pos
-      @colors.value[idx].set(
+      @aColor.value[idx].set(
         0.75 + 0.2 * Math.random(),
         0.55 + 0.2 * Math.random(),
         0.35 + 0.2 * Math.random(),
         1)
+      ang = Math.random() * Math.PI * 2
+      @aAngSize.value[idx].set ang, 0.2
+      @other[idx].angVel = Math.random() - 0.5
+      @other[idx].linVel.copy vel
       @idx = (idx + 1) % verts.length
 
     update: (camera, delta) ->
-      # for vert in @geom.vertices
-      #   vert.z += delta
-      for color in @colors.value
-        color.w -= delta * 0.3
+      @particleSystem.position.copy camera.position
+      vertices = @geom.vertices
+      aColor = @aColor.value
+      aAngSize = @aAngSize.value
+      other = @other
+      linVelScale = 1 / (1 + delta * 0.5)
+      for idx in [0...@length]
+        linVel = other[idx].linVel
+        linVel.multiplyScalar linVelScale
+        vertices[idx].addSelf tmpVec3a.copy(linVel).multiplyScalar(delta)
+        aColor[idx].w -= delta * 1
+        aAngSize[idx].x += other[idx].angVel * delta
+        if aColor[idx].w <= 0
+          aAngSize[idx].y = 0
+        else
+          aAngSize[idx].y += delta * 0.5
       @geom.verticesNeedUpdate = yes
-      @colors.needsUpdate = yes
+      @aColor.needsUpdate = yes
+      @aAngSize.needsUpdate = yes
 
   keyWeCareAbout = (event) ->
     event.keyCode <= 255
