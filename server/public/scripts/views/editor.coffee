@@ -53,6 +53,7 @@ define [
       client.setGame {}
 
       client.camera.idealFov = 75
+      cam.useQuaternion = no
       client.updateCamera()
 
       camPos = client.camera.position

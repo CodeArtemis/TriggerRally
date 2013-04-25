@@ -201,7 +201,6 @@ module.exports = (bb) ->
             .exec (err, tracks) ->
               return error err if err
               parsed = parseMongoose user
-              console.log tracks
               parsed.tracks = (track.pub_id for track in tracks when track.env?.equals alpEnvId)
               success parsed
     update: (model, success, error, options) ->
