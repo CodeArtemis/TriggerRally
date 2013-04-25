@@ -43,11 +43,10 @@ define [
       if created? then isoDate(created) else loadingText
 
     viewModel: ->
-      loading = '...'
       data = super
       data.loaded = data.name?
       data.issueDate = issueDate data.created
-      data.name ?= loading
+      data.name ?= loadingText
       data.noPicture = not data.picture?
       # data.pic_src = pictureSrc data.picture
       data.editable = @editable()
