@@ -2,6 +2,8 @@ define [
   'jquery'
   'backbone-full'
   'cs!views/view'
+  'cs!views/view_collection'
+  'cs!models/index'
   'jade!templates/track'
   'jade!templates/trackrun'
   'cs!util/popup'
@@ -9,6 +11,8 @@ define [
   $
   Backbone
   View
+  ViewCollection
+  models
   template
   templateRun
   popup
@@ -74,7 +78,7 @@ define [
       data
 
     afterRender: ->
-      trackRuns = ...
+      trackRuns = new models.RunCollection
       trackRunsView = new TrackRunsView
         collection: trackRuns
         el: @$('table.runlist')

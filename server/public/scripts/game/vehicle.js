@@ -496,23 +496,33 @@ function(THREE, psim, collision, util) {
       var locLinVelZ = llv.z;
       var locAngVel = this.body.getLocAngularVel();  // overwrites llv.
       var logFwdVel = Math.log(Math.abs(locLinVelZ) + 0.5);
-      var turnSpeed = 4;
+      var turnSpeed = 2;
       var turnRateA = 60 * wingFactor;  // Speed independent turn thrust.
       var turnRateB = 2000 * wingFactor;  // More realistic control surface turn rate.
 
       var input = this.controller.input;
       var turn = this.wheelTurnPos;
-      var oriMat = this.body.oriMat;
-      var plusZ = new Vec3(0,0,1);
 
-      tmpVec3b.copy(oriMat.getColumnY()).crossSelf(plusZ);
-      var ang1 = Math.acos(tmpVec3b.dot(oriMat.getColumnX()));
+      var elements = this.body.oriMat.elements;
+      // var heading = Math.atan2(elements[1], elements[0]);
+      var pitch = Math.acos(elements[10]);
+      var roll = Math.asin(elements[2]);
 
-      tmpVec3a.set(0.5 * (input.throttle - input.brake),
-                   turn * 0.1, -turn).multiplyScalar(turnSpeed);
-      // tmpVec3a.set(0, //CLAMP((targetSpeed - locLinVelZ) * 0.2, -1, 1),
-      //              0,
-      //              0);//CLAMP(ang1, -1, 1)).multiplyScalar(turnSpeed);
+      // X: Pitch down
+      // Y: Yaw left
+      // Z: Roll right (clockwise)
+
+      var angX = 0.05 + Math.PI/2 - pitch + (input.throttle - input.brake);
+      var angY = turn * 0.1;
+      var angZ = -roll - turn;
+      angX = CLAMP(angX, -1, 1);
+      angY = CLAMP(angY, -1, 1);
+      angZ = CLAMP(angZ, -1, 1);
+      tmpVec3a.set(angX, angY, angZ).multiplyScalar(turnSpeed);
+      this.wingElevator = angX;
+      this.wingRudder = angY;
+      this.wingAileron = angZ;
+
       tmpVec3b.copy(tmpVec3a).multiplyScalar(turnRateA);
       this.body.addLocTorque(tmpVec3b);
       tmpVec3a.subSelf(locAngVel).multiplyScalar(logFwdVel * turnRateB);

@@ -103,6 +103,8 @@
     path: 'cars'
   class EnvCollection extends PathCollection
     path: 'envs'
+  class RunCollection extends PathCollection
+    path: 'runs'
   class TrackCollection extends PathCollection
     path: 'tracks'
   class UserCollection extends PathCollection
@@ -388,6 +390,7 @@
     User
     UserPassport
 
+    RunCollection
     TrackCollectionSortModified
   }
   exports[k] = v for k, v of models

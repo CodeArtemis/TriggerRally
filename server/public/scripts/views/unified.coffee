@@ -112,18 +112,21 @@ define [
     getViewChild: -> @currentViewChild
 
     setView3D: (view) ->
+      $child = $('#unified-child')
       if @currentView3D
         @currentView3D.destroy()
-      @currentViewChild = null if @currentView3D is @currentViewChild
+      if @currentView3D is @currentViewChild
+        @currentViewChild = null
+        $child.empty()
       @currentView3D = view
       return
 
     setViewChild: (view) ->
-      container = $('#unified-child')
+      $child = $('#unified-child')
       if @currentViewChild
         @currentViewChild.destroy()
-        container.empty()
+        $child.empty()
       @currentView3D = null if @currentView3D is @currentViewChild
       @currentViewChild = view
-      container.append view.el if view
+      $child.append view.el if view
       return

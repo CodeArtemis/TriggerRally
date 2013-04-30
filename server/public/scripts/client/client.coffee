@@ -55,6 +55,9 @@ define [
           mesh
 
       root.on 'change:track.config.course.checkpoints.', reset
+      root.on 'add:track.config.course.checkpoints.', reset
+      root.on 'remove:track.config.course.checkpoints.', reset
+      root.on 'reset:track.config.course.checkpoints.', reset
 
       @destroy = ->
         for mesh in meshes
@@ -537,7 +540,7 @@ define [
 
       prefs = root.prefs
 
-      #@renderer = @createRenderer prefs
+      @renderer = @createRenderer prefs
       @containerEl.appendChild @renderer.domElement if @renderer
 
       prefs.on 'change:pixeldensity', =>

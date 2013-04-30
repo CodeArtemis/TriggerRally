@@ -118,8 +118,8 @@ function(THREE, util) {
         var foldI = util.cubic(fold);
         var tmp = fold - 1;
         var foldO = 1 - tmp * tmp * tmp * tmp;
-        var liftFlex = 0.000002 * vehic.liftForce;
-        var aileron = 0.3 * vehic.wheelTurnPos;
+        var liftFlex = 0.000002 * vehic.liftForce - 0.02;
+        var aileron = vehic.wingAileron * -0.3;
         meshes.WingLI.rotation.set(liftFlex, -liftFlex, foldI);
         meshes.WingLO.rotation.set(liftFlex + aileron, -liftFlex, foldO);
         meshes.WingRI.rotation.set(liftFlex, liftFlex, -foldI);

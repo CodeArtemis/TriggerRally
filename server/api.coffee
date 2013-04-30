@@ -15,7 +15,7 @@ findModel = (Model, pub_id, done) ->
 
 findCar      = -> findModel(bb.Car,      arguments...)
 findEnv      = -> findModel(bb.Env,      arguments...)
-findEnv      = -> findModel(bb.Run,      arguments...)
+findRun      = -> findModel(bb.Run,      arguments...)
 findTrack    = -> findModel(bb.Track,    arguments...)
 findTrackSet = -> findModel(bb.TrackSet, arguments...)
 findUser     = -> findModel(bb.User,     arguments...)
