@@ -78,6 +78,22 @@ module.exports = (bb) ->
               parsed.cars = (car.pub_id for car in cars)
               success parsed
 
+  bb.Run::sync = makeSync
+    read: (model, success, error, options) ->
+      mo.Run
+        .findOne(pub_id: model.id)
+        .populate('car', 'pub_id')
+        .populate('track', 'pub_id')
+        .populate('user', 'pub_id')
+        .exec (err, run) ->
+          return error err if err
+          return error "Couldn't find run #{model.id}" unless run
+          parsed = parseMongoose run
+          parsed.car = parsed.car.id if parsed.car
+          parsed.track = parsed.track.id if parsed.track
+          parsed.user = parsed.user.id if parsed.user
+          success parsed
+
   bb.Track::sync = do ->
     parseTrack = (track) ->
       parsed = parseMongoose track

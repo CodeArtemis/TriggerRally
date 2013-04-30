@@ -205,6 +205,20 @@
         data.cars = @cars.reset cars
       data
 
+  class Run extends Model
+    buildProps @, [
+      'car'
+      'created'
+      'record_i'
+      'record_p'
+      'status'
+      'time'
+      'track'
+      'user'
+    ]
+    urlRoot: '/v1/runs'
+    findByTrack: -> throw new Error 'Not implemented'
+
   class Track extends Model
     all: new (Collection.extend model: @)
     buildProps @, [
@@ -366,6 +380,7 @@
     Car
     Checkpoint
     Env
+    Run
     StartPos
     Track
     TrackConfig

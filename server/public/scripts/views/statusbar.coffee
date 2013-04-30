@@ -92,11 +92,13 @@ define [
       $trackAuthor = $trackInfo.find '.author'
       $trackLinkDrive = $trackInfo.find '.drive'
       $trackLinkEdit = $trackInfo.find '.edit'
+      $trackLinkInfo = $trackInfo.find '.info'
 
       @listenTo root, 'change:track.id', ->
         id = root.track.id
         $trackLinkDrive.attr 'href', "/track/#{id}/drive"
         $trackLinkEdit.attr 'href', "/track/#{id}/edit"
+        $trackLinkInfo.attr 'href', "/track/#{id}"
       @listenTo root, 'change:track.name', ->
         $trackName.text root.track.name
       trackUserView = null

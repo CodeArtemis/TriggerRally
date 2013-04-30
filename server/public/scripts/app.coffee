@@ -77,10 +77,10 @@ define [
       found = Backbone.history.start pushState: yes
       Backbone.trigger 'app:notfound' unless found
 
-      unless @unifiedView.client.renderer
-        # WebGL failed to initialize.
-        if location.pathname isnt '/about'
-          Backbone.trigger 'app:webglerror'
+      # unless @unifiedView.client.renderer
+      #   # WebGL failed to initialize.
+      #   if location.pathname isnt '/about'
+      #     Backbone.trigger 'app:webglerror'
 
     notFound: ->
       @router.setSpin()

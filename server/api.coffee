@@ -15,6 +15,7 @@ findModel = (Model, pub_id, done) ->
 
 findCar      = -> findModel(bb.Car,      arguments...)
 findEnv      = -> findModel(bb.Env,      arguments...)
+findEnv      = -> findModel(bb.Run,      arguments...)
 findTrack    = -> findModel(bb.Track,    arguments...)
 findTrackSet = -> findModel(bb.TrackSet, arguments...)
 findUser     = -> findModel(bb.User,     arguments...)
@@ -46,6 +47,8 @@ module.exports =
         req.fromUrl[attrib] = obj
         next()
 
+    loadUrlRun = (req, res, next) ->
+      loadUrl findRun, 'run_id', 'run', req, res, next
     loadUrlTrack = (req, res, next) ->
       loadUrl findTrack, 'track_id', 'track', req, res, next
     loadUrlTrackSet = (req, res, next) ->
@@ -102,6 +105,11 @@ module.exports =
         # restricted = env.id not in allowedEnvs
         res.json env #.toJSON { restricted }
 
+    app.get "#{base}/runs/:run_id", (req, res) ->
+      findEnv req.params['run_id'], (run) ->
+        return jsonError 404, res unless run?
+        res.json run
+
     app.post "#{base}/tracks", (req, res) ->
       return jsonError 401, res unless req.user?
       findUser req.user.user.pub_id, (reqUser) ->
@@ -128,22 +136,12 @@ module.exports =
               console.log "Error creating track: #{err}"
               jsonError 500, res
 
+    # TODO: Add a multi-ID track GET.
     app.get "#{base}/tracks/:track_id", loadUrlTrack, (req, res) ->
       res.json req.fromUrl.track
 
-    # TODO: Restore this more efficient multi-track GET.
-    # app.get "#{base}/tracks/:track_id", (req, res) ->
-    #   trackIds = req.params['track_id'].split('+')
-    #   tracks = []
-    #   done = _.after trackIds.length, ->
-    #     for track in tracks
-    #       return jsonError 404, res unless track?
-    #     data = if tracks.length > 1 then tracks else tracks[0]
-    #     res.json data
-    #   trackIds.forEach (trackId, i) ->
-    #     findTrack trackId, (track) ->
-    #       tracks[i] = track
-    #       done()
+    app.get "#{base}/tracks/:track_id/runs", loadUrlTrack, (req, res) ->
+      res.json req.fromUrl.track
 
     app.put "#{base}/tracks/:track_id", editUrlTrack, (req, res) ->
       allowedKeys = [ 'config', 'name', 'published' ]

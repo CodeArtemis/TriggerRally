@@ -10,6 +10,7 @@ define [
   # 'cs!views/notfound'
   'cs!views/profile'
   'cs!views/spin'
+  'cs!views/track'
   'cs!views/trackset'
 ], (
   Backbone
@@ -23,6 +24,7 @@ define [
   # NotFoundView
   ProfileView
   SpinView
+  TrackView
   TrackSetView
 ) ->
   class Router extends Backbone.Router
@@ -33,13 +35,14 @@ define [
     routes:
       "": "home"
       "about": "about"
-      "tracklist/:setId": "trackset"
       "ignition": "ignition"
       "license": "license"
-      "track/:trackId/edit": "editor"
-      "track/:trackId/drive": "drive"
-      "user/:userId": "profile"
-      "user/:userId/tracks": "usertracks"
+      "track/:trackId": "track"
+      "track/:trackId/edit": "trackEdit"
+      "track/:trackId/drive": "trackDrive"
+      "tracklist/:setId": "trackset"
+      "user/:userId": "user"
+      "user/:userId/tracks": "userTracks"
 
     setSpin: ->
       unless @uni.getView3D() instanceof SpinView
@@ -53,35 +56,6 @@ define [
       view = new AboutView @app, @uni.client
       @uni.setViewChild view
       view.render()
-
-    drive: (trackId) ->
-      view = @uni.getView3D()
-      unless view instanceof DriveView and
-             view is @uni.getViewChild()
-        view = new DriveView @app, @uni.client
-        @uni.setView3D view
-        @uni.setViewChild view
-        view.render()
-      root = @app.root
-      view.setTrackId trackId
-
-    editor: (trackId) ->
-      unless @uni.getView3D() instanceof EditorView and
-             @uni.getView3D() is @uni.getViewChild()
-        view = new EditorView @app, @uni.client
-        @uni.setView3D view
-        @uni.setViewChild view
-        view.render()
-      root = @app.root
-
-      # TODO: Let the editor do this itself.
-      track = models.Track.findOrCreate trackId
-      track.fetch
-        success: ->
-          track.env.fetch
-            success: ->
-              Backbone.trigger "app:settrack", track, yes
-              Backbone.trigger 'app:settitle', "Edit #{track.name}"
 
     home: ->
       Backbone.trigger 'app:settitle', null
@@ -104,11 +78,40 @@ define [
       view = new LicenseView @app, @uni.client
       @uni.setViewChild view.render()
 
-    profile: (userId) ->
+    track: (trackId) ->
       @setSpin()
-      user = models.User.findOrCreate userId
-      view = new ProfileView user, @app, @uni.client
+      track = models.Track.findOrCreate trackId
+      view = new TrackView track, @app, @uni.client
       @uni.setViewChild view.render()
+
+    trackDrive: (trackId) ->
+      view = @uni.getView3D()
+      unless view instanceof DriveView and
+             view is @uni.getViewChild()
+        view = new DriveView @app, @uni.client
+        @uni.setView3D view
+        @uni.setViewChild view
+        view.render()
+      root = @app.root
+      view.setTrackId trackId
+
+    trackEdit: (trackId) ->
+      unless @uni.getView3D() instanceof EditorView and
+             @uni.getView3D() is @uni.getViewChild()
+        view = new EditorView @app, @uni.client
+        @uni.setView3D view
+        @uni.setViewChild view
+        view.render()
+      root = @app.root
+
+      # TODO: Let the editor do this itself.
+      track = models.Track.findOrCreate trackId
+      track.fetch
+        success: ->
+          track.env.fetch
+            success: ->
+              Backbone.trigger "app:settrack", track, yes
+              Backbone.trigger 'app:settitle', "Edit #{track.name}"
 
     trackset: (setId) ->
       @setSpin()
@@ -117,7 +120,13 @@ define [
       view = new TrackSetView trackSet, @app, @uni.client
       @uni.setViewChild view.render()
 
-    usertracks: (userId) ->
+    user: (userId) ->
+      @setSpin()
+      user = models.User.findOrCreate userId
+      view = new ProfileView user, @app, @uni.client
+      @uni.setViewChild view.render()
+
+    userTracks: (userId) ->
       @setSpin()
       user = models.User.findOrCreate userId
       user.fetch

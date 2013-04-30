@@ -537,7 +537,7 @@ define [
 
       prefs = root.prefs
 
-      @renderer = @createRenderer prefs
+      #@renderer = @createRenderer prefs
       @containerEl.appendChild @renderer.domElement if @renderer
 
       prefs.on 'change:pixeldensity', =>
@@ -666,7 +666,8 @@ define [
       aspect = if @height > 0 then @width / @height else 1
       @camera.aspect = aspect
       @camera.fov = @camera.idealFov / Math.max 1, aspect / 1.777
-      @camera.degreesPerPixel = @camera.fov / (@height * @renderer.devicePixelRatio)
+      if @renderer
+        @camera.degreesPerPixel = @camera.fov / (@height * @renderer.devicePixelRatio)
       @camera.updateProjectionMatrix()
       @cameraHUD.left = -aspect
       @cameraHUD.right = aspect

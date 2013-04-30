@@ -11,10 +11,13 @@ table
       span.dropdownmenu Track &blacktriangledown;
         menu.trackinfo
           li
-            a.route.drive.name
+            span.name
             |  by 
             span.author
-          li: a.route.edit (Edit this track)
+          ul
+            li: a.route.drive Drive
+            li: a.route.info View top runs
+            li: a.route.edit Edit
           hr
           li: a.route(href="/tracklist/featured") Featured tracks
           li: a.route(href="/tracklist/recent") Recent published tracks

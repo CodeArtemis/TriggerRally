@@ -48,7 +48,7 @@ define [
       @userView.destroy()
       super
 
-  class TrackSetCollectionView extends ViewCollection
+  class TrackListView extends ViewCollection
     view: TrackSetEntryView
     childOffset: 1  # Ignore header <tr>.
 
@@ -58,10 +58,10 @@ define [
     constructor: (model, @app, @client) -> super { model }
 
     afterRender: ->
-      trackSetCollectionView = new TrackSetCollectionView
+      trackListView = new TrackListView
         collection: @model.tracks
-        el: @$('table.tracksetcollection')
-      trackSetCollectionView.render()
+        el: @$('table.tracklist')
+      trackListView.render()
 
       @listenTo @model, 'change:name', (m, name) =>
         @$('.tracksetname').text name
