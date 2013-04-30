@@ -87,6 +87,7 @@ define [
             @game = new gameGame.Game @client.track
             @client.setGame @game
             @updateTimer = yes
+            @$runTimer.addClass 'running'
             @notifyDrive()
 
             @game.addCarConfig carModel.config, (progress) =>

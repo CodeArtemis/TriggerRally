@@ -483,12 +483,12 @@ function(THREE, psim, collision, util) {
                                oami.z + (wami.z - oami.z) * wingFactor);
       // TODO: Transfer all this stuff to config.
       var lift = wingFactor * 150;
-      var linDragX = 0.3 * wingFactor;
-      var linDragY = 0.3 * wingFactor;
+      var linDragX = 100 * wingFactor;
+      var linDragY = 10 * wingFactor;
       var linDragZ = 0.3 * wingFactor;
       angDrag += 80 * wingFactor;
-      var finEffectX = 200 * wingFactor;
-      var finEffectY = 200 * wingFactor;
+      var finEffectX = 300 * wingFactor;
+      var finEffectY = 300 * wingFactor;
       var finEffectZ = 30 * wingFactor;
       var llv = this.body.getLocLinearVel();
       var locLinVelX = llv.x;
@@ -512,9 +512,9 @@ function(THREE, psim, collision, util) {
       // Y: Yaw left
       // Z: Roll right (clockwise)
 
-      var angX = 0.05 + Math.PI/2 - pitch + (input.throttle - input.brake);
-      var angY = turn * 0.1;
-      var angZ = -roll - turn;
+      var angX = 0.05 + Math.PI/2 - pitch + (input.throttle - input.brake) * 0.6;
+      var angY = turn * 0.5;
+      var angZ = turn * 0.2 - roll;
       angX = CLAMP(angX, -1, 1);
       angY = CLAMP(angY, -1, 1);
       angZ = CLAMP(angZ, -1, 1);
