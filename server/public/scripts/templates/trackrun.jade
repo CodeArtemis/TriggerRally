@@ -1,0 +1,18 @@
+td
+  a.route(href="/track/#{id}/drive") Drive 
+    strong= name
+td.trackuser
+td= modified_ago
+td= count_drive
+td= count_copy
+
+td= rank + 1
+td
+  user = run.user
+  include partial/user
+td= run.time_readable
+td
+  a(href="/run/#{run.pub_id}/replay") Watch replay
+td
+  a(href="/run/#{run.pub_id}") Details
+td= run.created_ago
