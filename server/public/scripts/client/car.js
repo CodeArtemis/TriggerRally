@@ -104,10 +104,11 @@ function(THREE, util) {
         wheel.mesh.rotation.x = vWheel.spinPos;
 
         if (vWheel.frictionForce.length() > 1000 + 1000 * Math.random()) {
+          tmpVec3a.copy(vWheel.contactVel);
           tmpVec3a.x *= Math.random() + 0.5;
           tmpVec3a.y *= Math.random() + 0.5;
           tmpVec3a.z *= Math.random() + 0.5;
-          dust.spawn(vWheel.clipPos, tmpVec3a);
+          dust.spawnDust(vWheel.clipPos, tmpVec3a);
         }
       }
 
@@ -124,6 +125,16 @@ function(THREE, util) {
         meshes.WingLO.rotation.set(liftFlex + aileron, -liftFlex, foldO);
         meshes.WingRI.rotation.set(liftFlex, liftFlex, -foldI);
         meshes.WingRO.rotation.set(liftFlex - aileron, liftFlex, -foldO);
+
+        this.root.updateMatrixWorld();
+        if (fold == 0) {
+          tmpVec3a.set(0.45, 1.45, 0);
+          meshes.WingLO.matrixWorld.multiplyVector3(tmpVec3a);
+          dust.spawnContrail(tmpVec3a, vehic.body.getLinearVelAtPoint(tmpVec3a).multiplyScalar(0.95));
+          tmpVec3a.set(-0.45, 1.45, 0);
+          meshes.WingRO.matrixWorld.multiplyVector3(tmpVec3a);
+          dust.spawnContrail(tmpVec3a, vehic.body.getLinearVelAtPoint(tmpVec3a).multiplyScalar(0.95));
+        }
       }
 
       if (this.aud) {

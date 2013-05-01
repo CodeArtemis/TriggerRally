@@ -482,8 +482,9 @@ function(THREE, psim, collision, util) {
                                oami.y + (wami.y - oami.y) * wingFactor,
                                oami.z + (wami.z - oami.z) * wingFactor);
       // TODO: Transfer all this stuff to config.
-      var lift = wingFactor * 150;
-      var linDragX = 100 * wingFactor;
+      var liftX = wingFactor * 150;
+      var liftY = wingFactor * 150;
+      var linDragX = 10 * wingFactor;
       var linDragY = 10 * wingFactor;
       var linDragZ = 0.3 * wingFactor;
       angDrag += 80 * wingFactor;
@@ -497,8 +498,8 @@ function(THREE, psim, collision, util) {
       var locAngVel = this.body.getLocAngularVel();  // overwrites llv.
       var logFwdVel = Math.log(Math.abs(locLinVelZ) + 0.5);
       var turnSpeed = 2;
-      var turnRateA = 60 * wingFactor;  // Speed independent turn thrust.
-      var turnRateB = 2000 * wingFactor;  // More realistic control surface turn rate.
+      var turnRateA = 30 * wingFactor;  // Speed independent turn thrust.
+      var turnRateB = 1500 * wingFactor;  // Speed dependent control surface turn rate.
 
       var input = this.controller.input;
       var turn = this.wheelTurnPos;
@@ -506,6 +507,7 @@ function(THREE, psim, collision, util) {
       var elements = this.body.oriMat.elements;
       // var heading = Math.atan2(elements[1], elements[0]);
       var pitch = Math.acos(elements[10]);
+      // TODO: Fix roll - it's only accurate when pitch = pi/2.
       var roll = Math.asin(elements[2]);
 
       // X: Pitch down
@@ -513,7 +515,7 @@ function(THREE, psim, collision, util) {
       // Z: Roll right (clockwise)
 
       var angX = 0.05 + Math.PI/2 - pitch + (input.throttle - input.brake) * 0.6;
-      var angY = turn * 0.5;
+      var angY = turn * 0.8;
       var angZ = turn * 0.2 - roll;
       angX = CLAMP(angX, -1, 1);
       angY = CLAMP(angY, -1, 1);
@@ -535,9 +537,11 @@ function(THREE, psim, collision, util) {
                 0));
 
       // Linear drag and lift.
-      tmpVec3a.x = -linDragX * locLinVelX * Math.abs(locLinVelX);
-      tmpVec3a.y = -(linDragY + lift * logFwdVel) * locLinVelY * Math.abs(locLinVelY);
+      tmpVec3a.x = -(linDragX + liftX * logFwdVel) * locLinVelX * Math.abs(locLinVelX);
+      tmpVec3a.y = -(linDragY + liftY * logFwdVel) * locLinVelY * Math.abs(locLinVelY);
       tmpVec3a.z = -linDragZ * locLinVelZ * Math.abs(locLinVelZ);
+      // Thrust.
+      //tmpVec3a.z += wingFactor * 10000;
       this.body.addLocForce(tmpVec3a);
       this.liftForce = tmpVec3a.y;
     }

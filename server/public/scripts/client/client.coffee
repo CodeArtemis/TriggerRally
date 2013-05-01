@@ -485,7 +485,7 @@ define [
       scene.add @particleSystem
       @idx = 0
 
-    spawn: (pos, vel) ->
+    spawnDust: (pos, vel) ->
       verts = @geom.vertices
       idx = @idx
       verts[idx].copy pos
@@ -502,6 +502,20 @@ define [
       other.linVel.z += 0.5
       @idx = (idx + 1) % verts.length
 
+    spawnContrail: (pos, vel) ->
+      verts = @geom.vertices
+      idx = @idx
+      verts[idx].copy pos
+      intensity = 1 - Math.random() * 0.05
+      @aColor.value[idx].set(intensity, intensity, intensity, 0.3)
+      ang = Math.random() * Math.PI * 2
+      @aAngSize.value[idx].set ang, 0
+      other = @other[idx]
+      other.angVel = 0
+      other.linVel.copy vel
+      # other.linVel.z += 0.5
+      @idx = (idx + 1) % verts.length
+
     update: (camera, delta) ->
       @uniforms.fScale.value = 100 / camera.degreesPerPixel
       @particleSystem.position.copy camera.position
@@ -509,7 +523,7 @@ define [
       aColor = @aColor.value
       aAngSize = @aAngSize.value
       other = @other
-      linVelScale = 1 / (1 + delta * 0.5)
+      linVelScale = 1 / (1 + delta * 1)
       idx = 0
       length = @length
       while idx < length
