@@ -1,4 +1,5 @@
 define [
+  'underscore'
   'backbone-full'
   'THREE'
   'util/util'
@@ -9,6 +10,7 @@ define [
   'cs!views/view'
   'jade!templates/editor'
 ], (
+  _
   Backbone
   THREE
   util
@@ -152,7 +154,9 @@ define [
       inspectorView.render()
 
       # Hide the help window.
-      $('#editor-helpbox-wrapper').removeClass 'visible'
+      _.delay ->
+        $('#editor-helpbox-wrapper').removeClass 'visible'
+      , 1000
       $('#editor-helpbox-wrapper .close-tab').click ->
         $('#editor-helpbox-wrapper').toggleClass 'visible'
 

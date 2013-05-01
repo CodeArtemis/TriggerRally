@@ -242,6 +242,9 @@
     #   # @config = new TrackConfig
     #   super
     #   # @on 'all', (event) -> console.log 'Track: ' + event
+    validate: ->
+      if @name.length < 3 then return "name too short"
+      if @name.length > 20 then return "name too long"
     parse: (response, options) ->
       # Regression detection.
       if @config and @config not instanceof TrackConfig

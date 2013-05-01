@@ -70,13 +70,14 @@ define [
       root.on 'change:user', updateTrackListView
 
       userView = null
-      root.on 'change:track.user', ->
-        return if root.track.user is userView?.model
+      do updateUser = ->
+        return if root.track?.user is userView?.model
         userView?.destroy()
         if root.track.user?
           userView = new UserView
             model: root.track.user
           $('#user-track-owner .content').append userView.el
+      root.on 'change:track.user', updateUser
 
       do compareUser = ->
         isOwnTrack = root.track?.user is root.user
@@ -86,20 +87,24 @@ define [
       root.on 'change:track.user', compareUser
       root.on 'change:user', compareUser
 
-      onChangeEnv = ->
-        return unless root.track.env.scenery?.layers
+      do onChangeEnv = ->
+        return unless root.track?.env?.scenery?.layers
         sceneryType.$content.empty()
         for layer, idx in root.track.env.scenery.layers
           sceneryType.$content.append new Option layer.id, idx
       root.on 'change:track.env', onChangeEnv
 
-      root.on 'change:track.name', ->
+      do updateName = ->
+        return unless root.track?
         selTitle.$content.val root.track.name
+      root.on 'change:track.name', updateName
       selTitle.$content.on 'input', ->
         root.track.name = selTitle.$content.val()
 
-      root.on 'change:track.published', ->
+      do updatePublished = ->
+        return unless root.track?
         $flagPublish[0].checked = root.track.published
+      root.on 'change:track.published', updatePublished
       $flagPublish.on 'change', ->
         root.track.published = $flagPublish[0].checked
 
