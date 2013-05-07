@@ -447,7 +447,7 @@ function(THREE, psim, collision, util) {
         else
           wingsShouldFold = true;
       }
-      if (controls.handbrake > 0.5) wingsShouldFold = false;
+      // if (controls.handbrake > 0.5) wingsShouldFold = false;
 
       if (wingsShouldFold) {
         if (this.wingFold == 0)
@@ -550,7 +550,8 @@ function(THREE, psim, collision, util) {
     tmpVec3a.copy(this.body.getAngularVel()).multiplyScalar(-angDrag);
     this.body.addTorque(tmpVec3a);
 
-    var handbrake = this.cfg.wings ? 0 : controls.handbrake;
+    // var handbrake = this.cfg.wings ? 0 : controls.handbrake;
+    var handbrake = controls.handbrake;
 
     this.hasContact = false;
     for (c = 0; c < this.wheels.length; ++c) {

@@ -106,7 +106,7 @@ module.exports =
         res.json env #.toJSON { restricted }
 
     app.get "#{base}/runs/:run_id", (req, res) ->
-      findEnv req.params['run_id'], (run) ->
+      findRun req.params['run_id'], (run) ->
         return jsonError 404, res unless run?
         res.json run
 
@@ -141,7 +141,13 @@ module.exports =
       res.json req.fromUrl.track
 
     app.get "#{base}/tracks/:track_id/runs", loadUrlTrack, (req, res) ->
-      res.json req.fromUrl.track
+      trackRuns = new bb.TrackRuns null, track: req.fromUrl.track
+      trackRuns.fetch
+        success: (collection) ->
+          res.json collection
+        error: (collection, err) ->
+          console.log "Error creating track: #{err}"
+          jsonError 500, res
 
     app.put "#{base}/tracks/:track_id", editUrlTrack, (req, res) ->
       allowedKeys = [ 'config', 'name', 'published' ]

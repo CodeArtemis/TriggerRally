@@ -283,6 +283,10 @@
       data.user = data.user.id if data.user?
       data
 
+  class TrackRuns extends Collection
+    model: Run
+    url: -> "/v1/tracks/#{@options.track.id}/runs"
+
   class TrackSet extends Model
     all: new (Collection.extend model: @)
     buildProps @, [
@@ -393,6 +397,7 @@
     User
     UserPassport
 
+    TrackRuns
     RunCollection
     TrackCollectionSortModified
   }

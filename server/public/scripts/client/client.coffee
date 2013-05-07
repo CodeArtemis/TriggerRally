@@ -656,7 +656,7 @@ define [
       #       layer.splice idx, 1
       #   renderCar.destroy()
 
-    on: (event, handler) -> @pubsub.subscribe event, handler
+    # on: (event, handler) -> @pubsub.subscribe event, handler
 
     add: (obj, priority = 0) ->
       layer = @objects[priority] ?= []

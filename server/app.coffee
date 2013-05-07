@@ -47,6 +47,8 @@ Car = mongoose.model('Car')
 Track = mongoose.model('Track')
 Run = mongoose.model('Run')
 
+mongoose.connect config.MONGOOSE_URL
+
 # { handleIPN } = require './paypal/ipn'
 
 # Alternate DB connection
@@ -209,59 +211,6 @@ app.configure 'production', ->
     res.json 500,
       error: "Internal Server Error"
 
-mongoose.connect config.MONGOOSE_URL
-
-# loadUrlTrackInternal = (find, req, res, next) ->
-#   find
-#     .populate('user')
-#     .populate('env')
-#     .populate('parent', {'pub_id':1, 'name':1})
-#     .exec (error, urlTrack) ->
-#       if error then return next error
-#       unless urlTrack then return res.send 404
-#       urlTrack.isAuthenticated = req.user?.user?.id is urlTrack.user.id
-#       req.urlTrack = urlTrack
-#       unless urlTrack.env then return next()
-#       Car
-#         .find()
-#         .where('_id')
-#         .in(urlTrack.env.cars)
-#         .exec (error, cars) ->
-#           if error then return next error
-#           # Horrible workaround because we can't populate env.cars directly.
-#           # See Environment model for the rest of the hack.
-#           req.urlTrack.env.populatedCars = cars
-#           next()
-
-# loadUrlTrack = (req, res, next) ->
-#   find = Track.findOne
-#     pub_id: req.params.idTrack
-#   loadUrlTrackInternal find, req, res, next
-
-# loadUrlCar = (req, res, next) ->
-#   Car
-#     .findOne(pub_id: req.params.idCar)
-#     .populate('user')
-#     .exec (error, urlCar) ->
-#       if error then return next error
-#       unless urlCar then return res.send 404
-#       urlCar.isAuthenticated = req.user?.user?.id is urlCar.user.id
-#       req.urlCar = urlCar
-#       next()
-
-# loadUrlRun = (req, res, next) ->
-#   Run
-#     .findOne(pub_id: req.params.idRun)
-#     .populate('user')
-#     .populate('car')
-#     .populate('track')
-#     .exec (error, urlRun) ->
-#       if error then return next error
-#       unless urlRun then return res.send 404
-#       urlRun.isAuthenticated = req.user?.user?.id is urlRun.user.id
-#       req.urlRun = urlRun
-#       next()
-
 app.get    '/v1/auth/facebook', passport.authenticate('facebook/v1')
 app.get    '/v1/auth/facebook/callback', passport.authenticate('facebook/v1',
   failureRedirect: '/login?popup=1'
@@ -311,8 +260,8 @@ app.get '/x/Preview/Arbusu/drive', (req, res) ->
   res.redirect '/', 301
 app.get '/x/:idTrack/:idCar/drive', (req, res) ->
   res.redirect "/track/#{req.params.idTrack}/drive", 301
-app.get '/track/:idTrack', (req, res) ->
-  res.redirect "/track/#{req.params.idTrack}/drive", 301
+# app.get '/track/:idTrack', (req, res) ->
+#   res.redirect "/track/#{req.params.idTrack}/drive", 301
 
 app.get    '/login', routes.login
 

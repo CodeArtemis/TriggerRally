@@ -170,40 +170,58 @@ module.exports = (bb) ->
                 return error null
               success null
 
-  bb.TrackSet::sync = do ->
-    makeSync
-      read: (model, success, error, options) ->
-        switch model.id
-          when 'featured'
-            response =
-              name: 'Featured tracks'
-              tracks: [
-                'uUJTPz6M'
-                'Alpina'
-                'pRNGozkY'
-                'Z7SkazUF'
-                '8wuycma7'
-                'KaXCxxFv'
-              ]
-            success response
-          when 'recent'
-            query =
-              env: alpEnvId  # TODO: Remove this filter.
-              published: yes
-            mo.Track
-              .find(query)
-              .sort({modified: -1})
-              .limit(30)
-              .exec (err, tracks) ->
-                if err
-                  console.log "Error fetching tracks: #{err}"
-                  return error null
-                response =
-                  name: 'Recent published tracks'
-                  tracks: (track.pub_id for track in tracks)
-                success response
-          else
-            error null
+  bb.TrackRuns::sync = makeSync
+    read: (collection, success, error, options) ->
+      mo.Run
+        .find()
+        .limit(5)
+        .populate('car', 'pub_id')
+        .populate('track', 'pub_id')
+        .populate('user', 'pub_id')
+        .exec (err, runs) ->
+          if err
+            console.log "Error fetching runs: #{err}"
+            return error null
+          parsed = parseMongoose runs
+          for p in parsed
+            p.car = p.car.id if p.car
+            p.track = p.track.id if p.track
+            p.user = p.user.id if p.user
+          success parsed
+
+  bb.TrackSet::sync = makeSync
+    read: (model, success, error, options) ->
+      switch model.id
+        when 'featured'
+          response =
+            name: 'Featured tracks'
+            tracks: [
+              'uUJTPz6M'
+              'Alpina'
+              'pRNGozkY'
+              'Z7SkazUF'
+              '8wuycma7'
+              'KaXCxxFv'
+            ]
+          success response
+        when 'recent'
+          query =
+            env: alpEnvId  # TODO: Remove this filter.
+            published: yes
+          mo.Track
+            .find(query)
+            .sort({modified: -1})
+            .limit(30)
+            .exec (err, tracks) ->
+              if err
+                console.log "Error fetching tracks: #{err}"
+                return error null
+              response =
+                name: 'Recent published tracks'
+                tracks: (track.pub_id for track in tracks)
+              success response
+        else
+          error null
 
   bb.User::sync = makeSync
     read: (model, success, error, options) ->

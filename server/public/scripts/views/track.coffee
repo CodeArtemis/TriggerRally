@@ -1,6 +1,7 @@
 define [
   'jquery'
   'backbone-full'
+  'cs!views/user'
   'cs!views/view'
   'cs!views/view_collection'
   'cs!models/index'
@@ -10,6 +11,7 @@ define [
 ], (
   $
   Backbone
+  UserView
   View
   ViewCollection
   models
@@ -37,16 +39,6 @@ define [
     afterRender: ->
       track = @model
       @listenTo track, 'change', @render, @
-
-      $trackuser = @$ '.trackuser'
-      @userView = null
-      do updateUserView = =>
-        @userView?.destroy()
-        @userView = track.user and new UserView
-          model: track.user
-        $trackuser.empty()
-        $trackuser.append @userView.el if @userView
-      @listenTo track, 'change:user', updateUserView
 
     destroy: ->
       @userView.destroy()
@@ -78,8 +70,20 @@ define [
       data
 
     afterRender: ->
-      trackRuns = new models.RunCollection
+      track = @model
+      trackRuns = new models.TrackRuns
       trackRunsView = new TrackRunsView
         collection: trackRuns
         el: @$('table.runlist')
       trackRunsView.render()
+      trackRuns.fetch()
+
+      $author = @$ '.author'
+      @userView = null
+      do updateUserView = =>
+        @userView?.destroy()
+        @userView = track.user and new UserView
+          model: track.user
+        $author.empty()
+        $author.append @userView.el if @userView
+      @listenTo track, 'change:user', updateUserView
