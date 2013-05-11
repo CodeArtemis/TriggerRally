@@ -148,7 +148,7 @@ passport.deserializeUser (id, done) ->
     .exec (error, userPassport) ->
       done error, userPassport
 
-app.use express.logger(format: '[:isodate] :status :response-time ms :method :url :referrer')
+app.use express.logger(format: '[:isodate] :status :response-time ms :res[content-length] :method :url :referrer')
 app.disable 'x-powered-by'
 app.use express.compress()
 app.use stylus.middleware(

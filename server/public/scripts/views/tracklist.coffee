@@ -41,3 +41,4 @@ define [
     initialize: ->
       super
       @collection.sort()
+      @listenTo @collection, 'change:name', => @collection.sort()
