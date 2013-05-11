@@ -38,3 +38,6 @@ define [
 
   class TrackListView extends ViewCollection
     view: TrackListEntryView
+    initialize: ->
+      super
+      @collection.sort()

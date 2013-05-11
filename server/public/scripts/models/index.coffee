@@ -66,18 +66,23 @@
       if @lastSync and not options?.force
         timeSinceLast = Date.now() - @lastSync
         if timeSinceLast < @cacheExpirySecs * 1000
-          return options.success? @, null, options
+          options.success? @, null, options
+          return null
       xhr = @fetchXHR
       if xhr
         # Bind handlers to in-progress fetch.
         xhr.done (data, textStatus, jqXHR) => options.success? @, data, options
-        xhr.fail (data, textStatus, errorThrown) => options.error? @, xhr, options
+        xhr.fail (data, textStatus, errorThrown) => options.error? @, null, options
       else
-        xhr = @fetchXHR = super
-        xhr?.always => @fetchXHR = null
+        # Perform fetch. (Will also call success/error.)
+        xhr = super
+        if xhr?.always
+          @fetchXHR = xhr
+          xhr.always => @fetchXHR = null
       xhr
 
     parse: (response, options) ->
+      # TODO: per-attribute timers?
       @lastSync = Date.now()
       super
 
@@ -208,18 +213,27 @@
       data
 
   class Run extends Model
+    all: new (Collection.extend model: @)
     buildProps @, [
       'car'
       'created'
+      'rank'  # Attribute generated when fetched.
       'record_i'
       'record_p'
       'status'
       'time'
+      'time_readable'
       'track'
       'user'
     ]
     urlRoot: '/v1/runs'
-    findByTrack: -> throw new Error 'Not implemented'
+    parse: ->
+      data = super
+      return data unless data
+      data.car = Car.findOrCreate data.car if data.car
+      data.track = Track.findOrCreate data.track if data.track
+      data.user = User.findOrCreate data.user if data.user
+      data
 
   class Track extends Model
     all: new (Collection.extend model: @)
@@ -242,9 +256,10 @@
     #   # @config = new TrackConfig
     #   super
     #   # @on 'all', (event) -> console.log 'Track: ' + event
+    maxNameLength: 25
     validate: ->
-      if @name.length < 3 then return "name too short"
-      if @name.length > 20 then return "name too long"
+      if @name?.length < 3 then return "name too short"
+      if @name?.length > @maxNameLength then return "name too long"
     parse: (response, options) ->
       # Regression detection.
       if @config and @config not instanceof TrackConfig
@@ -252,7 +267,6 @@
 
       data = super
       return data unless data
-      # console.log data
       if data.config
         config = @config
         config = new TrackConfig unless config instanceof TrackConfig
@@ -283,9 +297,26 @@
       data.user = data.user.id if data.user?
       data
 
-  class TrackRuns extends Collection
-    model: Run
-    url: -> "/v1/tracks/#{@options.track.id}/runs"
+  class TrackRuns extends Model
+    all: new (Collection.extend model: @)
+    buildProps @, [
+      'runs'
+    ]
+    url: -> "/v1/tracks/#{@id}/runs"
+    defaults: ->
+      runs: new RunCollection
+    parse: ->
+      data = super
+      return data unless data
+      if data.runs
+        runs = for run in data.runs
+          if typeof run is 'string'
+            Run.findOrCreate run
+          else
+            r = Run.findOrCreate run.id
+            r.set r.parse run
+        data.runs = @runs.reset runs
+      data
 
   class TrackSet extends Model
     all: new (Collection.extend model: @)
@@ -393,11 +424,11 @@
     StartPos
     Track
     TrackConfig
+    TrackRuns
     TrackSet
     User
     UserPassport
 
-    TrackRuns
     RunCollection
     TrackCollectionSortModified
   }

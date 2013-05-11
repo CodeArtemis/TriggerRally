@@ -37,8 +37,18 @@ define [
       data
 
     afterRender: ->
-      track = @model
-      @listenTo track, 'change', @render, @
+      run = @model
+      # @listenTo run, 'change', @render, @
+
+      $runuser = @$ '.runuser'
+      @userView = null
+      do updateUserView = =>
+        @userView?.destroy()
+        @userView = run.user and new UserView
+          model: run.user
+        $runuser.empty()
+        $runuser.append @userView.el if @userView
+      @listenTo run, 'change:user', updateUserView
 
     destroy: ->
       @userView.destroy()
@@ -71,9 +81,9 @@ define [
 
     afterRender: ->
       track = @model
-      trackRuns = new models.TrackRuns
+      trackRuns = models.TrackRuns.findOrCreate track.id
       trackRunsView = new TrackRunsView
-        collection: trackRuns
+        collection: trackRuns.runs
         el: @$('table.runlist')
       trackRunsView.render()
       trackRuns.fetch()
@@ -87,3 +97,7 @@ define [
         $author.empty()
         $author.append @userView.el if @userView
       @listenTo track, 'change:user', updateUserView
+
+      $name = @$ '.name'
+      @listenTo @model, 'change:name', (model, value) =>
+        $name.text value

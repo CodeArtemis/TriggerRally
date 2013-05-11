@@ -82,11 +82,13 @@ define [
         if root.user isnt root.track.user
           return Backbone.trigger 'app:status', 'Read only'
         Backbone.trigger 'app:status', 'Saving...'
-        root.track.save null,
+        result = root.track.save null,
           success: (model, response, options) ->
             Backbone.trigger 'app:status', 'OK'
           error: (model, xhr, options) ->
             Backbone.trigger 'app:status', "ERROR: #{xhr.statusText} (#{xhr.status})"
+        unless result
+          Backbone.trigger 'app:status', 'ERROR: save failed'
       , 1000
 
       @listenTo root, 'all', (event) ->

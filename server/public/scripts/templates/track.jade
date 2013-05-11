@@ -1,16 +1,18 @@
 .gui-container
   .text-panel
 
-    h2= name
+    h2.name= name
 
-    h3 Track by
+    h3 Track by 
       span.author
+      |  &mdash; 
+      a.route(href="#{id}/drive") Drive
 
     table.runlist.list
       tr
         td
         td Driver
         td Time
-        td
+        td Car
         td
         td Recorded

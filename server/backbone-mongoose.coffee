@@ -106,14 +106,14 @@ module.exports = (bb) ->
       create: (model, success, error, options) ->
         mo.Track
           .findOne(pub_id: model.parent.id)
-          .populate('env', 'pub_id')
           .exec (err, parentTrack) ->
             return error err if err
             return error "Couldn't find track #{model.parent.id}" unless parentTrack
+            data = jsonClone model
             track = new mo.Track
               parent: parentTrack.id
               user: options.user.id
-              name: parentTrack.name + ' copy'
+              name: data.name
               env: parentTrack.env
               config: parentTrack.config
             track.save (err) ->
@@ -121,10 +121,12 @@ module.exports = (bb) ->
                 console.log "Error creating track: #{err}"
                 return error null
               parsed = parseTrack(track)
-              # Hacky workaround for Mongoose population/ext ref problem.
-              # It would be nice to get rid of Mongoose.
-              parsed.user = options.user.pub_id
-              parsed.env = parentTrack.env.pub_id
+              # parsed.user = options.user.pub_id
+              # parsed.env = parentTrack.env.pub_id
+              # We don't actually need these values. The API layer has set them already.
+              delete parsed.env
+              delete parsed.parent
+              delete parsed.user
               success parsed
       read: (model, success, error, options) ->
         mo.Track
@@ -171,23 +173,33 @@ module.exports = (bb) ->
               success null
 
   bb.TrackRuns::sync = makeSync
-    read: (collection, success, error, options) ->
-      mo.Run
-        .find()
-        .limit(5)
-        .populate('car', 'pub_id')
-        .populate('track', 'pub_id')
-        .populate('user', 'pub_id')
-        .exec (err, runs) ->
-          if err
-            console.log "Error fetching runs: #{err}"
-            return error null
-          parsed = parseMongoose runs
-          for p in parsed
-            p.car = p.car.id if p.car
-            p.track = p.track.id if p.track
-            p.user = p.user.id if p.user
-          success parsed
+    read: (model, success, error, options) ->
+      mo.Track
+        .findOne(pub_id: model.id)
+        .exec (err, track) ->
+          # TODO: filter by car?
+          mo.Run
+            .find(track: track.id)
+            .where('time', { $not: { $type: 10 } })  # Exclude null times.
+            .sort(time: 1)
+            .limit(5)
+            .populate('car', 'pub_id')
+            .populate('track', 'pub_id')
+            .populate('user', 'pub_id')
+            .exec (err, runs) ->
+              if err
+                console.log "Error fetching runs: #{err}"
+                return error null
+              parsed = parseMongoose runs
+              rank = 1
+              for p in parsed
+                p.car = p.car.id if p.car
+                p.track = p.track.id if p.track
+                p.user = p.user.id if p.user
+                p.rank = rank++
+              success
+                id: model.id
+                runs: parsed
 
   bb.TrackSet::sync = makeSync
     read: (model, success, error, options) ->

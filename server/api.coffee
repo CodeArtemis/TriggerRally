@@ -9,16 +9,18 @@ jsonClone = (obj) -> JSON.parse JSON.stringify obj
 
 findModel = (Model, pub_id, done) ->
   model = Model.findOrCreate pub_id
-  model.fetch
+  result = model.fetch
     success: -> done model
     error:   -> done null
+  done null if result is false
 
-findCar      = -> findModel(bb.Car,      arguments...)
-findEnv      = -> findModel(bb.Env,      arguments...)
-findRun      = -> findModel(bb.Run,      arguments...)
-findTrack    = -> findModel(bb.Track,    arguments...)
-findTrackSet = -> findModel(bb.TrackSet, arguments...)
-findUser     = -> findModel(bb.User,     arguments...)
+findCar       = -> findModel(bb.Car,       arguments...)
+findEnv       = -> findModel(bb.Env,       arguments...)
+findRun       = -> findModel(bb.Run,       arguments...)
+findTrack     = -> findModel(bb.Track,     arguments...)
+findTrackRuns = -> findModel(bb.TrackRuns, arguments...)
+findTrackSet  = -> findModel(bb.TrackSet,  arguments...)
+findUser      = -> findModel(bb.User,      arguments...)
 
 # This public-facing API is responsible for validating requests and data.
 
@@ -29,7 +31,7 @@ module.exports =
 
     jsonError = (code, res, msg) ->
       text =
-        400: "Bad Request - might be a bug"
+        400: "Bad Request - client bug"
         401: "Unauthorized - log in required"
         403: "Forbidden"
         404: "Not Found"
@@ -51,6 +53,8 @@ module.exports =
       loadUrl findRun, 'run_id', 'run', req, res, next
     loadUrlTrack = (req, res, next) ->
       loadUrl findTrack, 'track_id', 'track', req, res, next
+    loadUrlTrackRuns = (req, res, next) ->
+      loadUrl findTrackRuns, 'track_id', 'trackRuns', req, res, next
     loadUrlTrackSet = (req, res, next) ->
       loadUrl findTrackSet, 'trackset_id', 'trackSet', req, res, next
     loadUrlUser = (req, res, next) ->
@@ -116,18 +120,25 @@ module.exports =
         return jsonError 500, res unless reqUser
         parentTrackId = req.body.parent
         findTrack parentTrackId, (parentTrack) ->
-          return jsonError 400, res unless parentTrack?.env?
+          return jsonError 404, res unless parentTrack?
+          return jsonError 400, res unless parentTrack.env?
+          return jsonError 403, res unless parentTrack.env.id is 'alp'
           # TODO: Check this user is allowed to copy tracks from this env.
           track = new bb.Track
+          newName = parentTrack.name
+          maxLength = bb.Track::maxNameLength - 5
+          if newName.length > maxLength then newName = newName.slice(0, maxLength - 3) + '...'
+          newName += ' copy'
           track.set track.parse
-            parent: parentTrack.id
-            user: reqUser.id
-            name: parentTrack.name + ' copy'
-            env: parentTrack.env.id
             config: jsonClone parentTrack.config
-          track.save null,
+            env: parentTrack.env.id
+            parent: parentTrack.id
+            name: newName
+            user: reqUser.id
+          result = track.save null,
             user: req.user.user
             success: (track) ->
+              console.log JSON.stringify track
               res.json track
               reqUser.tracks.add track
               parentTrack.count_copy += 1
@@ -135,19 +146,25 @@ module.exports =
             error: (model, err) ->
               console.log "Error creating track: #{err}"
               jsonError 500, res
+          if result is false
+            console.log "Error creating track: save failed"
+            jsonError 500, res
 
     # TODO: Add a multi-ID track GET.
     app.get "#{base}/tracks/:track_id", loadUrlTrack, (req, res) ->
       res.json req.fromUrl.track
 
-    app.get "#{base}/tracks/:track_id/runs", loadUrlTrack, (req, res) ->
-      trackRuns = new bb.TrackRuns null, track: req.fromUrl.track
-      trackRuns.fetch
-        success: (collection) ->
-          res.json collection
-        error: (collection, err) ->
-          console.log "Error creating track: #{err}"
-          jsonError 500, res
+    # app.get "#{base}/tracks/:track_id/runs", loadUrlTrack, (req, res) ->
+    #   trackRuns = new bb.TrackRuns null, track: req.fromUrl.track
+    #   trackRuns.fetch
+    #     success: (collection) ->
+    #       res.json collection
+    #     error: (collection, err) ->
+    #       console.log "Error creating track: #{err}"
+    #       jsonError 500, res
+
+    app.get "#{base}/tracks/:track_id/runs", loadUrlTrackRuns, (req, res) ->
+      res.json req.fromUrl.trackRuns
 
     app.put "#{base}/tracks/:track_id", editUrlTrack, (req, res) ->
       allowedKeys = [ 'config', 'name', 'published' ]
@@ -159,9 +176,13 @@ module.exports =
       track.save { count_drive: track.count_drive + 1 }
 
     app.delete "#{base}/tracks/:track_id", editUrlTrack, (req, res) ->
+      jsonError 403, res if req.fromUrl.track.id is 'v3-base-1'
       req.fromUrl.track.destroy
         success: -> res.json {}
         error:   -> jsonError 500, res
+
+    app.get "#{base}/tracksets/:trackset_id", loadUrlTrackSet, (req, res) ->
+      res.json req.fromUrl.trackSet
 
     app.get "#{base}/users/:user_id", loadUrlUser, (req, res) ->
       user = req.fromUrl.user
@@ -182,9 +203,6 @@ module.exports =
       else
         res.json user: null
       return
-
-    app.get "#{base}/tracksets/:trackset_id", loadUrlTrackSet, (req, res) ->
-      res.json req.fromUrl.trackSet
 
     # Give a JSON 404 response for any unknown path under /v1/.
     app.get "#{base}/*", (req, res) -> jsonError 404, res

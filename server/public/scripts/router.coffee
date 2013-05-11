@@ -112,6 +112,8 @@ define [
             success: ->
               Backbone.trigger "app:settrack", track, yes
               Backbone.trigger 'app:settitle', "Edit #{track.name}"
+        error: ->
+          Backbone.trigger 'app:notfound'
 
     trackset: (setId) ->
       @setSpin()

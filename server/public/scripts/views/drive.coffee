@@ -123,6 +123,8 @@ define [
             success: =>
               Backbone.trigger 'app:settrack', track
               Backbone.trigger 'app:settitle', track.name
+        error: ->
+          Backbone.trigger 'app:notfound'
 
     update: (delta) ->
       if @updateTimer and @game

@@ -96,6 +96,7 @@ define [
 
       do updateName = ->
         return unless root.track?
+        return if selTitle.$content.val() is root.track.name
         selTitle.$content.val root.track.name
       root.on 'change:track.name', updateName
       selTitle.$content.on 'input', ->

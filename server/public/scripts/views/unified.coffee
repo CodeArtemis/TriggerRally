@@ -75,6 +75,7 @@ define [
       $window.on 'resize', layout
 
       $document.on 'click', 'a.route', (event) ->
+        # TODO: Find a way to handle 404s.
         Backbone.history.navigate @pathname, trigger: yes
         no
 
