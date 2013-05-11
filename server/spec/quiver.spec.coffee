@@ -1,7 +1,3 @@
-# Copyright (C) 2012 jareiko / http://www.jareiko.net/
-
-
-
 describe "quiver", ->
 
   quiver = require "../public/scripts/util/quiver"
@@ -40,7 +36,7 @@ describe "quiver", ->
   describe "Node", ->
     describe "_walkOut", ->
       it "can walk a simple graph", (done) ->
-        quiver.connect n1 = new quiver.Node
+        quiver.connect n1 = new quiver.Node,
                        n2 = new quiver.Node
         info = {}
         ls = new quiver.LockedSet()
@@ -50,7 +46,7 @@ describe "quiver", ->
           done()
 
       it "merges diamond paths", (done) ->
-        quiver.connect n1 = new quiver.Node
+        quiver.connect n1 = new quiver.Node,
                        {}
                        n2 = new quiver.Node
                        n3 = new quiver.Node
@@ -66,7 +62,7 @@ describe "quiver", ->
 
     describe "_walkIn", ->
       it "can walk a simple graph", (done) ->
-        quiver.connect n1 = new quiver.Node
+        quiver.connect n1 = new quiver.Node,
                        n2 = new quiver.Node
         info = {}
         ls = new quiver.LockedSet()
@@ -76,7 +72,7 @@ describe "quiver", ->
           done()
 
       it "stops at updated nodes", (done) ->
-        quiver.connect n1 = new quiver.Node
+        quiver.connect n1 = new quiver.Node,
                        n2 = new quiver.Node
                        n3 = new quiver.Node
         n1.updated = true
@@ -90,7 +86,7 @@ describe "quiver", ->
           done()
 
       it "merges diamond paths", (done) ->
-        quiver.connect n1 = new quiver.Node
+        quiver.connect n1 = new quiver.Node,
                        n2 = new quiver.Node
                        n3 = new quiver.Node
                        n5 = new quiver.Node
@@ -147,7 +143,7 @@ describe "quiver", ->
 
       it "stops at updated nodes", (done) ->
         ctr = new Counter
-        quiver.connect n1 = ctr.makeNode()
+        quiver.connect n1 = ctr.makeNode(),
                        n2 = ctr.makeNode()
         quiver.push n1, ->
           expect(ctr.count).toBe 0

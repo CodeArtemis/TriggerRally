@@ -234,6 +234,12 @@
       data.track = Track.findOrCreate data.track if data.track
       data.user = User.findOrCreate data.user if data.user
       data
+    toJSON: ->
+      data = super
+      data.car = data.car.id if data.car?
+      data.track = data.track.id if data.track?
+      data.user = data.user.id if data.user?
+      data
 
   class Track extends Model
     all: new (Collection.extend model: @)
