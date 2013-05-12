@@ -30,18 +30,33 @@ moduleDef = (require, exports, module) ->
       keyMap: _.invert @keyMap
 
   class exports.StateRecorder
-    constructor: (object, keys, freq) ->
-      @timeline = timeline = []
-      changeHandler = (index, state) ->
-        timeline.push [index, state]
-      @sampler = new exports.StateSampler object, keys, freq, changeHandler
+    constructor: (@object, @keys, @freq) ->
+      @restart()
 
-    observe: ->
-      @sampler.observe()
+    restart: ->
+      @timeline = timeline = []
+      changeHandler = (offset, state) ->
+        timeline.push [offset, state]
+      @sampler = new exports.StateSampler @object, @keys, @freq, changeHandler
+
+    observe: -> @sampler.observe()
 
     toJSON: ->
       keyMap: @sampler.toJSON().keyMap
       timeline: @timeline
+
+  # Records into a Backbone Collection.
+  class exports.CollectionRecorder
+    constructor: (@collection, @object, @keys, @freq) ->
+      @restart()
+
+    restart: ->
+      collection = @collection.reset()
+      changeHandler = (offset, state) ->
+        collection.add { offset, state }
+      @sampler = new exports.StateSampler @object, @keys, @freq, changeHandler
+
+    observe: -> @sampler.observe()
 
   class exports.StatePlayback
     constructor: (@object, @saved) ->
@@ -95,13 +110,13 @@ moduleDef = (require, exports, module) ->
     keyMap = {}
     nextKey = 0
 
-    for key, val of keys
-      throw new Error('repeated key') if key of keyMap
-      keyMap[key] = (nextKey++).toString(36)
-      if _.isArray val
-        process val[0]
-      else if typeof val is 'object'
-        process val
+    do process = (keys) ->
+      for key, val of keys
+        keyMap[key] = (nextKey++).toString(36)
+        if _.isArray val
+          process val[0]
+        else if typeof val is 'object'
+          process val
 
     keyMap
 

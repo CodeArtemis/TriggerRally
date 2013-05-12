@@ -82,9 +82,9 @@ function(THREE, psim, collision, util) {
     this.vehicle = vehicle;
     this.shiftTimer = 0;
     this.input = {
-      throttle: 0,
       brake: 0,
       handbrake: 0,
+      throttle: 0,
       turn: 0
     };
     this.output = {

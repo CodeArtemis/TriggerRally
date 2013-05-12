@@ -9,6 +9,7 @@ define [
   'cs!models/index'
   'cs!views/view'
   'jade!templates/drive'
+  'cs!util/recorder'
 ], (
   $
   Backbone
@@ -20,12 +21,31 @@ define [
   models
   View
   template
+  recorder
 ) ->
   KEYCODE = util.KEYCODE
   Vec3 = THREE.Vector3
 
   padZero = (val, digits) ->
     (1e15 + val + '').slice(-digits)
+
+  keys1 =
+    brake: 0
+    handbrake: 0
+    throttle: 0
+    turn: 0
+  keys2 =
+    nextCpIndex: 0
+    vehicle:
+      body:
+        pos: {x:3,y:3,z:3}
+        ori: {x:3,y:3,z:3,w:3}
+        linVel: {x:3,y:3,z:3}
+        angVel: {x:3,y:3,z:3}
+      wheels: [
+        spinVel: 1
+      ]
+      engineAngVel: 3
 
   formatRunTime = (time) ->
     mins = Math.floor(time / 60)
@@ -43,29 +63,21 @@ define [
       @client.setGame null
       super
 
-    notifyDrive: ->
-      # TODO: Make Track model responsible for doing this.
-      # Will require some kind of special sync code.
-      $.ajax "/v1/tracks/#{@app.root.track.id}/drive", type: 'POST'
-
     onKeyDown: (event) ->
       switch event.keyCode
         when KEYCODE['C']
           @client.camControl?.nextMode()
         when KEYCODE['R']
-          @updateTimer = yes
-          @$runTimer.addClass 'running'
-          @game?.restart()
-          @notifyDrive()
+          @restartGame()
 
     afterRender: ->
       client = @client
       client.camera.idealFov = 75
       client.updateCamera()
 
-      @$countdown = @$('#countdown')
-      @$runTimer = @$('#timer')
-      @$checkpoints = @$('#checkpoints')
+      @$countdown = @$ '#countdown'
+      @$runTimer = @$ '#timer'
+      @$checkpoints = @$ '#checkpoints'
 
       @game = null
 
@@ -76,7 +88,6 @@ define [
 
       @lastRaceTime = 0
       @updateTimer = yes
-      followProgress = null
 
       do createGame = =>
         return unless root.track?
@@ -86,18 +97,15 @@ define [
           success: =>
             @game = new gameGame.Game @client.track
             @client.setGame @game
-            @updateTimer = yes
-            @$runTimer.addClass 'running'
-            @notifyDrive()
+            @restartGame()
 
             @game.addCarConfig carModel.config, (progress) =>
-              followProgress = progress
-              @listenTo followProgress, 'advance', =>
-                cpNext = followProgress.nextCpIndex
+              progress.on 'advance', =>
+                cpNext = progress.nextCpIndex
                 cpTotal = root.track.config.course.checkpoints.length
                 @$checkpoints.html "#{cpNext} / #{cpTotal}"
 
-                return if followProgress.nextCheckpoint(0)
+                return if progress.nextCheckpoint(0)
 
                 # Race complete.
                 @updateTimer = no
@@ -109,11 +117,33 @@ define [
                 #    # We can't save the run, but show a Twitter link.
                 #    showTwitterLink()
 
+              # obj1 = progress.vehicle.controller.input
+              # obj2 = progress
+              # @rec1 = new recorder.CollectionRecorder obj1, keys1
+              # @rec2 = new recorder.CollectionRecorder obj2, keys2, 40
+              # @game.sim.pubsub.on 'step', =>
+              #   @rec1.observe()
+              #   @rec2.observe()
+              #   console.log @rec2.timeline.length
+
       @listenTo root, 'change:track', createGame
       # Also recreate game if user or car changes.
       @listenTo root, 'change:user', createGame
       @listenTo root, 'change:user.products', createGame
       @listenTo root, 'change:prefs.car', createGame
+
+    restartGame: ->
+      @updateTimer = yes
+      @$runTimer.addClass 'running'
+      @game?.restart()
+      @rec1?.restart()
+      @rec2?.restart()
+      @notifyDrive()
+
+    notifyDrive: ->
+      # TODO: Make Track model responsible for doing this.
+      # Will require some kind of special sync code.
+      $.ajax "/v1/tracks/#{@app.root.track.id}/drive", type: 'POST'
 
     setTrackId: (trackId) ->
       track = models.Track.findOrCreate trackId
@@ -133,8 +163,6 @@ define [
           if @lastRaceTime < 0
             @$countdown.html 'Go!'
             @$countdown.addClass 'fadeout'
-            if followProgress?
-              @$checkpoints.html followProgress.nextCpIndex + ' / ' + @game.track.checkpoints.length
           @$runTimer.html formatRunTime raceTime
         else
           num = Math.ceil -raceTime
