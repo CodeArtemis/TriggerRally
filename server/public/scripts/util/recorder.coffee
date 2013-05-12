@@ -7,12 +7,11 @@ moduleDef = (require, exports, module) ->
     constructor: (@object, @keys, @freq = 1, @changeHandler) ->
       @keyMap = generateKeyMap keys
       @lastState = null
-      @observations = 0
+      @counter = -1
 
     observe: ->
-      index = @observations
-      return if @observations++ % @freq isnt 0
-      @freqCount = 0
+      ++@counter
+      return if @counter % @freq isnt 0
       newState = filterObject @object, @keys
       if @lastState
         # Store state difference for repeat observations.
@@ -23,10 +22,11 @@ moduleDef = (require, exports, module) ->
         # First observation.
         @lastState = stateDiff = newState
       remapped = remapKeys stateDiff, @keyMap
-      @changeHandler index, remapped
+      @changeHandler @counter, remapped
+      @counter = 0
 
     toJSON: ->
-      freq: @freq
+      # freq: @freq  # No longer necessary to record this value.
       keyMap: _.invert @keyMap
 
   class exports.StateRecorder
@@ -39,26 +39,26 @@ moduleDef = (require, exports, module) ->
     observe: ->
       @sampler.observe()
 
-    toJSON: -> { @sampler, @timeline }
+    toJSON: ->
+      keyMap: @sampler.toJSON().keyMap
+      timeline: @timeline
 
   class exports.StatePlayback
-    constructor: (@object, @serialized) ->
-      @index = 0
-      @freq = serialized.freq
-      @freqCount = 0
-      @nextSeg = 0
+    constructor: (@object, @saved) ->
+      # Set to -1 so that we advance to 0 and update object on first step.
+      @counter = -1
+      @currentSeg = -1
 
     step: ->
-      if @freq
-        return if ++@freqCount isnt @freq
-        @freqCount = 0
-      seg = @serialized.timeline[@nextSeg]
-      if seg
-        applyDiff(@object, seg[1], @serialized.keyMap)
-        if ++@index >= seg[0]
-          @index = 0
-          # if ++@nextSeg >= @serialized.timeline.length
-          #   @pubsub.publish('complete')
+      timeline = @saved.timeline
+      ++@counter
+      nextSeg = @currentSeg
+      while (seg = timeline[nextSeg + 1]) and (duration = seg[0]) <= @counter
+        ++nextSeg
+        @counter -= duration
+      return if nextSeg is @currentSeg
+      @currentSeg = nextSeg
+      applyDiff @object, timeline[nextSeg][1], @saved.keyMap
       return
 
   # Returns only values in a that differ from those in b.
@@ -70,7 +70,7 @@ moduleDef = (require, exports, module) ->
       if _.isArray aVal
         # Always pass through arrays.
         # TODO: Actually diff arrays. _.isEqual?
-        changed[k] = a[k]
+        changed[k] = aVal
       else if typeof aVal is 'object'
         c = objDiff aVal, b[k]
         changed[k] = c unless _.isEmpty c
@@ -84,7 +84,7 @@ moduleDef = (require, exports, module) ->
         # No remapping for array indices.
         obj[index] = applyDiff obj[index], el, keyMap
       obj
-    else if typeof diff is 'object'
+    else if _.isObject diff
       for key, val of diff
         obj[keyMap[key]] = applyDiff obj[keyMap[key]], val, keyMap
       obj
