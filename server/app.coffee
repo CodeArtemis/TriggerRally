@@ -1,5 +1,3 @@
-# Copyright (c) 2012 jareiko. All rights reserved.
-
 "use strict"
 
 _                 = require 'underscore'
@@ -490,9 +488,9 @@ io.of('/drive').on 'connection', (socket) ->
 
   if user
     socket.on 'record_i', (data) ->
-      buffer_i.push [ data.offset, data.state ]
+      Array::push.apply buffer_i, data.samples
     socket.on 'record_p', (data) ->
-      buffer_p.push [ data.offset, data.state ]
+      Array::push.apply buffer_p, data.samples
 
 # io.of('/api').on 'connection', (socket) ->
 #   session = socket.handshake.session

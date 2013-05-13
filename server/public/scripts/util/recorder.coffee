@@ -61,6 +61,9 @@ moduleDef = (require, exports, module) ->
 
   class exports.StatePlayback
     constructor: (@object, @saved) ->
+      @restart()
+
+    restart: ->
       # Set to -1 so that we advance to 0 and update object on first step.
       @counter = -1
       @currentSeg = -1
@@ -68,14 +71,13 @@ moduleDef = (require, exports, module) ->
     step: ->
       timeline = @saved.timeline
       ++@counter
-      nextSeg = @currentSeg
-      while (seg = timeline[nextSeg + 1]) and (duration = seg[0]) <= @counter
-        ++nextSeg
+      while (seg = timeline[@currentSeg + 1]) and (duration = seg[0]) <= @counter
+        ++@currentSeg
+        applyDiff @object, timeline[@currentSeg][1], @saved.keyMap
         @counter -= duration
-      return if nextSeg is @currentSeg
-      @currentSeg = nextSeg
-      applyDiff @object, timeline[nextSeg][1], @saved.keyMap
       return
+
+    complete: -> timeline[@currentSeg + 1]?
 
   # Returns only values in a that differ from those in b.
   # a and b must have the same attributes.

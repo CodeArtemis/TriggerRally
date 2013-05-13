@@ -9,6 +9,7 @@ define [
   'cs!views/license'
   # 'cs!views/notfound'
   'cs!views/profile'
+  'cs!views/replay'
   'cs!views/spin'
   'cs!views/track'
   'cs!views/trackset'
@@ -23,6 +24,7 @@ define [
   LicenseView
   # NotFoundView
   ProfileView
+  ReplayView
   SpinView
   TrackView
   TrackSetView
@@ -37,6 +39,7 @@ define [
       "about": "about"
       "ignition": "ignition"
       "license": "license"
+      "run/:runId/replay": "runReplay"
       "track/:trackId": "track"
       "track/:trackId/edit": "trackEdit"
       "track/:trackId/drive": "trackDrive"
@@ -78,6 +81,15 @@ define [
       view = new LicenseView @app, @uni.client
       @uni.setViewChild view.render()
 
+    runReplay: (runId) ->
+      view = @uni.getView3D()
+      unless view instanceof ReplayView and
+             view is @uni.getViewChild()
+        run = models.Run.findOrCreate runId
+        view = new ReplayView @app, @uni.client, run
+        @uni.setViewBoth view
+        view.render()
+
     track: (trackId) ->
       @setSpin()
       track = models.Track.findOrCreate trackId
@@ -89,20 +101,16 @@ define [
       unless view instanceof DriveView and
              view is @uni.getViewChild()
         view = new DriveView @app, @uni.client
-        @uni.setView3D view
-        @uni.setViewChild view
+        @uni.setViewBoth view
         view.render()
-      root = @app.root
       view.setTrackId trackId
 
     trackEdit: (trackId) ->
       unless @uni.getView3D() instanceof EditorView and
              @uni.getView3D() is @uni.getViewChild()
         view = new EditorView @app, @uni.client
-        @uni.setView3D view
-        @uni.setViewChild view
+        @uni.setViewBoth view
         view.render()
-      root = @app.root
 
       # TODO: Let the editor do this itself.
       track = models.Track.findOrCreate trackId

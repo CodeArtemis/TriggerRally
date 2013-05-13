@@ -39,6 +39,94 @@ define [
     contains: (sel) ->
       @some (element) -> element.get('sel').object is sel.object
 
+  class EditorCameraControl
+    constructor: (@camera) ->
+      @pos = camera.position
+      @ang = camera.rotation
+      @vel = new Vec3
+      @velTarget = new Vec3
+      @angVel = new Vec3
+      @angVelTarget = new Vec3
+      @autoTimer = -1
+      @autoPos = new Vec3
+      @autoAng = new Vec3
+
+    autoTo: (pos, rot) ->
+      Vec3::set.apply @autoPos, pos
+      @autoAng.x = 0.9
+      @autoAng.z = rot[2] - Math.PI / 2
+      @autoPos.x -= 20 * Math.cos(rot[2])
+      @autoPos.y -= 20 * Math.sin(rot[2])
+      @autoPos.z += 30
+      @autoTimer = 0
+
+    rotate: (origin, angX, angZ) ->
+      rot = new THREE.Matrix4()
+      rot.rotateZ -angZ + @ang.z + Math.PI
+      rot.rotateX angX
+      rot.rotateZ -@ang.z - Math.PI
+      @pos.subSelf origin
+      rot.multiplyVector3 @pos
+      @pos.addSelf origin
+      @ang.x -= angX
+      @ang.z -= angZ
+      @updateMatrix()
+
+    translate: (vec) ->
+      @pos.addSelf vec
+      @updateMatrix()
+
+    updateMatrix: ->
+      # This seems to fix occasional glitches in THREE.Projector.
+      @camera.updateMatrixWorld()
+
+    update: (delta, keyDown, terrainHeight) ->
+      SPEED = 30 + 0.8 * Math.max 0, @pos.z - terrainHeight
+      VISCOSITY = 20
+
+      @velTarget.set 0, 0, 0
+      @angVelTarget.set 0, 0, 0
+      if keyDown[KEYCODE.SHIFT] then SPEED *= 3
+      if keyDown[KEYCODE.RIGHT] then @velTarget.x += SPEED
+      if keyDown[KEYCODE.LEFT] then @velTarget.x -= SPEED
+      if keyDown[KEYCODE.UP] then @velTarget.y += SPEED
+      if keyDown[KEYCODE.DOWN] then @velTarget.y -= SPEED
+
+      if @autoTimer isnt -1
+        @autoTimer = Math.min 1, @autoTimer + delta
+        if @autoTimer < 1
+          @velTarget.sub @autoPos, @pos
+          @velTarget.multiplyScalar delta * 10 * @autoTimer
+          @pos.addSelf @velTarget
+
+          @ang.z -= Math.round((@ang.z - @autoAng.z) / TWOPI) * TWOPI
+          @velTarget.sub @autoAng, @ang
+          @velTarget.multiplyScalar delta * 10 * @autoTimer
+          @ang.addSelf @velTarget
+        else
+          @pos.copy @autoPos
+          @ang.copy @autoAng
+          @autoTimer = -1
+      else
+        @velTarget.set(
+            @velTarget.x * Math.cos(@ang.z) - @velTarget.y * Math.sin(@ang.z),
+            @velTarget.x * Math.sin(@ang.z) + @velTarget.y * Math.cos(@ang.z),
+            @velTarget.z)
+
+        mult = 1 / (1 + delta * VISCOSITY)
+        @vel.x = @velTarget.x + (@vel.x - @velTarget.x) * mult
+        @vel.y = @velTarget.y + (@vel.y - @velTarget.y) * mult
+        @vel.z = @velTarget.z + (@vel.z - @velTarget.z) * mult
+        @angVel.x = @angVelTarget.x + (@angVel.x - @angVelTarget.x) * mult
+        @angVel.y = @angVelTarget.y + (@angVel.y - @angVelTarget.y) * mult
+        @angVel.z = @angVelTarget.z + (@angVel.z - @angVelTarget.z) * mult
+
+        @pos.addSelf tmpVec3.copy(@vel).multiplyScalar delta
+
+        @ang.addSelf tmpVec3.copy(@angVel).multiplyScalar delta
+
+      @ang.x = Math.max 0, Math.min 2, @ang.x
+
   class EditorView extends View
     template: template
     constructor: (@app, @client) -> super()
@@ -58,15 +146,7 @@ define [
       client.camera.useQuaternion = no
       client.updateCamera()
 
-      camPos = client.camera.position
-      camAng = client.camera.rotation
-      camVel = new Vec3
-      camVelTarget = new Vec3
-      camAngVel = new Vec3
-      camAngVelTarget = new Vec3
-      camAutoTimer = -1
-      camAutoPos = new Vec3
-      camAutoAng = new Vec3
+      camControl = new EditorCameraControl client.camera
 
       selection = new Selection()
 
@@ -107,13 +187,7 @@ define [
         selection.reset()
 
         startposition = root.track.config.course.startposition
-        Vec3::set.apply camAutoPos, startposition.pos
-        camAutoAng.x = 0.9
-        camAutoAng.z = startposition.rot[2] - Math.PI / 2
-        camAutoPos.x -= 20 * Math.cos(startposition.rot[2])
-        camAutoPos.y -= 20 * Math.sin(startposition.rot[2])
-        camAutoPos.z += 30
-        camAutoTimer = 0
+        camControl.autoTo startposition.pos, startposition.rot
 
         Backbone.history.navigate "/track/#{root.track.id}/edit"
       @listenTo root, 'change:track.id', onChangeTrackId
@@ -169,18 +243,9 @@ define [
       @update = (delta) ->
         terrainHeight = 0
         if client.track?
-          terrainHeight = (client.track.terrain.getContactRayZ camPos.x, camPos.y).surfacePos.z
-        SPEED = 30 + 0.8 * Math.max 0, camPos.z - terrainHeight
-        ANG_SPEED = 2
-        VISCOSITY = 20
-        camVelTarget.set 0, 0, 0
-        camAngVelTarget.set 0, 0, 0
+          terrainHeight = (client.track.terrain.getContactRayZ camControl.pos.x, camControl.pos.y).surfacePos.z
         keyDown = client.keyDown
-        if keyDown[KEYCODE.SHIFT] then SPEED *= 3
-        if keyDown[KEYCODE.RIGHT] then camVelTarget.x += SPEED
-        if keyDown[KEYCODE.LEFT] then camVelTarget.x -= SPEED
-        if keyDown[KEYCODE.UP] then camVelTarget.y += SPEED
-        if keyDown[KEYCODE.DOWN] then camVelTarget.y -= SPEED
+        camControl.update delta, keyDown, terrainHeight
 
         if keyDown[188]
           objSpinVel += 5 * delta
@@ -205,41 +270,6 @@ define [
                 sel.object = obj
               else
                 sel.object.rot = rot
-
-        if camAutoTimer isnt -1
-          camAutoTimer = Math.min 1, camAutoTimer + delta
-          if camAutoTimer < 1
-            camVelTarget.sub camAutoPos, camPos
-            camVelTarget.multiplyScalar delta * 10 * camAutoTimer
-            camPos.addSelf camVelTarget
-
-            camAng.z -= Math.round((camAng.z - camAutoAng.z) / TWOPI) * TWOPI
-            camVelTarget.sub camAutoAng, camAng
-            camVelTarget.multiplyScalar delta * 10 * camAutoTimer
-            camAng.addSelf camVelTarget
-          else
-            camPos.copy camAutoPos
-            camAng.copy camAutoAng
-            camAutoTimer = -1
-        else
-          camVelTarget.set(
-              camVelTarget.x * Math.cos(camAng.z) - camVelTarget.y * Math.sin(camAng.z),
-              camVelTarget.x * Math.sin(camAng.z) + camVelTarget.y * Math.cos(camAng.z),
-              camVelTarget.z)
-
-          mult = 1 / (1 + delta * VISCOSITY)
-          camVel.x = camVelTarget.x + (camVel.x - camVelTarget.x) * mult
-          camVel.y = camVelTarget.y + (camVel.y - camVelTarget.y) * mult
-          camVel.z = camVelTarget.z + (camVel.z - camVelTarget.z) * mult
-          camAngVel.x = camAngVelTarget.x + (camAngVel.x - camAngVelTarget.x) * mult
-          camAngVel.y = camAngVelTarget.y + (camAngVel.y - camAngVelTarget.y) * mult
-          camAngVel.z = camAngVelTarget.z + (camAngVel.z - camAngVelTarget.z) * mult
-
-          camPos.addSelf tmpVec3.copy(camVel).multiplyScalar delta
-
-          camAng.addSelf tmpVec3.copy(camAngVel).multiplyScalar delta
-
-        camAng.x = Math.max 0, Math.min 2, camAng.x
 
       addSelection = (sel) -> selection.add {sel}
 
@@ -407,29 +437,17 @@ define [
                 sel.mesh.position.set pos[0], pos[1], pos[2]
           else
             if rotateMode
-              # Rotate camera.
-              rot = new THREE.Matrix4()
-              rot.rotateZ -angZ + camAng.z + Math.PI
-              rot.rotateX angX
-              rot.rotateZ -camAng.z - Math.PI
-              camPos.subSelf cursorPos
-              rot.multiplyVector3 camPos
-              camPos.addSelf cursorPos
-              camAng.x -= angX
-              camAng.z -= angZ
+              camControl.rotate cursorPos, angX, angZ
             else
-              # Translate camera.
-              camPos.subSelf relMotion
-            # This seems to fix occasional glitches in THREE.Projector.
-            client.camera.updateMatrixWorld()
+              relMotion.multiplyScalar -1
+              camControl.translate relMotion
         return
 
       scroll = (scrollY, event) ->
         return unless cursor
-        vec = cursorMesh.position.clone()
-        vec.subSelf camPos
+        vec = camControl.pos.clone().subSelf cursorMesh.position
         vec.multiplyScalar Math.exp(scrollY * -0.002) - 1
-        camPos.subSelf vec
+        camControl.translate vec
         event.preventDefault()
         return
 

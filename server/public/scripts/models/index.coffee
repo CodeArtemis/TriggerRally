@@ -265,7 +265,7 @@
     #   # @config = new TrackConfig
     #   super
     #   # @on 'all', (event) -> console.log 'Track: ' + event
-    maxNameLength: 25
+    maxNameLength: 40
     validate: ->
       if @name?.length < 3 then return "name too short"
       if @name?.length > @maxNameLength then return "name too long"

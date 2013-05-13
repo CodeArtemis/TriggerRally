@@ -8,7 +8,7 @@ define [
   'game/track'
   'cs!models/index'
   'cs!views/view'
-  'jade!templates/drive'
+  'jade!templates/drive'  # Yes, we use the drive template.
   'cs!util/recorder'
 ], (
   $
@@ -29,24 +29,6 @@ define [
   padZero = (val, digits) ->
     (1e15 + val + '').slice(-digits)
 
-  keys1 =
-    brake: 1
-    handbrake: 1
-    throttle: 1
-    turn: 2
-  keys2 =
-    nextCpIndex: 0
-    vehicle:
-      body:
-        pos: { x: 3, y: 3, z: 3 }
-        ori: { x: 3, y: 3, z: 3, w: 3 }
-        linVel: { x: 3, y: 3, z: 3 }
-        angVel: { x: 3, y: 3, z: 3 }
-      wheels: [
-        spinVel: 1
-      ]
-      engineAngVel: 3
-
   formatRunTime = (time) ->
     mins = Math.floor(time / 60)
     time -= mins * 60
@@ -55,12 +37,11 @@ define [
     cents = Math.floor(time * 100)
     mins + ':' + padZero(secs, 2) + '.' + padZero(cents, 2)
 
-  class Drive extends View
+  class Replay extends View
     template: template
-    constructor: (@app, @client) -> super()
+    constructor: (@app, @client, @run) -> super()
 
     destroy: ->
-      @socket?.disconnect()
       @client.setGame null
       super
 
@@ -74,6 +55,7 @@ define [
     afterRender: ->
       client = @client
       client.camera.idealFov = 75
+      client.camera.useQuaternion = no
       client.updateCamera()
 
       @$countdown = @$ '#countdown'
@@ -82,23 +64,20 @@ define [
 
       @game = null
 
-      @socket = io.connect '/drive'
-
       root = @app.root
 
       @lastRaceTime = 0
       @updateTimer = yes
 
-      do createGame = =>
-        return unless root.track?
-        @carId = carId = root.getCarId() ? 'ArbusuG'
-        carModel = models.Car.findOrCreate carId
-        carModel.fetch
-          success: =>
+      run = @run
+      run.fetch
+        success: =>
+          done = _.after 2, =>
             @game = new gameGame.Game @client.track
             @client.setGame @game
 
-            @game.addCarConfig carModel.config, (@progress) =>
+            @game.addCarConfig car.config, (@progress) =>
+              progress.vehicle.cfg.isReplay = yes
               progress.on 'advance', =>
                 cpNext = progress.nextCpIndex
                 cpTotal = root.track.config.course.checkpoints.length
@@ -112,56 +91,36 @@ define [
 
               obj1 = progress.vehicle.controller.input
               obj2 = progress
-              @rec1 = new recorder.StateSampler obj1, keys1, 20,  @record_i
-              @rec1buffer = []
-              @rec2 = new recorder.StateSampler obj2, keys2, 40, @record_p
+              @play1 = new recorder.StatePlayback obj1, run.record_i
+              @play2 = new recorder.StatePlayback obj2, run.record_p
               @game.sim.pubsub.on 'step', =>
-                @rec1.observe()
-                @rec2.observe()
+                @play1.step()
+                @play2.step()
+                # TODO: check if .complete()
 
               @restartGame()
 
-      @listenTo root, 'change:track', createGame
-      # Also recreate game if user or car changes.
-      @listenTo root, 'change:user', createGame
-      @listenTo root, 'change:user.products', createGame
-      @listenTo root, 'change:prefs.car', createGame
+          track = models.Track.findOrCreate run.track.id
+          track.fetch
+            success: ->
+              track.env.fetch
+                success: ->
+                  Backbone.trigger 'app:settrack', track
+                  Backbone.trigger 'app:settitle', track.name
+                  done()
+          car = models.Car.findOrCreate run.car.id
+          car.fetch success: done
+        error: ->
+          Backbone.trigger 'app:notfound'
 
     restartGame: ->
       @updateTimer = yes
       @$runTimer.addClass 'running'
       @game.restart()
       # The vehicle controller is recreated after restarting the game.
-      @rec1.object = @progress.vehicle.controller.input
-      @rec1.restart()
-      @rec1buffer = []
-      @rec2.restart()
-
-      @socket.emit 'start',
-        car: @carId
-        track: @app.root.track.id
-        keyMap_i: @rec1.toJSON().keyMap
-        keyMap_p: @rec2.toJSON().keyMap
-
-    record_i: (offset, state) =>
-      @rec1buffer.push [ offset, state ]
-      if yes #@rec1buffer.length >= 20
-        @socket.emit 'record_i', samples: @rec1buffer
-        @rec1buffer = []
-
-    record_p: (offset, state) =>
-      @socket.emit 'record_p', samples: [ [ offset, state ] ]
-
-    setTrackId: (trackId) ->
-      track = models.Track.findOrCreate trackId
-      track.fetch
-        success: =>
-          track.env.fetch
-            success: =>
-              Backbone.trigger 'app:settrack', track
-              Backbone.trigger 'app:settitle', track.name
-        error: ->
-          Backbone.trigger 'app:notfound'
+      @play1.object = @progress.vehicle.controller.input
+      @play1.restart()
+      @play2.restart()
 
     update: (delta) ->
       if @updateTimer and @game
