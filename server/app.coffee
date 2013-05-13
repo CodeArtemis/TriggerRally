@@ -432,10 +432,12 @@ io.on 'connection', (socket) ->
   socket.on 'disconnect', ->
     showNumberConnected()
 
+dbCallback = (err) ->
+  console.error err if err
+
 io.of('/drive').on 'connection', (socket) ->
   session = socket.handshake.session
   user = session.user
-  return unless user
 
   run = null
   buffer_i = []
@@ -444,17 +446,15 @@ io.of('/drive').on 'connection', (socket) ->
   flushBuffers = ->
     return unless run
     query = { _id: run._id }
-    callback = (err) ->
-      console.error err if err
     if buffer_i.length > 0
-      db.runs.update { _id: run._id },
+      db.runs.update query,
                      { $push: { "record_i.timeline": { $each: buffer_i } } },
-                     callback
+                     dbCallback
       buffer_i = []
     if buffer_p.length > 0
-      db.runs.update { _id: run._id },
+      db.runs.update query,
                      { $push: { "record_p.timeline": { $each: buffer_p } } },
-                     callback
+                     dbCallback
       buffer_p = []
 
   interval = setInterval flushBuffers, 1000
@@ -462,12 +462,16 @@ io.of('/drive').on 'connection', (socket) ->
     clearInterval interval
     flushBuffers()
 
+  # TODO: Resume connections, or notify user if recording has stopped.
+
   socket.on 'start', (data) ->
-    console.log 'started!'
     currentRun = null
     car = track = null
     done = _.after 2, ->
       return unless car and track
+      # This is why I should have a model layer.
+      db.tracks.update { _id: track._id }, { $inc: { count_drive: 1 } }, dbCallback
+      return unless user
       newRun =
         car: car._id
         pub_id: makePubId()
@@ -476,7 +480,7 @@ io.of('/drive').on 'connection', (socket) ->
         status: 'Unverified'
         track: track._id
         user: user._id
-      console.log "run: #{newRun.pub_id}"
+      console.log "Started run: #{newRun.pub_id}"
       db.runs.insert newRun, (err) ->
         return console.error err if err
         run = newRun
@@ -484,10 +488,11 @@ io.of('/drive').on 'connection', (socket) ->
     db.cars.findOne   pub_id: data.car,   (err, doc) -> car = doc;   done()
     db.tracks.findOne pub_id: data.track, (err, doc) -> track = doc; done()
 
-  socket.on 'record_i', (data) ->
-    buffer_i.push [ data.offset, data.state ]
-  socket.on 'record_p', (data) ->
-    buffer_p.push [ data.offset, data.state ]
+  if user
+    socket.on 'record_i', (data) ->
+      buffer_i.push [ data.offset, data.state ]
+    socket.on 'record_p', (data) ->
+      buffer_p.push [ data.offset, data.state ]
 
 # io.of('/api').on 'connection', (socket) ->
 #   session = socket.handshake.session
