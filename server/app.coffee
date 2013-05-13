@@ -2,6 +2,7 @@
 
 "use strict"
 
+_                 = require 'underscore'
 connect           = require 'connect'
 cookie            = require 'cookie'
 express           = require 'express'
@@ -22,6 +23,7 @@ objects           = require './objects'
 
 api               = require './api'
 config            = require './config'
+{ makePubId }     = require './objects/common'
 routes            = require './routes'
 
 getIsodate = -> new Date().toISOString()
@@ -52,9 +54,13 @@ mongoose.connect config.MONGOOSE_URL
 # { handleIPN } = require './paypal/ipn'
 
 # Alternate DB connection
-# dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
-# db = mongoskin.db dbUrl, { safe: true }
+dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
+db = mongoskin.db dbUrl, { safe: true }
 
+db.bind 'cars'
+db.bind 'runs'
+db.bind 'tracks'
+db.bind 'users'
 
 log "Base directory: #{__dirname}"
 
@@ -380,91 +386,108 @@ app.get '/checkout/return', (req, res) ->
 #
 
 server = http.createServer(app)
-# io = socketio.listen(server)
+io = socketio.listen(server)
 server.listen PORT
 log "Server listening on port #{PORT} in #{app.settings.env} mode"
 
 
 # TODO: Mirror http api over socket.io.
 
-# if NODE_ENV is 'production'
-#   io.set 'log level', 1
-# else
-#   io.set 'log level', 2
+if NODE_ENV is 'production'
+  io.set 'log level', 1
+else
+  io.set 'log level', 2
 
-# showNumberConnected = ->
-#   clients = io.sockets.clients()
-#   numConnected = clients.length
-#   log "Connected sockets: #{numConnected}"
+showNumberConnected = ->
+  clients = io.sockets.clients()
+  numConnected = clients.length
+  log "Connected sockets: #{numConnected}"
 
-# io.set 'authorization', (data, accept) ->
-#   # http://www.danielbaulig.de/socket-ioexpress/
-#   return accept('No cookie transmitted.', false) unless data.headers.cookie
-#   data.cookie = cookie.parse(data.headers.cookie)
-#   sid = data.cookie['connect.sid']
-#   return accept('No session id found.', false) unless sid
-#   data.sessionID = sid.substring(2, 26)
-#   # save the session store to the data object
-#   # (as required by the Session constructor)
-#   data.sessionStore = sessionStore
-#   sessionStore.get data.sessionID, (err, session) ->
-#     if err
-#       accept err, false
-#     else unless session
-#       accept 'No session', false
-#     else
-#       # create a session object, passing data as request and our
-#       # just acquired session data
-#       Session = connect.middleware.session.Session
-#       data.session = new Session(data, session)
-#       # TODO: accept fast, before deserialization?
-#       passport.deserializeUser data.session.passport.user, (err, userPassport) ->
-#         if err then accept 'passport error: ' + err, false
-#         else
-#           data.session.user = userPassport.user
-#           data.session.userPassport = userPassport
-#           accept null, true
+io.set 'authorization', (data, accept) ->
+  # http://www.danielbaulig.de/socket-ioexpress/
+  return accept('No cookie transmitted.', false) unless data.headers.cookie
+  data.cookie = cookie.parse(data.headers.cookie)
+  sid = data.cookie['connect.sid']
+  return accept('No session id found.', false) unless sid
+  data.sessionID = sid.substring(2, 26)
+  # save the session store to the data object
+  # (as required by the Session constructor)
+  data.sessionStore = sessionStore
+  sessionStore.get data.sessionID, (err, session) ->
+    return accept err, false if err
+    return accept 'No session', false unless session
+    # create a session object, passing data as request and our
+    # just acquired session data
+    Session = connect.middleware.session.Session
+    data.session = new Session(data, session)
+    # TODO: accept fast, before deserialization?
+    passport.deserializeUser data.session.passport.user, (err, userPassport) ->
+      return accept 'passport error: ' + err, false if err
+      data.session.user = userPassport.user
+      data.session.userPassport = userPassport
+      accept null, true
 
-# db.bind 'cars'
-# db.bind 'environments'
-# db.bind 'tracks'
-# db.bind 'users'
+io.on 'connection', (socket) ->
+  showNumberConnected()
+  socket.on 'disconnect', ->
+    showNumberConnected()
 
-# publicCar = (car) ->
-#   id: car.pub_id
-#   name: car.name
-#   config: car.config
+io.of('/drive').on 'connection', (socket) ->
+  session = socket.handshake.session
+  user = session.user
+  return unless user
 
-# publicUserBasic = (user) ->
-#   id: user.pub_id
-#   name: user.name
+  run = null
+  buffer_i = []
+  buffer_p = []
 
-# getPublicEnv = (_id, cb) ->
-#   db.environments.findOne {_id}, (err, env) ->
-#     return cb err if err?
-#     db.cars.find({ _id: { $in: env.cars } }).toArray (err, cars) ->
-#       return cb err if err?
-#       cb null,
-#         id: env.pub_id
-#         name: env.name
-#         cars: (publicCar(car) for car in cars)
-#         scenery: env.scenery
-#         terrain: env.terrain
+  flushBuffers = ->
+    return unless run
+    query = { _id: run._id }
+    callback = (err) ->
+      console.error err if err
+    if buffer_i.length > 0
+      db.runs.update { _id: run._id },
+                     { $push: { "record_i.timeline": { $each: buffer_i } } },
+                     callback
+      buffer_i = []
+    if buffer_p.length > 0
+      db.runs.update { _id: run._id },
+                     { $push: { "record_p.timeline": { $each: buffer_p } } },
+                     callback
+      buffer_p = []
 
-# getPublicTrackPubId = (pub_id, cb) ->
-#   db.tracks.findOne {pub_id}, (err, track) ->
-#     return cb err if err?
-#     getPublicEnv track.env, (err, env) ->
-#       return cb err if err?
-#       db.users.findOne track.user, (err, user) ->
-#         return cb err if err?
-#         cb null,
-#           id: track.pub_id
-#           name: track.name
-#           config: track.config
-#           env: env
-#           user: publicUserBasic user
-#           published: track.published
+  interval = setInterval flushBuffers, 1000
+  socket.on 'disconnect', ->
+    clearInterval interval
+    flushBuffers()
+
+  socket.on 'start', (data) ->
+    console.log 'started!'
+    currentRun = null
+    car = track = null
+    done = _.after 2, ->
+      return unless car and track
+      newRun =
+        car: car._id
+        pub_id: makePubId()
+        record_i: { keyMap: data.keyMap_i, timeline: [] }
+        record_p: { keyMap: data.keyMap_p, timeline: [] }
+        status: 'Unverified'
+        track: track._id
+        user: user._id
+      console.log "run: #{newRun.pub_id}"
+      db.runs.insert newRun, (err) ->
+        return console.error err if err
+        run = newRun
+        # TODO: send client the run id
+    db.cars.findOne   pub_id: data.car,   (err, doc) -> car = doc;   done()
+    db.tracks.findOne pub_id: data.track, (err, doc) -> track = doc; done()
+
+  socket.on 'record_i', (data) ->
+    buffer_i.push [ data.offset, data.state ]
+  socket.on 'record_p', (data) ->
+    buffer_p.push [ data.offset, data.state ]
 
 # io.of('/api').on 'connection', (socket) ->
 #   session = socket.handshake.session

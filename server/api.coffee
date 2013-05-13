@@ -172,8 +172,9 @@ module.exports =
 
     app.post "#{base}/tracks/:track_id/drive", loadUrlTrack, (req, res) ->
       res.send 200
-      track = req.fromUrl.track
-      track.save { count_drive: track.count_drive + 1 }
+      # Now handled by drive socket.
+      # track = req.fromUrl.track
+      # track.save { count_drive: track.count_drive + 1 }
 
     app.delete "#{base}/tracks/:track_id", editUrlTrack, (req, res) ->
       jsonError 403, res if req.fromUrl.track.id is 'v3-base-1'

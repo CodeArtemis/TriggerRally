@@ -30,10 +30,10 @@ define [
     (1e15 + val + '').slice(-digits)
 
   keys1 =
-    brake: 0
-    handbrake: 0
-    throttle: 0
-    turn: 0
+    brake: 1
+    handbrake: 1
+    throttle: 1
+    turn: 2
   keys2 =
     nextCpIndex: 0
     vehicle:
@@ -60,6 +60,7 @@ define [
     constructor: (@app, @client) -> super()
 
     destroy: ->
+      @socket?.disconnect()
       @client.setGame null
       super
 
@@ -68,7 +69,7 @@ define [
         when KEYCODE['C']
           @client.camControl?.nextMode()
         when KEYCODE['R']
-          @restartGame()
+          @restartGame() if @game
 
     afterRender: ->
       client = @client
@@ -81,25 +82,23 @@ define [
 
       @game = null
 
-      root = @app.root
+      @socket = io.connect '/drive'
 
-      # @startGame()
-      # @listenTo root, 'change:track.id', => @startGame()
+      root = @app.root
 
       @lastRaceTime = 0
       @updateTimer = yes
 
       do createGame = =>
         return unless root.track?
-        carId = root.getCarId() ? 'ArbusuG'
+        @carId = carId = root.getCarId() ? 'ArbusuG'
         carModel = models.Car.findOrCreate carId
         carModel.fetch
           success: =>
             @game = new gameGame.Game @client.track
             @client.setGame @game
-            @restartGame()
 
-            @game.addCarConfig carModel.config, (progress) =>
+            @game.addCarConfig carModel.config, (@progress) =>
               progress.on 'advance', =>
                 cpNext = progress.nextCpIndex
                 cpTotal = root.track.config.course.checkpoints.length
@@ -110,21 +109,16 @@ define [
                 # Race complete.
                 @updateTimer = no
                 @$runTimer.removeClass 'running'
-                #if !TRIGGER.RUN
-                #  if TRIGGER.USER_LOGGED_IN
-                #    _.delay(uploadRun, 1000)
-                #  else
-                #    # We can't save the run, but show a Twitter link.
-                #    showTwitterLink()
 
-              # obj1 = progress.vehicle.controller.input
-              # obj2 = progress
-              # @rec1 = new recorder.CollectionRecorder obj1, keys1
-              # @rec2 = new recorder.CollectionRecorder obj2, keys2, 40
-              # @game.sim.pubsub.on 'step', =>
-              #   @rec1.observe()
-              #   @rec2.observe()
-              #   console.log @rec2.timeline.length
+              obj1 = progress.vehicle.controller.input
+              obj2 = progress
+              @rec1 = new recorder.StateSampler obj1, keys1, 20, @record_i
+              @rec2 = new recorder.StateSampler obj2, keys2, 40, @record_p
+              @game.sim.pubsub.on 'step', =>
+                @rec1.observe()
+                @rec2.observe()
+
+              @restartGame()
 
       @listenTo root, 'change:track', createGame
       # Also recreate game if user or car changes.
@@ -135,15 +129,29 @@ define [
     restartGame: ->
       @updateTimer = yes
       @$runTimer.addClass 'running'
-      @game?.restart()
-      @rec1?.restart()
-      @rec2?.restart()
-      @notifyDrive()
+      @game.restart()
+      # The vehicle controller is recreated after restarting the game.
+      @rec1.object = @progress.vehicle.controller.input
+      @rec1.restart()
+      @rec2.restart()
 
-    notifyDrive: ->
-      # TODO: Make Track model responsible for doing this.
-      # Will require some kind of special sync code.
-      $.ajax "/v1/tracks/#{@app.root.track.id}/drive", type: 'POST'
+      @socket.emit 'start',
+        car: @carId
+        track: @app.root.track.id
+        keyMap_i: @rec1.toJSON().keyMap
+        keyMap_p: @rec2.toJSON().keyMap
+
+    record_i: (offset, state) =>
+      console.log 'record_i'
+      @socket.emit 'record_i', { offset, state }
+
+    record_p: (offset, state) =>
+      @socket.emit 'record_p', { offset, state }
+
+    # notifyDrive: ->
+    #   # TODO: Make Track model responsible for doing this.
+    #   # Will require some kind of special sync code.
+    #   $.ajax "/v1/tracks/#{@app.root.track.id}/drive", type: 'POST'
 
     setTrackId: (trackId) ->
       track = models.Track.findOrCreate trackId

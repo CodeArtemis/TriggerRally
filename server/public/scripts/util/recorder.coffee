@@ -6,6 +6,9 @@ moduleDef = (require, exports, module) ->
   class exports.StateSampler
     constructor: (@object, @keys, @freq = 1, @changeHandler) ->
       @keyMap = generateKeyMap keys
+      @restart()
+
+    restart: ->
       @lastState = null
       @counter = -1
 
@@ -45,18 +48,16 @@ moduleDef = (require, exports, module) ->
       keyMap: @sampler.toJSON().keyMap
       timeline: @timeline
 
-  # Records into a Backbone Collection.
-  class exports.CollectionRecorder
-    constructor: (@collection, @object, @keys, @freq) ->
-      @restart()
-
-    restart: ->
-      collection = @collection.reset()
-      changeHandler = (offset, state) ->
-        collection.add { offset, state }
-      @sampler = new exports.StateSampler @object, @keys, @freq, changeHandler
-
-    observe: -> @sampler.observe()
+  # # Records into a Backbone Collection.
+  # class exports.CollectionRecorder
+  #   constructor: (@collection, @object, @keys, @freq) ->
+  #     @restart()
+  #   restart: ->
+  #     collection = @collection.reset()
+  #     changeHandler = (offset, state) ->
+  #       collection.add { offset, state }
+  #     @sampler = new exports.StateSampler @object, @keys, @freq, changeHandler
+  #   observe: -> @sampler.observe()
 
   class exports.StatePlayback
     constructor: (@object, @saved) ->
@@ -112,7 +113,7 @@ moduleDef = (require, exports, module) ->
 
     do process = (keys) ->
       for key, val of keys
-        keyMap[key] = (nextKey++).toString(36)
+        keyMap[key] = (nextKey++).toString(36) unless key of keyMap
         if _.isArray val
           process val[0]
         else if typeof val is 'object'
