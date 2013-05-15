@@ -357,8 +357,8 @@
   class User extends Model
     all: new (Collection.extend model: @)
     buildProps @, [
-      # 'bio'
       'created'
+      'favorite_tracks'
       'name'
       'picture'
       'products'
@@ -410,6 +410,16 @@
       carIds = [ 'ArbusuG' ]
       carIds.push 'Icarus' if 'ignition' in products
       carIds
+    isFavoriteTrack: (trackId) ->
+      @favorite_tracks and trackId in @favorite_tracks
+    setFavoriteTrack: (trackId, favorite) ->
+      @favorite_tracks ?= []
+      isFavorite = @isFavoriteTrack trackId
+      if favorite and not isFavorite
+        @favorite_tracks = @favorite_tracks.concat trackId
+      else if isFavorite and not favorite
+        @favorite_tracks = _.without @favorite_tracks, trackId
+      @
 
   class UserPassport extends Model
     buildProps @, [
@@ -434,6 +444,7 @@
     RunTimeline
     StartPos
     Track
+    TrackCollection
     TrackCollectionSortModified
     TrackConfig
     TrackRuns

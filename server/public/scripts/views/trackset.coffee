@@ -19,6 +19,9 @@ define [
 
     initialize: ->
       @model.fetch()
+      @root = @options.parent.options.root
+      @listenTo @model, 'change', @render, @
+      @listenTo @root, 'change:user', @render, @
 
     viewModel: ->
       data = super
@@ -28,11 +31,11 @@ define [
       data.count_drive ?= loading
       data.count_copy ?= loading
       data.user ?= null
+      data.favorite = @root.user?.isFavoriteTrack data.id
       data
 
     afterRender: ->
       track = @model
-      @listenTo track, 'change', @render, @
 
       $trackuser = @$ '.trackuser'
       @userView = null
@@ -43,6 +46,18 @@ define [
         $trackuser.empty()
         $trackuser.append @userView.el if @userView
       @listenTo track, 'change:user', updateUserView
+
+      $favorite = @$('.favorite input')
+      $favorite.on 'change', (event) =>
+        if @root.user
+          @root.user.setFavoriteTrack track.id, $favorite[0].checked
+          @root.user.save()
+        else
+          Backbone.trigger 'app:dologin'
+          event.preventDefault()
+
+      @listenTo @root, 'change:user.favorite_tracks', =>
+        $favorite[0].checked = @root.user?.isFavoriteTrack track.id
 
     destroy: ->
       @userView.destroy()
@@ -61,6 +76,7 @@ define [
       trackListView = new TrackListView
         collection: @model.tracks
         el: @$('table.tracklist')
+        root: @app.root
       trackListView.render()
 
       @listenTo @model, 'change:name', (m, name) =>

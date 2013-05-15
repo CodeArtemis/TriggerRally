@@ -21,6 +21,7 @@ define [
 
     viewModel: ->
       prefs = @app.root.prefs
+      user = @app.root.user
       pixdens = [
         { value: 2, label: '2:1' }
         { value: 1, label: '1:1' }
@@ -30,7 +31,11 @@ define [
       ]
       for pd in pixdens
         pd.checked = ('' + pd.value is prefs.pixeldensity)
-      { prefs, pixdens }
+      {
+        prefs
+        pixdens
+        user
+      }
 
     afterRender: ->
       root = @app.root
@@ -110,5 +115,22 @@ define [
             model: root.track.user
           $trackAuthor.empty()
           $trackAuthor.append trackUserView.el
+
+      $favorite = @$('.favorite input')
+      $myFavorites = @$('.myfavorites')
+
+      $favorite.on 'change', (event) =>
+        if root.user
+          favorite = $favorite[0].checked
+          root.user.setFavoriteTrack track.id, favorite
+          root.user.save()
+        else
+          Backbone.trigger 'app:dologin'
+          event.preventDefault()
+      do updateFavorites = ->
+        $favorite[0].checked = root.track and root.user?.isFavoriteTrack root.track.id
+        $myFavorites.toggleClass 'hidden', not root.user
+        $myFavorites.attr 'href', "/user/#{root.user.id}/favorites" if root.user
+      @listenTo root, 'change:user change:track.id', updateFavorites
 
     height: -> @$el.height()

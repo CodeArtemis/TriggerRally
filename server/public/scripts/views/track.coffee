@@ -19,6 +19,8 @@ define [
   templateRun
   popup
 ) ->
+  loadingText = '...'
+
   class TrackRunView extends View
     template: templateRun
     tagName: 'tr'
@@ -28,11 +30,8 @@ define [
 
     viewModel: ->
       data = super
-      loading = '...'
-      data.name ?= loading
-      data.modified_ago ?= loading
-      data.count_drive ?= loading
-      data.count_copy ?= loading
+      data.name ?= loadingText
+      data.modified_ago ?= loadingText
       data.user ?= null
       data
 
@@ -68,15 +67,22 @@ define [
       Backbone.trigger 'app:settitle', @model.name
       @listenTo @model, 'change:name', => Backbone.trigger 'app:settitle', @model.name
       @listenTo @model, 'change:id', => @render()
-      @model.fetch
+      track = @model
+      track.fetch
+        success: ->
+          track.env.fetch
+            success: ->
+              Backbone.trigger 'app:settrack', track
         error: ->
           Backbone.trigger 'app:notfound'
-
-    loadingText = '...'
 
     viewModel: ->
       data = super
       data.name ?= loadingText
+      data.count_drive ?= loadingText
+      data.count_copy ?= loadingText
+      data.count_fav ?= loadingText
+      data.favorite = @app.root.user?.isFavoriteTrack @model.id
       data
 
     afterRender: ->
@@ -101,3 +107,31 @@ define [
       $name = @$ '.name'
       @listenTo @model, 'change:name', (model, value) =>
         $name.text value
+
+      $count_drive = @$ '.count_drive'
+      @listenTo @model, 'change:count_drive', (model, value) =>
+        $count_drive.text value
+
+      $count_copy = @$ '.count_copy'
+      @listenTo @model, 'change:count_copy', (model, value) =>
+        $count_copy.text value
+
+      $count_fav = @$ '.count_fav'
+      @listenTo @model, 'change:count_fav', (model, value) =>
+        $count_fav.text value
+
+      $favorite = @$('.favorite input')
+      $favorite.on 'change', (event) =>
+        if @app.root.user
+          favorite = $favorite[0].checked
+          @app.root.user.setFavoriteTrack track.id, favorite
+          @app.root.user.save()
+
+          # Hacky update because I don't want to hit the server for this.
+          $count_fav.text parseInt($count_fav.text()) + if favorite then 1 else -1
+        else
+          Backbone.trigger 'app:dologin'
+          event.preventDefault()
+
+      @listenTo @app.root, 'change:user', =>
+        $favorite[0].checked = @app.root.user?.isFavoriteTrack track.id

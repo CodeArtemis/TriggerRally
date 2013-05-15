@@ -7,3 +7,18 @@ table.list tr:first-child
   background #ddd
 table.list td
   padding 0 0.7em
+
+label.favorite input
+  width 1.3em
+  height 1.3em
+  vertical-align -20%
+  padding 0
+  font-size 1em
+  background-image url("/emojis/star.png")
+  background-size cover
+  -webkit-appearance none
+
+label.favorite input:not(:checked)
+  filter grayscale(1)
+  -moz-filter grayscale(1)
+  -webkit-filter grayscale(1)

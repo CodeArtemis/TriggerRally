@@ -28,7 +28,7 @@
     , "cs": "../js/cs"
     , "coffee-script": "../js/coffee-script"
     , "jade": "../js/require-jade"
-    , "jquery": "../js/jquery-1.9.1.min"  // .min
+    , "jquery": "../js/jquery-2.0.0.min"  // .min
     , "underscore": "../js/underscore-min"  // -min
   },
   stubModules: ["cs"],

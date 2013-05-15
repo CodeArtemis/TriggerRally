@@ -38,13 +38,13 @@ require(
   {
     paths: {
         'THREE': '../js/three-r54'  // .min
-      , 'async': '../js/async.min'  // .min
+      , 'async': '../js/async'  // .min
       , 'cs': '../js/cs'
       , 'coffee-script': '../js/coffee-script'
       , 'backbone': '../js/backbone'  // -min
       , 'jade': '../js/require-jade'
-      , 'jquery': '../js/jquery-1.9.1.min'  // .min
-      , 'underscore': '../js/underscore-min'  // -min
+      , 'jquery': '../js/jquery-2.0.0'  // .min
+      , 'underscore': '../js/underscore'  // -min
     }
   },
   [

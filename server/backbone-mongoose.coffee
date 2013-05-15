@@ -137,7 +137,11 @@ module.exports = (bb) ->
           .exec (err, track) ->
             return error err if err
             return error "Couldn't find track #{model.id}" unless track
-            success parseTrack(track)
+            mo.User
+              .count {'favorite_tracks': track._id}, (err, count) ->
+                parsed = parseTrack(track)
+                parsed.count_fav = count
+                success parsed
       update: (model, success, error, options) ->
         unless model.config?
           console.error "Saving track: NO CONFIG!"
@@ -146,6 +150,8 @@ module.exports = (bb) ->
         mo.Track
           .findOne(pub_id: model.id)
           .exec (err, track) ->
+            return error err if err
+            return error "Couldn't find track #{model.id}" unless track
             data = jsonClone model
             # TODO: Check if it's safe to just copy everything from the model.
             _.extend track, _.pick data, [
@@ -239,29 +245,48 @@ module.exports = (bb) ->
     read: (model, success, error, options) ->
       mo.User
         .findOne(pub_id: model.id)
+        .populate('favorite_tracks', 'pub_id')
         .exec (err, user) ->
-          return error err if err or not user?
+          return error err if err
+          return error "Couldn't find user #{model.id}" unless user
           mo.Track
             .find(user: user.id)
             .select('pub_id env')
             .exec (err, tracks) ->
               return error err if err
               parsed = parseMongoose user
+              parsed.favorite_tracks = (fav.pub_id for fav in user.favorite_tracks)
               parsed.tracks = (track.pub_id for track in tracks when track.env?.equals alpEnvId)
               success parsed
     update: (model, success, error, options) ->
+      user = fav_tracks = null
+      done = _.after 2, ->
+        data = jsonClone model
+        # TODO: Check if it's safe to just copy everything from the model.
+        _.extend user, _.pick data, [
+          # 'favorite_tracks'
+          'name'
+          'picture'
+          'products'
+          # 'tracks'  # This is a generated attribute.
+        ]
+        user.favorite_tracks = (ft._id for ft in fav_tracks)
+        user.save (err) ->
+          if err
+            console.log "Error saving user: #{err}"
+            return error null
+          success null
       mo.User
         .findOne(pub_id: model.id)
-        .exec (err, user) ->
-          data = jsonClone model
-          # TODO: Check if it's safe to just copy everything from the model.
-          _.extend user, _.pick data, [
-            'name'
-            'picture'
-            'products'
-          ]
-          user.save (err) ->
-            if err
-              console.log "Error saving user: #{err}"
-              return error null
-            success null
+        .exec (err, doc) ->
+          return error err if err
+          user = doc
+          return error "Couldn't find user #{model.id}" unless user
+          done()
+      mo.Track
+        .find(pub_id: { $in: model.favorite_tracks })
+        .select('_id')
+        .exec (err, docs) ->
+          return error err if err
+          fav_tracks = docs
+          done()

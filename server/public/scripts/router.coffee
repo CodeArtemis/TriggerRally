@@ -46,6 +46,7 @@ define [
       "tracklist/:setId": "trackset"
       "user/:userId": "user"
       "user/:userId/tracks": "userTracks"
+      "user/:userId/favorites": "userFavTracks"
 
     setSpin: ->
       unless @uni.getView3D() instanceof SpinView
@@ -136,13 +137,28 @@ define [
       view = new ProfileView user, @app, @uni.client
       @uni.setViewChild view.render()
 
+    userFavTracks: (userId) ->
+      @setSpin()
+      user = models.User.findOrCreate userId
+      user.fetch
+        success: =>
+          favTracks = (models.Track.findOrCreate trackId for trackId in user.favorite_tracks)
+          trackSet = new models.TrackSet
+            name: "#{user.name}'s Favorites"
+            tracks: new models.TrackCollection favTracks
+          # trackSet.tracks.on 'change:modified', -> trackSet.tracks.sort()
+          view = new TrackSetView trackSet, @app, @uni.client
+          @uni.setViewChild view.render()
+        error: ->
+          Backbone.trigger 'app:notfound'
+
     userTracks: (userId) ->
       @setSpin()
       user = models.User.findOrCreate userId
       user.fetch
         success: =>
           trackSet = new models.TrackSet
-            name: "Tracks by #{user.name}"
+            name: "#{user.name}'s Tracks"
             tracks: new models.TrackCollectionSortModified user.tracks.models
           trackSet.tracks.on 'change:modified', -> trackSet.tracks.sort()
           view = new TrackSetView trackSet, @app, @uni.client

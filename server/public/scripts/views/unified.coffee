@@ -79,9 +79,12 @@ define [
         Backbone.history.navigate @pathname, trigger: yes
         no
 
-      $document.on 'click', 'a.login', (event) ->
-        not popup.create "/login?popup=1", "Login", ->
+      doLogin = ->
+        popup.create "/login?popup=1", "Login", ->
           Backbone.trigger 'app:checklogin'
+
+      Backbone.on 'app:dologin', doLogin
+      $document.on 'click', 'a.login', (event) -> not doLogin()
 
       $document.on 'click', 'a.logout', (event) ->
         $.ajax('/v1/auth/logout')

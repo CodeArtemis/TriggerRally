@@ -41,7 +41,7 @@ var Track = new Schema({
   , published   : { type: Boolean, default: false }
   , count_drive : { type: Number, default: 0 }
   , count_copy  : { type: Number, default: 0 }
-  , count_fav   : { type: Number, default: 0 }
+  // , count_fav   : { type: Number, default: 0 }  // This has become a generated attribute.
 }, { strict: true });
 
 Track.statics.findAndModify = function() {

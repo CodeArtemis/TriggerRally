@@ -24,8 +24,8 @@ h2
 input[type="range"]
   width 60%
 
-input:checked + label
-  color #e77
+// input:checked + label
+//   color #e77
 
 #statusbar,
 #editor-inspector,
@@ -102,6 +102,7 @@ input:checked + label
 
 #unified-child
   position relative
+  height 0  // So that it doesn't get in the way of mouse events.
 
 .gui-container
   position relative

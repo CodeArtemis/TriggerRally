@@ -637,14 +637,14 @@ define [
         progress._renderCar = renderCar
         @add renderCar
         return if car.cfg.isRemote
-        @add @camControl = new CamControl @camera, renderCar
         @add new RenderDials @sceneHUD, car
         @add renderCheckpoints = new RenderCheckpointsDrive @scene, @root
-        @add new RenderCheckpointArrows @camera, progress
         progress.on 'advance', =>
           renderCheckpoints.highlightCheckpoint progress.nextCpIndex
           @audio?.playSound @checkpointBuffer, false, 1, 1 if @checkpointBuffer?
         return if car.cfg.isReplay
+        @add @camControl = new CamControl @camera, renderCar
+        @add new RenderCheckpointArrows @camera, progress
         @add new CarControl car, this
         return
 

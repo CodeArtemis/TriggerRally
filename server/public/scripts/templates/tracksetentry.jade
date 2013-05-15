@@ -5,3 +5,9 @@ td.trackuser
 td= modified_ago
 td= count_drive
 td= count_copy
+td
+  label.favorite
+    input(type="checkbox", checked=favorite)
+td
+  a.route(href="/track/#{id}")
+    img.emoji(src="/emojis/memo.png", title="Info and comments")

@@ -33,4 +33,7 @@
     .issued Issued: 
       span.issuedate= issueDate
     span &nbsp;
-    a.route.tracks(href="/user/#{id}/tracks") Tracks
+    span.tracks
+      a.route(href="/user/#{id}/tracks") Tracks
+      | , 
+      a.route(href="/user/#{id}/favorites") Favorites

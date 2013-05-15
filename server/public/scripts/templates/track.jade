@@ -1,12 +1,24 @@
 .gui-container
   .text-panel
 
-    h2.name= name
+    h2
+      label.favorite
+        input(type="checkbox", checked=favorite)
+      span.name= name
 
     h3 Track by 
       span.author
       |  &mdash; 
       a.route(href="#{id}/drive") Drive
+
+    p
+      | Driven 
+      span.count_drive= count_drive
+      |  times. Copied 
+      span.count_copy= count_copy
+      |  times. Favorited 
+      span.count_fav= count_fav
+      |  times.
 
     table.runlist.list
       tr

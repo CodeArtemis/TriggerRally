@@ -26,6 +26,9 @@ define [
     # TODO: Give inspector its own template, separate from editor.
     constructor: ($el, @app, @selection) -> super { el: $el }
 
+    destroy: ->
+      @userView?.destroy()
+
     afterRender: ->
       app = @app
       selection = @selection
@@ -67,45 +70,45 @@ define [
           collection: root.user.tracks
           root: root
         $('#track-list').append trackListView.el if trackListView?
-      root.on 'change:user', updateTrackListView
+      @listenTo root, 'change:user', updateTrackListView
 
-      userView = null
-      do updateUser = ->
-        return if root.track?.user is userView?.model
-        userView?.destroy()
+      @userView = null
+      do updateUser = =>
+        return if root.track?.user is @userView?.model
+        @userView?.destroy()
         if root.track.user?
-          userView = new UserView
+          @userView = new UserView
             model: root.track.user
-          $('#user-track-owner .content').append userView.el
-      root.on 'change:track.user', updateUser
+          $('#user-track-owner .content').append @userView.el
+      @listenTo root, 'change:track.user', updateUser
 
       do compareUser = ->
         isOwnTrack = root.track?.user is root.user
         $cmdDeleteTrack.toggleClass 'hidden', not isOwnTrack
         $("#track-ownership-warning").toggleClass 'hidden', isOwnTrack
         $("#copy-login-prompt").toggleClass 'hidden', !! root.user
-      root.on 'change:track.user', compareUser
-      root.on 'change:user', compareUser
+      @listenTo root, 'change:track.user', compareUser
+      @listenTo root, 'change:user', compareUser
 
       do onChangeEnv = ->
         return unless root.track?.env?.scenery?.layers
         sceneryType.$content.empty()
         for layer, idx in root.track.env.scenery.layers
           sceneryType.$content.append new Option layer.id, idx
-      root.on 'change:track.env', onChangeEnv
+      @listenTo root, 'change:track.env', onChangeEnv
 
       do updateName = ->
         return unless root.track?
         return if selTitle.$content.val() is root.track.name
         selTitle.$content.val root.track.name
-      root.on 'change:track.name', updateName
+      @listenTo root, 'change:track.name', updateName
       selTitle.$content.on 'input', ->
         root.track.name = selTitle.$content.val()
 
       do updatePublished = ->
         return unless root.track?
         $flagPublish[0].checked = root.track.published
-      root.on 'change:track.published', updatePublished
+      @listenTo root, 'change:track.published', updatePublished
       $flagPublish.on 'change', ->
         root.track.published = $flagPublish[0].checked
 

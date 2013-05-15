@@ -11,18 +11,22 @@ table
       span.dropdownmenu Track &blacktriangledown;
         menu.trackinfo
           li
+            label.favorite
+              input(type="checkbox")
             span.name
-            |  by 
+            br
+            | by 
             span.author
           ul
             li
               a.route.drive Drive
               span.label  (<b>R</b> to restart)
-            //- li: a.route.info View top runs
+            li: a.route.info Info
             li: a.route.edit Edit
           hr
           li: a.route(href="/tracklist/featured") Featured tracks
           li: a.route(href="/tracklist/recent") Recent published tracks
+          li: a.route.myfavorites(href="") My Favorites
       span.dropdownmenu Settings &blacktriangledown;
         menu
           li: label

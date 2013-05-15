@@ -9,7 +9,10 @@ define [
 
     render: ->
       @beforeRender()
-      @$el.html @template @viewModel() if @template?
+      if @template
+        viewModel = @viewModel()
+        rendered = @template viewModel
+        @$el.html rendered
       @afterRender()
       @
 
@@ -18,7 +21,7 @@ define [
     afterRender: ->
 
     destroy: ->
-      @stopListening()
+      # @stopListening()  # done by remove()
       @undelegateEvents()
       @$el.removeData().unbind()
       @remove()
