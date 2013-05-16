@@ -183,12 +183,16 @@ module.exports = (bb) ->
       mo.Track
         .findOne(pub_id: model.id)
         .exec (err, track) ->
+          return error err if err
+          return error "Couldn't find track #{model.id}" unless track
           # TODO: filter by car?
+          console.log track._id
           mo.Run
-            .find(track: track.id)
+            .find(track: track._id)
             .where('time', { $not: { $type: 10 } })  # Exclude null times.
             .sort(time: 1)
             .limit(5)
+            .select('pub_id car track user status time')
             .populate('car', 'pub_id')
             .populate('track', 'pub_id')
             .populate('user', 'pub_id')
