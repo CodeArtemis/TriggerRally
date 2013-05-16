@@ -137,20 +137,20 @@ define [
       @rec1buffer = []
       @rec2.restart()
 
-      @socket.emit 'start',
-        car: @carId
-        track: @app.root.track.id
-        keyMap_i: @rec1.toJSON().keyMap
-        keyMap_p: @rec2.toJSON().keyMap
+      # @socket.emit 'start',
+      #   car: @carId
+      #   track: @app.root.track.id
+      #   keyMap_i: @rec1.toJSON().keyMap
+      #   keyMap_p: @rec2.toJSON().keyMap
 
     record_i: (offset, state) =>
-      @rec1buffer.push [ offset, state ]
-      if yes #@rec1buffer.length >= 20
-        @socket.emit 'record_i', samples: @rec1buffer
-        @rec1buffer = []
+      # @rec1buffer.push [ offset, state ]
+      # if yes #@rec1buffer.length >= 20
+      #   @socket.emit 'record_i', samples: @rec1buffer
+      #   @rec1buffer = []
 
     record_p: (offset, state) =>
-      @socket.emit 'record_p', samples: [ [ offset, state ] ]
+      # @socket.emit 'record_p', samples: [ [ offset, state ] ]
 
     setTrackId: (trackId) ->
       track = models.Track.findOrCreate trackId

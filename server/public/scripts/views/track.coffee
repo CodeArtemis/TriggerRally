@@ -87,12 +87,12 @@ define [
 
     afterRender: ->
       track = @model
-      trackRuns = models.TrackRuns.findOrCreate track.id
-      trackRunsView = new TrackRunsView
-        collection: trackRuns.runs
-        el: @$('table.runlist')
-      trackRunsView.render()
-      trackRuns.fetch()
+      # trackRuns = models.TrackRuns.findOrCreate track.id
+      # trackRunsView = new TrackRunsView
+      #   collection: trackRuns.runs
+      #   el: @$('table.runlist')
+      # trackRunsView.render()
+      # trackRuns.fetch()
 
       $author = @$ '.author'
       @userView = null
