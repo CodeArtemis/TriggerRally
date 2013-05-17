@@ -1,5 +1,9 @@
 
-define [], ->
+define [
+  'underscore'
+], (
+  _
+)->
   TWOPI = Math.PI * 2
 
   deepClone = (obj) -> JSON.parse JSON.stringify obj
@@ -8,16 +12,19 @@ define [], ->
     scenery = deepClone track.config.scenery
     newSel = []
     newScenery = null
-    for selModel in selection.models
-      sel = selModel.get 'sel'
-      continue unless sel.type is 'terrain'
-      rotZ = if newScenery
-        # Align next object with previous one.
-        a = newScenery.pos
-        b = sel.object.pos
-        Math.atan2 b[1] - a[1], b[0] - a[0]
-      else
+    sels = (model.get('sel') for model in selection.models)
+    sels = (sel for sel in sels when sel.type is 'terrain')
+    for sel, i in sels
+      rotZ = if sels.length is 1
         Math.random() * TWOPI
+      else
+        if i is 0
+          a = sel.object.pos
+          b = sels[i+1].object.pos
+        else
+          a = sels[i-1].object.pos
+          b = sel.object.pos
+        Math.atan2 b[1] - a[1], b[0] - a[0]
       newScenery =
         scale: 1
         rot: [ 0, 0, rotZ ]
