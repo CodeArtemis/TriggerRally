@@ -410,15 +410,17 @@
       carIds = [ 'ArbusuG' ]
       carIds.push 'Icarus' if 'ignition' in products
       carIds
-    isFavoriteTrack: (trackId) ->
-      @favorite_tracks and trackId in @favorite_tracks
-    setFavoriteTrack: (trackId, favorite) ->
+    isFavoriteTrack: (track) ->
+      @favorite_tracks and track.id in @favorite_tracks
+    setFavoriteTrack: (track, favorite) ->
       @favorite_tracks ?= []
-      isFavorite = @isFavoriteTrack trackId
+      isFavorite = @isFavoriteTrack track.id
       if favorite and not isFavorite
-        @favorite_tracks = @favorite_tracks.concat trackId
+        @favorite_tracks = @favorite_tracks.concat track.id
+        track.count_fav += 1
       else if isFavorite and not favorite
-        @favorite_tracks = _.without @favorite_tracks, trackId
+        @favorite_tracks = _.without @favorite_tracks, track.id
+        track.count_fav -= 1
       @
 
   class UserPassport extends Model

@@ -11,8 +11,8 @@ table
       span.dropdownmenu Track &blacktriangledown;
         menu.trackinfo
           li
-            label.favorite
-              input(type="checkbox")
+            span.favorite
+            | 
             span.name
             br
             | by 
@@ -72,9 +72,18 @@ table
           li: a(target="_blank", href="https://plus.google.com/104685285638239390202")
             img.inline(src="/images/google_64.png")
             | Google+
-          hr
-          .label Something broken? Suggestions?
-          li: a(target="_blank", href="https://github.com/CodeArtemis/TriggerRally/issues") File an issue on GitHub
+          //- hr
+          //- <!-- AddThis Button BEGIN -->
+          //- <div class="addthis_toolbox addthis_default_style addthis_32x32_style">
+          //- <a class="addthis_button_preferred_1"></a>
+          //- <a class="addthis_button_preferred_2"></a>
+          //- <a class="addthis_button_preferred_3"></a>
+          //- <a class="addthis_button_preferred_4"></a>
+          //- <a class="addthis_button_compact"></a>
+          //- <a class="addthis_counter addthis_bubble_style"></a>
+          //- </div>
+          //- <script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=xa-5196095b5a500fd7"></script>
+          //- <!-- AddThis Button END -->
           hr
           div Controls:
           ul
@@ -87,6 +96,10 @@ table
           div
             a(target="_blank", href="https://github.com/CodeArtemis/TriggerRally/wiki/Controllers") Click here
             |  for info on <b>gamepad and wheel support</b> in Chrome
+          hr
+          .label Something broken? Suggestions?
+          li: a(target="_blank", href="https://github.com/CodeArtemis/TriggerRally/issues") File an issue on GitHub
+          .label or email support@codeartemis.com
     td.status
       span Status:&nbsp;
       span#status Loading

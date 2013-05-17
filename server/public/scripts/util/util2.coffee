@@ -1,8 +1,18 @@
-define [], ->
+define [
+  'THREE'
+], (
+  THREE
+) ->
   MB =
     LEFT: 1
     MIDDLE: 2
     RIGHT: 4
+
+  Vec3 = THREE.Vector3
+
+  tmpVec3 = new Vec3
+  tmpVec3b = new Vec3
+  plusZVec3 = new Vec3 0, 0, 1
 
   intersectZLine = (ray, pos) ->
     sideways = tmpVec3.cross ray.direction, plusZVec3

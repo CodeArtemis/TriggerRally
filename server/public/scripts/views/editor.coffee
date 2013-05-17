@@ -33,7 +33,6 @@ define [
 
   tmpVec3 = new THREE.Vector3
   tmpVec3b = new THREE.Vector3
-  plusZVec3 = new Vec3 0, 0, 1
 
   deepClone = (obj) -> JSON.parse JSON.stringify obj
 
@@ -301,7 +300,7 @@ define [
                 pos[1] += relMotion.y
                 pos[2] += relMotion.z
                 if sel.type isnt 'checkpoint'
-                  if inspectorView.snapToGround
+                  if @inspectorView.snapToGround
                     tmp = new Vec3 pos[0], pos[1], -Infinity
                     contact = client.track.terrain.getContact tmp
                     pos[2] = contact.surfacePos.z

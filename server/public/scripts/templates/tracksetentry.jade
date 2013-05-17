@@ -1,13 +1,14 @@
 td
-  a.route(href="/track/#{id}/drive") Drive 
-    strong= name
+  a.route(href="/track/#{id}/drive") &rArr; 
+    strong.trackname= name
 td.trackuser
 td= modified_ago
 td= count_drive
 td= count_copy
 td
-  label.favorite
-    input(type="checkbox", checked=favorite)
+  span.favorite
+  | 
+  span.count_fav= count_fav
 td
   a.route(href="/track/#{id}")
-    img.emoji(src="/emojis/memo.png", title="Info and comments")
+    img.emoji(src="/emojis/memo.png", title="Info")

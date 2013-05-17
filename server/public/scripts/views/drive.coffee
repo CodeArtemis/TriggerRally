@@ -137,11 +137,11 @@ define [
       @rec1buffer = []
       @rec2.restart()
 
-      # @socket.emit 'start',
-      #   car: @carId
-      #   track: @app.root.track.id
-      #   keyMap_i: @rec1.toJSON().keyMap
-      #   keyMap_p: @rec2.toJSON().keyMap
+      @socket.emit 'start',
+        car: @carId
+        track: @app.root.track.id
+        keyMap_i: @rec1.toJSON().keyMap
+        keyMap_p: @rec2.toJSON().keyMap
 
     record_i: (offset, state) =>
       # @rec1buffer.push [ offset, state ]

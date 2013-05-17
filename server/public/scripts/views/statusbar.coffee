@@ -1,16 +1,18 @@
 define [
   'backbone-full'
-  'cs!views/view'
   'jade!templates/statusbar'
   'jade!templates/statusbarcar'
+  'cs!views/favorite'
   'cs!views/user'
+  'cs!views/view'
   'cs!models/index'
 ], (
   Backbone
-  View
   template
   templateCar
+  FavoriteView
   UserView
+  View
   models
 ) ->
   class StatusBarView extends View
@@ -99,6 +101,16 @@ define [
       $trackLinkEdit = $trackInfo.find '.edit'
       $trackLinkInfo = $trackInfo.find '.info'
 
+      $favorite = @$ '.favorite'
+      @favoriteView = null
+      if root.track
+        @favoriteView = new FavoriteView root.track, root
+        $favorite.html @favoriteView.el
+
+      @listenTo root, 'change:track', =>
+        @favoriteView?.destroy()
+        @favoriteView = new FavoriteView root.track, root
+        $favorite.html @favoriteView.el
       @listenTo root, 'change:track.id', ->
         id = root.track.id
         $trackLinkDrive.attr 'href', "/track/#{id}/drive"
@@ -116,21 +128,14 @@ define [
           $trackAuthor.empty()
           $trackAuthor.append trackUserView.el
 
-      $favorite = @$('.favorite input')
       $myFavorites = @$('.myfavorites')
-
-      $favorite.on 'change', (event) =>
-        if root.user
-          favorite = $favorite[0].checked
-          root.user.setFavoriteTrack track.id, favorite
-          root.user.save()
-        else
-          Backbone.trigger 'app:dologin'
-          event.preventDefault()
-      do updateFavorites = ->
-        $favorite[0].checked = root.track and root.user?.isFavoriteTrack root.track.id
+      do updateMyFavorites = ->
         $myFavorites.toggleClass 'hidden', not root.user
         $myFavorites.attr 'href', "/user/#{root.user.id}/favorites" if root.user
-      @listenTo root, 'change:user change:track.id', updateFavorites
+      @listenTo root, 'change:user', updateMyFavorites
 
     height: -> @$el.height()
+
+    destroy: ->
+      # This shouldn't ever get called for StatusBar, really.
+      @favoriteView.destroy()

@@ -13,34 +13,14 @@ define [
     initialize: ->
       super
       @render()
-      @model?.on 'change', @render, @
+      if @model then @listenTo @model, 'change', => @render()
       @model?.fetch()
-
-    destroy: ->
-      @model?.off 'change', @render, @
-      super
 
     template: (viewModel) ->
       template = if @options.showStatus then templateWithStatus else templateBasic
       template viewModel
 
     viewModel: ->
+      img_src = "/images/profile/#{@model?.picture ? "blank"}.jpg"
       user: @model
-      randomSmiley: randomSmiley
-
-    randomSmiley = ->
-      smileys = [
-        "smiley.png"
-        "smile.png"
-        "smirk.png"
-        "relaxed.png"
-        "grinning.png"
-        "yum.png"
-        "sunglasses.png"
-        "satisfied.png"
-        "stuck_out_tongue.png"
-        "innocent.png"
-      ]
-      idx = Math.floor(Math.random() * smileys.length)
-      url = "https://triggerrally.com/emojis/#{smileys[idx]}"
-      encodeURIComponent url
+      img_src: img_src

@@ -4,6 +4,7 @@ define [
   'cs!views/view_collection'
   'jade!templates/trackset'
   'jade!templates/tracksetentry'
+  'cs!views/favorite'
   'cs!views/user'
 ], (
   Backbone
@@ -11,6 +12,7 @@ define [
   ViewCollection
   template
   templateEntry
+  FavoriteView
   UserView
 ) ->
   class TrackSetEntryView extends View
@@ -21,18 +23,21 @@ define [
       @model.fetch()
       @root = @options.parent.options.root
       @listenTo @model, 'change', @render, @
-      @listenTo @root, 'change:user', @render, @
 
     viewModel: ->
       data = super
       loading = '...'
       data.name ?= loading
       data.modified_ago ?= loading
-      data.count_drive ?= loading
       data.count_copy ?= loading
+      data.count_drive ?= loading
+      data.count_fav ?= loading
       data.user ?= null
-      data.favorite = @root.user?.isFavoriteTrack data.id
       data
+
+    beforeRender: ->
+      @userView?.destroy()
+      @favoriteView?.destroy()
 
     afterRender: ->
       track = @model
@@ -47,20 +52,16 @@ define [
         $trackuser.append @userView.el if @userView
       @listenTo track, 'change:user', updateUserView
 
-      $favorite = @$('.favorite input')
-      $favorite.on 'change', (event) =>
-        if @root.user
-          @root.user.setFavoriteTrack track.id, $favorite[0].checked
-          @root.user.save()
-        else
-          Backbone.trigger 'app:dologin'
-          event.preventDefault()
+      $favorite = @$ '.favorite'
+      @favoriteView = new FavoriteView track, @options.parent.options.root
+      $favorite.html @favoriteView.el
 
-      @listenTo @root, 'change:user.favorite_tracks', =>
-        $favorite[0].checked = @root.user?.isFavoriteTrack track.id
+      # $count_fav = @$('count_fav')
+      # @listenTo track, 'change:count_fav', ->
+      #   $count_fav.text track.count_fav
 
     destroy: ->
-      @userView.destroy()
+      @beforeRender()
       super
 
   class TrackListView extends ViewCollection
@@ -70,7 +71,7 @@ define [
   class TrackSetView extends View
     className: 'overlay'
     template: template
-    constructor: (model, @app, @client) -> super { model }
+    constructor: (model, @app) -> super { model }
 
     afterRender: ->
       trackListView = new TrackListView

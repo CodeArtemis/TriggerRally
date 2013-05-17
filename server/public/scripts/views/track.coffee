@@ -1,6 +1,7 @@
 define [
   'jquery'
   'backbone-full'
+  'cs!views/favorite'
   'cs!views/user'
   'cs!views/view'
   'cs!views/view_collection'
@@ -11,6 +12,7 @@ define [
 ], (
   $
   Backbone
+  FavoriteView
   UserView
   View
   ViewCollection
@@ -82,7 +84,6 @@ define [
       data.count_drive ?= loadingText
       data.count_copy ?= loadingText
       data.count_fav ?= loadingText
-      data.favorite = @app.root.user?.isFavoriteTrack @model.id
       data
 
     afterRender: ->
@@ -104,6 +105,10 @@ define [
         $author.append @userView.el if @userView
       @listenTo track, 'change:user', updateUserView
 
+      $favorite = @$ '.favorite'
+      @favoriteView = new FavoriteView track, @app.root
+      $favorite.html @favoriteView.el
+
       $name = @$ '.name'
       @listenTo @model, 'change:name', (model, value) =>
         $name.text value
@@ -119,19 +124,3 @@ define [
       $count_fav = @$ '.count_fav'
       @listenTo @model, 'change:count_fav', (model, value) =>
         $count_fav.text value
-
-      $favorite = @$('.favorite input')
-      $favorite.on 'change', (event) =>
-        if @app.root.user
-          favorite = $favorite[0].checked
-          @app.root.user.setFavoriteTrack track.id, favorite
-          @app.root.user.save()
-
-          # Hacky update because I don't want to hit the server for this.
-          $count_fav.text parseInt($count_fav.text()) + if favorite then 1 else -1
-        else
-          Backbone.trigger 'app:dologin'
-          event.preventDefault()
-
-      @listenTo @app.root, 'change:user', =>
-        $favorite[0].checked = @app.root.user?.isFavoriteTrack track.id
