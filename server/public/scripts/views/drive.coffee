@@ -55,14 +55,14 @@ define [
     cents = Math.floor(time * 100)
     mins + ':' + padZero(secs, 2) + '.' + padZero(cents, 2)
 
-  randomChoice = (arr) -> arr[Math.floor Math.random() * arr.length]
+  # randomChoice = (arr) -> arr[Math.floor Math.random() * arr.length]
 
-  checkpointMessage = -> randomChoice [
-    'Yes!'
-    'Great!'
-    'Awesome!'
-    'Excellent!'
-  ]
+  # checkpointMessage = -> randomChoice [
+  #   'Yes!'
+  #   'Great!'
+  #   'Awesome!'
+  #   'Excellent!'
+  # ]
 
   class Drive extends View
     template: template
@@ -119,7 +119,7 @@ define [
                   else if cpNext is cpTotal - 1
                     'Nearly there!'
                   else
-                    checkpointMessage()
+                    'Checkpoint'
                   @$countdown.text message
                   @$countdown.removeClass 'fadeout'
                   _.defer => @$countdown.addClass 'fadeout'

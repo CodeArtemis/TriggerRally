@@ -264,15 +264,15 @@ define [
 
             vec2 surfaceDerivs = 255.0 * tSurfaceScale.z / tSurfaceScale.xy * (surfaceSample.xy - 0.5);
 
-            mat2 screenToSurfaceSpace = inverse(mat2(dFdx(surfaceUv), dFdy(surfaceUv)));
+            // mat2 screenToSurfaceSpace = inverse(mat2(dFdx(surfaceUv), dFdy(surfaceUv)));
 
             float surfaceType = surfaceSample.b;
             float detailHeightAmount = surfaceSample.a;
 
             vec2 detailUv = worldToMapSpace(worldPosition.xy, tDetailSize, tDetailScale.xy);
-            vec4 detailSample = texture2D(tDetail, detailUv);
+            vec4 detailSample = texture2D(tDetail, detailUv) - vec4(0.5, 0.5, 0.0, 0.0);
             float detailHeight = detailSample.z;
-            vec2 detailDerivs = vec2(tDetailScale.z / tDetailScale.xy * (detailSample.xy - 0.5)) * detailHeightAmount;
+            vec2 detailDerivs = vec2(tDetailScale.z / tDetailScale.xy * detailSample.xy) * detailHeightAmount;
 
             vec2 epsilon = 1.0 / tDetailSize;
 

@@ -10,6 +10,7 @@ table
       //- a(href="javascript:location.reload()") Reload
       span.dropdownmenu Track &blacktriangledown;
         menu.trackinfo
+          .label Current track:
           li
             span.favorite
             | 
@@ -24,6 +25,7 @@ table
             li: a.route.info Info
             li: a.route.edit Edit
           hr
+          .label Other tracks:
           li: a.route(href="/tracklist/featured") Featured tracks
           li: a.route(href="/tracklist/recent") Recent published tracks
           li: a.route.myfavorites(href="") My Favorites 
