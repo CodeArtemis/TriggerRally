@@ -36,7 +36,9 @@ img.emoji
   vertical-align -20%
 
 .gray
+  -moz-filter grayscale(1)
   -webkit-filter grayscale(1)
+  filter grayscale(1)
 
 img.profilepic
   width 70px
@@ -62,14 +64,6 @@ a.disabled:visited
   color #777
   text-shadow inherit
   cursor default
-
-.frame3d a
-  color #03f
-  text-decoration underline
-
-.frame3d:-webkit-full-screen
-  width 100%
-  height 100%
 
 .hidden
   display none

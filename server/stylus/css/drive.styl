@@ -12,6 +12,9 @@
   top 0.5em
   right 1em
   font-size 2em
+  -moz-transition -moz-transform 2s
+  -moz-transform-origin top right
+  -moz-transform scale(2)
   -webkit-transition -webkit-transform 2s
   -webkit-transform-origin top right
   -webkit-transform scale(2)
@@ -19,6 +22,7 @@
   z-index 2
 #timer.running
   color #000
+  -moz-transform scale(1)
   -webkit-transform scale(1)
 #speedo
   position absolute
@@ -28,7 +32,7 @@
   color #040
   text-align center
   text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
-  -webkit-transform scale(1)
+  // -webkit-transform scale(1)
   width 6em
   z-index 2
 
@@ -38,14 +42,19 @@
   top 1em
   left 0
   right 0
-  font-size 4em
+  font-size 3em
   text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
   text-align center
   z-index 2
   opacity 1
-  -webkit-transition opacity 1s
 
 #countdown.fadeout
+  transition all 0.5s ease-in 0.3s
+  transform translateY(-0.7em)
+  -moz-transition all 0.5s ease-in 0.3s
+  -moz-transform translateY(-0.7em)
+  -webkit-transition all 0.5s ease-in 0.3s
+  -webkit-transform translateY(-0.7em)
   opacity 0
 
 #twitterlink

@@ -55,6 +55,15 @@ define [
     cents = Math.floor(time * 100)
     mins + ':' + padZero(secs, 2) + '.' + padZero(cents, 2)
 
+  randomChoice = (arr) -> arr[Math.floor Math.random() * arr.length]
+
+  checkpointMessage = -> randomChoice [
+    'Yes!'
+    'Great!'
+    'Awesome!'
+    'Excellent!'
+  ]
+
   class Drive extends View
     template: template
     constructor: (@app, @client) -> super()
@@ -102,7 +111,18 @@ define [
               progress.on 'advance', =>
                 cpNext = progress.nextCpIndex
                 cpTotal = root.track.config.course.checkpoints.length
-                @$checkpoints.html "#{cpNext} / #{cpTotal}"
+                @$checkpoints.text "#{cpNext} / #{cpTotal}"
+
+                if cpNext > 1
+                  message = if cpNext is cpTotal
+                    'Win!'
+                  else if cpNext is cpTotal - 1
+                    'Nearly there!'
+                  else
+                    checkpointMessage()
+                  @$countdown.text message
+                  @$countdown.removeClass 'fadeout'
+                  _.defer => @$countdown.addClass 'fadeout'
 
                 return if progress.nextCheckpoint(0)
 
@@ -168,14 +188,14 @@ define [
         raceTime = @game.interpolatedRaceTime()
         if raceTime >= 0
           if @lastRaceTime < 0
-            @$countdown.html 'Go!'
+            @$countdown.text 'Go!'
             @$countdown.addClass 'fadeout'
-          @$runTimer.html formatRunTime raceTime
+          @$runTimer.text formatRunTime raceTime
         else
           num = Math.ceil -raceTime
           lastNum = Math.ceil -@lastRaceTime
           if num != lastNum
-            @$runTimer.html ""
-            @$countdown.html '' + num
+            @$runTimer.text ""
+            @$countdown.text '' + num
             @$countdown.removeClass 'fadeout'
         @lastRaceTime = raceTime
