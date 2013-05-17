@@ -41,7 +41,15 @@ define [
       @prefs.car
 
   class PrefsModel extends models.Model
-    models.buildProps @, [ 'antialias', 'audio', 'car', 'pixeldensity', 'shadows', 'terrainhq' ]
+    models.buildProps @, [
+      'antialias'
+      'audio'
+      'car'
+      'pixeldensity'
+      'shadows'
+      'terrainhq'
+      'volume'
+    ]
     defaults:
       antialias: yes
       audio: yes
@@ -49,6 +57,7 @@ define [
       pixeldensity: 1
       shadows: yes
       terrainhq: yes
+      volume: 0.8
     sync: syncLocalStorage
 
   class App

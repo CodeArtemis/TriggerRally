@@ -33,6 +33,8 @@ table
           li: label
             input#pref-audio(type="checkbox", checked=prefs.audio)
             | Sound (Chrome only)
+          li Volume 
+            input#pref-volume(type="range", min=0, max=1, step="any", value=prefs.volume)
           hr
           .label Graphics options: the game may run faster if you turn these off.
             | They take effect after reloading the page.

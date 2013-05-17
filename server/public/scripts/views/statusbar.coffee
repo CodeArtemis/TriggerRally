@@ -54,6 +54,7 @@ define [
       @listenTo root, 'change:user', updateUserView
 
       $prefAudio = @$('#pref-audio')
+      $prefVolume = @$('#pref-volume')
       $prefShadows = @$('#pref-shadows')
       $prefTerrainhq = @$('#pref-terrainhq')
       $prefAntialias = @$('#pref-antialias')
@@ -62,6 +63,8 @@ define [
 
       $prefAudio.on 'change', ->
         prefs.audio = $prefAudio[0].checked
+      $prefVolume.on 'change', ->
+        prefs.volume = $prefVolume.val()
       $prefShadows.on 'change', ->
         prefs.shadows = $prefShadows[0].checked
       $prefTerrainhq.on 'change', ->
@@ -71,6 +74,7 @@ define [
 
       @listenTo root, 'change:prefs.', ->
         $prefAudio[0].checked = prefs.audio
+        $prefVolume.val prefs.volume
         $prefShadows[0].checked = prefs.shadows
         $prefTerrainhq[0].checked = prefs.terrainhq
         $prefAntialias[0].checked = prefs.antialias

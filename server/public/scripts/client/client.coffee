@@ -587,8 +587,11 @@ define [
       @checkpointBuffer = null
       @audio.loadBuffer '/a/sounds/checkpoint.ogg', (buffer) =>
         @checkpointBuffer = buffer
+      @audio.setGain prefs.volume
       prefs.on 'change:audio', (prefs, audio) =>
         if audio then @audio.unmute() else @audio.mute()
+      prefs.on 'change:volume', (prefs, volume) =>
+        @audio.setGain volume
 
       @track = new gameTrack.Track @root
 
@@ -704,7 +707,7 @@ define [
 
     muteAudioIfStopped: ->
       if @audio?
-        @audio.setGain 1
+        @audio.setGain @root.prefs.volume
         @debouncedMuteAudio @audio
 
     update: (delta) ->
