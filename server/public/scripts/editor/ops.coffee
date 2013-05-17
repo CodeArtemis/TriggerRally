@@ -7,12 +7,20 @@ define [], ->
   addScenery: (track, layer, layerIdx, selection) ->
     scenery = deepClone track.config.scenery
     newSel = []
+    newScenery = null
     for selModel in selection.models
       sel = selModel.get 'sel'
       continue unless sel.type is 'terrain'
+      rotZ = if newScenery
+        # Align next object with previous one.
+        a = newScenery.pos
+        b = sel.object.pos
+        Math.atan2 b[1] - a[1], b[0] - a[0]
+      else
+        Math.random() * TWOPI
       newScenery =
         scale: 1
-        rot: [ 0, 0, Math.random() * TWOPI ]
+        rot: [ 0, 0, rotZ ]
         pos: sel.object.pos
       scenery[layer] ?= { add: [] }
       idx = scenery[layer].add.length
