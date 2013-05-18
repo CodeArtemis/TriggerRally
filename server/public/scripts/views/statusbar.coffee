@@ -41,8 +41,6 @@ define [
 
     afterRender: ->
       root = @app.root
-      $status = @$('#status')
-      @listenTo Backbone, 'app:status', (msg) -> $status.text msg
 
       userView = null
       do updateUserView = =>

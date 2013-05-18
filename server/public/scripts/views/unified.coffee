@@ -36,6 +36,7 @@ define [
       $document = $(document)
       $view3d = @$('#view3d')
       $child = @$('#unified-child')
+      $statusMessage = @$('#status-message')
 
       client = @client = new TriggerClient $view3d[0], @app.root
       client.camera.eulerOrder = 'ZYX'
@@ -91,6 +92,11 @@ define [
         .done (data) ->
           Backbone.trigger 'app:logout'
         false
+
+      Backbone.on 'app:status', (msg) ->
+        $statusMessage.text msg
+        $statusMessage.removeClass 'fadeout'
+        _.defer -> $statusMessage.addClass 'fadeout'
 
       requestAnimationFrame @update
 

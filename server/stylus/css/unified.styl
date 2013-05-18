@@ -63,7 +63,7 @@ input[type="range"]
 //   text-align center
 
 #statusbar > table td:last-child
-  text-align center
+  text-align right
 
 #statusbar .status
   font-weight initial
@@ -285,3 +285,25 @@ a.paypal-checkout img
 
 .smaller
   font-size 0.6em
+
+#status-message
+  color #000
+  position absolute
+  top 2em
+  left 0
+  right 0
+  font-size 1.5em
+  font-weight bold
+  text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
+  text-align center
+  z-index 2
+  opacity 1
+
+#status-message.fadeout
+  transition all 1.5s ease-in 0.5s
+  transform translateY(-0.7em)
+  -moz-transition all 1.5s ease-in 0.5s
+  -moz-transform translateY(-0.7em)
+  -webkit-transition all 1.5s ease-in 0.5s
+  -webkit-transform translateY(-0.7em)
+  opacity 0
