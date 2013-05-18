@@ -31,17 +31,18 @@ Environment.pre('save', function(next) {
 
 
 var Track = new Schema({
-    pub_id      : { type: String, index: { unique: true } }
-  , name        : { type: String, trim: true }
-  , env         : { type: Schema.ObjectId, ref: 'Environment' }
-  , user        : { type: Schema.ObjectId, ref: 'User', index: true }
-  , config      : Schema.Types.Mixed
-  , modified    : { type: Date }
-  , parent      : { type: Schema.ObjectId, ref: 'Track' }
-  , published   : { type: Boolean, default: false }
-  , count_drive : { type: Number, default: 0 }
-  , count_copy  : { type: Number, default: 0 }
-  // , count_fav   : { type: Number, default: 0 }  // This has become a generated attribute.
+    pub_id          : { type: String, index: { unique: true } }
+  , name            : { type: String, trim: true }
+  , env             : { type: Schema.ObjectId, ref: 'Environment' }
+  , user            : { type: Schema.ObjectId, ref: 'User', index: true }
+  , config          : Schema.Types.Mixed
+  , modified        : { type: Date }
+  , parent          : { type: Schema.ObjectId, ref: 'Track' }
+  , published       : { type: Boolean, default: false }
+  , count_drive     : { type: Number, default: 0 }
+  , count_copy      : { type: Number, default: 0 }
+  // , count_fav      : { type: Number, default: 0 }  // This has become a generated attribute.
+  , prevent_copy    : { type: Boolean, default: false }
 }, { strict: true });
 
 Track.statics.findAndModify = function() {

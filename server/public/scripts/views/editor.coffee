@@ -74,7 +74,7 @@ define [
       client.addEditorCheckpoints editorObjects
 
       doSave = _.debounce ->
-        if root.user isnt root.track.user
+        if root.user isnt root.track.user or root.track.published
           return Backbone.trigger 'app:status', 'Read only'
         Backbone.trigger 'app:status', 'Saving...'
         result = root.track.save null,
@@ -242,7 +242,7 @@ define [
         if event.button is 0 and not hasMoved
           selection.reset() unless event.shiftKey
           if cursor
-            if root.user is root.track.user
+            unless root.user isnt root.track.user or root.track.published
               unless selection.contains cursor
                 addSelection cursor
             else

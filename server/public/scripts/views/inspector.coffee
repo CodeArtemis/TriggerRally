@@ -42,24 +42,29 @@ define [
         $root: $el
         $content: $el.find '.content'
 
-      selType         = attrib '#sel-type'
-      selTitle        = attrib '#title'
-      selScale        = attrib '#scale'
-      selDispRadius   = attrib '#disp-radius'
-      selDispHardness = attrib '#disp-hardness'
-      selDispStrength = attrib '#disp-strength'
-      selSurfRadius   = attrib '#surf-radius'
-      selSurfHardness = attrib '#surf-hardness'
-      selSurfStrength = attrib '#surf-strength'
-      sceneryType     = attrib '#scenery-type'
-      cmdAdd          = attrib '#cmd-add'
-      cmdCopy         = attrib '#cmd-copy'
-      cmdDelete       = attrib '#cmd-delete'
-      cmdCopyTrack    = attrib '#cmd-copy-track'
-      cmdDeleteTrack  = attrib '#cmd-delete-track'
-      $cmdDeleteTrack = $inspector.find '#cmd-delete-track'
-      $flagPublish    = $inspector.find '#flag-publish input'
-      $flagSnap       = $inspector.find '#flag-snap input'
+      selType           = attrib '#sel-type'
+      selTitle          = attrib '#title'
+      selScale          = attrib '#scale'
+      selDispRadius     = attrib '#disp-radius'
+      selDispHardness   = attrib '#disp-hardness'
+      selDispStrength   = attrib '#disp-strength'
+      selSurfRadius     = attrib '#surf-radius'
+      selSurfHardness   = attrib '#surf-hardness'
+      selSurfStrength   = attrib '#surf-strength'
+      sceneryType       = attrib '#scenery-type'
+      cmdAdd            = attrib '#cmd-add'
+      cmdCopy           = attrib '#cmd-copy'
+      cmdDelete         = attrib '#cmd-delete'
+      cmdCopyTrack      = attrib '#cmd-copy-track'
+      cmdPublishTrack   = attrib '#cmd-publish-track'
+      cmdClearRuns      = attrib '#cmd-clear-runs'
+      cmdDeleteTrack    = attrib '#cmd-delete-track'
+      $cmdCopyTrack     = $inspector.find '#cmd-copy-track'
+      $cmdPublishTrack  = $inspector.find '#cmd-publish-track'
+      $cmdClearRuns     = $inspector.find '#cmd-clear-runs'
+      $cmdDeleteTrack   = $inspector.find '#cmd-delete-track'
+      $flagPreventCopy  = $inspector.find '#flag-prevent-copy input'
+      $flagSnap         = $inspector.find '#flag-snap input'
 
       root = app.root
 
@@ -82,13 +87,23 @@ define [
           $('#user-track-owner .content').append @userView.el
       @listenTo root, 'change:track.user', updateUser
 
-      do compareUser = ->
+      enableItem = ($button, enabled) ->
+        $button.prop 'disabled', not enabled
+
+      do updateItemsEnabled = ->
         isOwnTrack = root.track?.user is root.user
-        $cmdDeleteTrack.toggleClass 'hidden', not isOwnTrack
+        published = isOwnTrack and root.track.published
+        editable = isOwnTrack and not published
+        enableItem selTitle.$content, editable
+        enableItem cmdCopyTrack.$content, isOwnTrack or root.track? and not root.track.prevent_copy
+        enableItem cmdPublishTrack.$content, editable
+        enableItem cmdClearRuns.$content, editable
+        enableItem cmdDeleteTrack.$content, editable
         $("#track-ownership-warning").toggleClass 'hidden', isOwnTrack
         $("#copy-login-prompt").toggleClass 'hidden', !! root.user
-      @listenTo root, 'change:track.user', compareUser
-      @listenTo root, 'change:user', compareUser
+        $("#track-published-warning").toggleClass 'hidden', not (isOwnTrack and published)
+      @listenTo root, 'change:track.', updateItemsEnabled
+      @listenTo root, 'change:user', updateItemsEnabled
 
       do onChangeEnv = ->
         return unless root.track?.env?.scenery?.layers
@@ -104,13 +119,6 @@ define [
       @listenTo root, 'change:track.name', updateName
       selTitle.$content.on 'input', ->
         root.track.name = selTitle.$content.val()
-
-      do updatePublished = ->
-        return unless root.track?
-        $flagPublish[0].checked = root.track.published
-      @listenTo root, 'change:track.published', updatePublished
-      $flagPublish.on 'change', ->
-        root.track.published = $flagPublish[0].checked
 
       bindSlider = (type, slider, eachSel) ->
         $content = slider.$content
@@ -163,6 +171,10 @@ define [
             Backbone.history.navigate "/track/v3-base-1/edit", trigger: yes
           error: (model, xhr) ->
             Backbone.trigger "app:status", "Delete failed: #{xhr.statusText} (#{xhr.status})"
+
+      cmdPublishTrack.$content.click ->
+        return unless window.confirm "Publishing a track will lock it and allow players to start competing for top times. Are you sure?"
+        root.track.published = yes
 
       do updateSnap = => @snapToGround = $flagSnap[0].checked
       $flagSnap.on 'change', updateSnap

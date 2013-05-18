@@ -123,6 +123,7 @@ module.exports =
           return jsonError 404, res unless parentTrack?
           return jsonError 400, res unless parentTrack.env?
           return jsonError 403, res unless parentTrack.env.id is 'alp'
+          return jsonError 403, res if parentTrack.prevent_copy
           # TODO: Check this user is allowed to copy tracks from this env.
           track = new bb.Track
           newName = parentTrack.name
@@ -132,8 +133,9 @@ module.exports =
           track.set track.parse
             config: jsonClone parentTrack.config
             env: parentTrack.env.id
-            parent: parentTrack.id
             name: newName
+            parent: parentTrack.id
+            prevent_copy: parentTrack.prevent_copy
             user: reqUser.id
           result = track.save null,
             user: req.user.user
@@ -167,8 +169,11 @@ module.exports =
       res.json req.fromUrl.trackRuns
 
     app.put "#{base}/tracks/:track_id", editUrlTrack, (req, res) ->
-      allowedKeys = [ 'config', 'name', 'published' ]
-      filterAndSaveIfModified req.fromUrl.track, allowedKeys, req, res
+      track = req.fromUrl.track
+      allowedKeys = [ 'name', 'prevent_copying' ]
+      unless track.published
+        allowedKeys = allowedKeys.concat [ 'config', 'published' ]
+      filterAndSaveIfModified track, allowedKeys, req, res
 
     app.post "#{base}/tracks/:track_id/drive", loadUrlTrack, (req, res) ->
       res.send 200

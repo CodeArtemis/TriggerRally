@@ -256,6 +256,7 @@
       'modified'
       'name'
       'parent'
+      'prevent_copy'
       'published'
       'user'
     ]

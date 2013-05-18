@@ -72,29 +72,43 @@
         span.content
 
       #track-ownership-warning.warning.hidden
-        | You cannot modify this track because it belongs to another
+        | You can't modify this track because it belongs to another
         | user, but you can make your own copy using the <b>Copy Track</b> button below.
         span#copy-login-prompt
           br
           br
           | You'll need to <a href="/login" title="Login popup" class="login">Log in</a> first.
 
+      #track-published-warning.warning.hidden
+        | You can't modify this track because it has been published,
+        | but you can make a modifiable copy using the <b>Copy Track</b> button below.
+
       #title
         span.label Track name:
         input.content(type="text")
 
       #cmd-copy-track
-        span.label Action
-        button.content Copy Track
+        span.label &nbsp;
+        button.content(disabled) Copy Track
 
-      #cmd-delete-track.hidden
-        span.label Action
-        button.content Delete Track
+      #cmd-publish-track
+        span.label &nbsp;
+        button.content(disabled) Publish Track
 
-      #flag-publish
+      #cmd-clear-runs
+        span.label &nbsp;
+        button.content(disabled) Clear Replays
+
+      #flag-prevent-copy
         label
           input(type="checkbox")
-          | Publish this track
+          | Forbid copying of this track
+
+      hr
+
+      #cmd-delete-track
+        span.label &nbsp;
+        button.content(disabled) Delete Track
 
     hr
 

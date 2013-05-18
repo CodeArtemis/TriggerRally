@@ -161,6 +161,7 @@ module.exports = (bb) ->
               'count_fav'
               'modified'
               'name'
+              'prevent_copy'
               'published'
             ]
             track.save (err) ->
@@ -240,6 +241,21 @@ module.exports = (bb) ->
                 return error null
               response =
                 name: 'Recent published tracks'
+                tracks: (track.pub_id for track in tracks)
+              success response
+        when 'all'
+          query =
+            env: alpEnvId  # TODO: Remove this filter.
+          mo.Track
+            .find(query)
+            .sort({modified: -1})
+            .limit(30)
+            .exec (err, tracks) ->
+              if err
+                console.log "Error fetching tracks: #{err}"
+                return error null
+              response =
+                name: 'Recently modified tracks'
                 tracks: (track.pub_id for track in tracks)
               success response
         else
