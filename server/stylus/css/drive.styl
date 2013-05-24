@@ -1,14 +1,16 @@
-#checkpoints
+.gui-container.drive > *
   color #000
   position absolute
+  text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
+  z-index 2
+
+.checkpoints
   top 0.5em
   left 1em
   font-size 2em
-  text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
-  z-index 2
-#timer
+
+.timer
   color #040
-  position absolute
   top 0.5em
   right 1em
   font-size 2em
@@ -18,14 +20,25 @@
   -webkit-transition -webkit-transform 2s
   -webkit-transform-origin top right
   -webkit-transform scale(2)
-  text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
-  z-index 2
-#timer.running
+.timer.running
   color #000
   -moz-transform scale(1)
   -webkit-transform scale(1)
-#speedo
-  position absolute
+
+.split-time
+  border-radius 0.2em
+  padding 0.1em 0.3em
+  right 2em
+  text-align right
+  top 5em
+  background rgba(128,0,0,0.3)
+  // text-shadow 0 0 0.1em #f00, 0 0 0.4em #fff
+// .split-time.plus
+.split-time.minus
+  background rgba(0,255,0,0.3)
+  text-shadow 0 0 0.1em #0f0, 0 0 0.4em #fff
+
+.speedo
   bottom 1em
   left 0
   font-size 1em
@@ -34,21 +47,16 @@
   text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
   // -webkit-transform scale(1)
   width 6em
-  z-index 2
 
-#countdown
-  color #000
-  position absolute
+.countdown
   top 1em
   left 0
   right 0
   font-size 3em
-  text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
   text-align center
-  z-index 2
   opacity 1
 
-#countdown.fadeout
+.countdown.fadeout
   transition all 0.5s ease-in 0.3s
   transform translateY(-0.7em)
   -moz-transition all 0.5s ease-in 0.3s
@@ -56,16 +64,3 @@
   -webkit-transition all 0.5s ease-in 0.3s
   -webkit-transform translateY(-0.7em)
   opacity 0
-
-#twitterlink
-  display none
-  position absolute
-  top 8em
-  right 5em
-  font-size 1em
-  text-shadow 0 0 0.1em #fff, 0 0 0.4em #fff
-  z-index 3
-
-#twitterlink.visible
-  display block
-  position absolute

@@ -79,7 +79,7 @@ Run.virtual('time_readable')
       var millis = Math.floor(time * 1000);
       return mins + ':' + padZero(secs, 2) + '.' + padZero(millis, 3);
     } else {
-      return '&mdash;';
+      return 'DNF';
     }
   });
 

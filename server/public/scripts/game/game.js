@@ -26,7 +26,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
 
   exports.Progress.prototype.restart = function() {
     this.nextCpIndex = 0;
-    this.lastCpDistSq = 0;
+    this.lastCpDistSq = null;
     this.cpTimes = [];
     this.trigger('advance');
   };
@@ -35,18 +35,26 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     return this.checkpoints.at(this.nextCpIndex + (i || 0)) || null;
   };
 
+  var CP_RADIUS = 18;
+  var CP_RADIUS_SQ = CP_RADIUS * CP_RADIUS;
+
   exports.Progress.prototype.update = function() {
     var vehic = this.vehicle;
     var nextCp = this.nextCheckpoint(0);
     if (!nextCp) return;
     var cpVec = new Vec2(vehic.body.pos.x - nextCp.pos[0], vehic.body.pos.y - nextCp.pos[1]);
     var cpDistSq = cpVec.lengthSq();
-    var CP_TEST = 18*18;
-    if (cpDistSq < CP_TEST) {
+    if (cpDistSq < CP_RADIUS_SQ) {
       var cpDist = Math.sqrt(cpDistSq);
-      var lastCpDist = Math.sqrt(this.lastCpDistSq);
-      var frac = (lastCpDist - Math.sqrt(CP_TEST)) / (lastCpDist - cpDist);
-      var time = vehic.sim.time - vehic.sim.timeStep * frac;
+      var time = vehic.sim.time;
+      if (this.lastCpDistSq !== null) {
+        var lastCpDist = Math.sqrt(this.lastCpDistSq);
+        var diff = lastCpDist - cpDist;
+        if (diff != 0) {
+          var frac = (lastCpDist - CP_RADIUS) / diff;
+          time -= vehic.sim.timeStep * frac;
+        }
+      }
       this.advanceCheckpoint(time);
     }
     this.lastCpDistSq = cpDistSq;
@@ -62,7 +70,15 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     this.trigger('advance');
   };
 
+  var makeId = (function() {
+    var nextId = 1;
+    return function() {
+      return nextId++;
+    };
+  })();
+
   exports.Game = function(track) {
+    this.id = makeId();
     this.track = track;
     this.progs = [];
     this.pubsub = new pubsub.PubSub();
@@ -72,6 +88,10 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     this.track.scenery.addToSim(this.sim);
     this.startTime = 3;
     this.sim.pubsub.subscribe('step', this.onSimStep.bind(this));
+  };
+
+  exports.Game.prototype.destroy = function() {
+    this.pubsub.trigger('destroy');
   };
 
   exports.Game.prototype.restart = function() {

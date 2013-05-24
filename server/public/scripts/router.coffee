@@ -7,7 +7,6 @@ define [
   'cs!views/home'
   'cs!views/ignition'
   'cs!views/license'
-  # 'cs!views/notfound'
   'cs!views/profile'
   'cs!views/replay'
   'cs!views/spin'
@@ -22,7 +21,6 @@ define [
   HomeView
   IgnitionView
   LicenseView
-  # NotFoundView
   ProfileView
   ReplayView
   SpinView
@@ -43,6 +41,7 @@ define [
       "track/:trackId": "track"
       "track/:trackId/edit": "trackEdit"
       "track/:trackId/drive": "trackDrive"
+      "track/:trackId/drive/vs/:runId": "trackDrive"
       "tracklist/:setId": "trackset"
       "user/:userId": "user"
       "user/:userId/tracks": "userTracks"
@@ -97,7 +96,7 @@ define [
       view = new TrackView track, @app, @uni.client
       @uni.setViewChild view.render()
 
-    trackDrive: (trackId) ->
+    trackDrive: (trackId, runId) ->
       view = @uni.getView3D()
       unless view instanceof DriveView and
              view is @uni.getViewChild()
@@ -105,6 +104,7 @@ define [
         @uni.setViewBoth view
         view.render()
       view.setTrackId trackId
+      view.setRunId runId if runId
 
     trackEdit: (trackId) ->
       unless @uni.getView3D() instanceof EditorView and

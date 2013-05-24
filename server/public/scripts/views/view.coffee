@@ -21,7 +21,4 @@ define [
     afterRender: ->
 
     destroy: ->
-      # @stopListening()  # done by remove()
-      @undelegateEvents()
-      @$el.removeData().unbind()
       @remove()

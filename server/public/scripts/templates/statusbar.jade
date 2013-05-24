@@ -8,15 +8,13 @@ table
       a.route(href="/about") About
       //- | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       //- a(href="javascript:location.reload()") Reload
-      span.dropdownmenu Track &blacktriangledown;
+      span.dropdownmenu Tracks &blacktriangledown;
         menu.trackinfo
           .label Current track:
           li
             span.favorite
-            | 
-            span.name
-            br
-            | by 
+            a.route.name
+            |  by 
             span.author
           ul
             li
@@ -31,6 +29,24 @@ table
           li: a.route(href="/tracklist/all") All tracks
           li: a.route.myfavorites(href="") My Favorites 
             img.emoji(src="/emojis/star.png")
+      span.dropdownmenu.challenge.hidden Challenge &blacktriangledown;
+        menu.trackinfo
+          li: a.route.drive Restart race (R)
+          hr
+          .label Pure race
+          li: label
+            input(type="radio", name="challenge", value='none')
+            | Hide clock
+          li: label
+            input(type="radio", name="challenge", value='clock')
+            | Race against the clock
+          .label Race with split times
+          li: label
+            input(type="radio", name="challenge", value='personal')
+            | Versus your personal best
+          li: label
+            input(type="radio", name="challenge", value='world')
+            | Versus the world's best
       span.dropdownmenu Settings &blacktriangledown;
         menu
           li: label

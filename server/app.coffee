@@ -469,7 +469,7 @@ io.of('/drive').on 'connection', (socket) ->
       return unless car and track
       # This is why I should have a model layer.
       db.tracks.update { _id: track._id }, { $inc: { count_drive: 1 } }, dbCallback
-      return  # Disable run recording
+      # return  # Disable run recording
       return unless user
       newRun =
         car: car._id
@@ -492,6 +492,14 @@ io.of('/drive').on 'connection', (socket) ->
       Array::push.apply buffer_i, data.samples
     socket.on 'record_p', (data) ->
       Array::push.apply buffer_p, data.samples
+    socket.on 'times', (data) ->
+      return unless run
+      # TODO: Verification!
+      times = data.times
+      time = times[times.length - 1]
+      db.runs.update { _id: run._id },
+                     { $set: { time, times } },
+                     dbCallback
 
 # io.of('/api').on 'connection', (socket) ->
 #   session = socket.handshake.session

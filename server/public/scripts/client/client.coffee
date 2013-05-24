@@ -114,7 +114,7 @@ define [
       @speedMeter.scale.multiplyScalar 0.4
       scene.add @speedMeter
 
-      @$digital = $("#speedo")
+      @$digital = $(".speedo")
 
     destroy: ->
       @revMeter.parent.remove @revMeter
@@ -624,17 +624,14 @@ define [
         #event.preventDefault()
       return
 
-    setGame: (game) ->
+    addGhostGame: (game) ->
+
+    addGame: (game) ->
       if @game
         # Clean up
-        for k, layer of @objects
-          @objects[k] = _.without layer, @gameCleanup...
-        for obj in @gameCleanup
-          obj.destroy?()
-        @gameCleanup = null
       @game = game
       @gameCleanup = [] if game?
-      game?.on? 'addvehicle', (car, progress) =>
+      game.on 'addvehicle', (car, progress) =>
         audio = if car.cfg.isRemote then null else @audio
         renderCar = new clientCar.RenderCar @scene, car, audio, @dust
         progress._renderCar = renderCar
@@ -650,6 +647,12 @@ define [
         @add new RenderCheckpointArrows @camera, progress
         @add new CarControl car, this
         return
+      game.on 'destroy', =>
+        for k, layer of @objects
+          @objects[k] = _.without layer, @gameCleanup...
+        for obj in @gameCleanup
+          obj.destroy?()
+        @gameCleanup = null
 
       # game.on 'deletevehicle', (progress) =>
       #   renderCar = progress._renderCar
@@ -659,8 +662,6 @@ define [
       #     if idx isnt -1
       #       layer.splice idx, 1
       #   renderCar.destroy()
-
-    # on: (event, handler) -> @pubsub.subscribe event, handler
 
     add: (obj, priority = 0) ->
       layer = @objects[priority] ?= []

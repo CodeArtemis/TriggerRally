@@ -83,6 +83,13 @@ define [
       @$el.on 'change', '.pixeldensity input:radio', (event) ->
         prefs.pixeldensity = @value
 
+      do updateChallenge = =>
+        @$("input[type=radio][name=challenge][value=#{prefs.challenge}]").prop 'checked', yes
+      @listenTo root, 'change:prefs.challenge', updateChallenge
+
+      @$("input[type=radio][name=challenge]").on 'change', ->
+        prefs.challenge = $(@).val()
+
       $carSection = @$('.car-section')
       do addCars = =>
         cars = root.user?.cars() or [ 'ArbusuG' ]
@@ -115,6 +122,7 @@ define [
         $favorite.html @favoriteView.el
       @listenTo root, 'change:track.id', ->
         id = root.track.id
+        $trackName.attr 'href', "/track/#{id}"
         $trackLinkDrive.attr 'href', "/track/#{id}/drive"
         $trackLinkEdit.attr 'href', "/track/#{id}/edit"
         $trackLinkInfo.attr 'href', "/track/#{id}"
@@ -135,6 +143,11 @@ define [
         $myFavorites.toggleClass 'hidden', not root.user
         $myFavorites.attr 'href', "/user/#{root.user.id}/favorites" if root.user
       @listenTo root, 'change:user', updateMyFavorites
+
+      @listenTo Backbone, 'statusbar:showchallenge', =>
+        @$('.challenge').removeClass 'hidden'
+      @listenTo Backbone, 'statusbar:hidechallenge', =>
+        @$('.challenge').addClass 'hidden'
 
     height: -> @$el.height()
 

@@ -223,6 +223,7 @@
       'status'
       'time'
       'time_readable'
+      'times'
       'track'
       'user'
     ]

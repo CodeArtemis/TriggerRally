@@ -21,7 +21,7 @@ define [
       when 'read'
         data = JSON.parse localStorage.getItem key
         data ?= { id: 1 }
-        model.set data
+        model.set model.parse data
       when 'update'
         localStorage.setItem key, JSON.stringify model
     return
@@ -45,6 +45,7 @@ define [
       'antialias'
       'audio'
       'car'
+      'challenge'
       'pixeldensity'
       'shadows'
       'terrainhq'
@@ -54,6 +55,7 @@ define [
       antialias: yes
       audio: yes
       car: 'Icarus'
+      challenge: 'world'
       pixeldensity: 1
       shadows: yes
       terrainhq: yes
