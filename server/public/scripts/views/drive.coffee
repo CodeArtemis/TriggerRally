@@ -160,6 +160,7 @@ define [
         carModel.fetch
           success: =>
             return if @destroyed
+            @game.destroy() if @game
             @game = new gameGame.Game @client.track
             @client.addGame @game
             @createReplayGame()
