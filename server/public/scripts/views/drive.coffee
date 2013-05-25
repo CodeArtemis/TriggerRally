@@ -64,19 +64,49 @@ define [
   #   'Excellent!'
   # ]
 
+  # Modify a game to make it track gameMaster and run.
+  # Injects a new update method into the game.
+  syncReplayGame = (game, progress, gameMaster, run) ->
+    obj1 = progress.vehicle.controller.input
+    obj2 = progress
+    play1 = new recorder.StatePlayback obj1, run.record_i
+    play2 = new recorder.StatePlayback obj2, run.record_p
+
+    game.sim.pubsub.on 'step', ->
+      play1.step()
+      play2.step()
+
+    originalUpdate = game.update
+
+    game.update = (deltaIgnored) ->
+      masterTime = gameMaster.sim.interpolatedTime()
+      delta = masterTime - game.sim.interpolatedTime()
+      if delta > 0
+        originalUpdate.call game, delta
+      else if delta < 0
+        game.restart()
+        # The vehicle controller is recreated after restarting the game.
+        play1.object = progress.vehicle.controller.input
+        play1.restart()
+        play2.restart()
+        originalUpdate.call game, masterTime
+      return
+    return
+
   class Drive extends View
     template: template
     constructor: (@app, @client) -> super()
 
     initialize: ->
       @replayRun = null
+      @replayGame = null
 
     destroy: ->
       Backbone.trigger 'statusbar:hidechallenge'
 
       @socket?.disconnect()
       @game.destroy()
-      @client.setGame null
+      @replayGame?.destroy()
       super
 
     onKeyDown: (event) ->
@@ -102,27 +132,37 @@ define [
       @$splitTime = @$ '.split-time'
 
       do updateChallenge = =>
-        hidden = root.prefs.challenge is 'none'
-        @$runTimer.toggleClass 'hidden', hidden
-        @$splitTime.toggleClass 'hidden', hidden
+        @$runTimer.toggleClass 'hidden', root.prefs.challenge is 'none'
+        @$splitTime.toggleClass 'hidden', root.prefs.challenge in [ 'none', 'clock' ]
       @listenTo root, 'change:prefs.challenge', updateChallenge
+      @listenTo root, 'change:prefs.challenge', =>
+        # This isn't triggered at startup, only on changes.
+        @useChallengeRun()
 
       @game = null
 
       @socket = io.connect '/drive'
+      @socket.on 'connect_failed', -> Backbone.trigger 'app:status', 'Socket connect failed'
+      @socket.on 'disconnect', -> Backbone.trigger 'app:status', 'Socket disconnected'
+      @socket.on 'error', -> Backbone.trigger 'app:status', 'Socket error'
+      @socket.on 'reconnect', -> Backbone.trigger 'app:status', 'Socket reconnected'
+      @socket.on 'reconnect_failed', -> Backbone.trigger 'app:status', 'Socket reconnect failed'
 
       @lastRaceTime = 0
       @updateTimer = yes
 
       do createGame = =>
         return unless root.track?
+        @trackId = root.track.id
         @setRun null if @replayRun and @replayRun.track.id isnt root.track.id
         @carId = carId = root.getCarId() ? 'ArbusuG'
         carModel = models.Car.findOrCreate carId
         carModel.fetch
           success: =>
+            return if @destroyed
             @game = new gameGame.Game @client.track
-            @client.setGame @game
+            @client.addGame @game
+            @createReplayGame()
 
             @game.addCarConfig carModel.config, (@progress) =>
               progress.on 'advance', => @advance()
@@ -155,6 +195,8 @@ define [
         @$splitTime.text text
         @$splitTime.removeClass 'hidden'
         @$splitTime.toggleClass 'minus', minus
+        if minus and not @app.root.user
+          Backbone.trigger 'app:status', 'You\'re leading! Log in to save your score!'
       else
         @$splitTime.addClass 'hidden'
 
@@ -198,7 +240,7 @@ define [
 
       if cpNext > 1
         message = if cpNext is cpTotal
-          'Win!'
+          'Finished!'
         else if cpNext is cpTotal - 1
           'Nearly there!'
         else
@@ -217,37 +259,76 @@ define [
       times = (time - startTime for time in @progress.cpTimes)
       @socket.emit 'times', { times }
 
-    setTrackId: (trackId) ->
+    setTrackId: (@trackId) ->
       track = models.Track.findOrCreate trackId
       track.fetch
-        success: ->
+        success: =>
           track.env.fetch
-            success: ->
+            success: =>
+              return if @destroyed
               Backbone.trigger 'app:settrack', track
               Backbone.trigger 'app:settitle', track.name
         error: ->
           Backbone.trigger 'app:notfound'
 
     setRunId: (runId) ->
+      @setRun models.Run.findOrCreate runId
+
+    useChallengeRun: ->
       @setRun null
-      run = models.Run.findOrCreate runId
-      run.fetch success: =>
-        @setRun run
+      challenge = @app.root.prefs.challenge
+      switch challenge
+        when 'world'
+          trackRuns = models.TrackRuns.findOrCreate @trackId
+          trackRuns.fetch
+            success: =>
+              @setRun trackRuns.runs.at(0)
+      # type = switch challenge
+      #   when 'world' then 'runs'
+      #   when 'personal' then 'personalruns'
+      # return unless type
+      # url = "/v1/tracks/#{@trackId}/#{type}"
+      # $.ajax(url)
+      # .done (data) =>
+      #   return unless data.run
+      #   run = models.Run.findOrCreate data.run.id
+      #   run.set run.parse data.run
+      #   @setRun run
+
+    cleanUrl: ->
+      Backbone.history.navigate "/track/#{@trackId}/drive"
 
     setRun: (run) ->
-      # TODO: Clean up old run.
+      # TODO: Clean up old run?
       @replayRun = null
+      @replayGame?.destroy()
+      @replayGame = null
 
-      return unless run
-      return if @app.root.track and run.track.id isnt @app.root.track.id
+      return @cleanUrl() unless run
 
+      if run.record_p
+        @setRunInternal run
+      else
+        run.fetch
+          force: yes
+          success: => @setRunInternal run
+          error: => @cleanUrl()
+
+    setRunInternal: (run) ->
       @replayRun = run
-      # We can start showing split times now.
+      @createReplayGame()
 
-      car = models.Car.findOrCreate run.car.id
-      car.fetch success: ->
-        # replayGame = new gameGame.Game @client.track
-        # client.addGame replayGame
+    createReplayGame: ->
+      # TODO: Check that replayGame matches replayRun?
+      return if @replayGame
+      return unless @replayRun and @game
+      car = models.Car.findOrCreate @replayRun.car.id
+      car.fetch success: =>
+        return if @destroyed
+        @replayGame = new gameGame.Game @client.track
+        @replayGame.addCarConfig car.config, (progress) =>
+          syncReplayGame @replayGame, progress, @game, @replayRun
+        @client.addGame @replayGame, isGhost: yes
 
     update: (delta) ->
       if @updateTimer and @game

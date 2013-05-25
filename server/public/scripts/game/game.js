@@ -82,12 +82,17 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     this.track = track;
     this.progs = [];
     this.pubsub = new pubsub.PubSub();
-    // TODO: Use a more sensible time step.
     this.sim = new psim.Sim(1 / 150);
     this.sim.addStaticObject(this.track.terrain);
-    this.track.scenery.addToSim(this.sim);
+    this.sim.addStaticObject(this.track.scenery);
     this.startTime = 3;
     this.sim.pubsub.subscribe('step', this.onSimStep.bind(this));
+  };
+
+  exports.Game.prototype.update = function(delta) {
+    if (this.track.ready) {
+      this.sim.tick(delta);
+    }
   };
 
   exports.Game.prototype.destroy = function() {
@@ -131,6 +136,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     var progress = new exports.Progress(checkpoints, vehicle);
     this.progs.push(progress);
     if (callback) callback(progress);
+    // TODO: Remove redundant vehicle argument.
     this.pubsub.publish('addvehicle', vehicle, progress);
   };
 

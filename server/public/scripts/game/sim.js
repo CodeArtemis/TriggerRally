@@ -20,12 +20,12 @@ function(THREE, pubsub, util) {
   var tmpQuat = new Quat();
 
   exports.Sim = function(timeStep) {
+    this.pubsub = new pubsub.PubSub();
     this.gravity = new Vec3(0, 0, -9.81);
     this.objects = [];
     this.staticObjects = [];  // Just used for clipping.
     this.timeStep = timeStep;
     this.restart();
-    this.pubsub = new pubsub.PubSub();
     this.on = this.pubsub.subscribe.bind(this.pubsub);
   };
 

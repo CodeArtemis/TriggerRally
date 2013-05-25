@@ -33,10 +33,6 @@ function(LFIB4, collision, hash2d, util, THREE) {
     return this.layers[this.layersById[id]];
   };
 
-  exports.Scenery.prototype.addToSim = function(sim) {
-    sim.addStaticObject(this);
-  };
-
   exports.Scenery.prototype.collideSphereList = function(sphereList) {
     var result = [];
     this.layers.forEach(function(layer) {

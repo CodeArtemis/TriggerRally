@@ -52,10 +52,7 @@ define [
       root = @app.root
       $ = @$.bind @
 
-      # Set a dummy game object so that client will start collecting objects.
-      # This lets us clean them up in destroy().
-      # TODO: Come up with a cleaner way to do this.
-      client.setGame {}
+      @objs = []
 
       client.camera.idealFov = 75
       client.camera.useQuaternion = no
@@ -71,7 +68,7 @@ define [
       startPos = new THREE.Object3D()
       editorObjects.add startPos
 
-      client.addEditorCheckpoints editorObjects
+      @objs.push client.addEditorCheckpoints editorObjects
 
       doSave = _.debounce ->
         if root.user isnt root.track.user or root.track.published
@@ -341,4 +338,4 @@ define [
     destroy: ->
       @inspectorView.destroy()
       @client.scene.remove @editorObjects
-      @client.setGame null
+      @client.destroyObjects @objs

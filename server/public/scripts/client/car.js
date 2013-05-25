@@ -14,7 +14,7 @@ function(THREE, util) {
 
   var tmpVec3a = new THREE.Vector3();
 
-  exports.RenderCar = function(scene, vehic, audio, dust) {
+  exports.RenderCar = function(scene, vehic, audio, dust, isGhost) {
     this.bodyGeometry = null;
     this.wheelGeometry = null;
 
@@ -108,7 +108,7 @@ function(THREE, util) {
           tmpVec3a.x *= Math.random() + 0.5;
           tmpVec3a.y *= Math.random() + 0.5;
           tmpVec3a.z *= Math.random() + 0.5;
-          dust.spawnDust(vWheel.clipPos, tmpVec3a);
+          if (dust) dust.spawnDust(vWheel.clipPos, tmpVec3a);
         }
       }
 
@@ -127,7 +127,7 @@ function(THREE, util) {
         meshes.WingRO.rotation.set(liftFlex - aileron, liftFlex, -foldO);
 
         this.root.updateMatrixWorld();
-        if (fold == 0) {
+        if (dust && fold == 0) {
           tmpVec3a.set(0.45, 1.45, 0);
           meshes.WingLO.matrixWorld.multiplyVector3(tmpVec3a);
           dust.spawnContrail(tmpVec3a, vehic.body.getLinearVelAtPoint(tmpVec3a).multiplyScalar(0.95));
@@ -188,9 +188,10 @@ function(THREE, util) {
 
       var s = this.config.scale || 1;
 
+      var bodyMaterial, wheelMaterial;
+
       if (this.loadedData) {
         var scene = this.loadedData.scene;
-        // this.root.add(scene);
         var meshes = {};
         var children = scene.children;
         for (var k in children) {
@@ -214,16 +215,20 @@ function(THREE, util) {
           meshes.WingRO.position.subSelf(meshes.WingRI.position);
         }
         this.meshes = meshes;
+        bodyMaterial = meshes.Body.material;
       } else {
+        // Support for older (non-scene) car models.
         this.bodyMesh = new THREE.Mesh(this.bodyGeometry, this.bodyMaterials[0]);
         this.bodyMesh.material.ambient.copy(this.bodyMesh.material.color);
         this.bodyMesh.material.map.flipY = false;
         this.bodyMesh.position.subSelf(center);
         this.bodyMesh.scale.set(s, s, s);
-        this.bodyMesh.castShadow = true;
-        this.bodyMesh.receiveShadow = true;
-
+        if (!isGhost) {
+          this.bodyMesh.castShadow = true;
+          this.bodyMesh.receiveShadow = true;
+        }
         this.root.add( this.bodyMesh );
+        bodyMaterial = this.bodyMesh.material;
       }
 
       for (i = 0; i < this.config.wheels.length; ++i) {
@@ -235,14 +240,28 @@ function(THREE, util) {
         wheel.mesh.material.map.flipY = false;
         wheel.mesh.scale.set( s, s, s );
         if (cfg.flip) wheel.mesh.rotation.z = Math.PI;
-        wheel.mesh.castShadow = true;
-        wheel.mesh.receiveShadow = true;
+        if (!isGhost) {
+          wheel.mesh.castShadow = true;
+          wheel.mesh.receiveShadow = true;
+        }
         wheel.root = new THREE.Object3D();
   			wheel.root.position = new THREE.Vector3(cfg.pos[0], cfg.pos[1], cfg.pos[2]);
         wheel.root.position.subSelf(center);
         wheel.root.add(wheel.mesh);
         this.root.add(wheel.root);
         this.wheels.push(wheel);
+      }
+
+      // TODO: Add wheel support to scene models.
+      wheelMaterial = this.wheelMaterials[0];
+
+      if (isGhost) {
+        bodyMaterial.opacity = 0.4;
+        bodyMaterial.transparent = true;
+        bodyMaterial.depthWrite = false;
+        wheelMaterial.opacity = 0.4;
+        wheelMaterial.transparent = true;
+        wheelMaterial.depthWrite = false;
       }
 
       if (this.aud) {

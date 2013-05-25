@@ -21,4 +21,5 @@ define [
     afterRender: ->
 
     destroy: ->
+      @destroyed = yes
       @remove()

@@ -112,7 +112,13 @@ module.exports =
     app.get "#{base}/runs/:run_id", (req, res) ->
       findRun req.params['run_id'], (run) ->
         return jsonError 404, res unless run?
-        res.json run
+        if run.record_p
+          res.json run
+        else
+          run.fetch
+            force: yes
+            success: -> res.json run
+            error: -> jsonError 500, res
 
     app.post "#{base}/tracks", (req, res) ->
       return jsonError 401, res unless req.user?
@@ -167,6 +173,14 @@ module.exports =
 
     app.get "#{base}/tracks/:track_id/runs", loadUrlTrackRuns, (req, res) ->
       res.json req.fromUrl.trackRuns
+
+    # app.get "#{base}/tracks/:track_id/bestrun", loadUrlTrack, (req, res) ->
+    #   req.fromUrl.track.getBestRun (run) ->
+    #     return jsonError 404, res unless run?
+    #     res.json { run }
+
+    # app.get "#{base}/tracks/:track_id/personalbestrun", loadUrlTrackRuns, (req, res) ->
+    #   res.json req.fromUrl.trackRuns
 
     app.put "#{base}/tracks/:track_id", editUrlTrack, (req, res) ->
       track = req.fromUrl.track

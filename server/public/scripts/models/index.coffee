@@ -242,9 +242,6 @@
       data.user = data.user.id if data.user?
       data
 
-  class RunTimeline extends Collection
-    url: -> "#{@run.url()}/#{@timeline}"
-
   class Track extends Model
     all: new (Collection.extend model: @)
     buildProps @, [
@@ -445,7 +442,6 @@
     Env
     Run
     RunCollection
-    RunTimeline
     StartPos
     Track
     TrackCollection

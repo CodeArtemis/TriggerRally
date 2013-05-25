@@ -104,7 +104,10 @@ define [
         @uni.setViewBoth view
         view.render()
       view.setTrackId trackId
-      view.setRunId runId if runId
+      if runId
+        view.setRunId runId
+      else
+        view.useChallengeRun()
 
     trackEdit: (trackId) ->
       unless @uni.getView3D() instanceof EditorView and

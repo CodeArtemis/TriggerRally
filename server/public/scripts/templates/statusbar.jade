@@ -31,22 +31,22 @@ table
             img.emoji(src="/emojis/star.png")
       span.dropdownmenu.challenge.hidden Challenge &blacktriangledown;
         menu.trackinfo
-          li: a.route.drive Restart race (R)
+          .label Press <b>R</b> to restart the race.
           hr
-          .label Pure race
+          //- .label Pure race
           li: label
             input(type="radio", name="challenge", value='none')
             | Hide clock
           li: label
             input(type="radio", name="challenge", value='clock')
-            | Race against the clock
-          .label Race with split times
-          li: label
-            input(type="radio", name="challenge", value='personal')
-            | Versus your personal best
+            | Show clock
+          //- .label Race with split times
+          //- li: label
+          //-   input(type="radio", name="challenge", value='personal')
+          //-   | Versus your personal best
           li: label
             input(type="radio", name="challenge", value='world')
-            | Versus the world's best
+            | Show clock and leader ghost
       span.dropdownmenu Settings &blacktriangledown;
         menu
           li: label

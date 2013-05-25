@@ -127,7 +127,7 @@ define [
           ((vehic.engineAngVelSmoothed - vehic.engineIdle) /
               (vehic.engineRedline - vehic.engineIdle))
       speed = Math.abs(vehic.differentialAngVel) * vehic.avgDriveWheelRadius * convertKMH
-      @speedMeter.rotation.z = -2.5 - 4.5 * speed * 0.0035
+      @speedMeter.rotation.z = -2.5 - 4.5 * speed * 0.004
       # Use actual speed for the digital indicator.
       speed = vehic.body.getLinearVel().length() * convertKMH
       @$digital.text speed.toFixed(0) + " km/h"
@@ -580,7 +580,7 @@ define [
 
       @add new SunLight @scene
 
-      @add (@dust = new Dust @scene)
+      @add @dust = new Dust @scene
 
       @audio = new clientAudio.WebkitAudio()
       @audio.mute() unless prefs.audio
@@ -624,35 +624,35 @@ define [
         #event.preventDefault()
       return
 
-    addGhostGame: (game) ->
+    addGame: (game, options = {}) ->
+      unless game? then throw new Error 'Added null game'
+      objs = []
 
-    addGame: (game) ->
-      if @game
-        # Clean up
-      @game = game
-      @gameCleanup = [] if game?
-      game.on 'addvehicle', (car, progress) =>
-        audio = if car.cfg.isRemote then null else @audio
-        renderCar = new clientCar.RenderCar @scene, car, audio, @dust
-        progress._renderCar = renderCar
-        @add renderCar
-        return if car.cfg.isRemote
-        @add new RenderDials @sceneHUD, car
-        @add renderCheckpoints = new RenderCheckpointsDrive @scene, @root
+      priority = if options.isGhost then 2 else 1
+
+      objs.push @add { update: (cam, delta) -> game.update delta }, priority
+
+      onAddVehicle = (car, progress) =>
+        # TODO: Use spatialized audio for ghosts.
+        audio = if options.isGhost then null else @audio
+        dust = if options.isGhost then null else @dust
+        renderCar = new clientCar.RenderCar @scene, car, audio, dust, options.isGhost
+        # progress._renderCar = renderCar
+        objs.push @add renderCar
+        return if options.isGhost
+        objs.push @add new RenderDials(@sceneHUD, car)
+        objs.push @add renderCheckpoints = new RenderCheckpointsDrive @scene, @root
         progress.on 'advance', =>
           renderCheckpoints.highlightCheckpoint progress.nextCpIndex
           @audio?.playSound @checkpointBuffer, false, 1, 1 if @checkpointBuffer?
+        # TODO: Migrate isReplay out of cfg to a method argument like isGhost.
         return if car.cfg.isReplay
-        @add @camControl = new CamControl @camera, renderCar
-        @add new RenderCheckpointArrows @camera, progress
-        @add new CarControl car, this
+        objs.push @add @camControl = new CamControl @camera, renderCar
+        objs.push @add new RenderCheckpointArrows @camera, progress
+        objs.push @add new CarControl car, @
         return
-      game.on 'destroy', =>
-        for k, layer of @objects
-          @objects[k] = _.without layer, @gameCleanup...
-        for obj in @gameCleanup
-          obj.destroy?()
-        @gameCleanup = null
+      onAddVehicle prog.vehicle, prog for prog in game.progs
+      game.on 'addvehicle', onAddVehicle
 
       # game.on 'deletevehicle', (progress) =>
       #   renderCar = progress._renderCar
@@ -663,10 +663,21 @@ define [
       #       layer.splice idx, 1
       #   renderCar.destroy()
 
-    add: (obj, priority = 0) ->
+      game.on 'destroy', => @destroyObjects objs
+      return
+
+    destroyObjects: (objs) ->
+      # Remove the objects from all update layers...
+      for k, layer of @objects
+        @objects[k] = _.without layer, objs...
+      # ...then destroy the objects.
+      for obj in objs
+        obj.destroy?()
+      return
+
+    add: (obj, priority = 10) ->
       layer = @objects[priority] ?= []
       layer.push obj
-      @gameCleanup?.push obj
       obj
 
     createRenderer: (prefs) ->
@@ -712,9 +723,6 @@ define [
         @debouncedMuteAudio @audio
 
     update: (delta) ->
-      # Pause simulation while track is updating.
-      if @track.ready
-        @game?.sim?.tick delta
       for priority, layer of @objects
         for object in layer
           object.update @camera, delta
