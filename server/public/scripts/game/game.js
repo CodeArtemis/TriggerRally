@@ -141,6 +141,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
   };
 
   exports.Game.prototype.setupVehicle = function(vehicle) {
+    vehicle.body.reset();
     vehicle.body.ori.set(1, 1, 1, 1).normalize();
     var startpos = this.track.root.track.config.course.startposition;
     vehicle.body.pos.set(startpos.pos[0], startpos.pos[1], startpos.pos[2]);

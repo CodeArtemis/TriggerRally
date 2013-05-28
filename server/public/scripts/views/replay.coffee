@@ -48,7 +48,7 @@ define [
     constructor: (@app, @client, @run) -> super()
 
     destroy: ->
-      @client.setGame null
+      @game?.destroy()
       super
 
     onKeyDown: (event) ->
@@ -85,8 +85,9 @@ define [
       run.fetch
         success: =>
           done = _.after 2, =>
+            @game?.destroy()
             @game = new gameGame.Game @client.track
-            @client.setGame @game
+            @client.addGame @game
 
             @game.addCarConfig car.config, (@progress) =>
               progress.vehicle.cfg.isReplay = yes

@@ -198,6 +198,15 @@ function(THREE, pubsub, util) {
   };
   exports.RigidBody.prototype = Object.create(new exports.ReferenceFrame());
 
+  exports.RigidBody.prototype.reset = function() {
+    this.linVel.set(0,0,0);
+    this.angVel.set(0,0,0);
+    this.angMom.set(0,0,0);
+    this.accumForce.set(0,0,0);
+    this.accumTorque.set(0,0,0);
+    this.recordState();
+  };
+
   exports.RigidBody.prototype.recordState = function() {
     // Copy current state so that we can refer to it later.
     this.old.pos.copy(this.pos);

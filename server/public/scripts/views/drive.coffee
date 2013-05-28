@@ -251,6 +251,7 @@ define [
         _.defer => @$countdown.addClass 'fadeout'
 
       return if @progress.nextCheckpoint(0)
+      throw new Error 'Simulation error' unless @progress.nextCpIndex > 0
 
       # Race complete.
       @updateTimer = no
