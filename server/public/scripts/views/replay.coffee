@@ -104,8 +104,8 @@ define [
 
               obj1 = progress.vehicle.controller.input
               obj2 = progress
-              @play1 = new recorder.StatePlayback obj1, run.record_i
-              @play2 = new recorder.StatePlayback obj2, run.record_p
+              @play1 = new recorder.StatePlaybackInterpolated obj1, run.record_i
+              @play2 = new recorder.StatePlaybackInterpolated obj2, run.record_p
               @game.sim.pubsub.on 'step', =>
                 @play1.step()
                 @play2.step()

@@ -79,6 +79,34 @@ moduleDef = (require, exports, module) ->
 
     complete: -> timeline[@currentSeg + 1]?
 
+  class exports.StatePlaybackInterpolated
+    constructor: (@object, @saved) ->
+      @restart()
+
+    restart: ->
+      # Set to -1 so that we advance to 0 on first step.
+      @counter = -1
+      @currentSeg = -1
+      @cache = {}
+
+    step: ->
+      timeline = @saved.timeline
+      ++@counter
+      keyMap = @saved.keyMap
+      while (nextSeg = timeline[@currentSeg + 1]) and (duration = nextSeg[0]) <= @counter
+        applyDiff @cache, nextSeg[1], keyMap
+        ++@currentSeg
+        @counter -= duration
+      return if @currentSeg < 0
+      factor = @counter / duration
+      if nextSeg
+        blendDiff @object, @cache, nextSeg[1], keyMap, factor
+      else
+        applyDiff @object, timeline[@currentSeg][1], keyMap
+      return
+
+    complete: -> timeline[@currentSeg + 1]?
+
   # Returns only values in a that differ from those in b.
   # a and b must have the same attributes.
   objDiff = (a, b) ->
@@ -97,17 +125,33 @@ moduleDef = (require, exports, module) ->
     changed
 
   applyDiff = (obj, diff, keyMap) ->
-    if _.isArray(diff)
+    if _.isArray diff
+      obj ?= []
       for el, index in diff
         # No remapping for array indices.
         obj[index] = applyDiff obj[index], el, keyMap
-      obj
+    else if _.isObject diff
+      obj ?= {}
+      for key, val of diff
+        mapped = keyMap[key]
+        obj[mapped] = applyDiff obj[mapped], val, keyMap
+    else
+      obj = parseFloat diff
+    obj
+
+  blendDiff = (obj, lastState, diff, keyMap, factor) ->
+    if _.isArray diff
+      for el, index in diff
+        # No remapping for array indices.
+        obj[index] = blendDiff obj[index], lastState[index], el, keyMap, factor
     else if _.isObject diff
       for key, val of diff
-        obj[keyMap[key]] = applyDiff obj[keyMap[key]], val, keyMap
-      obj
+        mapped = keyMap[key]
+        obj[mapped] = blendDiff obj[mapped], lastState[mapped], val, keyMap, factor
     else
-      parseFloat diff
+      target = parseFloat diff
+      obj = lastState + (target - lastState) * factor
+    obj
 
   generateKeyMap = (keys) ->
     keyMap = {}

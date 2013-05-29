@@ -41,7 +41,7 @@ define [
         pos: { x: 3, y: 3, z: 3 }
         ori: { x: 3, y: 3, z: 3, w: 3 }
         linVel: { x: 3, y: 3, z: 3 }
-        angVel: { x: 3, y: 3, z: 3 }
+        angMom: { x: 3, y: 3, z: 3 }
       wheels: [
         spinVel: 1
       ]
@@ -69,8 +69,8 @@ define [
   syncReplayGame = (game, progress, gameMaster, run) ->
     obj1 = progress.vehicle.controller.input
     obj2 = progress
-    play1 = new recorder.StatePlayback obj1, run.record_i
-    play2 = new recorder.StatePlayback obj2, run.record_p
+    play1 = new recorder.StatePlaybackInterpolated obj1, run.record_i
+    play2 = new recorder.StatePlaybackInterpolated obj2, run.record_p
 
     game.sim.pubsub.on 'step', ->
       play1.step()
@@ -81,7 +81,13 @@ define [
     game.update = (deltaIgnored) ->
       masterTime = gameMaster.sim.interpolatedTime()
       delta = masterTime - game.sim.interpolatedTime()
+      console.log "#{game.sim.time.toFixed(3)} vs #{gameMaster.sim.time.toFixed(3)}"
       if delta > 0
+        # if delta > 1
+        #   # Fast forward to 1 sec before present.
+        #   # Broken: playback sync relies on 'step' events.
+        #   game.sim.time += delta - 1
+        #   delta = 1
         originalUpdate.call game, delta
       else if delta < 0
         game.restart()

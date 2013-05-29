@@ -441,24 +441,33 @@ io.of('/drive').on 'connection', (socket) ->
   buffer_i = []
   buffer_p = []
 
-  flushBuffers = ->
-    return unless run
-    query = { _id: run._id }
-    if buffer_i.length > 0
-      db.runs.update query,
-                     { $push: { "record_i.timeline": { $each: buffer_i } } },
-                     dbCallback
-      buffer_i = []
-    if buffer_p.length > 0
-      db.runs.update query,
-                     { $push: { "record_p.timeline": { $each: buffer_p } } },
-                     dbCallback
-      buffer_p = []
+  # flushBuffers = ->
+  #   return unless run
+  #   query = { _id: run._id }
+  #   if buffer_i.length > 0
+  #     db.runs.update query,
+  #                    { $push: { "record_i.timeline": { $each: buffer_i } } },
+  #                    dbCallback
+  #     buffer_i = []
+  #   if buffer_p.length > 0
+  #     db.runs.update query,
+  #                    { $push: { "record_p.timeline": { $each: buffer_p } } },
+  #                    dbCallback
+  #     buffer_p = []
 
-  interval = setInterval flushBuffers, 1000
+  # interval = setInterval flushBuffers, 1000
+  # socket.on 'disconnect', ->
+  #   clearInterval interval
+  #   flushBuffers()
+
   socket.on 'disconnect', ->
-    clearInterval interval
-    flushBuffers()
+    return unless run
+    console.log "Writing replay records for run: #{run.pub_id}"
+    db.runs.update { _id: run._id },
+        $set:
+          "record_i.timeline": buffer_i
+          "record_p.timeline": buffer_p
+        , dbCallback
 
   # TODO: Resume connections, or notify user if recording has stopped.
 
@@ -494,12 +503,13 @@ io.of('/drive').on 'connection', (socket) ->
       Array::push.apply buffer_p, data.samples
     socket.on 'times', (data) ->
       return unless run
+      console.log "Writing times for run: #{run.pub_id}"
       # TODO: Verification!
       times = data.times
       time = times[times.length - 1]
       db.runs.update { _id: run._id },
-                     { $set: { time, times } },
-                     dbCallback
+          $set: { time, times },
+          dbCallback
 
 # io.of('/api').on 'connection', (socket) ->
 #   session = socket.handshake.session

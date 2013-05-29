@@ -116,3 +116,24 @@ describe 'recorder', ->
       expect(obj).toEqual { x: 3 }
       play.step()
       expect(obj).toEqual { x: 3 }
+
+    it 'has correct timing', ->
+      obj = jsonClone data2
+      rec = new recorder.StateRecorder obj, keys2, 2
+      obj.x = 1
+      rec.observe()
+      obj.x = 2
+      rec.observe()
+      obj.x = 3
+      rec.observe()
+      saved2 = jsonClone rec
+
+      obj = {}
+      play = new recorder.StatePlayback obj, saved2
+      expect(obj).toEqual {}
+      play.step()
+      expect(obj).toEqual { x: 1 }
+      play.step()
+      expect(obj).toEqual { x: 1 }
+      play.step()
+      expect(obj).toEqual { x: 3 }
