@@ -3,6 +3,7 @@ define [
   'jade!templates/statusbar'
   'jade!templates/statusbarcar'
   'cs!views/favorite'
+  'cs!views/music'
   'cs!views/user'
   'cs!views/view'
   'cs!models/index'
@@ -11,6 +12,7 @@ define [
   template
   templateCar
   FavoriteView
+  MusicView
   UserView
   View
   models
@@ -41,6 +43,9 @@ define [
 
     afterRender: ->
       root = @app.root
+
+      musicView = new MusicView @app
+      @$('td.navigation').append musicView.render().el
 
       userView = null
       do updateUserView = =>

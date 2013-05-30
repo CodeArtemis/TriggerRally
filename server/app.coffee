@@ -460,7 +460,7 @@ io.of('/drive').on 'connection', (socket) ->
   #   clearInterval interval
   #   flushBuffers()
 
-  socket.on 'disconnect', ->
+  writeTimelines = ->
     return unless run
     console.log "Writing replay records for run: #{run.pub_id}"
     db.runs.update { _id: run._id },
@@ -468,10 +468,15 @@ io.of('/drive').on 'connection', (socket) ->
           "record_i.timeline": buffer_i
           "record_p.timeline": buffer_p
         , dbCallback
+    buffer_i = []
+    buffer_p = []
+
+  socket.on 'disconnect', writeTimelines
 
   # TODO: Resume connections, or notify user if recording has stopped.
 
   socket.on 'start', (data) ->
+    writeTimelines()
     currentRun = null
     car = track = null
     done = _.after 2, ->

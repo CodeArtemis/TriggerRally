@@ -83,7 +83,18 @@ function(util) {
     source.loop = loop;
     source.gain.value = gain;
     source.playbackRate.value = (rate === undefined) ? 1 : rate;
-    source.noteOn(0);
+    source.start(0);
+    return source;
+  };
+
+  prot.playRange = function(buffer, offset, duration, gain, rate) {
+    var source = this.audio.createBufferSource();
+    source.buffer = buffer;
+    source.connect(this.master);
+    source.loop = false;
+    source.gain.value = gain;
+    source.playbackRate.value = (rate === undefined) ? 1 : rate;
+    source.start(0, offset, duration);
     return source;
   };
 

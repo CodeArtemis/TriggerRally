@@ -46,16 +46,20 @@ define [
       'audio'
       'car'
       'challenge'
+      'musicplay'
+      'musicvolume'
       'pixeldensity'
       'shadows'
       'terrainhq'
       'volume'
     ]
-    defaults:
+    defaults: ->
       antialias: yes
       audio: yes
       car: 'Icarus'
       challenge: 'world'
+      musicplay: yes
+      musicvolume: 0.5
       pixeldensity: 1
       shadows: yes
       terrainhq: yes

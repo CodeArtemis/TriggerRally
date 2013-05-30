@@ -585,8 +585,11 @@ define [
       @audio = new clientAudio.WebkitAudio()
       @audio.mute() unless prefs.audio
       @checkpointBuffer = null
-      @audio.loadBuffer '/a/sounds/checkpoint.ogg', (buffer) =>
-        @checkpointBuffer = buffer
+      @audio.loadBuffer '/a/sounds/checkpoint.ogg', (buffer) => @checkpointBuffer = buffer
+      @voiceBuffer = null
+      @audio.loadBuffer '/a/sounds/voice.ogg', (buffer) =>
+        @voiceBuffer = buffer
+        @speak 'welcome'
       @audio.setGain prefs.volume
       prefs.on 'change:audio', (prefs, audio) =>
         if audio then @audio.unmute() else @audio.mute()
@@ -623,6 +626,30 @@ define [
         @keyDown[event.keyCode] = false
         #event.preventDefault()
       return
+
+    speak: (msg) ->
+      return unless @voiceBuffer
+      # range = {
+      #   '3': [ 0, 1.149 ]
+      #   '2': [ 1.153, 1.010 ]
+      #   '1': [ 2.168, 1.137 ]
+      #   'go': [ 3.310, 0.963 ]
+      #   'checkpoint': [ 4.276, 1.229 ]
+      #   'complete': [ 5.508, 1.602 ]
+      #   'welcome': [ 7.115, 1.667 ]
+      # }[msg]
+      range = {
+        '3': [ 0, 0.621 ]
+        '2': [ 1.131, 0.531 ]
+        '1': [ 2.153, 0.690 ]
+        'go': [ 3.291, 0.351 ]
+        'checkpoint': [ 4.257, 0.702 ]
+        'complete': [ 5.575, 0.975 ]
+        'welcome': [ 7.354, 1.378 ]
+      }[msg]
+      return unless range
+      rate = 0.98 + Math.random() * 0.05
+      @audio.playRange @voiceBuffer, range[0], range[1], 2, rate
 
     addGame: (game, options = {}) ->
       unless game? then throw new Error 'Added null game'

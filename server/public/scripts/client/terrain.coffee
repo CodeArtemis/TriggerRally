@@ -25,6 +25,7 @@ define [
         @ringWidth = 7
       @totalTime = 0
       @glDerivs = @gl.getExtension('OES_standard_derivatives')
+      @glFloatLinear = @gl.getExtension('OES_texture_float_linear')
       @glAniso =
         @gl.getExtension("EXT_texture_filter_anisotropic") or
         @gl.getExtension("WEBKIT_EXT_texture_filter_anisotropic")

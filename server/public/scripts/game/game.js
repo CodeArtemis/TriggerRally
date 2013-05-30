@@ -100,11 +100,11 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
   };
 
   exports.Game.prototype.restart = function() {
+    this.sim.restart();
     this.progs.forEach(function(prog) {
       prog.restart();
       this.setupVehicle(prog.vehicle);
     }, this);
-    this.sim.restart();
   };
 
   exports.Game.prototype.on = function(event, callback) {

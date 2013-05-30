@@ -81,7 +81,6 @@ define [
     game.update = (deltaIgnored) ->
       masterTime = gameMaster.sim.interpolatedTime()
       delta = masterTime - game.sim.interpolatedTime()
-      console.log "#{game.sim.time.toFixed(3)} vs #{gameMaster.sim.time.toFixed(3)}"
       if delta > 0
         # if delta > 1
         #   # Fast forward to 1 sec before present.
@@ -245,13 +244,17 @@ define [
       #   data = { cp, time: @progress.cpTimes[cp] }
       #   @socket.emit 'advance', data
 
-      if cpNext > 1
-        message = if cpNext is cpTotal
-          'Finished!'
+      if cpNext > 1 or @game.interpolatedRaceTime() > 1
+        if cpNext is cpTotal
+          message = 'Race complete'
+          speak = 'complete'
         else if cpNext is cpTotal - 1
-          'Nearly there!'
+          message = 'Nearly there!'
+          # speak = 'checkpoint'
         else
-          'Checkpoint'
+          message = 'Checkpoint'
+          # speak = 'checkpoint'
+        @client.speak speak if speak?
         @$countdown.text message
         @$countdown.removeClass 'fadeout'
         _.defer => @$countdown.addClass 'fadeout'
@@ -343,6 +346,7 @@ define [
         raceTime = @game.interpolatedRaceTime()
         if raceTime >= 0
           if @lastRaceTime < 0
+            @client.speak 'go'
             @$countdown.text 'Go!'
             @$countdown.addClass 'fadeout'
           @$runTimer.text formatRunTime raceTime
@@ -351,6 +355,8 @@ define [
           lastNum = Math.ceil -@lastRaceTime
           if num != lastNum
             @$runTimer.text ""
-            @$countdown.text '' + num
+            text = '' + num
+            @client.speak text
+            @$countdown.text text
             @$countdown.removeClass 'fadeout'
         @lastRaceTime = raceTime

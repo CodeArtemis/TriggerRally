@@ -5,7 +5,7 @@ table
     td.navigation
       a(href="javascript:history.back()") &lt; Back
       a.route(href="/") Home
-      a.route(href="/about") About
+      //- a.route(href="/about") About
       //- | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       //- a(href="javascript:location.reload()") Reload
       span.dropdownmenu Tracks &blacktriangledown;
@@ -25,7 +25,7 @@ table
           hr
           .label Other tracks:
           li: a.route(href="/tracklist/featured") Featured tracks
-          li: a.route(href="/tracklist/recent") Recent published tracks
+          li: a.route(href="/tracklist/recent") Published tracks
           li: a.route(href="/tracklist/all") All tracks
           li: a.route.myfavorites(href="") My Favorites 
             img.emoji(src="/emojis/star.png")
@@ -51,7 +51,7 @@ table
         menu
           li: label
             input#pref-audio(type="checkbox", checked=prefs.audio)
-            | Sound (Chrome only)
+            | Sound effects (Chrome only)
           li Volume 
             input#pref-volume(type="range", min=0, max=1, step="any", value=prefs.volume)
           hr
@@ -73,13 +73,10 @@ table
               input(type="radio", name="pixdens", value=pd.value, checked=pd.checked)
               | #{pd.label}
           .car-section
-      //- span.dropdownmenu Share &blacktriangledown;
-      //-   menu
-      //-     li
-      //-       <a href="https://twitter.com/share" class="twitter-share-button" data-via="TriggerRally" data-size="large" data-related="jareiko" data-dnt="true">Tweet</a>
-      //-       <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
       span.dropdownmenu Help &blacktriangledown;
         menu
+          li: a.route(href="/about") About Trigger Rally
+          hr
           .label Get news and updates on:
           li: a(target="_blank", href="http://blog.triggerrally.com")
             img.inline(src="/images/tumblr_64.png")
