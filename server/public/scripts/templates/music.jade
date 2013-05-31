@@ -1,0 +1,15 @@
+span Music &blacktriangledown;
+  .musiccontrol.playpause.play(title="Play/Pause")
+  .musiccontrol.next(title="Next Song")
+  span.status
+menu.musicplayer
+  h2 Code Artemis Radio
+  div
+    .callout
+      div Artist: 
+        span.artist
+      div Track: 
+        span.title
+  li Music volume 
+    input.volume(type="range", min=0, max=1, step="any")
+  audio(autoplay)
