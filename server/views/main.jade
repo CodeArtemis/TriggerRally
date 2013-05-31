@@ -9,6 +9,9 @@ html
   body
     #unified-container
 
+    //- For sharing scrapers to use, eg. Facebook or Google+.
+    img(src="/images/icon-128.png", style="display:none", title="Trigger Rally icon")
+
     script(src="/socket.io/socket.io.js")
 
     - if ('production' === process.env.NODE_ENV)
