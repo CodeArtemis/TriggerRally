@@ -183,6 +183,8 @@ function(THREE, pubsub, util) {
     this.angVel = new Vec3();
     this.angMom = new Vec3();  // angVel is derived from this.
 
+    this.angDamping = 1e-10;
+
     // World space accumulators, zeroed after each integration step.
     this.accumForce = new Vec3();
     this.accumTorque = new Vec3();
@@ -332,6 +334,10 @@ function(THREE, pubsub, util) {
 
     // Integrate angular momentum.
     this.angMom.addSelf(this.accumTorque.multiplyScalar(delta));
+
+    // Angular momentum damping.
+    var scaleFactor = 1 / (1 + this.angMom.lengthSq() * delta * this.angDamping);
+    this.angMom.multiplyScalar(scaleFactor);
 
     // Calculate ang velocity from ang momentum.
     angVel.copy(this.angMom);

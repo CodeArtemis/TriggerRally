@@ -214,7 +214,6 @@ define [
       # The vehicle controller is recreated after restarting the game.
       @rec1.object = @progress.vehicle.controller.input
       @rec1.restart()
-      @rec1buffer = []
       @rec2.restart()
 
       @socket.emit 'start',
@@ -224,10 +223,7 @@ define [
         keyMap_p: @rec2.toJSON().keyMap
 
     record_i: (offset, state) =>
-      @rec1buffer.push [ offset, state ]
-      if yes #@rec1buffer.length >= 20
-        @socket.emit 'record_i', samples: @rec1buffer
-        @rec1buffer = []
+      @socket.emit 'record_i', samples: [ [ offset, state ] ]
 
     record_p: (offset, state) =>
       @socket.emit 'record_p', samples: [ [ offset, state ] ]

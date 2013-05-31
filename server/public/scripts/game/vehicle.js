@@ -425,7 +425,6 @@ function(THREE, psim, collision, util) {
       }
     }
 
-    var angDrag = 20;
     if (this.cfg.wings) {
       var timeOut = 0.5;
       var wingsShouldFold = true;
@@ -487,7 +486,7 @@ function(THREE, psim, collision, util) {
       var linDragX = 10 * wingFactor;
       var linDragY = 10 * wingFactor;
       var linDragZ = 0.3 * wingFactor;
-      angDrag += 80 * wingFactor;
+      this.body.angDamping = Math.pow(10, -10 + 1.5 * wingFactor);
       var finEffectX = 300 * wingFactor;
       var finEffectY = 300 * wingFactor;
       var finEffectZ = 30 * wingFactor;
@@ -545,10 +544,6 @@ function(THREE, psim, collision, util) {
       this.body.addLocForce(tmpVec3a);
       this.liftForce = tmpVec3a.y;
     }
-
-    // Angular drag.
-    tmpVec3a.copy(this.body.getAngularVel()).multiplyScalar(-angDrag);
-    this.body.addTorque(tmpVec3a);
 
     // var handbrake = this.cfg.wings ? 0 : controls.handbrake;
     var handbrake = controls.handbrake;

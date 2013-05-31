@@ -437,47 +437,31 @@ io.of('/drive').on 'connection', (socket) ->
   session = socket.handshake.session
   user = session.user
 
-  run = null
-  buffer_i = []
-  buffer_p = []
+  run = record_i_timeline = record_p_timeline = null
 
-  # flushBuffers = ->
-  #   return unless run
-  #   query = { _id: run._id }
-  #   if buffer_i.length > 0
-  #     db.runs.update query,
-  #                    { $push: { "record_i.timeline": { $each: buffer_i } } },
-  #                    dbCallback
-  #     buffer_i = []
-  #   if buffer_p.length > 0
-  #     db.runs.update query,
-  #                    { $push: { "record_p.timeline": { $each: buffer_p } } },
-  #                    dbCallback
-  #     buffer_p = []
+  resetRun = ->
+    run = null
+    record_i_timeline = []
+    record_p_timeline = []
 
-  # interval = setInterval flushBuffers, 1000
-  # socket.on 'disconnect', ->
-  #   clearInterval interval
-  #   flushBuffers()
-
-  writeTimelines = ->
+  completeRun = ->
     return unless run
-    console.log "Writing replay records for run: #{run.pub_id}"
-    db.runs.update { _id: run._id },
-        $set:
-          "record_i.timeline": buffer_i
-          "record_p.timeline": buffer_p
-        , dbCallback
-    buffer_i = []
-    buffer_p = []
+    console.log "Finalizing records for run: #{run.pub_id}"
+    newValues =
+      "record_i.timeline": record_i_timeline
+      "record_p.timeline": record_p_timeline
+    newValues.times = run.times if run.times
+    newValues.time = run.time if run.time?
+    db.runs.update { _id: run._id }, $set: newValues, dbCallback
+    resetRun()
 
-  socket.on 'disconnect', writeTimelines
+  socket.on 'disconnect', completeRun
 
   # TODO: Resume connections, or notify user if recording has stopped.
 
   socket.on 'start', (data) ->
-    writeTimelines()
-    currentRun = null
+    completeRun()
+    resetRun()
     car = track = null
     done = _.after 2, ->
       return unless car and track
@@ -495,26 +479,22 @@ io.of('/drive').on 'connection', (socket) ->
         user: user._id
       console.log "Started run: #{newRun.pub_id}"
       db.runs.insert newRun, (err) ->
-        return console.error err if err
+        return console.error 'Run insert error: ' + err if err
+        return if run  # Another run was already started. Discard this one.
         run = newRun
-        # TODO: send client the run id
     db.cars.findOne   pub_id: data.car,   (err, doc) -> car = doc;   done()
     db.tracks.findOne pub_id: data.track, (err, doc) -> track = doc; done()
 
-  if user
-    socket.on 'record_i', (data) ->
-      Array::push.apply buffer_i, data.samples
-    socket.on 'record_p', (data) ->
-      Array::push.apply buffer_p, data.samples
-    socket.on 'times', (data) ->
-      return unless run
-      console.log "Writing times for run: #{run.pub_id}"
-      # TODO: Verification!
-      times = data.times
-      time = times[times.length - 1]
-      db.runs.update { _id: run._id },
-          $set: { time, times },
-          dbCallback
+  socket.on 'record_i', (data) ->
+    Array::push.apply record_i_timeline, data.samples
+  socket.on 'record_p', (data) ->
+    Array::push.apply record_p_timeline, data.samples
+  socket.on 'times', (data) ->
+    # TODO: Also buffer times in the event that the run isn't ready yet.
+    return unless run
+    # TODO: Verification!
+    run.times = data.times
+    run.time = data.times[data.times.length - 1]
 
 # io.of('/api').on 'connection', (socket) ->
 #   session = socket.handshake.session
