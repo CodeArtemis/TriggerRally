@@ -21,13 +21,18 @@ define [
       'Art is Born': 'Citizen_X0_-_Art_is_Born.ogg'
     'DoKashiteru':
       '2025': 'DoKashiteru_-_2025.ogg'
+    'Dubslate':
+      'Nervous Refix': 'dubslate_-_nervous_refix.ogg'
     'J.Lang':
       'Love Will Open Your Heart Dance Mix': 'djlang59_-_Love_Will_Open_Your_Heart_Dance_Mix.ogg'
-    'spinningmerkaba':
+    'Sawtooth':
+      'Carcinogens': 'Sawtooth_-_Carcinogens.ogg'
+    'SpinningMerkaba':
       '260809 Funky Nurykabe': 'jlbrock44_-_260809_Funky_Nurykabe.ogg'
+    'Super Sigil':
+      'Thunderlizard at the Art War': 'Super_Sigil_-_Thunderlizard_at_the_Art_War.ogg'
     'Travis Morgan':
       'pROgraM vs. Us3R': 'morgantj_-_pROgraM_vs._Us3R.ogg'
-
   tracks = []
   for artist, val of tracksSrc
     for title, src of val
