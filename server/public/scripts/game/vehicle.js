@@ -39,7 +39,7 @@ function(THREE, psim, collision, util) {
   var FRICTION_STATIC_CHASSIS = 1.2 * 0.9;
   var FRICTION_DYNAMIC_WHEEL = 0.9 * 1.2;
   var FRICTION_STATIC_WHEEL = 1.2 * 1.2;
-  var WHEEL_LATERAL_FEEDBACK = -0.025;
+  var WHEEL_LATERAL_FEEDBACK = 0.025;
 
   var tmpVec3a = new Vec3();
   var tmpVec3b = new Vec3();
@@ -202,15 +202,16 @@ function(THREE, psim, collision, util) {
       });
     }
 
+    this.wheelLateralFeedback = config.wheelLateralFeedback || WHEEL_LATERAL_FEEDBACK;
     this.avgDriveWheelRadius = 0;
     this.wheels = [];
     for (var w = 0; w < config.wheels.length; ++w) {
       var wheel = this.wheels[w] = {};
-      wheel.cfg = config.wheels[w];
+      var wcfg = wheel.cfg = config.wheels[w];
       wheel.pos = new Vec3(
-        wheel.cfg.pos[0] - config.center[0],
-        wheel.cfg.pos[1] - config.center[1],
-        wheel.cfg.pos[2] - config.center[2]);
+        wcfg.pos[0] - config.center[0],
+        wcfg.pos[1] - config.center[1],
+        wcfg.pos[2] - config.center[2]);
       wheel.ridePos = 0;
       wheel.rideVel = 0;
       wheel.spinPos = 0;
@@ -218,9 +219,15 @@ function(THREE, psim, collision, util) {
       wheel.frictionForce = new Vec2();
       wheel.contactVel = new Vec3();
       wheel.clipPos = new Vec3();
-      var drive = wheel.cfg.drive || 0;
+      var drive = wcfg.drive || 0;
       this.totalDrive += drive;
-      this.avgDriveWheelRadius += wheel.cfg.radius * drive;
+      this.avgDriveWheelRadius += wcfg.radius * drive;
+
+      wheel.MASS = wcfg.mass || WHEEL_MASS;
+      wheel.SUSP_MAX = wcfg.suspMax || SUSP_MAX;
+      wheel.SUSP_CONSTANT = wcfg.suspConstant || SUSP_CONSTANT;
+      wheel.SUSP_DAMPING_1 = wcfg.suspDamping1 || SUSP_DAMPING_1;
+      wheel.SUSP_DAMPING_2 = wcfg.suspDamping2 || SUSP_DAMPING_2;
     }
     this.avgDriveWheelRadius /= this.totalDrive;
 
@@ -584,9 +591,9 @@ function(THREE, psim, collision, util) {
     }).call(this);
 
     var wheelTurnVelTarget =
-        (controls.desiredTurnPos - this.wheelTurnPos) * 400 +
-        this.wheelTurnVel * -20.0 +
-        wheelLateralForce * WHEEL_LATERAL_FEEDBACK;
+        (controls.desiredTurnPos - this.wheelTurnPos) * 400 -
+        this.wheelTurnVel * 20.0 -
+        wheelLateralForce * this.wheelLateralFeedback;
     wheelTurnVelTarget = CLAMP(wheelTurnVelTarget, -8, 8);
     this.wheelTurnVel = PULLTOWARD(this.wheelTurnVel,
                                    wheelTurnVelTarget,
@@ -656,14 +663,15 @@ function(THREE, psim, collision, util) {
     }
   };
 
+  var tmpWheelPos = new Vec3();
   exports.Vehicle.prototype.tickWheel = function(wheel, delta) {
-    var suspensionForce = wheel.ridePos * SUSP_CONSTANT;
+    var suspensionForce = wheel.ridePos * wheel.SUSP_CONSTANT;
     wheel.frictionForce.set(0, 0);
 
     // F = m.a, a = F / m
-    wheel.rideVel -= suspensionForce / WHEEL_MASS * delta;
+    wheel.rideVel -= suspensionForce / wheel.MASS * delta;
     // We apply suspension damping semi-implicitly.
-    wheel.rideVel *= 1 / (1 + SUSP_DAMPING_1 * delta);
+    wheel.rideVel *= 1 / (1 + wheel.SUSP_DAMPING_1 * delta);
     wheel.ridePos += wheel.rideVel * delta;
 
     wheel.spinPos += wheel.spinVel * delta;
@@ -671,23 +679,24 @@ function(THREE, psim, collision, util) {
 
     // TICK STUFF ABOVE HERE
 
-    var clipPos = wheel.clipPos.copy(this.body.getLocToWorldPoint(wheel.pos));
+    tmpWheelPos.copy(wheel.pos);
+    tmpWheelPos.y += wheel.ridePos;
+    var clipPos = wheel.clipPos.copy(this.body.getLocToWorldPoint(tmpWheelPos));
+
+    var suspensionAxis = this.body.oriMat.getColumnY().clone();
 
     // var sideways = this.body.oriMat.getColumnX();
     // tmpVec3a.cross(sideways, plusZVec3);
     // tmpVec3b.cross(tmpVec3a, sideways);
     var wheelRight = this.getWheelRightVector(wheel);
     tmpVec3a.cross(wheelRight, plusZVec3);
-    tmpVec3b.cross(tmpVec3a, wheelRight);
-    var wheelUp = tmpVec3a.copy(tmpVec3b);
-    tmpVec3b.multiplyScalar(wheel.ridePos - wheel.cfg.radius);
+    tmpVec3b.cross(wheelRight, tmpVec3a);
+    tmpVec3b.multiplyScalar(wheel.cfg.radius);
     clipPos.addSelf(tmpVec3b);
     var contacts = this.sim.collidePoint(clipPos);
     if (contacts.length == 0) return;
     var contactVel = wheel.contactVel.copy(this.body.getLinearVelAtPoint(clipPos));
     var wheelSurfaceVel = wheel.spinVel * wheel.cfg.radius;
-    // tmpVec3b.cross(wheelUp, wheelRight).multiplyScalar(wheelSurfaceVel);
-    // contactVel.addSelf(tmpVec3b);
     this.hasContact = true;
     for (var c = 0; c < contacts.length; ++c) {
       var contact = contacts[c];
@@ -703,26 +712,31 @@ function(THREE, psim, collision, util) {
       // This is wrong if there are multiple contacts.
       contactVel.addSelf(tmpVec3b.copy(surf.v).multiplyScalar(wheelSurfaceVel));
 
-      wheel.ridePos += contact.depth;
+      wheel.ridePos += contact.normal.dot(suspensionAxis) * contact.depth;
 
       var perpForce;
-      if (wheel.ridePos <= SUSP_MAX) {
+      if (wheel.ridePos > wheel.SUSP_MAX) {
+        // Suspension has bottomed out. Add hard clipping force.
+        var overDepth = wheel.ridePos - wheel.SUSP_MAX;
+
+        wheel.ridePos = wheel.SUSP_MAX;
+        wheel.rideVel = 0;
+
+        perpForce = wheel.SUSP_MAX * wheel.SUSP_CONSTANT +
+                    overDepth * CLIP_CONSTANT -
+                    contactVelSurf.z * CLIP_DAMPING;
+      } else {
+        if (wheel.ridePos < -wheel.SUSP_MAX) {
+          // Suspension has "topped" out. Cap the force.
+          wheel.ridePos = -wheel.SUSP_MAX;
+        }
+
         wheel.rideVel = Math.max(wheel.rideVel, -contactVelSurf.z);
 
         // Damped spring model for perpendicular contact force.
         // Recompute suspension force given new ridePos.
-        perpForce = wheel.ridePos * SUSP_CONSTANT +
-                    wheel.rideVel * SUSP_DAMPING_2;
-      } else {
-        // Suspension has bottomed out. Add hard clipping force.
-        var overDepth = wheel.ridePos - SUSP_MAX;
-
-        wheel.ridePos = SUSP_MAX;
-        wheel.rideVel = 0;
-
-        perpForce = SUSP_MAX * SUSP_CONSTANT +
-                    overDepth * CLIP_CONSTANT -
-                    contactVelSurf.z * CLIP_DAMPING;
+        perpForce = wheel.ridePos * wheel.SUSP_CONSTANT +
+                    wheel.rideVel * wheel.SUSP_DAMPING_2;
       }
 
       // Only interact further if there's a positive normal force.
