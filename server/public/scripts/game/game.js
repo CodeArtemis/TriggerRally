@@ -38,11 +38,12 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
   var CP_RADIUS = 18;
   var CP_RADIUS_SQ = CP_RADIUS * CP_RADIUS;
 
+  var cpVec = new Vec2();
   exports.Progress.prototype.update = function() {
     var vehic = this.vehicle;
     var nextCp = this.nextCheckpoint(0);
     if (!nextCp) return;
-    var cpVec = new Vec2(vehic.body.pos.x - nextCp.pos[0], vehic.body.pos.y - nextCp.pos[1]);
+    cpVec.set(vehic.body.pos.x - nextCp.pos[0], vehic.body.pos.y - nextCp.pos[1]);
     var cpDistSq = cpVec.lengthSq();
     if (cpDistSq < CP_RADIUS_SQ) {
       var cpDist = Math.sqrt(cpDistSq);
