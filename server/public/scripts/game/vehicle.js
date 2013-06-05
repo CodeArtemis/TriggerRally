@@ -44,6 +44,7 @@ function(THREE, psim, collision, util) {
   var tmpVec3a = new Vec3();
   var tmpVec3b = new Vec3();
   var tmpVec2a = new Vec2();
+  var tmpWheelPos = new Vec3();
   var plusXVec3 = new Vec3(1, 0, 0);
   var plusYVec3 = new Vec3(0, 1, 0);
   var plusZVec3 = new Vec3(0, 0, 1);
@@ -190,6 +191,9 @@ function(THREE, psim, collision, util) {
     this.wheelTurnVel = 0;
     this.totalDrive = 0;
 
+    this.wheelFrictionStatic = config.wheelFrictionStatic || FRICTION_STATIC_WHEEL;
+    this.wheelFrictionDynamic = config.wheelFrictionDynamic || FRICTION_DYNAMIC_WHEEL;
+
     this.clips = [];
     for (var i = 0; i < config.clips.length; ++i) {
       var cfg = config.clips[i];
@@ -292,6 +296,7 @@ function(THREE, psim, collision, util) {
       var ninetyDeg = new Quat(1, 0, 0, 1).normalize();
       var newOri = new Quat().setFromAxisAngle(plusYVec3, Math.PI - angleY);
       newOri = ninetyDeg.multiplySelf(newOri);
+      // newOri.set(0,0,0,1);
 
       // Make sure we take the shortest path.
       var cosHalfTheta = newOri.x * body.ori.x + newOri.y * body.ori.y +
@@ -566,7 +571,9 @@ function(THREE, psim, collision, util) {
         wheelTorque += (perWheelTorque - diffTorque) * wheel.cfg.drive;
       }
       // TODO: Convert torque to ang accel with proper units.
-      wheel.spinVel += 0.13 * wheelTorque * delta;
+      var angAccel = 2 * wheelTorque / wheel.MASS / wheel.cfg.radius * 0.3;
+      wheel.spinVel += angAccel * delta;
+      // wheel.spinVel += 0.13 * wheelTorque * delta;
       var brake =
           controls.brake * (wheel.cfg.brake || 0) +
           handbrake * (wheel.cfg.handbrake || 0);
@@ -577,7 +584,7 @@ function(THREE, psim, collision, util) {
 
     (function() {
       // TODO: Use real clip geometry instead of just points.
-      // TODO: Pre-alloc worldPts.
+      // TODO: GARBAGE: Pre-alloc worldPts.
       var worldPts = [];
       this.clips.forEach(function(clip) {
         var pt = this.body.getLocToWorldPoint(clip.pos).clone();
@@ -663,7 +670,6 @@ function(THREE, psim, collision, util) {
     }
   };
 
-  var tmpWheelPos = new Vec3();
   exports.Vehicle.prototype.tickWheel = function(wheel, delta) {
     var suspensionForce = wheel.ridePos * wheel.SUSP_CONSTANT;
     wheel.frictionForce.set(0, 0);
@@ -682,8 +688,6 @@ function(THREE, psim, collision, util) {
     tmpWheelPos.copy(wheel.pos);
     tmpWheelPos.y += wheel.ridePos;
     var clipPos = wheel.clipPos.copy(this.body.getLocToWorldPoint(tmpWheelPos));
-
-    var suspensionAxis = this.body.oriMat.getColumnY().clone();
 
     // var sideways = this.body.oriMat.getColumnX();
     // tmpVec3a.cross(sideways, plusZVec3);
@@ -712,7 +716,8 @@ function(THREE, psim, collision, util) {
       // This is wrong if there are multiple contacts.
       contactVel.addSelf(tmpVec3b.copy(surf.v).multiplyScalar(wheelSurfaceVel));
 
-      wheel.ridePos += contact.normal.dot(suspensionAxis) * contact.depth;
+      var suspensionDotContact = contact.normal.dot(this.body.oriMat.getColumnY());
+      wheel.ridePos += suspensionDotContact * contact.depth;
 
       var perpForce;
       if (wheel.ridePos > wheel.SUSP_MAX) {
@@ -739,14 +744,21 @@ function(THREE, psim, collision, util) {
                     wheel.rideVel * wheel.SUSP_DAMPING_2;
       }
 
+      perpForce *= suspensionDotContact;
+      var hardClipForce = contact.depth * CLIP_CONSTANT -
+                          contactVelSurf.z * CLIP_DAMPING;
+      var sideFactor = 1 - suspensionDotContact * suspensionDotContact;
+      // perpForce += hardClipForce * (1 - Math.abs(suspensionDotContact));
+      perpForce += hardClipForce * sideFactor;
+
       // Only interact further if there's a positive normal force.
       if (perpForce > 0) {
         // TODO: Reexamine this friction algorithm.
         var friction = tmpVec2a.set(-contactVelSurf.x, -contactVelSurf.y).
             multiplyScalar(3000);
 
-        var maxFriction = perpForce * FRICTION_DYNAMIC_WHEEL;
-        var testFriction = perpForce * FRICTION_STATIC_WHEEL;
+        var maxFriction = perpForce * this.wheelFrictionDynamic;
+        var testFriction = perpForce * this.wheelFrictionStatic;
 
         var leng = friction.length();
 

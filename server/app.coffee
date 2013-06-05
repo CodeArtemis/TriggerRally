@@ -272,23 +272,24 @@ app.get    '/login', routes.login
 ppec = require './paypal/expresscheckout'
 qs = require 'querystring'
 
-getPaymentParams = (productId) ->
-  products =
-    ignition:
-      cost: '5.00'
-      name: 'Trigger Rally Icarus Ignition'
-      description: 'A new car for Trigger Rally.'
-      url: 'https://triggerrally.com/ignition'
+availablePacks =
+  ignition:
+    cost: '5.00'
+    name: 'Trigger Rally Icarus Ignition'
+    description: 'A new car for Trigger Rally.'
+    url: 'https://triggerrally.com/ignition'
+    products: [ 'paid', 'ignition' ]
+  # mayhem: ...
 
-  product = products[productId]
-  return null unless product
+pack.id = id for own id, pack of availablePacks
 
+getPaymentParams = (pack) ->
   # TODO: Hide these details inside expresscheckout module.
 
-  PAYMENTREQUEST_0_CUSTOM: productId
+  PAYMENTREQUEST_0_CUSTOM: pack.id
   PAYMENTREQUEST_0_PAYMENTACTION: 'Sale'
-  PAYMENTREQUEST_0_AMT: product.cost
-  PAYMENTREQUEST_0_ITEMAMT: product.cost  # Required for digital goods.
+  PAYMENTREQUEST_0_AMT: pack.cost
+  PAYMENTREQUEST_0_ITEMAMT: pack.cost  # Required for digital goods.
   RETURNURL: "#{URL_PREFIX}/checkout/return"
   CANCELURL: "#{URL_PREFIX}/closeme"
   REQCONFIRMSHIPPING: 0
@@ -305,20 +306,24 @@ getPaymentParams = (productId) ->
   # BUYERREGISTRATIONDATE
 
   L_PAYMENTREQUEST_0_ITEMCATEGORY0: 'Digital'
-  L_PAYMENTREQUEST_0_ITEMURL0: product.url
+  L_PAYMENTREQUEST_0_ITEMURL0: pack.url
   L_PAYMENTREQUEST_0_QTY0: 1
-  L_PAYMENTREQUEST_0_AMT0: product.cost
-  L_PAYMENTREQUEST_0_DESC0: product.description
-  L_PAYMENTREQUEST_0_NAME0: product.name
+  L_PAYMENTREQUEST_0_AMT0: pack.cost
+  L_PAYMENTREQUEST_0_DESC0: pack.description
+  L_PAYMENTREQUEST_0_NAME0: pack.name
 
 app.get '/checkout', (req, res) ->
   return res.send 401 unless req.user
-  productId = req.query.product
+  packId = req.query.product
 
-  # Check that user doesn't already have this product.
-  return res.send 403 if productId in req.user.user.products
+  pack = availablePacks[packId]
+  return res.send 404 unless pack
 
-  params = getPaymentParams productId
+  # Check that user doesn't already have this pack.
+  newProducts = _.difference pack.products, req.user.user.products
+  return res.send 403 if _.isEmpty newProducts
+
+  params = getPaymentParams product
   return res.send 404 unless params
   params.METHOD = 'SetExpressCheckout'
   console.log "Calling: #{JSON.stringify params}"
@@ -347,9 +352,11 @@ app.get '/checkout/return', (req, res) ->
       return failure 500, "#{params.METHOD} error: #{err}" if err
       console.log "#{params.METHOD} response: #{nvp_res}"
       return failure 500 if nvp_res.ACK isnt 'Success'
-      productId = nvp_res.PAYMENTREQUEST_0_CUSTOM
-      return failure 403 if productId in (bbUser.products ? [])
-      params = getPaymentParams productId
+      packId = nvp_res.PAYMENTREQUEST_0_CUSTOM
+      pack = availablePacks[packId]
+      newProducts = _.difference pack.products, (bbUser.products ? [])
+      return res.send 403 if _.isEmpty newProducts
+      params = getPaymentParams pack
       return failure 500 unless params
       params.METHOD = 'DoExpressCheckoutPayment'
       params.TOKEN = nvp_res.TOKEN
@@ -363,8 +370,7 @@ app.get '/checkout/return', (req, res) ->
         console.log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
         return failure 500 if nvp_res.ACK isnt 'Success'
         products = bbUser.products ? []
-        # We use concat instead of push to create a new array object.
-        products = products.concat productId
+        products = _.union products, pack.products
         bbUser.save { products },
           success: ->
             # TODO: Show a "Thank you!" interstitial page?
@@ -439,7 +445,7 @@ io.of('/drive').on 'connection', (socket) ->
 
   run = record_i_timeline = record_p_timeline = null
 
-  resetRun = ->
+  do resetRun = ->
     run = null
     record_i_timeline = []
     record_p_timeline = []
@@ -467,7 +473,7 @@ io.of('/drive').on 'connection', (socket) ->
       return unless car and track
       # This is why I should have a model layer.
       db.tracks.update { _id: track._id }, { $inc: { count_drive: 1 } }, dbCallback
-      # return  # Disable run recording
+      return  # Disable run recording
       return unless user
       newRun =
         car: car._id

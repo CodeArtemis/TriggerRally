@@ -87,6 +87,7 @@ function(THREE, pubsub, util) {
   };
 
   // Collide a point against registered static objects.
+  // Only used for terrain heightfield clipping.
   exports.Sim.prototype.collidePoint = function(pt) {
     var contacts = [];
     this.staticObjects.forEach(function(obj) {
@@ -102,6 +103,17 @@ function(THREE, pubsub, util) {
       }
     });
     return contacts;
+  };
+
+  // Collide a single sphere.
+  exports.Sim.prototype.collideSphere = function(sphere) {
+    var contactsArrays = [];
+    this.staticObjects.forEach(function(obj) {
+      if (obj.collideSphere) {
+        contactsArrays.push(obj.collideSphere(sphere));
+      }
+    });
+    return [].concat.apply([], contactsArrays);
   };
 
   // Collide a sphere list against registered static objects.

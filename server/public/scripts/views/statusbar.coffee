@@ -143,6 +143,12 @@ define [
           $trackAuthor.empty()
           $trackAuthor.append trackUserView.el
 
+      $myTracks = @$('.mytracks')
+      do updateMyTracks = ->
+        $myTracks.toggleClass 'hidden', not root.user
+        $myTracks.attr 'href', "/user/#{root.user.id}/tracks" if root.user
+      @listenTo root, 'change:user', updateMyTracks
+
       $myFavorites = @$('.myfavorites')
       do updateMyFavorites = ->
         $myFavorites.toggleClass 'hidden', not root.user

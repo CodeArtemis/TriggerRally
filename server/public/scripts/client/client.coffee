@@ -223,14 +223,16 @@ define [
         update: (cam, car, delta) ->
           car.bodyMesh?.visible = yes
           targetPos = car.root.position.clone()
-          targetPos.addSelf(car.vehic.body.linVel.clone().multiplyScalar(.17))
-          targetPos.addSelf(car.root.matrix.getColumnX().clone().multiplyScalar(0))
-          targetPos.addSelf(car.root.matrix.getColumnY().clone().multiplyScalar(1.2))
-          targetPos.addSelf(car.root.matrix.getColumnZ().clone().multiplyScalar(-2.9))
+          targetPos.addSelf car.vehic.body.linVel.clone().multiplyScalar .17
+          offset = car.config.chaseCamOffset or [ 0, 1.2, -2.9 ]
+          matrix = car.root.matrix
+          targetPos.addSelf matrix.getColumnX().multiplyScalar offset[0]
+          targetPos.addSelf matrix.getColumnY().multiplyScalar offset[1]
+          targetPos.addSelf matrix.getColumnZ().multiplyScalar offset[2]
           camDelta = delta * 5
-          cam.position.x = PULLTOWARD(cam.position.x, targetPos.x, camDelta)
-          cam.position.y = PULLTOWARD(cam.position.y, targetPos.y, camDelta)
-          cam.position.z = PULLTOWARD(cam.position.z, targetPos.z, camDelta)
+          cam.position.x = PULLTOWARD cam.position.x, targetPos.x, camDelta
+          cam.position.y = PULLTOWARD cam.position.y, targetPos.y, camDelta
+          cam.position.z = PULLTOWARD cam.position.z, targetPos.z, camDelta
 
           cam.useQuaternion = false
           pullTransformedQuat cam.quaternion, car.root.quaternion, 1
@@ -570,7 +572,7 @@ define [
       @camera.degreesPerPixel = 1
       @camera.up.set 0, 0, 1
       @camera.position.set 0, 0, 500
-      @scene.add @camera
+      @scene.add @camera  # Required so that we can attach stuff to camera.
       @camControl = null
       @scene.fog = new THREE.FogExp2 0xddeeff, 0.0002
 
@@ -589,6 +591,7 @@ define [
       @voiceBuffer = null
       @audio.loadBuffer '/a/sounds/voice.ogg', (buffer) =>
         @voiceBuffer = buffer
+        console.log 'speak welcome'
         @speak 'welcome'
       @audio.setGain prefs.volume
       prefs.on 'change:audio', (prefs, audio) =>
@@ -604,7 +607,7 @@ define [
         @add new clientTerrain.RenderTerrain(
             @scene, @track.terrain, @renderer.context, prefs.terrainhq)
         @add new clientScenery.RenderScenery @scene, @track.scenery, loadFunc, @renderer
-      @add new CamTerrainClipping(@camera, @track.terrain), 10
+      @add new CamTerrainClipping(@camera, @track.terrain), 20
 
       @keyDown = []
 
@@ -648,7 +651,7 @@ define [
         'welcome': [ 7.354, 1.378, 0 ]
       }[msg]
       rate = 1 + (Math.random() - 0.4) * random
-      @audio.playRange @voiceBuffer, offset, duration, 2, rate
+      @audio.playRange @voiceBuffer, offset, duration, 1.5, rate
 
     addGame: (game, options = {}) ->
       unless game? then throw new Error 'Added null game'

@@ -33,6 +33,16 @@ function(LFIB4, collision, hash2d, util, THREE) {
     return this.layers[this.layersById[id]];
   };
 
+  exports.Scenery.prototype.collideSphere = function(sphere) {
+    var result = [];
+    this.layers.forEach(function(layer) {
+      if (layer.config.collision) {
+        result.push(layer.collideSphere(sphere));
+      }
+    });
+    return [].concat.apply([], result);
+  };
+
   exports.Scenery.prototype.collideSphereList = function(sphereList) {
     var result = [];
     this.layers.forEach(function(layer) {
@@ -112,10 +122,44 @@ function(LFIB4, collision, hash2d, util, THREE) {
     }
   };
 
+  // TODO: Factor out common code between collideSphere{,List}.
+  exports.Layer.prototype.collideSphere = function(sphere) {
+    var thisSphereList = this.sphereList;
+    // TODO: This algorithm seems more efficient than IndirectHash2D. Replace it?
+    var maxScale = 2.8;  // TODO: Compute the true maxScale is for this layer.
+    var radius = sphere.radius + thisSphereList.bounds.radius * maxScale;
+    var center = sphere.center;
+    var objects = this.getObjects(
+        center.x - radius, center.y - radius,
+        center.x + radius, center.y + radius);
+    var contactArrays = [];
+    var mat4 = new THREE.Matrix4();
+    var sl = thisSphereList.clone();
+    var i, numpts = sl.points.length;
+    var scale = new Vec3(), pt;
+    objects.forEach(function(object) {
+      var objScale = object.scale;
+      mat4.setRotationFromEuler(object.rotation);
+      mat4.scale(scale.set(objScale, objScale, objScale));
+      for (i = 0; i < numpts; ++i) {
+        pt = sl.points[i];
+        pt.copy(thisSphereList.points[i]);
+        mat4.multiplyVector3(pt);
+        pt.radius = thisSphereList.points[i].radius * objScale;
+      }
+      sl.bounds.center.copy(thisSphereList.bounds.center);
+      mat4.multiplyVector3(sl.bounds.center);
+      sl.bounds.center.addSelf(object.position);
+      sl.bounds.radius = thisSphereList.bounds.radius * objScale;
+      contactArrays.push(sl.collideSphere(sphere));
+    });
+    return [].concat.apply([], contactArrays);
+  };
+
   exports.Layer.prototype.collideSphereList = function(sphereList) {
     var thisSphereList = this.sphereList;
     // TODO: This algorithm seems more efficient than IndirectHash2D. Replace it?
-    var maxScale = 2.8;
+    var maxScale = 2.8;  // TODO: Compute the true maxScale is for this layer.
     var radius = sphereList.bounds.radius + thisSphereList.bounds.radius * maxScale;
     var center = sphereList.bounds.center;
     var objects = this.getObjects(

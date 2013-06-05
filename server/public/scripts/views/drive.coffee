@@ -64,40 +64,6 @@ define [
   #   'Excellent!'
   # ]
 
-  # Modify a game to make it track gameMaster and run.
-  # Injects a new update method into the game.
-  syncReplayGame = (game, progress, gameMaster, run) ->
-    obj1 = progress.vehicle.controller.input
-    obj2 = progress
-    play1 = new recorder.StatePlaybackInterpolated obj1, run.record_i
-    play2 = new recorder.StatePlaybackInterpolated obj2, run.record_p
-
-    game.sim.pubsub.on 'step', ->
-      play1.step()
-      play2.step()
-
-    originalUpdate = game.update
-
-    game.update = (deltaIgnored) ->
-      masterTime = gameMaster.sim.interpolatedTime()
-      delta = masterTime - game.sim.interpolatedTime()
-      if delta > 0
-        # if delta > 1
-        #   # Fast forward to 1 sec before present.
-        #   # Broken: playback sync relies on 'step' events.
-        #   game.sim.time += delta - 1
-        #   delta = 1
-        originalUpdate.call game, delta
-      else if delta < 0
-        game.restart()
-        # The vehicle controller is recreated after restarting the game.
-        play1.object = progress.vehicle.controller.input
-        play1.restart()
-        play2.restart()
-        originalUpdate.call game, masterTime
-      return
-    return
-
   class Drive extends View
     template: template
     constructor: (@app, @client) -> super()
@@ -334,7 +300,7 @@ define [
         return if @destroyed
         @replayGame = new gameGame.Game @client.track
         @replayGame.addCarConfig car.config, (progress) =>
-          syncReplayGame @replayGame, progress, @game, @replayRun
+          @syncReplayGame progress
         @client.addGame @replayGame, isGhost: yes
 
     update: (delta) ->
@@ -356,3 +322,39 @@ define [
             @$countdown.text text
             @$countdown.removeClass 'fadeout'
         @lastRaceTime = raceTime
+
+    # Makes @replayGame track @game.
+    syncReplayGame: (progress) ->
+      run = @replayRun
+      replayGame = @replayGame
+
+      obj1 = progress.vehicle.controller.input
+      obj2 = progress
+      play1 = new recorder.StatePlaybackInterpolated obj1, run.record_i
+      play2 = new recorder.StatePlaybackInterpolated obj2, run.record_p
+
+      replayGame.sim.pubsub.on 'step', ->
+        play1.step()
+        play2.step()
+
+      originalUpdate = replayGame.update
+
+      replayGame.update = (deltaIgnored) =>
+        masterTime = @game.sim.interpolatedTime()
+        delta = masterTime - replayGame.sim.interpolatedTime()
+        if delta > 0
+          # if delta > 1
+          #   # Fast forward to 1 sec before present.
+          #   # Broken: playback sync relies on 'step' events.
+          #   replayGame.sim.time += delta - 1
+          #   delta = 1
+          originalUpdate.call replayGame, delta
+        else if delta < 0
+          replayGame.restart()
+          # The vehicle controller is recreated after restarting the game.
+          play1.object = progress.vehicle.controller.input
+          play1.restart()
+          play2.restart()
+          originalUpdate.call replayGame, masterTime
+        return
+      return
