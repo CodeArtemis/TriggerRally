@@ -642,15 +642,15 @@ define [
       #   'welcome': [ 7.115, 1.667, 0 ]
       # }[msg]
       [ offset, duration, random ] = {
-        '3': [ 0, 0.621, 0.05 ]
-        '2': [ 1.131, 0.531, 0.05 ]
-        '1': [ 2.153, 0.690, 0.05 ]
-        'go': [ 3.291, 0.351, 0.05 ]
-        'checkpoint': [ 4.257, 0.702, 0.05 ]
-        'complete': [ 5.575, 0.975, 0.05 ]
+        '3': [ 0, 0.621, 0.03 ]
+        '2': [ 1.131, 0.531, 0.03 ]
+        '1': [ 2.153, 0.690, 0.03 ]
+        'go': [ 3.291, 0.351, 0.03 ]
+        'checkpoint': [ 4.257, 0.702, 0.03 ]
+        'complete': [ 5.575, 0.975, 0.03 ]
         'welcome': [ 7.354, 1.378, 0 ]
       }[msg]
-      rate = 1 + (Math.random() - 0.4) * random
+      rate = 1 + (Math.random() - 0.3) * random
       @audio.playRange @voiceBuffer, offset, duration, 1.5, rate
 
     addGame: (game, options = {}) ->

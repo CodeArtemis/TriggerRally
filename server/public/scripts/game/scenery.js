@@ -128,7 +128,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
     // TODO: This algorithm seems more efficient than IndirectHash2D. Replace it?
     var maxScale = 2.8;  // TODO: Compute the true maxScale is for this layer.
     var radius = sphere.radius + thisSphereList.bounds.radius * maxScale;
-    var center = sphere.center;
+    var center = sphere;
     var objects = this.getObjects(
         center.x - radius, center.y - radius,
         center.x + radius, center.y + radius);

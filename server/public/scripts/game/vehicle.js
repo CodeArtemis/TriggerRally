@@ -223,6 +223,7 @@ function(THREE, psim, collision, util) {
       wheel.frictionForce = new Vec2();
       wheel.contactVel = new Vec3();
       wheel.clipPos = new Vec3();
+      wheel.clipPos.radius = wcfg.radius;  // For collideSphere use.
       var drive = wcfg.drive || 0;
       this.totalDrive += drive;
       this.avgDriveWheelRadius += wcfg.radius * drive;
@@ -689,6 +690,8 @@ function(THREE, psim, collision, util) {
     tmpWheelPos.y += wheel.ridePos;
     var clipPos = wheel.clipPos.copy(this.body.getLocToWorldPoint(tmpWheelPos));
 
+    var contacts = this.sim.collideSphere(clipPos);
+
     // var sideways = this.body.oriMat.getColumnX();
     // tmpVec3a.cross(sideways, plusZVec3);
     // tmpVec3b.cross(tmpVec3a, sideways);
@@ -697,14 +700,16 @@ function(THREE, psim, collision, util) {
     tmpVec3b.cross(wheelRight, tmpVec3a);
     tmpVec3b.multiplyScalar(wheel.cfg.radius);
     clipPos.addSelf(tmpVec3b);
-    var contacts = this.sim.collidePoint(clipPos);
+    Array.prototype.push.apply(contacts, this.sim.collidePoint(clipPos));
     if (contacts.length == 0) return;
-    var contactVel = wheel.contactVel.copy(this.body.getLinearVelAtPoint(clipPos));
     var wheelSurfaceVel = wheel.spinVel * wheel.cfg.radius;
     this.hasContact = true;
     for (var c = 0; c < contacts.length; ++c) {
       var contact = contacts[c];
       var surf = getSurfaceBasis(contact.normal, wheelRight);
+
+      // This is wrong if there are multiple contacts.
+      var contactVel = wheel.contactVel.copy(this.body.getLinearVelAtPoint(contact.pos2 || clipPos));
 
       // Local velocity in surface space.
       var contactVelSurf = tmpVec3a.set(
@@ -776,6 +781,8 @@ function(THREE, psim, collision, util) {
         force.addSelf(surf.v.multiplyScalar(friction.y));
 
         this.body.addForceAtPoint(force, clipPos);
+
+        this.crashLevel = Math.max(this.crashLevel, perpForce * sideFactor);
       }
     }
   };

@@ -203,6 +203,12 @@ function(THREE, util) {
         var sounds = this.config.sounds;
         this.aud.loadBuffer(sounds.engine, function(buffer) {
           this.sourceEngine = this.aud.playSound(buffer, true, 0);
+          // var biquad = this.aud.createBiquadFilter();
+          // this.sourceEngine.disconnect(0);
+          // this.sourceEngine.connect(biquad);
+          // // biquad.connect(this.aud.master);
+          // biquad.type = 'lowshelf';
+          // biquad.gain = 40;
         }.bind(this));
         this.aud.loadBuffer(sounds.transmission, function(buffer) {
           this.sourceTransmission = this.aud.playSound(buffer, true, 0);
@@ -288,7 +294,7 @@ function(THREE, util) {
               (this.config.sounds.engineRpm * Math.PI / 30);
         }
         if (this.sourceTransmission) {
-          var transmissionRate = vehic.differentialAngVel /
+          var transmissionRate = Math.abs(vehic.differentialAngVel) /
               (this.config.sounds.transmissionRpm * Math.PI / 30);
           this.sourceTransmission.gain.value = Math.min(1, transmissionRate) * vehic.controller.output.throttle * 0.08;
           this.sourceTransmission.playbackRate.value = transmissionRate;
