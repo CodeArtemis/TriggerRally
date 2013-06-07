@@ -278,8 +278,13 @@ availablePacks =
     name: 'Trigger Rally Icarus Ignition'
     description: 'A new car for Trigger Rally.'
     url: 'https://triggerrally.com/ignition'
-    products: [ 'paid', 'ignition' ]
-  # mayhem: ...
+    products: [ 'ignition', 'rally' ]
+  mayhem:
+    cost: 0
+    name: 'Trigger Rally Mayhem'
+    description: 'The Mayhem Monster Truck for Trigger Rally.'
+    url: 'https://triggerrally.com/mayhem'
+    products: [ 'mayhem', 'mayhembeta' ]
 
 pack.id = id for own id, pack of availablePacks
 
@@ -314,16 +319,34 @@ getPaymentParams = (pack) ->
 
 app.get '/checkout', (req, res) ->
   return res.send 401 unless req.user
-  packId = req.query.product
+  packId = req.query.pack
 
   pack = availablePacks[packId]
   return res.send 404 unless pack
 
   # Check that user doesn't already have this pack.
   newProducts = _.difference pack.products, req.user.user.products
-  return res.send 403 if _.isEmpty newProducts
+  return res.send 409 if _.isEmpty newProducts
 
-  params = getPaymentParams product
+  switch req.query.method
+    when 'free' then freeCheckout pack, req, res
+    when 'paypal' then paypalCheckout pack, req, res
+    else res.send 400
+
+freeCheckout = (pack, req, res) ->
+  return res.send 402 unless pack.cost in [ 0, '0' ]
+  api.findUser req.user.user.pub_id, (bbUser) ->
+    return failure 500 unless bbUser
+    products = bbUser.products ? []
+    products = _.union products, pack.products
+    bbUser.save { products },
+      success: ->
+        res.redirect '/closeme'
+      error: ->
+        res.send 500
+
+paypalCheckout = (pack, req, res) ->
+  params = getPaymentParams pack
   return res.send 404 unless params
   params.METHOD = 'SetExpressCheckout'
   console.log "Calling: #{JSON.stringify params}"
@@ -354,8 +377,9 @@ app.get '/checkout/return', (req, res) ->
       return failure 500 if nvp_res.ACK isnt 'Success'
       packId = nvp_res.PAYMENTREQUEST_0_CUSTOM
       pack = availablePacks[packId]
+      # Check AGAIN that the user doesn't already have this pack.
       newProducts = _.difference pack.products, (bbUser.products ? [])
-      return res.send 403 if _.isEmpty newProducts
+      return res.send 409 if _.isEmpty newProducts
       params = getPaymentParams pack
       return failure 500 unless params
       params.METHOD = 'DoExpressCheckoutPayment'

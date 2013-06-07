@@ -313,9 +313,10 @@ function(THREE, util) {
 
         var cnl = vehic.getCrashNoiseLevel() * 0.000005;
         if (cnl > 0 && this.buffersCrash.length > 0) {
+          var rate = (0.5 + 675 / vehic.cfg.mass) * (0.99 + Math.random() * 0.02);
           this.aud.playSound(
               this.buffersCrash[Math.floor(Math.random() * this.buffersCrash.length)],
-              false, Math.log(1 + cnl), 0.99 + Math.random() * 0.02);
+              false, Math.log(1 + cnl), rate);
         }
         for (var k in vehic.events) {
           var event = vehic.events[k];

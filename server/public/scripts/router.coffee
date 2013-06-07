@@ -7,6 +7,7 @@ define [
   'cs!views/home'
   'cs!views/ignition'
   'cs!views/license'
+  'cs!views/mayhem'
   'cs!views/profile'
   'cs!views/replay'
   'cs!views/spin'
@@ -21,6 +22,7 @@ define [
   HomeView
   IgnitionView
   LicenseView
+  MayhemView
   ProfileView
   ReplayView
   SpinView
@@ -37,6 +39,7 @@ define [
       "about": "about"
       "ignition": "ignition"
       "license": "license"
+      "mayhem": "mayhem"
       "run/:runId/replay": "runReplay"
       "track/:trackId": "track"
       "track/:trackId/edit": "trackEdit"
@@ -80,6 +83,14 @@ define [
       @setSpin()
       view = new LicenseView @app, @uni.client
       @uni.setViewChild view.render()
+
+    mayhem: ->
+      Backbone.trigger 'app:settitle', 'Mayhem Pack'
+      # TODO: Show Mayhem car?
+      @setSpin()
+      view = new MayhemView @app, @uni.client
+      @uni.setViewChild view
+      view.render()
 
     runReplay: (runId) ->
       view = @uni.getView3D()

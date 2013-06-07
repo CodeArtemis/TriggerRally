@@ -37,7 +37,7 @@
           else if user
             td: span.price $5 USD
             td
-              a.paypal-checkout(href="/checkout?product=ignition")
+              a.checkout(href="/checkout?method=paypal&pack=ignition")
                 img(src="https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif")
           else
             td: span.price $5 USD

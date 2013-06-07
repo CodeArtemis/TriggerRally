@@ -58,7 +58,12 @@ define [
         data.badges.push
           href: '/ignition'
           img_src: '/images/packs/ignition.svg'
-          img_title: 'Ignition Pack'
+          img_title: 'Ignition Icarus'
+      if 'mayhem' in products
+        data.badges.push
+          href: '/mayhem'
+          img_src: '/images/packs/mayhem.png'
+          img_title: 'Mayhem Monster Truck'
       data
 
     afterRender: ->

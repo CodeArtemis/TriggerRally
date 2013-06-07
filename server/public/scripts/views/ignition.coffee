@@ -25,7 +25,7 @@ define [
 
     afterRender: ->
       root = @app.root
-      @$('a.paypal-checkout').on 'click', ->
+      @$('a.checkout').on 'click', ->
         not popup.create @href, "Checkout", ->
           root.user.fetch
             force: yes

@@ -612,8 +612,9 @@ function(THREE, psim, collision, util) {
       this.tickWheel(this.wheels[c], delta);
     }
 
+    var smoothRate = delta * 100000 / this.cfg.engine.flywheel;
     this.engineAngVelSmoothed = PULLTOWARD(
-        this.engineAngVelSmoothed, this.engineAngVel, delta * 20);
+        this.engineAngVelSmoothed, this.engineAngVel, smoothRate);
   };
 
   var tmpBasis = { u: new Vec3(), v: new Vec3(), w: new Vec3() };
