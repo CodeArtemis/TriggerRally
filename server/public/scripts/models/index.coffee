@@ -177,12 +177,7 @@
       data.user = data.user.id if data.user?
       if data.product? and data.config?
         unless data.product in (options?.products ? [])
-          data.config = _.pick data.config, [
-            'dimensions'
-            'meshes'
-            'scale'
-            'wheels'
-          ]
+          delete data.config.sounds
       data
 
   class Env extends Model

@@ -718,7 +718,8 @@ define [
           clearColor: 0xffffff
         r.devicePixelRatio = prefs.pixeldensity
         r.shadowMapEnabled = prefs.shadows
-        r.shadowMapCullFrontFaces = false
+        # r.shadowMapCullFrontFaces = false
+        r.shadowMapCullFace = THREE.CullFaceBack
         r.autoClear = false
         r
       catch e

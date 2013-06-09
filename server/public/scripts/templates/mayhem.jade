@@ -1,0 +1,66 @@
+.gui-container
+  .text-panel
+    .mayhem-promo-image
+
+    h2
+      span.highlight Mayhem
+      |  Monster Truck
+
+    ul
+      li Powerful and fast <b>monster truck</b>
+      li Built for <b>off-road</b> with huge wheels and soft suspension
+      //- li Includes an upgrade to <b>Rally License</b> so you can choose your avatar
+      //- li <b>Support</b> the development of Trigger Rally
+
+    p
+      | <b>FREE</b> open beta for a limited time!
+
+    if user
+      if purchased
+        p.purchased-thanks
+          strong Thank you for purchasing Mayhem!
+          br
+          | Switch between cars using the <b>Settings</b> menu.
+          br
+          | Don't forget you can now also 
+          a.route(href="/user/#{user.id}") choose an <b>avatar</b>
+          | .
+        br
+
+      .checkout-box
+        table
+          tr
+            td: img.pack(src="/images/packs/mayhem.png")
+            td Mayhem Pack
+          tr
+            if purchased
+              td
+              td
+                .purchased Purchased.
+                  br
+                  | Thank you!
+            else //- if user
+              td: span.price FREE
+              td
+                a.checkout(href="/checkout?method=free&pack=mayhem")
+                  | Install
+            //- else
+            //-   td: span.price FREE
+            //-   td: a.login(href="/login") Log in
+    else
+      p.purchased-thanks
+        a.login(href="/login") Log in required
+
+    //- if purchased
+    //-   p
+    //-     | If you need help with your purchase,
+    //-     | please contact sup<span class="hidden">.remove.</span>port@codeartemis.com
+    //- else if user
+    //-   p Purchase will be credited to user ID #{user.id} (#{user.name}).
+
+    p Need help? Please email <b>sup<span class="hidden">.remove.</span>port@codeartemis.com</b>
+
+    p Use is subject to the 
+      a.route(href="/license") License and Terms of Use
+      | .
+    .clear-both

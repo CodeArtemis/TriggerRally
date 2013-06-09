@@ -33,6 +33,7 @@ define [
       do updatePromo = =>
         products = @app.root.user?.products ? []
         @$('.ignition-promo').toggleClass 'hidden', 'ignition' in products
+        @$('.mayhem-promo').toggleClass 'hidden', 'mayhem' in products
 
       @listenTo @app.root, 'change:user', updatePromo
       @listenTo @app.root, 'change:user.products', updatePromo

@@ -497,7 +497,7 @@ io.of('/drive').on 'connection', (socket) ->
       return unless car and track
       # This is why I should have a model layer.
       db.tracks.update { _id: track._id }, { $inc: { count_drive: 1 } }, dbCallback
-      return  # Disable run recording
+      # return  # Disable run recording
       return unless user
       newRun =
         car: car._id
