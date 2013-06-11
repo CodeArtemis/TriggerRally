@@ -146,7 +146,6 @@ module.exports =
           result = track.save null,
             user: req.user.user
             success: (track) ->
-              console.log JSON.stringify track
               res.json track
               reqUser.tracks.add track
               parentTrack.count_copy += 1

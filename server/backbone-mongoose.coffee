@@ -187,7 +187,6 @@ module.exports = (bb) ->
           return error err if err
           return error "Couldn't find track #{model.id}" unless track
           # TODO: filter by car?
-          console.log track._id
           mo.Run
             .find(track: track._id)
             # .where('time', { $not: { $type: 10 } })  # Exclude null times. Sort index also excludes.
