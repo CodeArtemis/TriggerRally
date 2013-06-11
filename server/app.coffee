@@ -278,13 +278,13 @@ availablePacks =
     name: 'Trigger Rally Icarus Ignition'
     description: 'A new car for Trigger Rally.'
     url: 'https://triggerrally.com/ignition'
-    products: [ 'ignition', 'rally' ]
+    products: [ 'ignition', 'rally', 'paid' ]
   mayhem:
     cost: 0
     name: 'Trigger Rally Mayhem'
     description: 'The Mayhem Monster Truck for Trigger Rally.'
     url: 'https://triggerrally.com/mayhem'
-    products: [ 'mayhem', 'mayhembeta' ]
+    products: [ 'mayhem', 'mayhembeta', 'paid' ]
 
 pack.id = id for own id, pack of availablePacks
 

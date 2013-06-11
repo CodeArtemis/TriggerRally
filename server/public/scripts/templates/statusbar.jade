@@ -30,6 +30,9 @@ table
           li: a.route.mytracks(href="") My Tracks
           li: a.route.myfavorites(href="") My Favorites 
             img.emoji(src="/emojis/star.png")
+      span.dropdownmenu Cars &blacktriangledown;
+        menu.trackinfo
+          .car-section
       span.dropdownmenu.challenge.hidden Challenge &blacktriangledown;
         menu.trackinfo
           .label Press <b>R</b> to restart the race.
@@ -73,7 +76,6 @@ table
             li: label.pixeldensity
               input(type="radio", name="pixdens", value=pd.value, checked=pd.checked)
               | #{pd.label}
-          .car-section
       span.dropdownmenu Help &blacktriangledown;
         menu
           li: a.route(href="/about") About Trigger Rally

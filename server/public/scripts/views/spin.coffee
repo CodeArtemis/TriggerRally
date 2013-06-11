@@ -43,7 +43,9 @@ define [
 
       @renderCar = null
       do updateCar = =>
-        carId = @app.root.getCarId() ? 'ArbusuG'
+        # carId = @app.root.getCarId() ? 'ArbusuG'
+        # This is just the Spin page, so allow showing any car.
+        carId = @app.root.prefs.car
         carModel = models.Car.findOrCreate carId
         carModel.fetch
           success: =>

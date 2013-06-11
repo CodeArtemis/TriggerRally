@@ -28,7 +28,9 @@ define [
           Backbone.trigger 'app:notfound'
 
     editable: -> @model.id is @app.root.user?.id
-    purchased: -> 'ignition' in (@model.products ? [])
+    purchased: ->
+      products = @model.products ? []
+      'ignition' in products or 'mayhem' in products
 
     loadingText = '...'
     pictureSrc = (picture) ->

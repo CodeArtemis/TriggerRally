@@ -84,6 +84,13 @@ define [
 
       @$el.on 'change', '.statusbarcar input:radio', (event) ->
         prefs.car = @value
+        available = root.user?.cars() ? [ 'ArbusuG' ]
+        if prefs.car not in available
+          page =
+            'Icarus': '/ignition'
+            'Mayhem': '/mayhem'
+          Backbone.history.navigate page[prefs.car], trigger: yes
+        return
 
       @$el.on 'change', '.pixeldensity input:radio', (event) ->
         prefs.pixeldensity = @value
@@ -97,15 +104,15 @@ define [
 
       $carSection = @$('.car-section')
       do addCars = =>
-        cars = root.user?.cars() or [ 'ArbusuG' ]
+        cars = [ 'ArbusuG', 'Mayhem' ]
         # cars = (models.Car.findOrCreate car for car in cars)
         @$('.statusbarcar').remove()
-        if cars.length >= 2
-          for car in cars.reverse()
-            checked = prefs.car is car
-            $li = $ templateCar { car, checked }
-            $li.insertAfter $carSection
-          $('<hr class="statusbarcar">').insertAfter $carSection
+        # if cars.length >= 2
+        for car in cars.reverse()
+          checked = prefs.car is car
+          $li = $ templateCar { car, checked }
+          $li.insertAfter $carSection
+        # $('<hr class="statusbarcar">').insertAfter $carSection
       @listenTo root, 'change:user', addCars
 
       $trackInfo = @$ '.trackinfo'

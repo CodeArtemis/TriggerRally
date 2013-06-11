@@ -5,43 +5,46 @@
     h2 Ignition 
       span.highlight Icarus
 
-    p The Icarus is a new car for Trigger Rally:
     ul
       li More powerful and <b>faster</b> than the Arbusu
       li Retractable <b>wings</b> for controlled gliding
       li Includes an upgrade to <b>Rally License</b> so you can choose your avatar
       //- li <b>Support</b> the development of Trigger Rally
 
-    if purchased
-      p.purchased-thanks
-        strong Thank you for purchasing the Icarus!
-        br
-        | Switch between cars using the <b>Settings</b> menu.
-        br
-        | Don't forget you can now also 
-        a.route(href="/user/#{user.id}") choose an <b>avatar</b>
-        | .
+    if user
+      if purchased
+        p.purchased-thanks
+          strong Thank you for purchasing the Icarus!
+          br
+          | Switch between cars using the <b>Settings</b> menu.
+          br
+          | Don't forget you can now also 
+          a.route(href="/user/#{user.id}") choose an <b>avatar</b>
+          | .
 
-    .checkout-box
-      table
-        tr
-          td: img.pack(src="/images/packs/ignition.svg")
-          td Ignition Pack
-        tr
-          if purchased
-            td
-            td
-              .purchased Purchased.
-                br
-                | Thank you!
-          else if user
-            td: span.price $5 USD
-            td
-              a.checkout(href="/checkout?method=paypal&pack=ignition")
-                img(src="https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif")
-          else
-            td: span.price $5 USD
-            td: a.login(href="/login") Log in
+      .checkout-box
+        table
+          tr
+            td: img.pack(src="/images/packs/ignition.svg")
+            td Ignition Pack
+          tr
+            if purchased
+              td
+              td
+                .purchased Purchased.
+                  br
+                  | Thank you!
+            else if user
+              td: span.price $5 USD
+              td
+                a.checkout(href="/checkout?method=paypal&pack=ignition")
+                  img(src="https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif")
+            //- else
+            //-   td: span.price $5 USD
+            //-   td: a.login(href="/login") Log in
+    else
+      p.purchased-thanks
+        a.login(href="/login") Log in required
 
     //- if purchased
     //-   p

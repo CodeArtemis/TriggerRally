@@ -12,8 +12,7 @@
       //- li Includes an upgrade to <b>Rally License</b> so you can choose your avatar
       //- li <b>Support</b> the development of Trigger Rally
 
-    p
-      | <b>FREE</b> open beta for a limited time!
+    p Introductory price: <b>$2 USD</b> for a limited time!
 
     if user
       if purchased
@@ -40,13 +39,10 @@
                   br
                   | Thank you!
             else //- if user
-              td: span.price FREE
+              td: span.price $2 USD
               td
                 a.checkout(href="/checkout?method=free&pack=mayhem")
                   | Install
-            //- else
-            //-   td: span.price FREE
-            //-   td: a.login(href="/login") Log in
     else
       p.purchased-thanks
         a.login(href="/login") Log in required

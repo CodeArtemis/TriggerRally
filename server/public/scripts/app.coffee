@@ -56,7 +56,7 @@ define [
     defaults: ->
       antialias: yes
       audio: yes
-      car: 'Mayhem'  # TODO: Find a better way to default to just-bought cars.
+      car: 'ArbusuG'
       challenge: 'world'
       musicplay: yes
       musicvolume: 0.5

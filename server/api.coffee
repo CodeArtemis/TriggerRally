@@ -211,7 +211,8 @@ module.exports =
 
     app.put "#{base}/users/:user_id", editUrlUser, (req, res) ->
       products = req.fromUrl.user.products ? []
-      return jsonError 403, res if 'picture' of req.body and 'ignition' not in products
+      maySetPicture = 'ignition' in products or 'mayhem' in products
+      return jsonError 403, res if 'picture' of req.body and not maySetPicture
       allowedKeys = [
         'favorite_tracks'
         'name'
