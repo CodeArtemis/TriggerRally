@@ -591,7 +591,6 @@ define [
       @voiceBuffer = null
       @audio.loadBuffer '/a/sounds/voice.ogg', (buffer) =>
         @voiceBuffer = buffer
-        console.log 'speak welcome'
         @speak 'welcome'
       @audio.setGain prefs.volume
       prefs.on 'change:audio', (prefs, audio) =>

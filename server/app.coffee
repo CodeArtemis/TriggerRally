@@ -275,13 +275,13 @@ qs = require 'querystring'
 availablePacks =
   ignition:
     cost: '5.00'
-    name: 'Trigger Rally Icarus Ignition'
+    name: 'Trigger Rally: Icarus Ignition'
     description: 'A new car for Trigger Rally.'
     url: 'https://triggerrally.com/ignition'
     products: [ 'ignition', 'rally', 'paid' ]
   mayhem:
-    cost: 0
-    name: 'Trigger Rally Mayhem'
+    cost: '2.00'
+    name: 'Trigger Rally: Mayhem Monster Truck'
     description: 'The Mayhem Monster Truck for Trigger Rally.'
     url: 'https://triggerrally.com/mayhem'
     products: [ 'mayhem', 'mayhembeta', 'paid' ]

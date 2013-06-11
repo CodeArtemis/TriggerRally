@@ -18,6 +18,7 @@ define [
     constructor: (@app, @client) -> super()
 
     initialize: ->
+      @app.root.prefs.car = 'Mayhem'
       @listenTo @app.root, 'change:user', => @render()
       @listenTo @app.root, 'change:user.products', => @render()
 

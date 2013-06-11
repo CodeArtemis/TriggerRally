@@ -12,18 +12,21 @@
       //- li Includes an upgrade to <b>Rally License</b> so you can choose your avatar
       //- li <b>Support</b> the development of Trigger Rally
 
-    p Introductory price: <b>$2 USD</b> for a limited time!
+    p <strike>$4 USD</strike> Introductory price: <b>$2 USD</b> for a limited time!
 
     if user
       if purchased
         p.purchased-thanks
           strong Thank you for purchasing Mayhem!
           br
-          | Switch between cars using the <b>Settings</b> menu.
+          | Switch between cars using the <b>Cars</b> menu.
           br
           | Don't forget you can now also 
           a.route(href="/user/#{user.id}") choose an <b>avatar</b>
           | .
+          //- br
+          //- | Now go and 
+          //- a.route(href="/track/uUJTPz6M/drive") drive!
         br
 
       .checkout-box
@@ -41,7 +44,7 @@
             else //- if user
               td: span.price $2 USD
               td
-                a.checkout(href="/checkout?method=free&pack=mayhem")
+                a.checkout(href="/checkout?method=paypal&pack=mayhem")
                   | Install
     else
       p.purchased-thanks
