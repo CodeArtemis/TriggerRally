@@ -104,7 +104,7 @@ define [
 
       $carSection = @$('.car-section')
       do addCars = =>
-        cars = [ 'ArbusuG', 'Mayhem' ]
+        cars = [ 'ArbusuG', 'Mayhem', 'Icarus' ]
         # cars = (models.Car.findOrCreate car for car in cars)
         @$('.statusbarcar').remove()
         # if cars.length >= 2

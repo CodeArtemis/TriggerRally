@@ -174,7 +174,7 @@ define [
 
       cmdPublishTrack.$content.click ->
         return unless window.confirm "Publishing a track will lock it and allow players to start competing for top times. Are you sure?"
-        root.track.published = yes
+        root.track.save published: yes
 
       do updateSnap = => @snapToGround = $flagSnap[0].checked
       $flagSnap.on 'change', updateSnap
