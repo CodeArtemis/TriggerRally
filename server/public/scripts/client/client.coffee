@@ -322,8 +322,8 @@ define [
       controls = @controls
       axes = @gamepad.axes
       buttons = @gamepad.buttons
-      axes0 = deadZone axes[0], 0.01
-      axes3 = deadZone axes[3], 0.01
+      axes0 = deadZone axes[0], 0.04
+      axes3 = deadZone axes[3], 0.04
       controls.throttle = Math.max 0, -axes3, buttons[0] or 0, buttons[5] or 0, buttons[7] or 0
       controls.brake = Math.max 0, axes3, buttons[4] or 0, buttons[6] or 0
       controls.handbrake = buttons[2] or 0
