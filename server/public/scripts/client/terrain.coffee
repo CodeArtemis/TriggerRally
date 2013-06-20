@@ -13,7 +13,6 @@ define [
 
   RenderTerrain: class RenderTerrain
     constructor: (@scene, @terrain, @gl, terrainhq) ->
-      # We currently grab the terrain source directly. This is not very kosher.
       @geom = null
       if terrainhq
         @baseScale = 0.5
@@ -462,6 +461,7 @@ define [
         tex.flipY = false
         tex
 
+      # TODO: Don't grab the terrain source directly. It's supposed to be hidden implementation.
       maps = @terrain.source.maps
       uniforms = @material.uniforms
 

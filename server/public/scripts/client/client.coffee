@@ -591,7 +591,7 @@ define [
       @voiceBuffer = null
       @audio.loadBuffer '/a/sounds/voice.ogg', (buffer) =>
         @voiceBuffer = buffer
-        @speak 'welcome'
+        # @speak 'welcome'
       @audio.setGain prefs.volume
       prefs.on 'change:audio', (prefs, audio) =>
         if audio then @audio.unmute() else @audio.mute()

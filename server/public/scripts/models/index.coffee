@@ -175,9 +175,9 @@
       data = super
       delete data.created
       data.user = data.user.id if data.user?
-      if data.product? and data.config?
-        unless data.product in (options?.products ? [])
-          delete data.config.sounds
+      # if data.product? and data.config?
+      #   unless data.product in (options?.products ? [])
+      #     delete data.config.sounds
       data
 
   class Env extends Model
