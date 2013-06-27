@@ -100,8 +100,6 @@ define [
 
         startposition = root.track.config.course.startposition
         camControl.autoTo startposition.pos, startposition.rot
-
-        Backbone.history.navigate "/track/#{root.track.id}/edit"
       @listenTo root, 'change:track.id', onChangeTrackId
 
       do onChangeTrackName = ->
