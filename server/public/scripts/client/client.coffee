@@ -4,6 +4,7 @@
 
 define [
   'THREE'
+  'underscore'
   'client/audio'
   'client/car'
   'cs!client/misc'
@@ -16,6 +17,7 @@ define [
   'util/util'
 ], (
   THREE
+  _
   clientAudio
   clientCar
   clientMisc

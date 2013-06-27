@@ -18,7 +18,7 @@ define [
     constructor: (@app, @client) -> super()
 
     initialize: ->
-      @app.root.prefs.car = 'Mayhem'
+      @app.root.prefs.car = carId
       @listenTo @app.root, 'change:user', => @render()
       @listenTo @app.root, 'change:user.products', => @render()
 
@@ -33,6 +33,3 @@ define [
         not popup.create @href, "Checkout", ->
           root.user.fetch
             force: yes
-            success: ->
-              newCar = carId
-              root.prefs.car = newCar if newCar in root.user.cars()

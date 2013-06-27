@@ -1,10 +1,12 @@
 define [
   'backbone-full'
+  'underscore'
   'THREE'
   'client/car'
   'cs!models/index'
 ], (
   Backbone
+  _
   THREE
   clientCar
   models

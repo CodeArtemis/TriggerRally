@@ -4,10 +4,11 @@
 
 define [
   'THREE'
+  'underscore'
   'cs!client/array_geometry'
   'util/image'
   'cs!util/quiver'
-], (THREE, array_geometry, uImg, quiver) ->
+], (THREE, _, array_geometry, uImg, quiver) ->
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
 

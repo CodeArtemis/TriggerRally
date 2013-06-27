@@ -5,13 +5,14 @@
 define([
   'util/LFIB4',
   'THREE',
+  'underscore',
   'game/scenery',
   'game/terrain',
   'util/image',
   'cs!util/quiver',
   'util/util'
 ],
-function(LFIB4, THREE, gameScenery, gameTerrain, uImg, quiver, util) {
+function(LFIB4, THREE, _, gameScenery, gameTerrain, uImg, quiver, util) {
   var exports = {};
 
   var Vec2 = THREE.Vector2;

@@ -1,5 +1,6 @@
 define [
   'backbone-full'
+  'underscore'
   'cs!views/view'
   'cs!views/statusbar'
   'cs!client/client'
@@ -7,6 +8,7 @@ define [
   'cs!util/popup'
 ], (
   Backbone
+  _
   View
   StatusBarView
   TriggerClient

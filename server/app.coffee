@@ -285,6 +285,10 @@ availablePacks =
     description: 'The Mayhem Monster Truck for Trigger Rally.'
     url: 'https://triggerrally.com/mayhem'
     products: [ 'mayhem', 'mayhembeta', 'paid' ]
+  full:
+    cost: '5.00'
+    name: 'Trigger Rally: Unlock full game'
+    description: 'Access all tracks, plus the Mayhem and Icarus cars.'
 
 pack.id = id for own id, pack of availablePacks
 
@@ -349,12 +353,12 @@ paypalCheckout = (pack, req, res) ->
   params = getPaymentParams pack
   return res.send 404 unless params
   params.METHOD = 'SetExpressCheckout'
-  console.log "Calling: #{JSON.stringify params}"
+  log "Calling: #{JSON.stringify params}"
   ppec.request params, (err, nvp_res) ->
     if err
       console.error "#{params.METHOD} error: #{err}"
       return res.send 500
-    console.log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
+    log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
     return res.send 500 if nvp_res.ACK isnt 'Success'
     TOKEN = nvp_res.TOKEN
     return res.send 500 unless TOKEN
@@ -370,38 +374,39 @@ app.get '/checkout/return', (req, res) ->
     params =
       METHOD: 'GetExpressCheckoutDetails'
       TOKEN: req.query.token
-    console.log "Calling: #{JSON.stringify params}"
+    log "Calling: #{JSON.stringify params}"
     ppec.request params, (err, nvp_res) ->
       return failure 500, "#{params.METHOD} error: #{err}" if err
-      console.log "#{params.METHOD} response: #{nvp_res}"
+      log "#{params.METHOD} response: #{nvp_res}"
       return failure 500 if nvp_res.ACK isnt 'Success'
       packId = nvp_res.PAYMENTREQUEST_0_CUSTOM
       pack = availablePacks[packId]
       # Check AGAIN that the user doesn't already have this pack.
       newProducts = _.difference pack.products, (bbUser.products ? [])
       return res.send 409 if _.isEmpty newProducts
+      # TODO: Check that price and description match what we expect?
       params = getPaymentParams pack
       return failure 500 unless params
       params.METHOD = 'DoExpressCheckoutPayment'
       params.TOKEN = nvp_res.TOKEN
       params.PAYERID = nvp_res.PAYERID
       params.RETURNFMFDETAILS = 1
-      console.log "Calling: #{JSON.stringify params}"
-      # console.log "OMIT CALL"
+      log "Calling: #{JSON.stringify params}"
+      # log "OMIT CALL"
       # if true
       ppec.request params, (err, nvp_res) ->
         return failure 500, "#{params.METHOD} error: #{err}" if err
-        console.log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
+        log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
         return failure 500 if nvp_res.ACK isnt 'Success'
         products = bbUser.products ? []
         products = _.union products, pack.products
         bbUser.save { products },
           success: ->
             # TODO: Show a "Thank you!" interstitial page?
-            console.log "PURCHASE COMPLETE for user #{bbUser.id}"
+            log "PURCHASE COMPLETE for user #{bbUser.id}"
             res.redirect '/closeme'
           error: ->
-            console.log "user: #{JSON.stringify bbUser}"
+            log "user: #{JSON.stringify bbUser}"
             failure 500, "COMPLETE BUT FAILED TO RECORD - VERY BAD!!"
 
 # app.post '/paypal/ipn', handleIPN

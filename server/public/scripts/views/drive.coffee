@@ -1,6 +1,7 @@
 define [
   'jquery'
   'backbone-full'
+  'underscore'
   'THREE'
   'util/util'
   'client/car'
@@ -13,6 +14,7 @@ define [
 ], (
   $
   Backbone
+  _
   THREE
   util
   clientCar
@@ -214,12 +216,13 @@ define [
           message = 'Nearly there!'
           # speak = 'checkpoint'
         else
-          message = 'Checkpoint'
+          # message = 'Checkpoint'
           # speak = 'checkpoint'
-        @client.speak speak if speak?
-        @$countdown.text message
-        @$countdown.removeClass 'fadeout'
-        _.defer => @$countdown.addClass 'fadeout'
+        @client.speak speak if speak
+        if message
+          @$countdown.text message
+          @$countdown.removeClass 'fadeout'
+          _.defer => @$countdown.addClass 'fadeout'
 
       return if @progress.nextCheckpoint(0)
       throw new Error 'Simulation error' unless @progress.nextCpIndex > 0

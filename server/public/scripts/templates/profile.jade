@@ -6,7 +6,7 @@
     - classes.push('purchased');
   div(class="#{classes.join(' ')}")
     .badges
-      .label Endorsements
+      .label Status
       each badge in badges
         a.route(href=badge.href)
           img(src=badge.img_src, title=badge.img_title)
