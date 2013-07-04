@@ -88,11 +88,12 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     this.sim.addStaticObject(this.track.scenery);
     this.startTime = 3;
     this.sim.pubsub.subscribe('step', this.onSimStep.bind(this));
+    this.simRate = 1;
   };
 
   exports.Game.prototype.update = function(delta) {
     if (this.track.ready) {
-      this.sim.tick(delta);
+      this.sim.tick(delta * this.simRate);
     }
   };
 
@@ -101,6 +102,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
   };
 
   exports.Game.prototype.restart = function() {
+    this.simRate = 1;
     this.sim.restart();
     this.progs.forEach(function(prog) {
       prog.restart();

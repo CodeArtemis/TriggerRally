@@ -24,6 +24,10 @@ define [
     template: template
     constructor: (@app, @client) -> super()
 
+    viewModel: ->
+      products = @app.root.user?.products ? []
+      purchased: 'packa' in products
+
     afterRender: ->
       do updateDriveButton = =>
         trackId = @app.root.track?.id

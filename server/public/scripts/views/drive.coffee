@@ -78,7 +78,7 @@ define [
       Backbone.trigger 'statusbar:hidechallenge'
 
       @socket?.disconnect()
-      @game.destroy()
+      @game?.destroy()
       @replayGame?.destroy()
       super
 
@@ -103,6 +103,7 @@ define [
       @$runTimer = @$ '.timer'
       @$checkpoints = @$ '.checkpoints'
       @$splitTime = @$ '.split-time'
+      @$nextButton = @$ '.nextbutton'
 
       do updateChallenge = =>
         @$runTimer.toggleClass 'hidden', root.prefs.challenge is 'none'
@@ -126,14 +127,22 @@ define [
 
       do createGame = =>
         return unless root.track?
+        products = root.user?.products or []
+        if not root.track.demo and 'packa' not in products
+          _.defer ->
+            Backbone.history.navigate '/purchase', trigger: yes
+          return
         @trackId = root.track.id
+        nextTrackId = root.track.next_track?.id
+        @$nextButton.toggleClass 'hidden', not nextTrackId
+        @$nextButton.attr 'href', "/track/#{nextTrackId}/drive"
         @setRun null if @replayRun and @replayRun.track.id isnt root.track.id
         @carId = carId = root.getCarId() ? 'ArbusuG'
         carModel = models.Car.findOrCreate carId
         carModel.fetch
           success: =>
             return if @destroyed
-            @game.destroy() if @game
+            @game?.destroy()
             @game = new gameGame.Game @client.track
             @client.addGame @game
             @createReplayGame()
@@ -177,6 +186,7 @@ define [
     restartGame: ->
       @updateTimer = yes
       @$runTimer.addClass 'running'
+      @$('.racecomplete').addClass 'hidden'
       @splitTimes = []
       @game.restart()
       # The vehicle controller is recreated after restarting the game.
@@ -209,9 +219,12 @@ define [
       #   @socket.emit 'advance', data
 
       if cpNext > 1 or @game.interpolatedRaceTime() > 1
+        fade = yes
         if cpNext is cpTotal
           message = 'Race complete'
           speak = 'complete'
+          fade = no
+          @$('.racecomplete').removeClass 'hidden'
         else if cpNext is cpTotal - 1
           message = 'Nearly there!'
           # speak = 'checkpoint'
@@ -222,7 +235,7 @@ define [
         if message
           @$countdown.text message
           @$countdown.removeClass 'fadeout'
-          _.defer => @$countdown.addClass 'fadeout'
+          if fade then _.defer => @$countdown.addClass 'fadeout'
 
       return if @progress.nextCheckpoint(0)
       throw new Error 'Simulation error' unless @progress.nextCpIndex > 0
@@ -307,7 +320,8 @@ define [
         @client.addGame @replayGame, isGhost: yes
 
     update: (delta) ->
-      if @updateTimer and @game
+      return unless @game
+      if @updateTimer
         raceTime = @game.interpolatedRaceTime()
         if raceTime >= 0
           if @lastRaceTime < 0
@@ -325,6 +339,9 @@ define [
             @$countdown.text text
             @$countdown.removeClass 'fadeout'
         @lastRaceTime = raceTime
+      # else
+      #   @game.simRate = 0.5 #/= 1 + delta * 0.3
+      return
 
     # Makes @replayGame track @game.
     syncReplayGame: (progress) ->

@@ -35,7 +35,7 @@ define [
       @listenTo root, 'change:track.', updateStartPos
 
       unless root.track
-        track = models.Track.findOrCreate 'uUJTPz6M'
+        track = models.Track.findOrCreate 'RF87t6b6'
         track.fetch
           success: =>
             track.env.fetch

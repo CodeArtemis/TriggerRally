@@ -2,27 +2,33 @@
   menu
     div Code Artemis presents
     h1 Trigger Rally
-    menu.home-left
-      li
-        a.route.highlight.drivebutton(href="/") &gt; Drive &lt;
-      //- li
-      //-   a.route(href="/instructions") Instructions
-      //- li.ignition-promo.hidden
-      //-   a.route(href="/ignition") Icarus Car
-      //-     .new-marker New!
-      li.mayhem-promo.hidden
-        a.route(href="/mayhem") Mayhem
-          .new-marker New!
-      li
-        a.route(href="/track/Alpina/drive") Alpina
-      li
-        a.route(href="/track/KaXCxxFv/drive") Engelberg Descent
-    menu.home-right
-      li
-        a.route(href="/tracklist/featured") Featured tracks
-      li
-        a.route(href="/tracklist/recent") Published tracks
-      li
-        a.route(href="/tracklist/all") All tracks
-      li
-        a.route(href="/track/v3-base-1/edit") Create a track
+    if purchased
+      menu.home-left
+        li
+          a.route.highlight.drivebutton(href="/") &gt; Drive &lt;
+        //- li.ignition-promo.hidden
+        //-   a.route(href="/ignition") Icarus Car
+        //-     .new-marker New!
+        //- li.mayhem-promo.hidden
+        //-   a.route(href="/mayhem") Mayhem
+        //-     .new-marker New!
+        //- li
+        //-   a.route(href="/track/Alpina/drive") Alpina
+        //- li
+        //-   a.route(href="/track/KaXCxxFv/drive") Engelberg Descent
+        li
+          a.route(href="/track/v3-base-1/edit") Create a track
+      menu.home-right
+        li
+          a.route(href="/tracklist/featured") Featured tracks
+        li
+          a.route(href="/tracklist/recent") Published tracks
+        li
+          a.route(href="/tracklist/all") All tracks
+    else
+      menu.home-left
+        li
+          a.route.highlight.drivebutton(href="/") &gt; Drive &lt;
+      menu.home-right
+        li
+          a.route(href="/fullgame") Full Game

@@ -245,9 +245,11 @@
       'count_drive'
       'count_fav'
       'created'
+      'demo'
       'env'
       'modified'
       'name'
+      'next_track'
       'parent'
       'prevent_copy'
       'published'
@@ -291,6 +293,10 @@
         else
           data.user = User.findOrCreate user.id
           data.user.set data.user.parse user
+      if data.next_track
+        nextTrack = data.next_track
+        nextTrackId = if typeof nextTrack is 'string' then nextTrack else nextTrack.id
+        data.next_track = Track.findOrCreate nextTrackId
       data.modified = data.created if data.created and not data.modified
       data
     toJSON: ->
@@ -298,6 +304,7 @@
       data.env = data.env.id if data.env?
       data.parent = data.parent.id if data.parent?
       data.user = data.user.id if data.user?
+      data.next_track = data.next_track.id if data.next_track?
       data
 
   class TrackRuns extends Model
@@ -402,8 +409,9 @@
       products = @products ? []
       return null unless products?
       carIds = [ 'ArbusuG' ]
-      carIds.push 'Icarus' if 'ignition' in products
-      carIds.push 'Mayhem' if 'mayhem' in products
+      carIds.push 'Icarus', 'Mayhem' if 'packa' in products
+      # carIds.push 'Icarus' if 'ignition' in products
+      # carIds.push 'Mayhem' if 'mayhem' in products
       carIds
     isFavoriteTrack: (track) ->
       @favorite_tracks and track.id in @favorite_tracks

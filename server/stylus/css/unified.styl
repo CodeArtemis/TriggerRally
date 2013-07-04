@@ -282,16 +282,23 @@ table.credits td:first-child
   border 1px solid black
 
 .checkout-box
-  margin 1em 5em
-  background-color:#ffffff;
-  background-image: -moz-radial-gradient(66% 65%, circle cover, #ffffff 30%, rgb(168, 197, 224));
-  background-image: -webkit-radial-gradient(66% 65%, circle cover, #ffffff 30%, rgb(168, 197, 224));
-  background-image: radial-gradient(66% 65%, circle cover, #ffffff 30%, rgb(168, 197, 224))
+  margin 1em 3em
+  background-color #f0f8ff
+  // background-color:#ffffff;
+  // background-image: -moz-radial-gradient(66% 65%, circle cover, #ffffff 30%, rgb(168, 197, 224));
+  // background-image: -webkit-radial-gradient(66% 65%, circle cover, #ffffff 30%, rgb(168, 197, 224));
+  // background-image: radial-gradient(66% 65%, circle cover, #ffffff 30%, rgb(168, 197, 224))
 
 .checkout-box table
-  text-align center
+  // text-align center
   border-spacing 0
-  padding-right 0.6em
+  // padding-right 0.6em
+
+.checkout-box td
+  vertical-align top
+
+.checkout-box .checkout-buttons
+  text-align center
 
 .checkout-box img.pack
   width 4em
@@ -305,6 +312,28 @@ table.credits td:first-child
 
 // .checkout-box .purchased
 //   text-align left
+
+.checkout-box input[type="radio"]
+  font-size inherit
+  width 0.8em
+  height 0.8em
+
+.checkout-box input[type="text"].customprice
+  font-size inherit
+  width 8em
+  margin 0 0.5em
+  opacity 1
+  transition opacity 0.5s
+
+.checkout-box .zeroalpha
+  opacity 0 !important
+
+.checkout-box .customerror
+  border 1px solid rgba(0,0,0,0.4)
+  border-radius 0.5em
+  margin 0.2em
+  padding 0.2em
+  width 16em
 
 a.checkout img
   // margin-left 1em
@@ -324,6 +353,15 @@ a.checkout img
 .mayhem-promo-image
   display inline-block
   float right
+  width (1680/80)em
+  height (1066/80)em
+  background-image url("/images/promo-mayhem.jpg")
+  background-size cover
+  border-radius 0.5em
+.packa-promo-image
+  display inline-block
+  float right
+  margin-left 0.5em
   width (1680/80)em
   height (1066/80)em
   background-image url("/images/promo-mayhem.jpg")

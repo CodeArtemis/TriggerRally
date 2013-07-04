@@ -98,6 +98,7 @@ module.exports = (bb) ->
     parseTrack = (track) ->
       parsed = parseMongoose track
       parsed.env = parsed.env.id if parsed.env
+      parsed.next_track = parsed.next_track.id if parsed.next_track
       parsed.parent = parsed.parent.id if parsed.parent
       parsed.user = parsed.user.id if parsed.user
       parsed
@@ -132,6 +133,7 @@ module.exports = (bb) ->
         mo.Track
           .findOne(pub_id: model.id)
           .populate('env', 'pub_id')
+          .populate('next_track', 'pub_id')
           .populate('parent', 'pub_id')
           .populate('user', 'pub_id')
           .exec (err, track) ->

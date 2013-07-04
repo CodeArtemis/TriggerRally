@@ -273,32 +273,35 @@ ppec = require './paypal/expresscheckout'
 qs = require 'querystring'
 
 availablePacks =
-  ignition:
-    cost: '5.00'
-    name: 'Trigger Rally: Icarus Ignition'
-    description: 'A new car for Trigger Rally.'
-    url: 'https://triggerrally.com/ignition'
-    products: [ 'ignition', 'rally', 'paid' ]
-  mayhem:
-    cost: '2.00'
-    name: 'Trigger Rally: Mayhem Monster Truck'
-    description: 'The Mayhem Monster Truck for Trigger Rally.'
-    url: 'https://triggerrally.com/mayhem'
-    products: [ 'mayhem', 'mayhembeta', 'paid' ]
+  # ignition:
+  #   cost: '5.00'
+  #   name: 'Trigger Rally: Icarus Ignition'
+  #   description: 'A new car for Trigger Rally.'
+  #   url: 'https://triggerrally.com/ignition'
+  #   products: [ 'ignition', 'rally', 'paid' ]
+  # mayhem:
+  #   cost: '2.00'
+  #   name: 'Trigger Rally: Mayhem Monster Truck'
+  #   description: 'The Mayhem Monster Truck for Trigger Rally.'
+  #   url: 'https://triggerrally.com/mayhem'
+  #   products: [ 'mayhem', 'paid' ]
   full:
-    cost: '5.00'
-    name: 'Trigger Rally: Unlock full game'
-    description: 'Access all tracks, plus the Mayhem and Icarus cars.'
+    # cost: '5.99'
+    name: 'Trigger Rally: Full Game'
+    description: 'Access all tracks, the Arbusu, Mayhem and Icarus cars, and more!'
+    url: 'https://triggerrally.com/purchase'
+    products: [ 'packa', 'ignition', 'mayhem', 'paid' ]
 
 pack.id = id for own id, pack of availablePacks
 
-getPaymentParams = (pack) ->
+getPaymentParams = (pack, cost) ->
   # TODO: Hide these details inside expresscheckout module.
+  cost ?= pack.cost
 
   PAYMENTREQUEST_0_CUSTOM: pack.id
   PAYMENTREQUEST_0_PAYMENTACTION: 'Sale'
-  PAYMENTREQUEST_0_AMT: pack.cost
-  PAYMENTREQUEST_0_ITEMAMT: pack.cost  # Required for digital goods.
+  PAYMENTREQUEST_0_AMT: cost
+  PAYMENTREQUEST_0_ITEMAMT: cost  # Required for digital goods.
   RETURNURL: "#{URL_PREFIX}/checkout/return"
   CANCELURL: "#{URL_PREFIX}/closeme"
   REQCONFIRMSHIPPING: 0
@@ -317,7 +320,7 @@ getPaymentParams = (pack) ->
   L_PAYMENTREQUEST_0_ITEMCATEGORY0: 'Digital'
   L_PAYMENTREQUEST_0_ITEMURL0: pack.url
   L_PAYMENTREQUEST_0_QTY0: 1
-  L_PAYMENTREQUEST_0_AMT0: pack.cost
+  L_PAYMENTREQUEST_0_AMT0: cost
   L_PAYMENTREQUEST_0_DESC0: pack.description
   L_PAYMENTREQUEST_0_NAME0: pack.name
 

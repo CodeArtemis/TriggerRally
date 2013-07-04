@@ -8,7 +8,7 @@ define [
   'cs!views/ignition'
   'cs!views/license'
   'cs!views/mayhem'
-  'cs!views/packA'
+  'cs!views/packa'
   'cs!views/profile'
   'cs!views/replay'
   'cs!views/spin'
@@ -39,9 +39,9 @@ define [
     routes:
       "": "home"
       "about": "about"
-      "ignition": "ignition"
+      # "ignition": "ignition"
       "license": "license"
-      "mayhem": "mayhem"
+      # "mayhem": "mayhem"
       "purchase": "packA"
       "run/:runId/replay": "runReplay"
       "track/:trackId": "track"
