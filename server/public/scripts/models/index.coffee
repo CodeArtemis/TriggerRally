@@ -399,6 +399,7 @@
       delete data.website
 
       delete data.admin unless data.admin
+      delete data.pay_history
       unless authenticated
         delete data.admin
       if data.tracks? then data.tracks = for track in data.tracks.models

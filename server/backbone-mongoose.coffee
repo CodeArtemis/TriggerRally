@@ -287,6 +287,7 @@ module.exports = (bb) ->
         _.extend user, _.pick data, [
           # 'favorite_tracks'
           'name'
+          'pay_history'
           'picture'
           'products'
           # 'tracks'  # This is a generated attribute.

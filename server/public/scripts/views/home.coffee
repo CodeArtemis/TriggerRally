@@ -24,6 +24,9 @@ define [
     template: template
     constructor: (@app, @client) -> super()
 
+    initialize: ->
+      @listenTo @app.root, 'change:user', => @render()
+
     viewModel: ->
       products = @app.root.user?.products ? []
       purchased: 'packa' in products
@@ -34,10 +37,9 @@ define [
         @$('.drivebutton').attr 'href', "/track/#{trackId}/drive" if trackId
       @listenTo @app.root, 'change:track.', updateDriveButton
 
-      do updatePromo = =>
-        products = @app.root.user?.products ? []
-        @$('.ignition-promo').toggleClass 'hidden', 'ignition' in products
-        @$('.mayhem-promo').toggleClass 'hidden', 'mayhem' in products
+      # do updatePromo = =>
+      #   products = @app.root.user?.products ? []
+      #   @$('.ignition-promo').toggleClass 'hidden', 'ignition' in products
+      #   @$('.mayhem-promo').toggleClass 'hidden', 'mayhem' in products
 
-      @listenTo @app.root, 'change:user', updatePromo
-      @listenTo @app.root, 'change:user.products', updatePromo
+      # @listenTo @app.root, 'change:user.products', updatePromo

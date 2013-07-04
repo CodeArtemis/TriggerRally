@@ -286,7 +286,6 @@ availablePacks =
   #   url: 'https://triggerrally.com/mayhem'
   #   products: [ 'mayhem', 'paid' ]
   full:
-    # cost: '5.99'
     name: 'Trigger Rally: Full Game'
     description: 'Access all tracks, the Arbusu, Mayhem and Icarus cars, and more!'
     url: 'https://triggerrally.com/purchase'
@@ -295,10 +294,9 @@ availablePacks =
 pack.id = id for own id, pack of availablePacks
 
 getPaymentParams = (pack, cost) ->
-  # TODO: Hide these details inside expresscheckout module.
-  cost ?= pack.cost
+  # cost ?= pack.cost
 
-  PAYMENTREQUEST_0_CUSTOM: pack.id
+  PAYMENTREQUEST_0_CUSTOM: pack.id + ',' + cost
   PAYMENTREQUEST_0_PAYMENTACTION: 'Sale'
   PAYMENTREQUEST_0_AMT: cost
   PAYMENTREQUEST_0_ITEMAMT: cost  # Required for digital goods.
@@ -336,24 +334,27 @@ app.get '/checkout', (req, res) ->
   return res.send 409 if _.isEmpty newProducts
 
   switch req.query.method
-    when 'free' then freeCheckout pack, req, res
+    # when 'free' then freeCheckout pack, req, res
     when 'paypal' then paypalCheckout pack, req, res
     else res.send 400
 
-freeCheckout = (pack, req, res) ->
-  return res.send 402 unless pack.cost in [ 0, '0' ]
-  api.findUser req.user.user.pub_id, (bbUser) ->
-    return failure 500 unless bbUser
-    products = bbUser.products ? []
-    products = _.union products, pack.products
-    bbUser.save { products },
-      success: ->
-        res.redirect '/closeme'
-      error: ->
-        res.send 500
+# freeCheckout = (pack, req, res) ->
+#   return res.send 402 unless pack.cost in [ 0, '0' ]
+#   api.findUser req.user.user.pub_id, (bbUser) ->
+#     return failure 500 unless bbUser
+#     products = bbUser.products ? []
+#     products = _.union products, pack.products
+#     bbUser.save { products },
+#       success: ->
+#         res.redirect '/closeme'
+#       error: ->
+#         res.send 500
 
 paypalCheckout = (pack, req, res) ->
-  params = getPaymentParams pack
+  amt = req.query.amt
+  return res.send 402 if ',' in amt
+  return res.send 402 unless parseFloat(amt) >= 0.01
+  params = getPaymentParams pack, amt
   return res.send 404 unless params
   params.METHOD = 'SetExpressCheckout'
   log "Calling: #{JSON.stringify params}"
@@ -382,13 +383,13 @@ app.get '/checkout/return', (req, res) ->
       return failure 500, "#{params.METHOD} error: #{err}" if err
       log "#{params.METHOD} response: #{nvp_res}"
       return failure 500 if nvp_res.ACK isnt 'Success'
-      packId = nvp_res.PAYMENTREQUEST_0_CUSTOM
+      [packId, amt] = nvp_res.PAYMENTREQUEST_0_CUSTOM.split ','
       pack = availablePacks[packId]
       # Check AGAIN that the user doesn't already have this pack.
       newProducts = _.difference pack.products, (bbUser.products ? [])
       return res.send 409 if _.isEmpty newProducts
       # TODO: Check that price and description match what we expect?
-      params = getPaymentParams pack
+      params = getPaymentParams pack, amt
       return failure 500 unless params
       params.METHOD = 'DoExpressCheckoutPayment'
       params.TOKEN = nvp_res.TOKEN
@@ -403,7 +404,9 @@ app.get '/checkout/return', (req, res) ->
         return failure 500 if nvp_res.ACK isnt 'Success'
         products = bbUser.products ? []
         products = _.union products, pack.products
-        bbUser.save { products },
+        pay_history = bbUser.pay_history ? []
+        pay_history.push amt
+        bbUser.save { products, pay_history },
           success: ->
             # TODO: Show a "Thank you!" interstitial page?
             log "PURCHASE COMPLETE for user #{bbUser.id}"

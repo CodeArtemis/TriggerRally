@@ -30,7 +30,7 @@ define [
     editable: -> @model.id is @app.root.user?.id
     purchased: ->
       products = @model.products ? []
-      'ignition' in products or 'mayhem' in products
+      'paid' in products or 'packa' in products or 'ignition' in products or 'mayhem' in products
 
     loadingText = '...'
     pictureSrc = (picture) ->
@@ -58,12 +58,14 @@ define [
       products = data.products ? []
       if 'ignition' in products
         data.badges.push
-          href: '/ignition'
+          # href: '/ignition'
+          href: '/purchase'
           img_src: '/images/packs/ignition.svg'
           img_title: 'Ignition Icarus'
       if 'mayhem' in products
         data.badges.push
-          href: '/mayhem'
+          # href: '/mayhem'
+          href: '/purchase'
           img_src: '/images/packs/mayhem.png'
           img_title: 'Mayhem Monster Truck'
       data
