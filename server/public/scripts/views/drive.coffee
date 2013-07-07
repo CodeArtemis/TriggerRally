@@ -224,7 +224,8 @@ define [
           message = 'Race complete'
           speak = 'complete'
           fade = no
-          @$('.racecomplete').removeClass 'hidden'
+          products = @app.root.user?.products ? []
+          @$('.racecomplete').removeClass 'hidden' unless 'packa' in products
         else if cpNext is cpTotal - 1
           message = 'Nearly there!'
           # speak = 'checkpoint'

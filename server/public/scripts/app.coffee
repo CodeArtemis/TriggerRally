@@ -58,7 +58,7 @@ define [
       audio: yes
       car: 'ArbusuG'
       challenge: 'world'
-      musicplay: yes
+      musicplay: no
       musicvolume: 0.5
       pixeldensity: 1
       shadows: yes
