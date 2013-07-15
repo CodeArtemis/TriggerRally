@@ -80,6 +80,8 @@ define [
 
       @router = new Router @
 
+      @router.on 'route', -> window._gaq.push ['_trackPageview']
+
       Backbone.on 'app:settrack', @setTrack, @
       Backbone.on 'app:checklogin', @checkUserLogin, @
       Backbone.on 'app:logout', @logout, @

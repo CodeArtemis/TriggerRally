@@ -209,7 +209,8 @@ define [
     advance: ->
       cpNext = @progress.nextCpIndex
       cpTotal = @app.root.track.config.course.checkpoints.length
-      @$checkpoints.text "#{cpNext} / #{cpTotal}"
+      text = "#{cpNext} / #{cpTotal}"
+      @$checkpoints.text text
 
       @updateSplit()
 
@@ -237,6 +238,8 @@ define [
           @$countdown.text message
           @$countdown.removeClass 'fadeout'
           if fade then _.defer => @$countdown.addClass 'fadeout'
+
+      window._gaq.push ['_trackEvent', 'Tracks', 'Drive Advance', "#{@app.root.track.id}: #{text}"]
 
       return if @progress.nextCheckpoint(0)
       throw new Error 'Simulation error' unless @progress.nextCpIndex > 0
