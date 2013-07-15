@@ -85,7 +85,7 @@ authenticateUser = (profile, done) ->
       # Create new user from passport profile.
       user = new User
         name: profile.displayName or profile.username
-      user.email = profile.emails[0].value if profile.emails?[0]
+      # user.email = profile.emails[0].value if profile.emails?[0]
       user.save (error) ->
         return done error if error
         userPassport.profile = profile
@@ -248,6 +248,20 @@ app.get    '/auth/twitter/callback', passport.authenticate('twitter',
 app.get    '/logout', (req, res) ->
   req.logOut()
   res.redirect '/'
+
+app.get    '/autologin', (req, res, next) ->
+  code = req.query.code
+  passport_id = config.autologin[code]
+  return res.send 401 unless passport_id
+  UserPassport
+    .findOne({ passport_id })
+    .populate('user')
+    .exec (error, userPassport) ->
+      return next error if error
+      return res.send 500 unless userPassport
+      req.login userPassport, (error) ->
+        return next error if error
+        res.redirect '/'
 
 app.get    '/closeme', routes.closeme
 

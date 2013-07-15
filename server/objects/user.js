@@ -14,15 +14,6 @@ var validate = require('./validate');
 var User = new Schema({
     pub_id      : { type: String, index: { unique: true } }
   , name        : { type: String, trim: true, validate: [validate.goosify(validate.required), 'name'] }
-  , location    : { type: String, default: '', trim: true } // DEPRECATED
-  , website     : { type: String, default: '', trim: true } // DEPRECATED
-  , bio         : { type: String, default: '', trim: true } // DEPRECATED
-  , email       : { type: String, default: '', trim: true } // DEPRECATED
-  , prefs       : {
-      shadows     : { type: Boolean, default: true }
-    , audio       : { type: Boolean, default: true }
-    , terrainhq   : { type: Boolean, default: true }
-  }
   , admin       : { type: Boolean, default: false }
   , picture     : String
   , products    : [ String ]
