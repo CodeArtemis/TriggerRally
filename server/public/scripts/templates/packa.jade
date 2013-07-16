@@ -1,0 +1,110 @@
+.gui-container
+  .text-panel
+    .packa-promo-image
+
+    h2
+      span.highlight Trigger Rally
+      |  Full Game
+
+    //- p!= priceHtml
+    p Pay what you want for:
+
+    ul
+      li The <b>Mayhem Monster Truck</b>
+      li The <b>Icarus flying car</b>
+      li Challenge top times on <b>over 700 tracks</b>
+      //- li Create your own tracks with the track editor
+      li Get the <b>Rally License</b> and choose your avatar
+      //- li Support an indie game developer!
+
+    p ...and of course that warm fuzzy feeling that you've supported an indie game developer!
+
+    if user
+      if purchased
+        .purchased-thanks
+          | Thank you for purchasing the full game! You now have an all-access pass!
+          br
+          | Use the <b>Tracks</b> and <b>Cars</b> menus at the top of the page to explore.
+          br
+          | Why not also try:
+          ul
+            li Driving some of the 
+              strong: a.route(href="/tracklist/featured") featured tracks
+            li Choosing an avatar on 
+              strong: a.route(href="/user/#{user.id}") your profile
+            //- li Creating your own track with the 
+            //-   strong: a.route(href="/v3-base-1/edit") editor
+        br
+      else
+        .checkout-box
+          table
+            tr
+              td Choose an amount in USD:
+              td
+            tr
+              td
+                form
+                  //- div Choose an amount in USD:<br><br>
+                  br
+                  div: label
+                    input(type="radio", name="amount", value="15")
+                    | $15
+                  div: label
+                    input(type="radio", name="amount", value="10")
+                    | $10
+                  div: label
+                    input(type="radio", name="amount", value="5")
+                    | $5
+                  div: label
+                    input(type="radio", name="amount", value="2")
+                    | $2
+                  div
+                    label
+                      input(type="radio", name="amount", value="custom")
+                      | Custom amount 
+                    input(type="text", name="custom", value="$10.00").customprice.zeroalpha
+                    .zeroalpha.message.minimum Please enter at least $0.01
+                    .zeroalpha.message.paypal PayPal takes at least $0.31. We would sure appreciate it if you could spare a little more!
+              td.checkout-buttons
+                //- div ...and then:
+                img.pack(src="/images/icon-128.png")
+                div: i: b Trigger Rally
+                br
+                input.checkout(type="image", src="https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif", name="paypal", value="paypal")
+                //- div: small (Use "Buy as a guest" to<br>pay with a credit card)
+          //- table
+            tr
+              td
+                img.pack(src="/images/icon-128.png")
+                //- img.pack(src="/images/packs/ignition.svg")
+                //- img.pack(src="/images/packs/mayhem.png")
+              td Trigger Rally:<br>Full Game
+            tr
+              if purchased
+                td
+                td
+                  .purchased Purchased.
+                    br
+                    | Thank you!
+              else
+                td: span.price 5.99 USD
+                td
+                  a.checkout(href="/checkout?pmkey=#{pmkey}&method=paypal&pack=packA")
+                    img(src="https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif")
+    else
+      p.purchased-thanks
+        a.login(href="/login") Please log in first
+
+    //- if purchased
+    //-   p
+    //-     | If you need help with your purchase,
+    //-     | please contact sup<span class="hidden">.remove.</span>port@codeartemis.com
+    //- else if user
+    //-   p Purchase will be credited to user ID #{user.id} (#{user.name}).
+
+    p Need help? Please email <b>sup<span class="hidden">.remove.</span>port@codeartemis.com</b>
+
+    p Use is subject to the 
+      a.route(href="/license") License and Terms of Use
+      | .
+    .clear-both
