@@ -1,11 +1,14 @@
 .gui-container
+  unless purchased
+    a.twitter-promo(href="https://twitter.com/jareiko", target="_blank")
+      img(src="/images/i-made-this.svg")
   menu
     div Code Artemis presents
     h1 Trigger Rally
     if purchased
       menu.home-left
         li
-          a.route.highlight.drivebutton(href="/") &gt; Drive &lt;
+          a.btn.route.highlight.drivebutton(href="/") &gt; Drive &lt;
         //- li.ignition-promo.hidden
         //-   a.route(href="/ignition") Icarus Car
         //-     .new-marker New!
@@ -17,18 +20,18 @@
         //- li
         //-   a.route(href="/track/KaXCxxFv/drive") Engelberg Descent
         li
-          a.route(href="/track/v3-base-1/edit") Create a track
+          a.btn.route(href="/track/v3-base-1/edit") Create a track
       menu.home-right
         li
-          a.route(href="/tracklist/featured") Featured tracks
+          a.btn.route(href="/tracklist/featured") Featured tracks
         li
-          a.route(href="/tracklist/recent") Published tracks
+          a.btn.route(href="/tracklist/recent") Published tracks
         li
-          a.route(href="/tracklist/all") All tracks
+          a.btn.route(href="/tracklist/all") All tracks
     else
       menu.home-left
         li
-          a.route.highlight.drivebutton(href="/") &gt; Drive &lt;
+          a.btn.route.highlight.drivebutton(href="/") &gt; Drive &lt;
       menu.home-right
         li
-          a.route(href="/purchase") Full Game
+          a.btn.route(href="/purchase") Full Game

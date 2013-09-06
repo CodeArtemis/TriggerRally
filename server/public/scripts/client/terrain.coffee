@@ -416,6 +416,9 @@ define [
             gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor, fogFactor);
           }
           """
+      # lineMat = new THREE.MeshBasicMaterial# color: 0x000000, wireframe: true
+      # lineMat.wireframe = true
+      # @material.wireframe = true
       obj = new THREE.Mesh @geom, @material
       obj.frustumCulled = no
       obj.receiveShadow = yes
@@ -502,15 +505,6 @@ define [
 
       return
 
-    _createImmediateObject: ->
-      class TerrainImmediateObject extends THREE.Object3D
-        constructor: (@renderTerrain) ->
-          super()
-          @receiveShadow = true
-        immediateRenderCallback: (program, gl, frustum) ->
-          @renderTerrain._render program, gl, frustum
-      return new TerrainImmediateObject @
-
     _createGeom: ->
       geom = new array_geometry.ArrayGeometry()
       geom.wireframe = false
@@ -562,7 +556,3 @@ define [
       #geom.removeIndices()
       geom.updateOffsets()
       return geom
-
-    _render: (program, gl, frustum) ->
-      @geom.render program, gl
-      return
