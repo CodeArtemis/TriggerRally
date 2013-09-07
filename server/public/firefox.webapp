@@ -1,0 +1,10 @@
+{
+  "name": "Trigger Rally",
+  "description": "Fast arcade rally racing action!",
+  "launch_path": "/",
+  "icons": {
+    "128": "/images/icon-128.png"
+  },
+  "default_locale": "en",
+  "version": "2.0.1"
+}
