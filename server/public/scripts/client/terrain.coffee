@@ -202,7 +202,6 @@ define [
             morphTargetPosition.z = getHeight(morphTargetPosition.xy);
 
             worldPosition = mix(worldPosition, morphTargetPosition, morph);
-            //worldPosition.z = 110.0;
 
             eyePosition = modelViewMatrix * vec4(worldPosition, 1.0);
             gl_Position = projectionMatrix * eyePosition;
@@ -285,7 +284,6 @@ define [
 
             // Add another layer of high-detail noise.
             vec3 normalSq = normalDetail * normalDetail;
-            //normalSq = pow(normalSq, vec3(3.0));
             vec2 detail2SampleX = texture2D(tDetail, worldToMapSpace(worldPosition.zy, tDetailSize, tDetailScale.xy / 37.3)).xy;
             vec2 detail2SampleY = texture2D(tDetail, worldToMapSpace(worldPosition.xz, tDetailSize, tDetailScale.xy / 37.3)).xy;
             vec2 detail2SampleZ = texture2D(tDetail, worldToMapSpace(worldPosition.yx, tDetailSize, tDetailScale.xy / 37.3)).xy;
@@ -302,11 +300,8 @@ define [
             vec3 veggieColor1 = vec3(0.43, 0.45, 0.25);
             vec3 veggieColor2 = vec3(0.14, 0.18, 0.05);
             vec3 eyeVec = normalize(cameraPosition - worldPosition);
-            //float veggieMix = pow(4.0, dot(eyeVec, normalDetail2) - 1.0);
             float veggieMix = dot(eyeVec, normalDetail);
             veggieMix = bias_fast(veggieMix * 0.7 + 0.3, 0.7);
-            //veggieMix = pow(max(0.0, veggieMix), 0.4);
-            //veggieMix = floor(veggieMix * 5.0) / 5.0;
             vec3 veggieColor = mix(veggieColor1, veggieColor2, veggieMix);
             float rockMix = 1.0 - smoothstep(1.5*0.71, 1.5*0.74,
                 normalRegion.z + normalDetail.z * 0.5 + (noiseSample - 0.5) * 0.3 - height * 0.0002);
@@ -382,7 +377,6 @@ define [
               vec4 lDirection = viewMatrix * vec4(directionalLightDirection[i], 0.0);
               vec3 dirVector = normalize(lDirection.xyz);
               directIllum += max(dot(normalDetail2, directionalLightDirection[i]), 0.0);
-              //directIllum += exp(dot(normalDetail2, directionalLightDirection[i]) - 1.0) / exp(-2.0);
               specularIllum += specular *
                   pow(max(0.0, dot(normalDetail2,
                                    normalize(eyeVec + directionalLightDirection[i]))),
@@ -397,19 +391,6 @@ define [
             vec3 totalIllum = ambientLightColor + directIllum * shadowColor;
             gl_FragColor.rgb = gl_FragColor.rgb * totalIllum + specularIllum * shadowColor;
 
-            // For debugging.
-            //gl_FragColor.rgb = normalDetail2 * 0.5 + 0.5;
-            //gl_FragColor.rgb = diffDirtSample;
-            //gl_FragColor.rgb = vec3(surfaceSample.a);
-            //gl_FragColor.rgb = vec3(detailHeightAmountDerivs, 0.0) * 0.001 + 0.5;
-            //gl_FragColor.rgb = vec3(screenToSurfaceSpace[0], 0.0) * 1.0 + 0.5;
-            //gl_FragColor.rgb = vec3(0.0, normal.y, 0.0);
-            //gl_FragColor.rgb = vec3(detailSample);
-            //gl_FragColor.rgb = 1.0 * vec3(normal.x, 0.0, normalDetail.x);
-            //gl_FragColor.rgb = veggieColor;
-
-            //vec3 fogCol = vec3(0.8, 0.85, 0.9);
-            //float clarity = 160.0 / (depth + 160.0);
             const float LOG2 = 1.442695;
             float fogFactor = exp2( - fogDensity * fogDensity * depth * depth * LOG2 );
             fogFactor = clamp( 1.0 - fogFactor, 0.0, 1.0 );
