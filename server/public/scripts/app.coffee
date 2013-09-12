@@ -57,7 +57,7 @@ define [
       antialias: yes
       audio: yes
       car: 'ArbusuG'
-      challenge: 'world'
+      challenge: 'clock'  # none, clock, world
       musicplay: no
       musicvolume: 0.5
       pixeldensity: 1

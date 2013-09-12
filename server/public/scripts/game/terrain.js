@@ -53,7 +53,7 @@ function(THREE, async, uImg, quiver, util) {
     // Note to self: elevation data in 8-bit PNG seems to compress 20% better
     // if you split the channels into separate greyscale PNG images.
     // (on Engelberg 1024x1024 dataset).
-    // Or could use 3072x1024 greyscale image.
+    // Or could use a 2048x1024 greyscale image.
 
     // TODO: More uniform handling of data types. Scale
     // everything to a 0-1 range?

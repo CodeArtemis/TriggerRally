@@ -145,6 +145,7 @@ define [
               p2 * (x - 1.0) * x2);
           }
 
+          // Cubic sampling in one dimension.
           float textureCubicU(sampler2D samp, vec2 uv00, float texel, float offsetV, float frac) {
             return catmullRom(
                 texture2D(samp, uv00 + vec2(-texel, offsetV)).r,
@@ -154,6 +155,7 @@ define [
                 frac);
           }
 
+          // Cubic sampling in two dimensions, taking advantage of separability.
           float textureBicubic(sampler2D samp, vec2 uv00, vec2 texel, vec2 frac) {
             return catmullRom(
                 textureCubicU(samp, uv00, texel.x, -texel.y, frac.x),
@@ -166,19 +168,26 @@ define [
           float getHeight(vec2 worldPosition) {
             vec2 heightUv = worldToMapSpace(worldPosition, tHeightSize, tHeightScale.xy);
             vec2 texel = 1.0 / tHeightSize;
+
+            // Find the bottom-left texel we need to sample.
             vec2 heightUv00 = (floor(heightUv * tHeightSize + 0.5) - 0.5) / tHeightSize;
+
+            // Determine the fraction across the 4-texel quad we need to compute.
             vec2 frac = (heightUv - heightUv00) * tHeightSize;
+
+            // Compute an interpolated coarse height value.
             float coarseHeight = textureBicubic(tHeight, heightUv00, texel, frac) * tHeightScale.z;
 
+            // Take a surface texture sample.
             vec2 surfaceUv = worldToMapSpace(worldPosition, tSurfaceSize, tSurfaceScale.xy);
             vec4 surfaceSample = texture2D(tSurface, surfaceUv - 0.5 / tSurfaceSize);
 
-            float surfaceType = surfaceSample.a;
-            float detailHeightAmount = surfaceSample.a;
+            // Use the surface type to work out how much detail noise to add.
+            float detailHeightMultiplier = surfaceSample.a;
             vec2 detailHeightUv = worldToMapSpace(worldPosition.xy, tDetailSize, tDetailScale.xy);
             vec4 detailSample = texture2D(tDetail, detailHeightUv);
             float detailHeightSample = detailSample.z - 0.5;
-            float detailHeight = detailHeightSample * tDetailScale.z * detailHeightAmount;
+            float detailHeight = detailHeightSample * tDetailScale.z * detailHeightMultiplier;
 
             return coarseHeight + detailHeight;
           }
@@ -190,17 +199,21 @@ define [
 
             worldPosition = position * layerScale + vec3(layerOffset, 0.0);
 
+            // Work out how much morphing we need to do.
             vec3 manhattan = abs(worldPosition - cameraPosition);
             float morphDist = max(manhattan.x, manhattan.y) / layerScale;
             float morph = min(1.0, max(0.0, morphDist / (RING_WIDTH / 2.0) - 3.0));
-            vec2 scaledPosition = worldPosition.xy / layerScale;
-            vec3 morphTargetPosition = vec3(worldPosition.xy + layerScale *
-              mod(scaledPosition.xy, 2.0) *
-              (mod(scaledPosition.xy, 4.0) - 2.0), 0.0);
 
+            // Compute the morph direction vector.
+            vec2 layerPosition = worldPosition.xy / layerScale;
+            vec2 morphVector = mod(layerPosition.xy, 2.0) * (mod(layerPosition.xy, 4.0) - 2.0);
+            vec3 morphTargetPosition = vec3(worldPosition.xy + layerScale * morphVector, 0.0);
+
+            // Get the unmorphed and fully morphed terrain heights.
             worldPosition.z = getHeight(worldPosition.xy);
             morphTargetPosition.z = getHeight(morphTargetPosition.xy);
 
+            // Apply the morphing.
             worldPosition = mix(worldPosition, morphTargetPosition, morph);
 
             eyePosition = modelViewMatrix * vec4(worldPosition, 1.0);
