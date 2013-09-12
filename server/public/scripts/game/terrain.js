@@ -48,7 +48,7 @@ function(THREE, async, uImg, quiver, util) {
     // Create seed buffers. The pipeline will preserve their data types.
     uImg.createBuffer(this.maps.height, 1, 1, 1, Float32Array);
     uImg.createBuffer(this.maps.surface, 1, 1, 4, Uint8Array);
-    uImg.createBuffer(this.maps.detail, 1, 1, 4, Uint8Array);
+    uImg.createBuffer(this.maps.detail, 1, 1, 3, Uint8Array);
 
     // Note to self: elevation data in 8-bit PNG seems to compress 20% better
     // if you split the channels into separate greyscale PNG images.
