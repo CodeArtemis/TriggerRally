@@ -277,8 +277,6 @@ define [
 
             vec2 surfaceDerivs = 255.0 * tSurfaceScale.z / tSurfaceScale.xy * (surfaceSample.xy - 0.5);
 
-            // mat2 screenToSurfaceSpace = inverse(mat2(dFdx(surfaceUv), dFdy(surfaceUv)));
-
             float surfaceType = surfaceSample.b;
             float detailHeightAmount = surfaceSample.a;
 
