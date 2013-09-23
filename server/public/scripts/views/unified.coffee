@@ -29,6 +29,7 @@ define [
       # TODO: Find a better solution.
       @currentView3D = null     # Controls 3D rendering.
       @currentViewChild = null  # Controls DOM.
+      @currentDialog = null
 
     afterRender: ->
       statusBarView = new StatusBarView @app
@@ -37,7 +38,7 @@ define [
       $window = $(window)
       $document = $(document)
       $view3d = @$('#view3d')
-      $child = @$('#unified-child')
+      $child = @$child = @$('#unified-child')
       $statusMessage = @$('#status-message')
 
       client = @client = new TriggerClient $view3d[0], @app.root
@@ -80,7 +81,7 @@ define [
       $document.on 'click', 'a.route', (event) ->
         # TODO: Find a way to handle 404s.
         Backbone.history.navigate @pathname, trigger: yes
-        no
+        false
 
       doLogin = ->
         popup.create "/login?popup=1", "Login", ->
@@ -111,6 +112,7 @@ define [
       @currentView3D?.update? deltaTime, time
       if @currentViewChild isnt @currentView3D
         @currentViewChild?.update? deltaTime, time
+      @currentDialog?.update? deltaTime, time
 
       @client.update deltaTime
       try
@@ -122,34 +124,38 @@ define [
 
     getView3D: -> @currentView3D
     getViewChild: -> @currentViewChild
+    getDialog: -> @currentDialog
 
     setView3D: (view) ->
-      $child = $('#unified-child')
       if @currentView3D
         @currentView3D.destroy()
       if @currentView3D is @currentViewChild
         @currentViewChild = null
-        $child.empty()
+        @$child.empty()
       @currentView3D = view
       return
 
     setViewChild: (view) ->
-      $child = $('#unified-child')
       if @currentViewChild
         @currentViewChild.destroy()
-        $child.empty()
+        @$child.empty()
         @currentView3D = null if @currentView3D is @currentViewChild
       @currentViewChild = view
-      $child.append view.el if view
+      @$child.append view.el if view
       return
 
     setViewBoth: (view) ->
-      $child = $('#unified-child')
       if @currentViewChild
         @currentViewChild.destroy()
         @currentView3D = null if @currentView3D is @currentViewChild
       if @currentView3D
         @currentView3D.destroy()
-      $child.empty().append view.el if view
+      @$child.empty().append view.el if view
       @currentViewChild = @currentView3D = view
+      return
+
+    setDialog: (view) ->
+      @currentDialog?.destroy()
+      @currentDialog = view
+      @$child.append view.el if view
       return

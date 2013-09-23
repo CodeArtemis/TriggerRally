@@ -5,6 +5,7 @@ define [
   'client/car'
   'cs!models/index'
   'cs!views/inspector'
+  'cs!views/purchase'
   'cs!views/view'
   'jade!templates/home'
 ], (
@@ -14,6 +15,7 @@ define [
   clientCar
   models
   InspectorView
+  PurchaseView
   View
   template
 ) ->
@@ -28,8 +30,9 @@ define [
       @listenTo @app.root, 'change:user', => @render()
 
     viewModel: ->
-      products = @app.root.user?.products ? []
-      purchased: 'packa' in products
+      # products = @app.root.user?.products ? []
+      # purchased: 'packa' in products
+      credits: @app.root.user?.credits
 
     afterRender: ->
       do updateDriveButton = =>
@@ -43,3 +46,11 @@ define [
       #   @$('.mayhem-promo').toggleClass 'hidden', 'mayhem' in products
 
       # @listenTo @app.root, 'change:user.products', updatePromo
+
+      @$('.purchaseplus a').on 'click', (event) =>
+        purchaseView = new PurchaseView @app.root.user, @app, @client
+        @app.unifiedView.setDialog purchaseView
+        purchaseView.render()
+        false
+
+      return

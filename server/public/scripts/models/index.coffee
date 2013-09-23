@@ -359,6 +359,7 @@
     all: new (Collection.extend model: @)
     buildProps @, [
       'created'
+      'credits'
       'favorite_tracks'
       'name'
       'picture'

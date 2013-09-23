@@ -3,6 +3,7 @@
 @import drive
 @import editor
 @import profile
+@import purchase
 @import track
 
 body
@@ -137,12 +138,22 @@ audio
   position relative
   height 0  // So that it doesn't get in the way of mouse events.
 
+.modal
+  z-index 2
+
+.modal-blocker
+  position absolute
+  width 100%
+  height 100%
+  z-index -1
+
 .gui-container
-  position relative
+  position absolute
   width 32em
   height 18em
-  margin auto
   overflow auto
+  left 50%
+  margin-left -16em
 
 .gui-container h1
   margin 0.2em 0
@@ -405,3 +416,28 @@ input.checkout
 
 .twitter-promo img
   width 5em
+
+.dialog
+  background white
+  box-shadow inset 0 0 4em rgba(0,0,0,0.3), 0 0.3em 1em black
+  border-radius 0.8em
+  scale = 0.75
+  font-size scale * 1em
+  // padding 0.5em
+  position absolute
+  // Total space is 32em by 18em.
+  // Card size is 21 by 13.
+  width 21em
+  height 13em
+  top (18/scale * 1em - @height) * 0.1
+  left (32/scale * 1em - @width) * 0.5
+  border 0.3em solid #fda
+  overflow hidden
+  // font-family monospace
+  // -moz-user-select auto
+  // -webkit-user-select auto
+  // user-select auto
+  opacity 0.95
+
+.dialogpadding
+  padding 0.5em

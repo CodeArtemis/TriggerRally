@@ -18,6 +18,7 @@ var User = new Schema({
   , picture     : String
   , products    : [ String ]
   , favorite_tracks : [ { type: Schema.ObjectId, ref: 'Track', index: true } ]
+  , credits     : { type: Number, default: 0 }
 }, { strict: true });
 
 User.virtual('id')

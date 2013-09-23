@@ -282,16 +282,7 @@ module.exports = (bb) ->
     update: (model, success, error, options) ->
       user = fav_tracks = null
       done = _.after 2, ->
-        data = jsonClone model
-        # TODO: Check if it's safe to just copy everything from the model.
-        _.extend user, _.pick data, [
-          # 'favorite_tracks'
-          'name'
-          'pay_history'
-          'picture'
-          'products'
-          # 'tracks'  # This is a generated attribute.
-        ]
+        _.extend user, jsonClone model
         user.favorite_tracks = (ft._id for ft in fav_tracks)
         user.save (err) ->
           if err
