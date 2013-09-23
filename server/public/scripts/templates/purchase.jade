@@ -22,6 +22,7 @@
             label
               input(type="radio", name="credits", value="#{option.credits}")
               .ca-credit
-              |  #{option.credits} for USD #{option.price}
+              span  #{option.credits}
+              span.muted  for USD #{option.price}
         input.checkout(type="image", src="https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif", name="paypal", value="paypal")
         //- img.paypal-logo(src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_111x69.jpg")

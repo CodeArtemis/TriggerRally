@@ -287,29 +287,45 @@ ppec = require './paypal/expresscheckout'
 qs = require 'querystring'
 
 availablePacks =
-  # ignition:
-  #   cost: '5.00'
-  #   name: 'Trigger Rally: Icarus Ignition'
-  #   description: 'A new car for Trigger Rally.'
-  #   url: 'https://triggerrally.com/ignition'
-  #   products: [ 'ignition', 'rally', 'paid' ]
-  # mayhem:
-  #   cost: '2.00'
-  #   name: 'Trigger Rally: Mayhem Monster Truck'
-  #   description: 'The Mayhem Monster Truck for Trigger Rally.'
-  #   url: 'https://triggerrally.com/mayhem'
-  #   products: [ 'mayhem', 'paid' ]
-  full:
-    name: 'Trigger Rally: Full Game'
-    description: 'Access all tracks, the Arbusu, Mayhem and Icarus cars, and more!'
-    url: 'https://triggerrally.com/purchase'
-    products: [ 'packa', 'ignition', 'mayhem', 'paid' ]
+  ignition:
+    cost: '750'
+    currency: 'credits'
+    # name: 'Trigger Rally: Icarus Ignition'
+    # description: 'A new car for Trigger Rally.'
+    # url: 'https://triggerrally.com/ignition'
+    products: [ 'ignition', 'paid' ]
+  mayhem:
+    cost: '400'
+    currency: 'credits'
+    # name: 'Trigger Rally: Mayhem Monster Truck'
+    # description: 'The Mayhem Monster Truck for Trigger Rally.'
+    # url: 'https://triggerrally.com/mayhem'
+    products: [ 'mayhem', 'paid' ]
+  # full:
+  #   name: 'Trigger Rally: Full Game'
+  #   description: 'Access all tracks, the Arbusu, Mayhem and Icarus cars, and more!'
+  #   url: 'https://triggerrally.com/purchase'
+  #   products: [ 'packa', 'ignition', 'mayhem', 'paid' ]
+
+addCredits = (credits, cost) ->
+  availablePacks["credits#{credits}"] =
+    name: "Trigger Rally: #{credits} Credits"
+    description: "Adds #{credits} credits to your Trigger Rally account."
+    url: "https://triggerrally.com/"
+    cost: cost
+    credits: credits
+    currency: 'USD'
+
+addCredits '80',   '0.99'
+addCredits '200',  '1.99'
+addCredits '550',  '4.99'
+addCredits '1200', '9.99'
+addCredits '2000', '14.99'
 
 pack.id = id for own id, pack of availablePacks
 
 getPaymentParams = (pack, cost) ->
   # cost ?= pack.cost
-
   PAYMENTREQUEST_0_CUSTOM: pack.id + ',' + cost
   PAYMENTREQUEST_0_PAYMENTACTION: 'Sale'
   PAYMENTREQUEST_0_AMT: cost
@@ -328,7 +344,6 @@ getPaymentParams = (pack, cost) ->
   BUYEREMAILOPTINENABLE: 1
   # BUYERUSERNAME  # May be useful to increase user confidence?
   # BUYERREGISTRATIONDATE
-
   L_PAYMENTREQUEST_0_ITEMCATEGORY0: 'Digital'
   L_PAYMENTREQUEST_0_ITEMURL0: pack.url
   L_PAYMENTREQUEST_0_QTY0: 1
@@ -343,13 +358,17 @@ app.get '/checkout', (req, res) ->
   pack = availablePacks[packId]
   return res.send 404 unless pack
 
-  # Check that user doesn't already have this pack.
-  newProducts = _.difference pack.products, req.user.user.products
-  return res.send 409 if _.isEmpty newProducts
+  if pack.products
+    # Check that user doesn't already have this pack.
+    newProducts = _.difference pack.products, req.user.user.products
+    return res.send 409 if _.isEmpty newProducts
 
-  switch req.query.method
-    # when 'free' then freeCheckout pack, req, res
-    when 'paypal' then paypalCheckout pack, req, res
+  switch pack.currency
+    when 'USD'
+      switch req.query.method
+        when 'paypal' then paypalCheckout pack, req, res
+        else res.send 400
+    when 'credits' then creditsCheckout pack, req, res
     else res.send 400
 
 # freeCheckout = (pack, req, res) ->
@@ -363,6 +382,19 @@ app.get '/checkout', (req, res) ->
 #         res.redirect '/closeme'
 #       error: ->
 #         res.send 500
+
+creditsCheckout = (pack, req, res) ->
+  api.findUser req.user.user.pub_id, (bbUser) ->
+    return failure 500 unless bbUser
+    cost = parseInt(pack.cost)
+    return res.send 402 unless bbUser.credits >= cost
+    products = bbUser.products ? []
+    products = _.union products, pack.products
+    bbUser.save { products, credits: bbUser.credits - cost },
+      success: ->
+        res.redirect '/closeme'
+      error: ->
+        res.send 500
 
 paypalCheckout = (pack, req, res) ->
   amt = req.query.amt
@@ -397,32 +429,34 @@ app.get '/checkout/return', (req, res) ->
       return failure 500, "#{params.METHOD} error: #{err}" if err
       log "#{params.METHOD} response: #{nvp_res}"
       return failure 500 if nvp_res.ACK isnt 'Success'
-      [packId, amt] = nvp_res.PAYMENTREQUEST_0_CUSTOM.split ','
+      packId = nvp_res.PAYMENTREQUEST_0_CUSTOM
       pack = availablePacks[packId]
-      # Check AGAIN that the user doesn't already have this pack.
-      newProducts = _.difference pack.products, (bbUser.products ? [])
-      return res.send 409 if _.isEmpty newProducts
+      if pack.products
+        # Check AGAIN that the user doesn't already have this pack.
+        newProducts = _.difference pack.products, (bbUser.products ? [])
+        return res.send 409 if _.isEmpty newProducts
       # TODO: Check that price and description match what we expect?
-      params = getPaymentParams pack, amt
+      params = getPaymentParams pack
       return failure 500 unless params
       params.METHOD = 'DoExpressCheckoutPayment'
       params.TOKEN = nvp_res.TOKEN
       params.PAYERID = nvp_res.PAYERID
       params.RETURNFMFDETAILS = 1
       log "Calling: #{JSON.stringify params}"
-      # log "OMIT CALL"
-      # if true
       ppec.request params, (err, nvp_res) ->
         return failure 500, "#{params.METHOD} error: #{err}" if err
         log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
         return failure 500 if nvp_res.ACK isnt 'Success'
-        products = bbUser.products ? []
-        products = _.union products, pack.products
-        pay_history = bbUser.pay_history ? []
-        pay_history.push amt
+        saveData = {}
+        if pack.products
+          products = bbUser.products ? []
+          products = _.union products, pack.products
+        if pack.credits
+          saveData.credits = bbUser.credits + parseInt(pack.credits)
+        saveData.pay_history = bbUser.pay_history ? []
+        saveData.pay_history.push [ Date.now(), 'paypal', pack.currency, pack.cost, pack.id ]
         bbUser.save { products, pay_history },
           success: ->
-            # TODO: Show a "Thank you!" interstitial page?
             log "PURCHASE COMPLETE for user #{bbUser.id}"
             res.redirect '/closeme'
           error: ->

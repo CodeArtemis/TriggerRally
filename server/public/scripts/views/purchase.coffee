@@ -26,7 +26,7 @@ define [
     pricing =
       80: '0.99'
       200: '1.99'
-      600: '4.99'
+      550: '4.99'
       1200: '9.99'
       2000: '15.99'
 
@@ -40,7 +40,7 @@ define [
       @$('.modal-blocker').on 'click', (event) =>
         @destroy()
 
-      @$('.purchasecredits input:radio[value=\"600\"]').prop 'checked', yes
+      @$('.purchasecredits input:radio[value=\"550\"]').prop 'checked', yes
 
       # $displayAmount = @$('.display-amount')
       # $displayAmount.text 'default'
