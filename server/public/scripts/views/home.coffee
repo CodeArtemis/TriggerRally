@@ -40,6 +40,11 @@ define [
         @$('.drivebutton').attr 'href', "/track/#{trackId}/drive" if trackId
       @listenTo @app.root, 'change:track.', updateDriveButton
 
+      $userCredits = @$('.user-credits')
+      @listenTo @app.root, 'change:user.credits', =>
+        # TODO: Animate credit gains.
+        $userCredits.text @app.root.user?.credits
+
       # do updatePromo = =>
       #   products = @app.root.user?.products ? []
       #   @$('.ignition-promo').toggleClass 'hidden', 'ignition' in products

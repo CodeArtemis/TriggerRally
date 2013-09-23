@@ -4,12 +4,15 @@
   menu
     div Code Artemis presents
     h1 Trigger Rally
-    .credits-box
-      .ca-credit
-      |  #{credits} 
-      .purchaseplus
-        a(href="#")
-          span +
+    if credits !== undefined
+      .credits-box
+        .ca-credit
+        | &nbsp;
+        span.user-credits= credits
+        | &nbsp;
+        .purchaseplus
+          a(href="#")
+            span +
     menu.home-left
       li
         a.btn.route.highlight.drivebutton(href="/") &gt; Drive &lt;

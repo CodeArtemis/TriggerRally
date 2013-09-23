@@ -19,7 +19,7 @@ parseMongoose = (doc) ->
   if doc instanceof mongoose.Document
     parseMongoose doc.toObject getters: yes
   else if doc instanceof mongoose.Types.ObjectId
-    "[ObjectId]"
+    "[bbm ObjectId]"
   else if _.isArray doc
     (parseMongoose el for el in doc)
   else if doc instanceof Date
@@ -282,7 +282,16 @@ module.exports = (bb) ->
     update: (model, success, error, options) ->
       user = fav_tracks = null
       done = _.after 2, ->
-        _.extend user, jsonClone model
+        data = jsonClone model
+        _.extend user, _.pick data, [
+          # 'favorite_tracks'  # Done below.
+          'credits'
+          'name'
+          'pay_history'
+          'picture'
+          'products'
+          # 'tracks'  # This is a generated attribute.
+        ]
         user.favorite_tracks = (ft._id for ft in fav_tracks)
         user.save (err) ->
           if err

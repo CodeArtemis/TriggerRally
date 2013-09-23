@@ -17,12 +17,6 @@ define [
     constructor: (user, @app, @client) ->
       super { model: user }
 
-    initialize: ->
-      @listenTo @app.root, 'change:user', => @render()
-      @model.fetch
-        error: ->
-          Backbone.trigger 'app:notfound'
-
     pricing =
       80: '0.99'
       200: '1.99'
@@ -52,8 +46,9 @@ define [
         credits = @$('input[name=credits]:checked').val()
         "/checkout?method=paypal&cur=USD&pack=credits#{credits}"
 
-      @$('.checkout').on 'click', ->
-        result = popup.create checkoutUrl(), "Checkout", ->
+      @$('.checkout').on 'click', =>
+        result = popup.create checkoutUrl(), "Checkout", =>
+          @destroy()
           root.user.fetch
             force: yes
         alert 'Popup window was blocked!' unless result

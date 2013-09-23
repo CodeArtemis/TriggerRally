@@ -324,9 +324,9 @@ addCredits '2000', '14.99'
 
 pack.id = id for own id, pack of availablePacks
 
-getPaymentParams = (pack, cost) ->
-  # cost ?= pack.cost
-  PAYMENTREQUEST_0_CUSTOM: pack.id + ',' + cost
+getPaymentParams = (pack) ->
+  cost = pack.cost
+  PAYMENTREQUEST_0_CUSTOM: pack.id
   PAYMENTREQUEST_0_PAYMENTACTION: 'Sale'
   PAYMENTREQUEST_0_AMT: cost
   PAYMENTREQUEST_0_ITEMAMT: cost  # Required for digital goods.
@@ -397,10 +397,7 @@ creditsCheckout = (pack, req, res) ->
         res.send 500
 
 paypalCheckout = (pack, req, res) ->
-  amt = req.query.amt
-  return res.send 402 if ',' in amt
-  return res.send 402 unless parseFloat(amt) >= 0.01
-  params = getPaymentParams pack, amt
+  params = getPaymentParams pack
   return res.send 404 unless params
   params.METHOD = 'SetExpressCheckout'
   log "Calling: #{JSON.stringify params}"
@@ -414,54 +411,57 @@ paypalCheckout = (pack, req, res) ->
     return res.send 500 unless TOKEN
     res.redirect ppec.redirectUrl TOKEN
 
+failure = (res, code, msg) ->
+  console.error "PURCHASE FAILED: (#{code}) #{msg}"
+  res.send code
+
 app.get '/checkout/return', (req, res) ->
-  failure = (code, msg) ->
-    console.error "PURCHASE FAILED: (#{code}) #{msg}"
-    res.send code
-  return failure 401 unless req.user
+  return failure res, 401 unless req.user
   api.findUser req.user.user.pub_id, (bbUser) ->
-    return failure 500 unless bbUser
+    return failure res, 500 unless bbUser
     params =
       METHOD: 'GetExpressCheckoutDetails'
       TOKEN: req.query.token
     log "Calling: #{JSON.stringify params}"
-    ppec.request params, (err, nvp_res) ->
-      return failure 500, "#{params.METHOD} error: #{err}" if err
-      log "#{params.METHOD} response: #{nvp_res}"
-      return failure 500 if nvp_res.ACK isnt 'Success'
-      packId = nvp_res.PAYMENTREQUEST_0_CUSTOM
-      pack = availablePacks[packId]
-      if pack.products
-        # Check AGAIN that the user doesn't already have this pack.
-        newProducts = _.difference pack.products, (bbUser.products ? [])
-        return res.send 409 if _.isEmpty newProducts
-      # TODO: Check that price and description match what we expect?
-      params = getPaymentParams pack
-      return failure 500 unless params
-      params.METHOD = 'DoExpressCheckoutPayment'
-      params.TOKEN = nvp_res.TOKEN
-      params.PAYERID = nvp_res.PAYERID
-      params.RETURNFMFDETAILS = 1
-      log "Calling: #{JSON.stringify params}"
-      ppec.request params, (err, nvp_res) ->
-        return failure 500, "#{params.METHOD} error: #{err}" if err
-        log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
-        return failure 500 if nvp_res.ACK isnt 'Success'
-        saveData = {}
-        if pack.products
-          products = bbUser.products ? []
-          products = _.union products, pack.products
-        if pack.credits
-          saveData.credits = bbUser.credits + parseInt(pack.credits)
-        saveData.pay_history = bbUser.pay_history ? []
-        saveData.pay_history.push [ Date.now(), 'paypal', pack.currency, pack.cost, pack.id ]
-        bbUser.save { products, pay_history },
-          success: ->
-            log "PURCHASE COMPLETE for user #{bbUser.id}"
-            res.redirect '/closeme'
-          error: ->
-            log "user: #{JSON.stringify bbUser}"
-            failure 500, "COMPLETE BUT FAILED TO RECORD - VERY BAD!!"
+    ppec.request params, paypalResponse_GetExpressCheckoutDetails.bind null, bbUser, res
+
+paypalResponse_GetExpressCheckoutDetails = (bbUser, res, err, nvp_res) ->
+  method = 'GetExpressCheckoutDetails'
+  return failure res, 500, "#{method} error: #{err}" if err
+  log "#{method} response: #{nvp_res}"
+  return failure res, 500 if nvp_res.ACK isnt 'Success'
+  packId = nvp_res.PAYMENTREQUEST_0_CUSTOM
+  pack = availablePacks[packId]
+  # TODO: Check that price and description match what we expect?
+  params = getPaymentParams pack
+  return failure res, 500 unless params
+  params.METHOD = 'DoExpressCheckoutPayment'
+  params.TOKEN = nvp_res.TOKEN
+  params.PAYERID = nvp_res.PAYERID
+  params.RETURNFMFDETAILS = 1
+  log "Calling: #{JSON.stringify params}"
+  ppec.request params, paypalResponse_DoExpressCheckoutPayment.bind null, bbUser, res
+
+paypalResponse_DoExpressCheckoutPayment = (bbUser, res, err, nvp_res) ->
+  method = 'DoExpressCheckoutPayment'
+  return failure res, 500, "#{method} error: #{err}" if err
+  log "#{method} response: #{JSON.stringify nvp_res}"
+  return failure res, 500 if nvp_res.ACK isnt 'Success'
+  saveData = {}
+  if pack.products
+    saveData.products = _.union (bbUser.products ? []), pack.products
+  if pack.credits
+    saveData.credits = bbUser.credits + parseInt(pack.credits)
+  saveData.pay_history = bbUser.pay_history ? []
+  saveData.pay_history.push [ Date.now(), 'paypal', pack.currency, pack.cost, pack.id ]
+  console.log saveData
+  bbUser.save saveData,
+    success: ->
+      log "PURCHASE COMPLETE for user #{bbUser.id}"
+      res.redirect '/closeme'
+    error: ->
+      log "user: #{JSON.stringify bbUser}"
+      failure res, 500, "COMPLETE BUT FAILED TO RECORD - VERY BAD!!"
 
 # app.post '/paypal/ipn', handleIPN
 
