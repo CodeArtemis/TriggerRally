@@ -39,10 +39,10 @@ define [
     routes:
       "": "home"
       "about": "about"
-      # "ignition": "ignition"
+      "ignition": "ignition"
       "license": "license"
-      # "mayhem": "mayhem"
-      "purchase": "packA"
+      "mayhem": "mayhem"
+      # "purchase": "packA"
       "run/:runId/replay": "runReplay"
       "track/:trackId": "track"
       "track/:trackId/edit": "trackEdit"

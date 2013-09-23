@@ -9,23 +9,19 @@
   // text-shadow 0 0 0.1em white
   // color white
 
-.ca-credit
-  display inline-block
+span.ca-credit
   background url('/images/ca-credit.png')
   background-repeat no-repeat
   background-size contain
-  background-position center
-  width 1em
-  height 1em
-  margin-bottom -0.15em
+  background-position left center
+  padding-left 1.2em
 
-.purchaseplus
-  display inline-block
+.purchasebutton
+  // display inline-block
   margin-left 0.1em
   text-align center
 
-.purchaseplus a
-.purchaseplus a:visited
+.purchasebutton a
   display inline-block
   background #140
   color white
@@ -35,13 +31,32 @@
   position relative
   top 0.2em
 
-.purchaseplus a:hover
-.purchaseplus a:active
+.purchasebutton a
+.purchasebutton a:visited
+  color white
+
+.purchasebutton a:hover
+.purchasebutton a:active
   background #684
 
-.purchaseplus a span
+.purchasebutton a span
   position relative
   top -0.25em
+
+a.buybutton
+  background #140
+  border-radius 0.2em
+  padding 0.1em 0.3em
+
+a.buybutton
+a.buybutton:visited
+  color white
+
+a.buybutton:hover
+a.buybutton:active
+  background #684
+
+// .buybutton a span
 
 .purchasecredits input[type="radio"]
   font-size inherit

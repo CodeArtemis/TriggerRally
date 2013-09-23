@@ -128,10 +128,10 @@ define [
       do createGame = =>
         return unless root.track?
         products = root.user?.products or []
-        if not root.track.demo and 'packa' not in products
-          _.defer ->
-            Backbone.history.navigate '/purchase', trigger: yes
-          return
+        # if not root.track.demo and 'packa' not in products
+        #   _.defer ->
+        #     Backbone.history.navigate '/purchase', trigger: yes
+        #   return
         @trackId = root.track.id
         nextTrackId = root.track.next_track?.id
         @$nextButton.toggleClass 'hidden', not nextTrackId

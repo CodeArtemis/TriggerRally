@@ -5,7 +5,6 @@ define [
   'client/car'
   'cs!models/index'
   'cs!views/inspector'
-  'cs!views/purchase'
   'cs!views/view'
   'jade!templates/home'
 ], (
@@ -15,7 +14,6 @@ define [
   clientCar
   models
   InspectorView
-  PurchaseView
   View
   template
 ) ->
@@ -40,22 +38,20 @@ define [
         @$('.drivebutton').attr 'href', "/track/#{trackId}/drive" if trackId
       @listenTo @app.root, 'change:track.', updateDriveButton
 
-      $userCredits = @$('.user-credits')
+      $userCredits = @$('.ca-credit.usercredits')
       @listenTo @app.root, 'change:user.credits', =>
         # TODO: Animate credit gains.
         $userCredits.text @app.root.user?.credits
 
-      # do updatePromo = =>
-      #   products = @app.root.user?.products ? []
-      #   @$('.ignition-promo').toggleClass 'hidden', 'ignition' in products
-      #   @$('.mayhem-promo').toggleClass 'hidden', 'mayhem' in products
+      do updatePromo = =>
+        products = @app.root.user?.products ? []
+        @$('.ignition-promo').toggleClass 'hidden', 'ignition' in products
+        @$('.mayhem-promo').toggleClass 'hidden', 'mayhem' in products
 
-      # @listenTo @app.root, 'change:user.products', updatePromo
+      @listenTo @app.root, 'change:user.products', updatePromo
 
-      @$('.purchaseplus a').on 'click', (event) =>
-        purchaseView = new PurchaseView @app.root.user, @app, @client
-        @app.unifiedView.setDialog purchaseView
-        purchaseView.render()
+      @$('.purchasebutton a').on 'click', (event) =>
+        @app.showCreditPurchaseDialog()
         false
 
       return

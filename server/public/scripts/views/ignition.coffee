@@ -28,8 +28,14 @@ define [
       user: @app.root.user
 
     afterRender: ->
-      root = @app.root
-      @$('a.checkout').on 'click', ->
-        not popup.create @href, "Checkout", ->
-          root.user.fetch
-            force: yes
+      app = @app
+      @$('a.buybutton').on 'click', ->
+        if app.root.user.credits >= 750
+          $.ajax
+            url: @href
+          .done ->
+            app.root.user.fetch
+              force: yes
+        else
+          app.showCreditPurchaseDialog()
+        false

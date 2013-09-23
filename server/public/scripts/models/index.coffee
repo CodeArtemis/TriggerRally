@@ -411,9 +411,11 @@
       products = @products ? []
       return null unless products?
       carIds = [ 'ArbusuG' ]
-      carIds.push 'Icarus', 'Mayhem' if 'packa' in products
-      # carIds.push 'Icarus' if 'ignition' in products
-      # carIds.push 'Mayhem' if 'mayhem' in products
+      if 'packa' in products
+        carIds.push 'Icarus', 'Mayhem'
+      else
+        carIds.push 'Icarus' if 'ignition' in products
+        carIds.push 'Mayhem' if 'mayhem' in products
       carIds
     isFavoriteTrack: (track) ->
       @favorite_tracks and track.id in @favorite_tracks

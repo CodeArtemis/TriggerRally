@@ -293,14 +293,14 @@ availablePacks =
     # name: 'Trigger Rally: Icarus Ignition'
     # description: 'A new car for Trigger Rally.'
     # url: 'https://triggerrally.com/ignition'
-    products: [ 'ignition', 'paid' ]
+    products: [ 'ignition' ]
   mayhem:
     cost: '400'
     currency: 'credits'
     # name: 'Trigger Rally: Mayhem Monster Truck'
     # description: 'The Mayhem Monster Truck for Trigger Rally.'
     # url: 'https://triggerrally.com/mayhem'
-    products: [ 'mayhem', 'paid' ]
+    products: [ 'mayhem' ]
   # full:
   #   name: 'Trigger Rally: Full Game'
   #   description: 'Access all tracks, the Arbusu, Mayhem and Icarus cars, and more!'
@@ -309,8 +309,8 @@ availablePacks =
 
 addCredits = (credits, cost) ->
   availablePacks["credits#{credits}"] =
-    name: "Trigger Rally: #{credits} Credits"
-    description: "Adds #{credits} credits to your Trigger Rally account."
+    name: "#{credits} Credits - Trigger Rally"
+    description: "A package of #{credits} credits for your Trigger Rally account."
     url: "https://triggerrally.com/"
     cost: cost
     credits: credits
@@ -392,7 +392,10 @@ creditsCheckout = (pack, req, res) ->
     products = _.union products, pack.products
     bbUser.save { products, credits: bbUser.credits - cost },
       success: ->
-        res.redirect '/closeme'
+        if req.query.popup
+          res.redirect '/closeme'
+        else
+          res.send 200
       error: ->
         res.send 500
 
@@ -423,9 +426,9 @@ app.get '/checkout/return', (req, res) ->
       METHOD: 'GetExpressCheckoutDetails'
       TOKEN: req.query.token
     log "Calling: #{JSON.stringify params}"
-    ppec.request params, paypalResponse_GetExpressCheckoutDetails.bind null, bbUser, res
+    ppec.request params, paypalResponse_GetExpressCheckoutDetails.bind null, bbUser, req, res
 
-paypalResponse_GetExpressCheckoutDetails = (bbUser, res, err, nvp_res) ->
+paypalResponse_GetExpressCheckoutDetails = (bbUser, req, res, err, nvp_res) ->
   method = 'GetExpressCheckoutDetails'
   return failure res, 500, "#{method} error: #{err}" if err
   log "#{method} response: #{nvp_res}"
@@ -440,9 +443,9 @@ paypalResponse_GetExpressCheckoutDetails = (bbUser, res, err, nvp_res) ->
   params.PAYERID = nvp_res.PAYERID
   params.RETURNFMFDETAILS = 1
   log "Calling: #{JSON.stringify params}"
-  ppec.request params, paypalResponse_DoExpressCheckoutPayment.bind null, bbUser, res
+  ppec.request params, paypalResponse_DoExpressCheckoutPayment.bind null, bbUser, req, res
 
-paypalResponse_DoExpressCheckoutPayment = (bbUser, res, err, nvp_res) ->
+paypalResponse_DoExpressCheckoutPayment = (bbUser, req, res, err, nvp_res) ->
   method = 'DoExpressCheckoutPayment'
   return failure res, 500, "#{method} error: #{err}" if err
   log "#{method} response: #{JSON.stringify nvp_res}"
@@ -458,7 +461,10 @@ paypalResponse_DoExpressCheckoutPayment = (bbUser, res, err, nvp_res) ->
   bbUser.save saveData,
     success: ->
       log "PURCHASE COMPLETE for user #{bbUser.id}"
-      res.redirect '/closeme'
+      if req.query.popup
+        res.redirect '/closeme'
+      else
+        res.send 200
     error: ->
       log "user: #{JSON.stringify bbUser}"
       failure res, 500, "COMPLETE BUT FAILED TO RECORD - VERY BAD!!"

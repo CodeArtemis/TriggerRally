@@ -44,7 +44,7 @@ define [
 
       checkoutUrl = =>
         credits = @$('input[name=credits]:checked').val()
-        "/checkout?method=paypal&cur=USD&pack=credits#{credits}"
+        "/checkout?method=paypal&cur=USD&pack=credits#{credits}&popup=1"
 
       @$('.checkout').on 'click', =>
         result = popup.create checkoutUrl(), "Checkout", =>

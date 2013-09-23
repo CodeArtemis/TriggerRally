@@ -86,7 +86,10 @@ define [
         prefs.car = @value
         available = root.user?.cars() ? [ 'ArbusuG' ]
         if prefs.car not in available
-          Backbone.history.navigate '/purchase', trigger: yes
+          purchaseUrl =
+            'Icarus': '/ignition'
+            'Mayhem': '/mayhem'
+          Backbone.history.navigate purchaseUrl[prefs.car], trigger: yes
         return
 
       @$el.on 'change', '.pixeldensity input:radio', (event) ->

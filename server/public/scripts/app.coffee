@@ -4,6 +4,7 @@ define [
   'cs!models/index'
   'cs!router'
   'cs!views/notfound'
+  'cs!views/purchase'
   'cs!views/unified'
 ], (
   $
@@ -11,6 +12,7 @@ define [
   models
   Router
   NotFoundView
+  PurchaseView
   UnifiedView
 ) ->
   jsonClone = (obj) -> JSON.parse JSON.stringify obj
@@ -143,3 +145,9 @@ define [
     setTitle: (title) ->
       main = "Trigger Rally"
       document.title = if title then "#{title} - #{main}" else main
+
+    showCreditPurchaseDialog: ->
+      purchaseView = new PurchaseView @root.user, @, @unifiedView.client
+      @unifiedView.setDialog purchaseView
+      purchaseView.render()
+      return
