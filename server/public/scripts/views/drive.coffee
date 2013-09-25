@@ -82,6 +82,9 @@ define [
       @replayGame?.destroy()
       super
 
+    viewModel: ->
+      raceCredits: 123
+
     onKeyDown: (event) ->
       return if event.shiftKey or event.metaKey or event.ctrlKey or event.altKey
       switch event.keyCode
@@ -116,11 +119,16 @@ define [
       @game = null
 
       @socket = io.connect '/drive'
-      @socket.on 'connect_failed', -> Backbone.trigger 'app:status', 'Socket connect failed'
-      @socket.on 'disconnect', -> Backbone.trigger 'app:status', 'Socket disconnected'
-      @socket.on 'error', -> Backbone.trigger 'app:status', 'Socket error'
-      @socket.on 'reconnect', -> Backbone.trigger 'app:status', 'Socket reconnected'
-      @socket.on 'reconnect_failed', -> Backbone.trigger 'app:status', 'Socket reconnect failed'
+      # TODO: Just display a simple red/green online indicator?
+      # @socket.on 'connect_failed', -> Backbone.trigger 'app:status', 'Socket connect failed'
+      # @socket.on 'disconnect', -> Backbone.trigger 'app:status', 'Socket disconnected'
+      # @socket.on 'error', -> Backbone.trigger 'app:status', 'Socket error'
+      # @socket.on 'reconnect', -> Backbone.trigger 'app:status', 'Socket reconnected'
+      # @socket.on 'reconnect_failed', -> Backbone.trigger 'app:status', 'Socket reconnect failed'
+
+      @socket.on 'updateuser', (data) ->
+        return unless data.id is root.user.id
+        root.user.credits = data.credits
 
       @lastRaceTime = 0
       @updateTimer = yes
@@ -214,12 +222,15 @@ define [
 
       @updateSplit()
 
-      # if cpNext > 0
-      #   cp = cpNext - 1
-      #   data = { cp, time: @progress.cpTimes[cp] }
-      #   @socket.emit 'advance', data
+      if cpNext > 0
+        cp = cpNext - 1
+        data = { cp, time: @progress.cpTimes[cp] }
+        @socket.emit 'advance', data
 
       if cpNext > 1 or @game.interpolatedRaceTime() > 1
+        # Predict credit increase?
+        # user = @app.root.user
+        # user.credits += 1 if user?
         fade = yes
         if cpNext is cpTotal
           message = 'Race complete'

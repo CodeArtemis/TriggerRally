@@ -29,7 +29,9 @@ define [
 
     afterRender: ->
       app = @app
-      @$('a.buybutton').on 'click', ->
+      $buybutton = @$('a.buybutton')
+      # TODO: Disable buy button on click.
+      $buybutton.on 'click', ->
         if app.root.user.credits >= 750
           $.ajax
             url: @href

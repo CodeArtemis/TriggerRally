@@ -518,7 +518,10 @@ io.set 'authorization', (data, accept) ->
       return accept 'passport error: ' + err, false if err
       data.session.user = userPassport.user
       data.session.userPassport = userPassport
-      accept null, true
+      api.findUser data.session.user.pub_id, (bbUser) ->
+        return accept 'failed to load backbone user' unless bbUser
+        data.session.bbUser = bbUser
+        accept null, true
 
 io.on 'connection', (socket) ->
   showNumberConnected()
@@ -531,6 +534,7 @@ dbCallback = (err) ->
 io.of('/drive').on 'connection', (socket) ->
   session = socket.handshake.session
   user = session.user
+  bbUser = session.bbUser
 
   run = record_i_timeline = record_p_timeline = null
 
@@ -591,86 +595,12 @@ io.of('/drive').on 'connection', (socket) ->
     run.times = data.times
     run.time = data.times[data.times.length - 1]
 
-# io.of('/api').on 'connection', (socket) ->
-#   session = socket.handshake.session
-#   wireId = socket.id
-#   tag = (if session.user then " #{session.user.pub_id}" else "")
-#   do ->
-#     isodate = getIsodate()
-#     console.log "[#{isodate}] #{wireId} connected" + tag
-#   #showNumberConnected()
-
-#   socket.on 'sync', (data, callback) ->
-#     switch data.method
-#       when 'create'
-#         callback 'create not implemented'
-#       when 'read'
-#         switch data.urlRoot
-#           when 'track'
-#             getPublicTrackPubId data.model.id, (err, track) ->
-#               return callback err if err?
-#               callback null, track
-#       when 'update'
-#         switch data.urlRoot
-#           when 'track'
-#             db.tracks.findOne { pub_id: data.model.id }, (err, track) ->
-#               return callback err if err?
-#               unless track?
-#                 return callback 404
-#               unless track.user.equals session.user._id
-#                 return callback 403
-#               track.config = data.model.config
-#               track.name = data.model.name
-#               track.published = data.model.published
-#               track.modified = new Date()
-#               db.tracks.save track, (err) ->
-#                 callback err, {}
-#                 isodate = getIsodate()
-#                 console.log "[#{isodate}] Track #{track.pub_id} saved by #{session.user.pub_id}"
-#       when 'delete'
-#         callback 'delete not implemented'
-#     return
-
-#   ###
-#   # Stuff a custom storage object into the socket.
-#   socket.hackyStore = {}
-#   socket.on 'c2s', (data) ->
-
-#     #console.log('Update from ' + wireId + tag);
-#     if data.config
-
-#       # TODO: Find a cleaner way of signaling that cars are remote?
-#       data.config.isRemote = true
-#       socket.hackyStore['config'] = data.config
-#     if data.carstate
-#       clients = io.sockets.clients()
-#       clients.forEach (client) ->
-#         if client.id isnt wireId
-#           seen = client.hackyStore['seen'] or (client.hackyStore['seen'] = {})
-#           unless seen[wireId]
-#             seen[wireId] = true
-#             client.emit 'addcar',
-#               wireId: wireId
-#               config: socket.hackyStore['config']
-
-#           client.volatile.emit 's2c',
-#             wireId: wireId
-#             carstate: data.carstate
-
-#   socket.on 'disconnect', ->
-#     showNumberConnected()
-#     console.log wireId + ' disconnected' + tag
-#     clients = io.sockets.clients()
-#     clients.forEach (client) ->
-#       if client.id isnt wireId
-#         seen = client.hackyStore['seen'] or (client.hackyStore['seen'] = {})
-#         if wireId of seen
-#           delete seen[wireId]
-
-#           client.emit 'deletecar',
-#             wireId: wireId
-#   ###
-
-#   socket.on 'error', (data) ->
-#     isodate = getIsodate()
-#     console.log "[#{isodate}] Error from #{wireId}: #{data.msg}"
+  socket.on 'advance', (data) ->
+    return unless user
+    return unless data.cp > 0
+    credits = bbUser.credits + 1
+    bbUser.save { credits }
+    # db.users.update { _id: user._id }, { $set: { credits: bbUser.credits } }, dbCallback
+    socket.emit 'updateuser',
+      id: user.pub_id
+      credits: credits

@@ -2,6 +2,7 @@ define [
   'backbone-full'
   'underscore'
   'cs!views/view'
+  'cs!views/credits'
   'cs!views/statusbar'
   'cs!client/client'
   'jade!templates/unified'
@@ -10,6 +11,7 @@ define [
   Backbone
   _
   View
+  CreditsView
   StatusBarView
   TriggerClient
   template
@@ -35,11 +37,15 @@ define [
       statusBarView = new StatusBarView @app
       statusBarView.render()
 
+      creditsView = new CreditsView @app
+      creditsView.render()
+
       $window = $(window)
       $document = $(document)
       $view3d = @$('#view3d')
       $child = @$child = @$('#unified-child')
       $statusMessage = @$('#status-message')
+      $scaledUi = @$('#scaled-ui')
 
       client = @client = new TriggerClient $view3d[0], @app.root
       client.camera.eulerOrder = 'ZYX'
@@ -75,7 +81,7 @@ define [
         targetAspect = cx / cy
         aspect = width / height
         fontSize = if aspect >= targetAspect then height / cy else width / cx
-        $child.css "font-size", "#{fontSize}px"
+        $scaledUi.css "font-size", "#{fontSize}px"
       $window.on 'resize', layout
 
       $document.on 'click', 'a.route', (event) ->
