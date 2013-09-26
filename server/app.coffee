@@ -516,8 +516,9 @@ io.set 'authorization', (data, accept) ->
     # TODO: accept fast, before deserialization?
     passport.deserializeUser data.session.passport.user, (err, userPassport) ->
       return accept 'passport error: ' + err, false if err
-      data.session.user = userPassport.user
+      user = data.session.user = userPassport.user
       data.session.userPassport = userPassport
+      return accept null, true unless user
       api.findUser data.session.user.pub_id, (bbUser) ->
         return accept 'failed to load backbone user' unless bbUser
         data.session.bbUser = bbUser
@@ -595,12 +596,18 @@ io.of('/drive').on 'connection', (socket) ->
     run.times = data.times
     run.time = data.times[data.times.length - 1]
 
-  socket.on 'advance', (data) ->
-    return unless user
-    return unless data.cp > 0
+  awardCredit = ->
     credits = bbUser.credits + 1
     bbUser.save { credits }
     # db.users.update { _id: user._id }, { $set: { credits: bbUser.credits } }, dbCallback
     socket.emit 'updateuser',
       id: user.pub_id
       credits: credits
+    return
+
+  awardCreditThrottled = _.throttle awardCredit, 600, leading: no
+
+  socket.on 'advance', (data) ->
+    return unless user
+    return unless data.cp > 0
+    awardCreditThrottled()

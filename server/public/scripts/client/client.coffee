@@ -590,6 +590,8 @@ define [
       @audio.mute() unless prefs.audio
       @checkpointBuffer = null
       @audio.loadBuffer '/a/sounds/checkpoint.ogg', (buffer) => @checkpointBuffer = buffer
+      @kachingBuffer = null
+      @audio.loadBuffer '/a/sounds/kaching.ogg', (buffer) => @kachingBuffer = buffer
       @voiceBuffer = null
       @audio.loadBuffer '/a/sounds/voice.ogg', (buffer) =>
         @voiceBuffer = buffer
@@ -645,6 +647,12 @@ define [
       }[msg]
       rate = 1 + (Math.random() - 0.3) * random
       @audio.playRange @voiceBuffer, offset, duration, 1.5, rate
+
+    playSound: (name) ->
+      switch name
+        when 'kaching'
+          @audio.playSound @kachingBuffer, false, 0.3, 1 if @kachingBuffer
+      return
 
     addGame: (game, options = {}) ->
       unless game? then throw new Error 'Added null game'

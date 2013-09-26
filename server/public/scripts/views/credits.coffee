@@ -1,14 +1,16 @@
 define [
+  'underscore'
   'cs!views/view'
   'jade!templates/credits'
 ], (
+  _
   View
   template
 ) ->
   class CreditsView extends View
     el: '#credits'
     template: template
-    constructor: (@app) -> super()
+    constructor: (@app, @client) -> super()
 
     initialize: ->
       @listenTo @app.root, 'change:user', => @render()
@@ -16,11 +18,19 @@ define [
     afterRender: ->
       $creditsBox = @$('.credits-box')
       $userCredits = @$('.usercredits')
+
+      prevCredits = null
+
       do updateCredits = =>
         credits = @app.root.user?.credits
-        # TODO: Animate credit gains.
-        $userCredits.text credits if credits?
+        if credits?
+          $userCredits.text credits
+          if prevCredits? and credits > prevCredits
+            @client.playSound 'kaching'
+            $creditsBox.addClass 'flash'
+            _.defer -> $creditsBox.removeClass 'flash'
         $creditsBox.toggleClass 'hidden', not credits?
+        prevCredits = credits
       @listenTo @app.root, 'change:user.credits', updateCredits
 
       $userCredits = @$('.ca-credit.usercredits')

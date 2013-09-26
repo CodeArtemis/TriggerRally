@@ -6,12 +6,20 @@
   z-index 2
 
 .credits-box
-  background rgba(255, 255, 255, 0.7)
+  // background rgba(255, 255, 255, 0.7)
+  background #fff
   position absolute
   top 1em
   right 1em
   border-radius 0.5em
   padding 0.2em 0.4em
+  opacity 0.5
+  transition opacity 1.5s
+
+.credits-box:hover
+.credits-box.flash
+  opacity 1
+  transition opacity 0
 
 // .race-credits-box
 //   position absolute

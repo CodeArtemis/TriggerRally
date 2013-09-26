@@ -37,9 +37,6 @@ define [
       statusBarView = new StatusBarView @app
       statusBarView.render()
 
-      creditsView = new CreditsView @app
-      creditsView.render()
-
       $window = $(window)
       $document = $(document)
       $view3d = @$('#view3d')
@@ -49,6 +46,9 @@ define [
 
       client = @client = new TriggerClient $view3d[0], @app.root
       client.camera.eulerOrder = 'ZYX'
+
+      creditsView = new CreditsView @app, client
+      creditsView.render()
 
       $document.on 'keyup', (event) =>
         client.onKeyUp event
