@@ -23,6 +23,6 @@
     "session-mongoose": "*",
     "socket.io": "*",
     "stylus": "*",
-    "underscore": "~1.4.4"
+    "underscore": "~1.5.2"
   }
 }
