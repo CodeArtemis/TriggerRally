@@ -89,6 +89,12 @@ define [
         Backbone.history.navigate @pathname, trigger: yes
         false
 
+      $document.on 'click', 'a.outgoing', (event) ->
+        _gaq.push ['_trackEvent', 'Outgoing link', 'click', @href]
+        ga 'send', 'event', 'Outgoing link', 'click', @href
+        _.delay (=> document.location.href = @href), 100
+        false
+
       doLogin = ->
         popup.create "/login?popup=1", "Login", ->
           Backbone.trigger 'app:checklogin'

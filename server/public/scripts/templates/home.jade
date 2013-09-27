@@ -1,7 +1,10 @@
 .gui-container
   unless loggedIn
-    a.twitter-promo(href="https://twitter.com/jareiko", target="_blank")
-      img(src="/images/i-made-this.svg")
+    a.twitter-promo.outgoing(href="https://twitter.com/jareiko", target="_blank")
+      if xpTwitterPromo
+        img(src="/images/i-made-this-2.svg")
+      else
+        img(src="/images/i-made-this.svg")
   menu
     div Code Artemis presents
     h1 Trigger Rally

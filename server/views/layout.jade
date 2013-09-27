@@ -13,12 +13,7 @@ html
     //- script(src='/js/jquery-1.7.1.min.js')
 
     //- Version 1 expects underscore.
-    script(src='/js/underscore-min.js')
-
-  body
-    block body
-
-    //- This layout is used for server-rendered pages. For client app, see main.jade.
+    //- script(src='/js/underscore-min.js')
 
     //- Classic Google Analytics.
     script(type='text/javascript').
@@ -40,3 +35,8 @@ html
 
       ga('create', 'UA-29310119-2', 'triggerrally.com');
       ga('send', 'pageview');
+
+  body
+    block body
+
+    //- This layout is used for server-rendered pages. For client app, see main.jade.

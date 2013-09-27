@@ -18,6 +18,7 @@ define [
       # purchased: 'packa' in products
       loggedIn: @app.root.user?
       credits: @app.root.user?.credits
+      xpTwitterPromo: @app.root.xp.dimension2
 
     afterRender: ->
       do updateDriveButton = =>

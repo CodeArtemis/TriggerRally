@@ -7,6 +7,17 @@ html
     link(rel='stylesheet', href='/css/unified.css')
     link(rel='icon', href='/favicon.png')
 
+    //- Classic Google Analytics.
+    script(type='text/javascript').
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-29310119-1']);
+      //- _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
     //- Google Universal Analytics.
     script.
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -29,14 +40,3 @@ html
       script(src="/build-v3/main.js")
     - else
       script(data-main="/scripts/main", src="/js/require.js")
-
-    //- Classic Google Analytics.
-    script(type='text/javascript').
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-29310119-1']);
-      //- _gaq.push(['_trackPageview']);
-      (function() {
-        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-      })();

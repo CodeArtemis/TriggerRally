@@ -1,5 +1,6 @@
 define [
   'jquery'
+  'underscore'
   'backbone-full'
   'cs!models/index'
   'cs!router'
@@ -8,6 +9,7 @@ define [
   'cs!views/unified'
 ], (
   $
+  _
   Backbone
   models
   Router
@@ -29,7 +31,7 @@ define [
     return
 
   class RootModel extends models.Model
-    models.buildProps @, [ 'track', 'user', 'prefs' ]
+    models.buildProps @, [ 'track', 'user', 'prefs', 'xp' ]
     bubbleAttribs: [ 'track', 'user', 'prefs' ]
     # initialize: ->
     #   super
@@ -42,7 +44,9 @@ define [
       return null unless cars? and @prefs.car in cars
       @prefs.car
 
+  # Should this be extending BackboneModel instead?
   class PrefsModel extends models.Model
+    sync: syncLocalStorage
     models.buildProps @, [
       'antialias'
       'audio'
@@ -59,14 +63,28 @@ define [
       antialias: yes
       audio: yes
       car: 'ArbusuG'
-      challenge: 'clock'  # none, clock, world
+      challenge: 'world'  # none, clock, world
       musicplay: no
       musicvolume: 0.5
       pixeldensity: 1
       shadows: yes
       terrainhq: yes
       volume: 0.8
+
+  randRange = (range) -> Math.floor Math.random() * range
+
+  class ExperimentsModel extends models.BackboneModel
     sync: syncLocalStorage
+    models.buildProps @, [
+      'dimension2'
+    ]
+    initialize: ->
+      @fetch()
+      @save()
+      ga 'set', _.omit @attributes, 'id'
+    defaults: ->
+      # 'dimension1': x           # User Type: 'Visitor' or 'Registered'
+      'dimension2': randRange(2)  # Twitter promo: 0 old, 1 new
 
   class App
     constructor: ->
@@ -74,6 +92,7 @@ define [
         user: null
         track: null
         prefs: new PrefsModel
+        xp: new ExperimentsModel
 
       @root.prefs.fetch()  # Assume sync because it's localStorage.
       @root.prefs.on 'change', => @root.prefs.save()
@@ -131,7 +150,7 @@ define [
         if data.user
           _gaq.push ['_setCustomVar', 1, 'User Type', 'Registered', 2]
           ga 'set', 'dimension1', 'Registered'
-          ga 'send', 'event', 'login', 'Log In'
+          # ga 'send', 'event', 'login', 'Log In'
           user = models.User.findOrCreate data.user.id
           user.set user.parse data.user
           @root.user = user
@@ -146,7 +165,7 @@ define [
     logout: ->
       _gaq.push ['_setCustomVar', 1, 'User Type', 'Visitor', 2]
       ga 'set', 'dimension1', 'Visitor'
-      ga 'send', 'event', 'login', 'Log Out'
+      # ga 'send', 'event', 'login', 'Log Out'
       @root.user = null
       Backbone.trigger 'app:status', 'Logged out'
 
