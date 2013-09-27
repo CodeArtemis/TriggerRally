@@ -1,7 +1,6 @@
 if user
   //- Unfortunately, Jade client-side includes aren't working.
     //include ./user
-  span Logged in as 
   span.user
     a.route(href="/user/#{user.pub_id || user.id}")
       img_src = user.picture ? user.picture : "blank"
@@ -9,7 +8,7 @@ if user
       img(src=img_src)
       span.username #{user.name}
   span &nbsp;&mdash;&nbsp;
-  a.logout(href='/logout') Log Out&nbsp;
+  a.logout(href='/logout') Log out&nbsp;
 else
   span
     a.login(href="/login")

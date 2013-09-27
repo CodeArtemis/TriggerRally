@@ -82,7 +82,9 @@ define [
 
       @router = new Router @
 
-      @router.on 'route', -> window._gaq.push ['_trackPageview']
+      @router.on 'route', ->
+        window._gaq.push ['_trackPageview']
+        ga 'send', 'pageview'
 
       Backbone.on 'app:settrack', @setTrack, @
       Backbone.on 'app:checklogin', @checkUserLogin, @
@@ -127,6 +129,9 @@ define [
       $.ajax('/v1/auth/me')
       .done (data) =>
         if data.user
+          _gaq.push ['_setCustomVar', 1, 'User Type', 'Registered', 2]
+          ga 'set', 'dimension1', 'Registered'
+          ga 'send', 'event', 'login', 'Log In'
           user = models.User.findOrCreate data.user.id
           user.set user.parse data.user
           @root.user = user
@@ -139,6 +144,9 @@ define [
           @logout()
 
     logout: ->
+      _gaq.push ['_setCustomVar', 1, 'User Type', 'Visitor', 2]
+      ga 'set', 'dimension1', 'Visitor'
+      ga 'send', 'event', 'login', 'Log Out'
       @root.user = null
       Backbone.trigger 'app:status', 'Logged out'
 

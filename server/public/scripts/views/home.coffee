@@ -16,6 +16,7 @@ define [
     viewModel: ->
       # products = @app.root.user?.products ? []
       # purchased: 'packa' in products
+      loggedIn: @app.root.user?
       credits: @app.root.user?.credits
 
     afterRender: ->

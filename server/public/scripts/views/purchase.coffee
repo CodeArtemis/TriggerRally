@@ -53,4 +53,8 @@ define [
             force: yes
         alert 'Popup window was blocked!' unless result
         return false
+
+      ga 'send', 'pageview',
+        page: '/purchase-credits'
+        title: 'Purchase Credits Dialog'
       return

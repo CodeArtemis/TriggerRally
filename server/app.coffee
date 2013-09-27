@@ -610,4 +610,4 @@ io.of('/drive').on 'connection', (socket) ->
   socket.on 'advance', (data) ->
     return unless user
     return unless data.cp > 0
-    awardCreditThrottled()
+    awardCreditThrottled() if Math.random() < 0.6

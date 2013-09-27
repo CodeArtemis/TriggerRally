@@ -228,9 +228,6 @@ define [
         @socket.emit 'advance', data
 
       if cpNext > 1 or @game.interpolatedRaceTime() > 1
-        # Predict credit increase?
-        # user = @app.root.user
-        # user.credits += 1 if user?
         fade = yes
         if cpNext is cpTotal
           message = 'Race complete'
@@ -251,6 +248,7 @@ define [
           if fade then _.defer => @$countdown.addClass 'fadeout'
 
       window._gaq.push ['_trackEvent', 'Tracks', 'Drive Advance', "#{@app.root.track.id}: #{text}"]
+      ga 'send', 'event', 'Drive', 'Checkpoint', "#{@app.root.track.id}: #{text}", cpNext
 
       return if @progress.nextCheckpoint(0)
       throw new Error 'Simulation error' unless @progress.nextCpIndex > 0

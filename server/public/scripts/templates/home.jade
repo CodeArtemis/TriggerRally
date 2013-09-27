@@ -1,6 +1,7 @@
 .gui-container
-  //- a.twitter-promo(href="https://twitter.com/jareiko", target="_blank")
-  //-   img(src="/images/i-made-this.svg")
+  unless loggedIn
+    a.twitter-promo(href="https://twitter.com/jareiko", target="_blank")
+      img(src="/images/i-made-this.svg")
   menu
     div Code Artemis presents
     h1 Trigger Rally
@@ -17,6 +18,9 @@
       //-   a.route(href="/track/Alpina/drive") Alpina
       //- li
       //-   a.route(href="/track/KaXCxxFv/drive") Engelberg Descent
+      unless loggedIn
+        li
+          a.btn.login(href="/login") Log in
     menu.home-right
       li
         a.btn.route(href="/tracklist/featured") Featured tracks
