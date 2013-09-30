@@ -4,20 +4,36 @@
   .split-time.hidden
   .countdown
   .speedo
-  //- .race-credits-box
-  //-   span
-  //-     span.ca-credit.racecredits= raceCredits
-  menu.racecomplete.hidden
-    br
-    br
-    br
-    br
-    br
-    menu.home-left
-      li
-        a.btn.route.highlight.nextbutton(href="/") &gt; Next Track &lt;
-      //- li
-      //-   a.route.drivebutton(href="/") Restart (R)
-    //- menu.home-right
-    //-   li
-    //-     a.route(href="/purchase") Full Game
+  if xpEndRace
+    .dialog.racecomplete.hidden
+      .dialogpadding
+        h1 Finished in 
+          span.finishtime
+        .linespacing
+          a.sharebutton.facebook(href="#") Challenge your friends on Facebook!
+          br
+          a.sharebutton.twitter(href="#") Share your time on Twitter!
+          hr
+          center
+            a.route.restartbutton(href="drive") Restart
+            |  | 
+            a.route(href=".") Top times
+            |  | 
+            a.route(href="/") Home
+            br
+            a.route.nextbutton(href="#") Next Track
+  else
+    menu.racecomplete.hidden
+      br
+      br
+      br
+      br
+      br
+      menu.home-left
+        li
+          a.btn.route.highlight.nextbutton(href="#") &gt; Next Track &lt;
+        //- li
+        //-   a.route.drivebutton(href="/") Restart (R)
+      //- menu.home-right
+      //-   li
+      //-     a.route(href="/purchase") Full Game

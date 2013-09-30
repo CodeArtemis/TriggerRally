@@ -45,11 +45,13 @@ define [
       # "purchase": "packA"
       "run/:runId/replay": "runReplay"
       "track/:trackId": "track"
+      "track/:trackId/": "track"
       "track/:trackId/edit": "trackEdit"
       "track/:trackId/drive": "trackDrive"
       "track/:trackId/drive/vs/:runId": "trackDrive"
       "tracklist/:setId": "trackset"
       "user/:userId": "user"
+      "user/:userId/": "user"
       "user/:userId/tracks": "userTracks"
       "user/:userId/favorites": "userFavTracks"
 

@@ -61,6 +61,10 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     this.lastCpDistSq = cpDistSq;
   };
 
+  exports.Progress.prototype.isFinished = function() {
+    return ! this.nextCheckpoint(0);
+  };
+
   exports.Progress.prototype.finishTime = function() {
     return this.cpTimes[this.checkpoints.length - 1] || null;
   };
@@ -167,7 +171,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     var disabled = (this.sim.time < this.startTime);
     this.progs.forEach(function(progress) {
       if (!disabled) progress.update();
-      progress.vehicle.disabled = disabled;
+      progress.vehicle.disabled = disabled || progress.isFinished();
     });
   };
 

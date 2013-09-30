@@ -42,11 +42,14 @@ define [
       #   opt = pricing[@value]
       #   $displayAmount.text '$' + opt
 
+      creditsVal = =>
+        parseInt @$('input[name=credits]:checked').val()
+
       checkoutUrl = =>
-        credits = @$('input[name=credits]:checked').val()
-        "/checkout?method=paypal&cur=USD&pack=credits#{credits}&popup=1"
+        "/checkout?method=paypal&cur=USD&pack=credits#{creditsVal()}&popup=1"
 
       @$('.checkout').on 'click', =>
+        ga 'send', 'event', 'purchase', 'click', 'checkout', creditsVal()
         result = popup.create checkoutUrl(), "Checkout", =>
           @destroy()
           root.user.fetch

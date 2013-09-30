@@ -11,7 +11,7 @@
     "jade": "*",
     "mongodb": "*",
     "mongoose": "*",
-    "mongoskin": "~0.4.4",
+    "mongoskin": "*",
     "passport": "*",
     "passport-facebook": "*",
     "passport-google": "*",

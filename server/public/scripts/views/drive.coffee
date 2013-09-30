@@ -73,6 +73,7 @@ define [
     initialize: ->
       @replayRun = null
       @replayGame = null
+      @xpEndRace = (@app.root.xp.dimension3 is 1)
 
     destroy: ->
       Backbone.trigger 'statusbar:hidechallenge'
@@ -83,7 +84,7 @@ define [
       super
 
     viewModel: ->
-      raceCredits: 123
+      xpEndRace: @xpEndRace
 
     onKeyDown: (event) ->
       return if event.shiftKey or event.metaKey or event.ctrlKey or event.altKey
@@ -106,7 +107,11 @@ define [
       @$runTimer = @$ '.timer'
       @$checkpoints = @$ '.checkpoints'
       @$splitTime = @$ '.split-time'
+      @$restartButton = @$ '.restartbutton'
       @$nextButton = @$ '.nextbutton'
+
+      @$restartButton.on 'click', =>
+        @restartGame() if @game
 
       do updateChallenge = =>
         @$runTimer.toggleClass 'hidden', root.prefs.challenge is 'none'
@@ -230,11 +235,12 @@ define [
       if cpNext > 1 or @game.interpolatedRaceTime() > 1
         fade = yes
         if cpNext is cpTotal
-          message = 'Race complete'
+          unless @xpEndRace
+            message = 'Race complete'
+            fade = no
           speak = 'complete'
-          fade = no
-          products = @app.root.user?.products ? []
-          @$('.racecomplete').removeClass 'hidden' unless 'packa' in products
+          # products = @app.root.user?.products ? []
+          @$('.racecomplete').removeClass 'hidden' # unless 'packa' in products
         else if cpNext is cpTotal - 1
           message = 'Nearly there!'
           # speak = 'checkpoint'
@@ -250,12 +256,33 @@ define [
       window._gaq.push ['_trackEvent', 'Tracks', 'Drive Advance', "#{@app.root.track.id}: #{text}"]
       ga 'send', 'event', 'Drive', 'Checkpoint', "#{@app.root.track.id}: #{text}", cpNext
 
-      return if @progress.nextCheckpoint(0)
-      throw new Error 'Simulation error' unless @progress.nextCpIndex > 0
+      return unless @progress.isFinished()
+      throw new Error 'Simulation error' unless @progress.nextCpIndex > 0  # Just a sanity check.
 
       # Race complete.
       @updateTimer = no
       @$runTimer.removeClass 'running'
+      finishTime = @$runTimer.text()
+      @$('.finishtime').text finishTime
+
+      targetUrl = encodeURIComponent "https://triggerrally.com/track/#{@app.root.track.id}"
+      shareText = encodeURIComponent "I finished \"#{@app.root.track.name}\" in #{finishTime}. Can you beat that?"
+
+      $sharefacebook = @$('.sharebutton.facebook')
+      $sharefacebook.attr 'href', "https://www.facebook.com/sharer/sharer.php?u=#{targetUrl}"
+      $sharefacebook.on 'click', ->
+        window.open @href, 'facebook-share-dialog', 'width=626,height=436'
+        ga 'send', 'social', 'Facebook', 'SharePrompt', targetUrl
+        ga 'send', 'event', 'Social', 'SharePrompt', 'Facebook'
+        false
+
+      $sharetwitter = @$('.sharebutton.twitter')
+      $sharetwitter.attr 'href', "https://twitter.com/share?url=#{targetUrl}&via=TriggerRally&text=#{shareText}&related=jareiko"
+      $sharetwitter.on 'click', ->
+        window.open @href, 'twitter-share-dialog', 'width=626,height=436'
+        ga 'send', 'social', 'Twitter', 'TweetPrompt', targetUrl
+        ga 'send', 'event', 'Social', 'SharePrompt', 'Twitter'
+        false
 
       startTime = @game.startTime
       times = (time - startTime for time in @progress.cpTimes)

@@ -72,19 +72,20 @@ define [
       volume: 0.8
 
   randRange = (range) -> Math.floor Math.random() * range
+  probability = (prob) -> Math.floor Math.random() + prob
 
+  # Experiments in this class need to match up with Google Analytics Custom Dimensions.
   class ExperimentsModel extends models.BackboneModel
     sync: syncLocalStorage
-    models.buildProps @, [
-      'dimension2'
-    ]
+    models.buildProps @, ("dimension#{n}" for n in [2..3])
     initialize: ->
       @fetch()
       @save()
       ga 'set', _.omit @attributes, 'id'
     defaults: ->
-      # 'dimension1': x           # User Type: 'Visitor' or 'Registered'
-      'dimension2': randRange(2)  # Twitter promo: 0 old, 1 new
+      # 'dimension1'                  # RESERVED as User Type: 'Visitor' or 'Registered'
+      'dimension2': probability(0.5)  # Twitter promo: 0 old, 1 new
+      'dimension3': probability(0.8)  # End of race revamp
 
   class App
     constructor: ->
