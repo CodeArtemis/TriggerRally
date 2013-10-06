@@ -63,7 +63,7 @@ define [
       antialias: yes
       audio: yes
       car: 'ArbusuG'
-      challenge: 'world'  # none, clock, world
+      challenge: 'world'  # none, clock, world  # TODO: Add an experiment for this!
       musicplay: no
       musicvolume: 0.5
       pixeldensity: 1

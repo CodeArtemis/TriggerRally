@@ -450,8 +450,8 @@ define [
             threeType(buffer.data),
             null,
             THREE.RepeatWrapping, THREE.RepeatWrapping,
-            THREE.LinearFilter,
-            if mipmap then THREE.LinearMipMapLinearFilter else THREE.LinearFilter)
+            if mipmap then THREE.LinearFilter else THREE.NearestFilter,
+            if mipmap then THREE.LinearMipMapLinearFilter else THREE.NearestFilter)
         tex.generateMipmaps = mipmap
         tex.needsUpdate = true
         tex.flipY = false

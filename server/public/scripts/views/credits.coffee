@@ -37,7 +37,7 @@ define [
       @listenTo @app.root, 'change:user.credits', =>
         $userCredits.text @app.root.user?.credits
 
-      @$('.purchasebutton a').on 'click', (event) =>
+      $creditsBox.on 'click', (event) =>
         @app.showCreditPurchaseDialog()
         false
 
