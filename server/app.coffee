@@ -322,6 +322,7 @@ addCredits '550',  '4.99'
 addCredits '1200', '9.99'
 addCredits '2000', '14.99'
 
+# Add an 'id' field matching the pack key.
 pack.id = id for own id, pack of availablePacks
 
 getPaymentParams = (pack) ->
@@ -359,7 +360,7 @@ app.get '/checkout', (req, res) ->
   return res.send 404 unless pack
 
   if pack.products
-    # Check that user doesn't already have this pack.
+    # Check that user doesn't already have this pack. Prevents accidental double-purchase.
     newProducts = _.difference pack.products, req.user.user.products
     return res.send 409 if _.isEmpty newProducts
 
@@ -388,6 +389,7 @@ creditsCheckout = (pack, req, res) ->
     return failure 500 unless bbUser
     cost = parseInt(pack.cost)
     return res.send 402 unless bbUser.credits >= cost
+    log "user #{bbUser.id} purchased #{pack.id} for #{cost} credits"
     products = bbUser.products ? []
     products = _.union products, pack.products
     bbUser.save { products, credits: bbUser.credits - cost },
@@ -610,4 +612,4 @@ io.of('/drive').on 'connection', (socket) ->
   socket.on 'advance', (data) ->
     return unless user
     return unless data.cp > 0
-    awardCreditThrottled() if Math.random() < 0.6
+    awardCreditThrottled() if Math.random() < 0.4
