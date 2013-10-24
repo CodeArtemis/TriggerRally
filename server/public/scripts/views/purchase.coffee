@@ -50,8 +50,8 @@ define [
 
       @$('.checkout').on 'click', =>
         ga 'send', 'event', 'purchase', 'click', 'checkout', creditsVal()
-        result = popup.create checkoutUrl(), "Checkout", =>
-          @destroy()
+        result = popup.create checkoutUrl(), "Checkout", (autoclosed) =>
+          @destroy() if autoclosed
           root.user.fetch
             force: yes
         alert 'Popup window was blocked!' unless result
