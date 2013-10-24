@@ -3,6 +3,8 @@ html
   head
     title Trigger Rally
     script.
+      var o = window.opener;
+      if (o) o._tr_popup_autoclosed = true;
       window.close();
   body
     p You may close this window.

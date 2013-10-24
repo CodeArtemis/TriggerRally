@@ -394,6 +394,7 @@ creditsCheckout = (pack, req, res) ->
     products = _.union products, pack.products
     bbUser.save { products, credits: bbUser.credits - cost },
       success: ->
+        log "saved user #{JSON.stringify bbUser}"
         if req.query.popup
           res.redirect '/closeme'
         else
