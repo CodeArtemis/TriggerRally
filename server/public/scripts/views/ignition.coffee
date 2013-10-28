@@ -24,7 +24,7 @@ define [
 
     viewModel: ->
       products = @app.root.user?.products ? []
-      purchased: productId in products
+      purchased: 'packa' in products or productId in products
       user: @app.root.user
 
     afterRender: ->
