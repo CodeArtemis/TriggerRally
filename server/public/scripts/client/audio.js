@@ -9,10 +9,11 @@ function(util) {
   var exports = {};
   var CallbackQueue = util.CallbackQueue;
 
-  exports.WebkitAudio = function() {
-    if (true && 'webkitAudioContext' in window) {
-      this.audio = new webkitAudioContext();
-      this.master = this.audio.createGainNode();
+  exports.Audio = function() {
+    var AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+      this.audio = new AudioContext();
+      this.master = this.audio.createGain();
       this.master.connect(this.audio.destination);
     }
 
@@ -24,7 +25,7 @@ function(util) {
     // TODO: Find a way to save CPU when set to zero gain.
   };
 
-  var prot = exports.WebkitAudio.prototype;
+  var prot = exports.Audio.prototype;
 
   prot._updateGain = function() {
     if (!this.audio) return;
@@ -69,20 +70,31 @@ function(util) {
     request.open('GET', url, true);
     request.responseType = 'arraybuffer';
     request.onload = function() {
-      var buffer = this.audio.createBuffer(request.response, true);
-      this.buffers[url] = buffer;
-      cbq.fire(buffer);
+      this.audio.decodeAudioData(request.response, function(buffer) {
+        this.buffers[url] = buffer;
+        cbq.fire(buffer);
+      }.bind(this), function() {
+        throw new Error("Error decoding audio.");
+      });
     }.bind(this);
     request.send();
   };
 
+  // TODO: Merge duplicate code in these two methods.
   prot.playSound = function(buffer, loop, gain, rate) {
     var source = this.audio.createBufferSource();
     source.buffer = buffer;
-    source.connect(this.master);
     source.loop = loop;
-    source.gain.value = gain;
     source.playbackRate.value = (rate === undefined) ? 1 : rate;
+    if (source.gain) {
+      source.connect(this.master);
+    } else {
+      var gainNode = this.audio.createGain();
+      source.gain = gainNode.gain;
+      gainNode.connect(this.master);
+      source.connect(gainNode);
+    }
+    source.gain.value = gain;
     source.start(0);
     return source;
   };
@@ -90,10 +102,17 @@ function(util) {
   prot.playRange = function(buffer, offset, duration, gain, rate) {
     var source = this.audio.createBufferSource();
     source.buffer = buffer;
-    source.connect(this.master);
     source.loop = false;
-    source.gain.value = gain;
     source.playbackRate.value = (rate === undefined) ? 1 : rate;
+    if (source.gain) {
+      source.connect(this.master);
+    } else {
+      var gainNode = this.audio.createGain();
+      source.gain = gainNode.gain;
+      gainNode.connect(this.master);
+      source.connect(gainNode);
+    }
+    source.gain.value = gain;
     source.start(0, offset, duration);
     return source;
   };

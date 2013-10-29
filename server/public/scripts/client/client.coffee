@@ -586,7 +586,7 @@ define [
 
       @add @dust = new Dust @scene
 
-      @audio = new clientAudio.WebkitAudio()
+      @audio = new clientAudio.Audio()
       @audio.mute() unless prefs.audio
       @checkpointBuffer = null
       @audio.loadBuffer '/a/sounds/checkpoint.ogg', (buffer) => @checkpointBuffer = buffer
