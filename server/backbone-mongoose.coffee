@@ -9,6 +9,8 @@ mo = do ->
   Track: mongoose.model 'Track'
   User:  mongoose.model 'User'
 
+favhot = require './util/favhot'
+
 alpEnvId = new mongoose.Types.ObjectId '506754342668a4626133ccd7'
 # alpEnvId = '506754342668a4626133ccd7'
 
@@ -117,6 +119,7 @@ module.exports = (bb) ->
               name: data.name
               env: parentTrack.env
               config: parentTrack.config
+              modified: new Date()
             track.save (err) ->
               if err
                 console.log "Error creating track: #{err}"
@@ -216,6 +219,26 @@ module.exports = (bb) ->
   bb.TrackSet::sync = makeSync
     read: (model, success, error, options) ->
       switch model.id
+        when 'favhot'
+          query =
+            env: alpEnvId  # TODO: Remove this filter.
+            published: yes
+          mo.Track
+            .find(query)
+            .select('count_fav modified pub_id')
+            # .sort({modified: -1})
+            # .limit(1000)
+            .exec (err, tracks) ->
+              if err
+                console.log "Error fetching tracks: #{err}"
+                return error null
+              tracks.sort (a, b) ->
+                favhot.trackScore(b) - favhot.trackScore(a)
+              if tracks.length > 30 then tracks.length = 30
+              response =
+                name: 'Most favorited recent published tracks'
+                tracks: (track.pub_id for track in tracks)
+              success response
         when 'featured'
           response =
             name: 'Featured tracks'

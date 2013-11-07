@@ -14,11 +14,9 @@ define [
       @listenTo @app.root, 'change:user', => @render()
 
     viewModel: ->
-      # products = @app.root.user?.products ? []
-      # purchased: 'packa' in products
       loggedIn: @app.root.user?
       credits: @app.root.user?.credits
-      xpTwitterPromo: @app.root.xp.dimension2
+      # xpTwitterPromo: @app.root.xp.dimension2
 
     afterRender: ->
       do updateDriveButton = =>

@@ -1,13 +1,10 @@
 .gui-container
   unless loggedIn
     a.twitter-promo.outgoing(href="https://twitter.com/jareiko", target="_blank")
-      if xpTwitterPromo
-        img(src="/images/i-made-this-2.svg")
-      else
-        img(src="/images/i-made-this.svg")
+      img(src="/images/i-made-this.svg")
   menu
     //- div Code Artemis presents
-    .promo-donate Donations welcome at BTC 1ATrJJfJjfxhD5VbtT3yCrYCMBkWPKCPsm :)
+    //- .promo-donate Donations welcome at BTC 1ATrJJfJjfxhD5VbtT3yCrYCMBkWPKCPsm :)
     h1 Trigger Rally
     menu.home-left
       li
@@ -28,6 +25,9 @@
     menu.home-right
       li
         a.btn.route(href="/tracklist/featured") Featured tracks
+      li
+        a.btn.route(href="/tracklist/favhot") Most favorited
+          .new-marker New!
       li
         a.btn.route(href="/tracklist/recent") Published tracks
       li

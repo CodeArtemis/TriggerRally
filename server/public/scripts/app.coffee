@@ -84,7 +84,7 @@ define [
       ga 'set', _.omit @attributes, 'id'
     defaults: ->
       # 'dimension1'                  # RESERVED as User Type: 'Visitor' or 'Registered'
-      'dimension2': probability(0.2)  # Twitter promo: 0 old, 1 new
+      'dimension2': 0                 # Twitter promo: 0 old, 1 new, experiment ended 20131104
       'dimension3': probability(0.8)  # End of race revamp
 
   class App
