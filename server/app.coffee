@@ -608,7 +608,7 @@ io.of('/drive').on 'connection', (socket) ->
       credits: credits
     return
 
-  awardCreditThrottled = _.throttle awardCredit, 600, leading: no
+  awardCreditThrottled = _.throttle awardCredit, 1500, leading: no
 
   socket.on 'advance', (data) ->
     return unless user

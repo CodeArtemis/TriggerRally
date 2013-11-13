@@ -1,13 +1,7 @@
 _ = require 'underscore'
-mongoskin = require 'mongoskin'
 
-config = require '../config'
+db = require './batchdb'
 favhot = require '../util/favhot'
-
-dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
-db = mongoskin.db dbUrl, { safe: false }
-
-db.bind 'tracks'
 
 
 lpad = (value, padding) ->

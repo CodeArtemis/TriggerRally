@@ -210,7 +210,7 @@ module.exports =
 
     app.put "#{base}/users/:user_id", editUrlUser, (req, res) ->
       products = req.fromUrl.user.products ? []
-      maySetPicture = 'ignition' in products or 'mayhem' in products
+      maySetPicture = 'ignition' in products or 'mayhem' in products or 'packa' in products
       return jsonError 403, res if 'picture' of req.body and not maySetPicture
       allowedKeys = [
         'favorite_tracks'

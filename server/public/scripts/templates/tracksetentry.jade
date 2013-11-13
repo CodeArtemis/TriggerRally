@@ -1,5 +1,5 @@
 td
-  a.route(href="/track/#{id}/drive") &rArr; 
+  a.route(href="/track/#{id}") &rArr; 
     strong.trackname= name
 td.trackuser
 td= modified_ago
@@ -9,6 +9,3 @@ td
   span.favorite
   | 
   span.count_fav= count_fav
-td
-  a.route(href="/track/#{id}")
-    img.emoji(src="/emojis/memo.png", title="Info")

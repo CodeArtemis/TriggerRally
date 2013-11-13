@@ -60,14 +60,14 @@
       # console.log "findOrCreate #{@::constructor.name}:#{id} isNew = #{isNew}"
       model
 
-    # cacheExpirySecs: 2
+    cacheExpirySecs: 1
 
     fetch: (options = {}) ->
-      # if @lastSync and not options?.force
-      #   timeSinceLast = Date.now() - @lastSync
-      #   if timeSinceLast < @cacheExpirySecs * 1000
-      #     options.success? @, null, options
-      #     return null
+      if @lastSync and not options?.force
+        timeSinceLast = Date.now() - @lastSync
+        if timeSinceLast < @cacheExpirySecs * 1000
+          options.success? @, null, options
+          return null
       xhr = @fetchXHR
       if xhr
         # Bind handlers to in-progress fetch.

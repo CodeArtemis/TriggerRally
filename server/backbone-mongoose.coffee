@@ -196,7 +196,7 @@ module.exports = (bb) ->
             .find(track: track._id)
             # .where('time', { $not: { $type: 10 } })  # Exclude null times. Sort index also excludes.
             .sort(time: 1)
-            .limit(5)
+            .limit(10)
             .select('pub_id car track user status time')
             .populate('car', 'pub_id')
             .populate('track', 'pub_id')

@@ -4,4 +4,10 @@ config = require '../config'
 
 dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
 
-module.exports = mongoskin.db dbUrl, { safe: false }
+db = mongoskin.db dbUrl, { safe: false }
+
+db.bind 'runs'
+db.bind 'tracks'
+db.bind 'users'
+
+module.exports = db

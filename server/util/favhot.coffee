@@ -10,7 +10,8 @@ trackScore = (track, timeNow = Date.now()) ->
   gravity = 1.2
   time = trackModified(track).getTime()
   ageDays = Math.round (timeNow - time) / (1000 * 60 * 60 * 24)
-  (track.count_fav - 0.5) / Math.pow(ageDays + 2, gravity)
+  count_fav = track.count_fav ? 0
+  (count_fav - 0.5) / Math.pow(ageDays + 2, gravity)
 
 module.exports = {
   trackModified
