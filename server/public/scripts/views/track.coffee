@@ -1,6 +1,7 @@
 define [
   'jquery'
   'backbone-full'
+  'cs!views/comments'
   'cs!views/favorite'
   'cs!views/user'
   'cs!views/view'
@@ -12,6 +13,7 @@ define [
 ], (
   $
   Backbone
+  CommentsView
   FavoriteView
   UserView
   View
@@ -36,6 +38,9 @@ define [
       data.modified_ago ?= loadingText
       data.user ?= null
       data
+
+    beforeRender: ->
+      @userView?.destroy()
 
     afterRender: ->
       run = @model
@@ -87,6 +92,8 @@ define [
       data.count_drive ?= loadingText
       data.count_copy ?= loadingText
       data.count_fav ?= loadingText
+      data.loggedIn = @app.root.user?
+      # data.loggedInUser = @app.root.user
       data
 
     afterRender: ->
@@ -127,3 +134,9 @@ define [
       $count_fav = @$ '.count_fav'
       @listenTo @model, 'change:count_fav', (model, value) =>
         $count_fav.text value
+
+      comments = models.CommentSet.findOrCreate 'blah'
+      @commentsView = new CommentsView comments, @app
+      @commentsView.render()
+      $commentsView = @$ '.comments-view'
+      $commentsView.html @commentsView.el

@@ -10,15 +10,15 @@
       a.route.drivebutton(href="/track/#{id}/drive") &gt; Drive &lt;
       |  this track by 
       span.author
-
-    p
-      | Driven 
+      |  (Drive: 
       span.count_drive= count_drive
-      |  times. Copied 
+      |  Copy: 
       span.count_copy= count_copy
-      |  times. Favorited 
+      |  Fav: 
       span.count_fav= count_fav
-      |  times.
+      | )
+
+    h3 Top Times
 
     table.runlist.list
       tr
@@ -28,3 +28,7 @@
         td Car
         td
         td Recorded
+
+    h3 Comments
+
+    .comments-view

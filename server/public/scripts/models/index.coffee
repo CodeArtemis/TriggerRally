@@ -439,6 +439,51 @@
     ]
     bubbleAttribs: [ 'user' ]
 
+  class Comment extends Model
+    all: new (Collection.extend model: @)
+    buildProps @, [
+      'created'
+      'text'
+      'user'
+    ]
+    # urlRoot: '/v1/comments'  # Cannot be fetched directly.
+    parse: ->
+      data = super
+      return data unless data
+      data.user = User.findOrCreate data.user if data.user
+      data
+    toJSON: ->
+      data = super
+      data.user = data.user.id if data.user?
+      data
+
+  class CommentCollection extends Collection
+    model: Comment
+
+  class CommentSet extends Model
+    all: new (Collection.extend model: @)
+    buildProps @, [
+      'name'
+      'comments'
+    ]
+    urlRoot: '/v1/commentsets'
+    defaults: ->
+      comments: new CommentCollection
+    parse: ->
+      data = super
+      return data unless data
+      if data.comments
+        comments = for commentData in data.comments
+          comment = new Comment
+          comment.set com.parse commentData
+          comment
+        data.comments = @comments.reset comments
+      data
+    # toJSON: (options) ->
+    #   data = super
+    #   data.tracks = (track.id for track in data.tracks.models) if data.tracks?
+    #   data
+
   models = {
     buildProps
     BackboneCollection: Backbone.Collection
@@ -449,6 +494,8 @@
 
     Car
     Checkpoint
+    Comment
+    CommentSet
     Env
     Run
     RunCollection
