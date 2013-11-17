@@ -1,11 +1,11 @@
 table.commentlist.list
   if loggedIn
     tr
-      td [You]
+      td.loggedinuser
       td
         input.comment-text(type="text")
       td
-        button.comment-post Post comment
+        button.comment-post Post
   else
     tr
       td

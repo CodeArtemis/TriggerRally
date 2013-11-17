@@ -135,7 +135,7 @@ define [
       @listenTo @model, 'change:count_fav', (model, value) =>
         $count_fav.text value
 
-      comments = models.CommentSet.findOrCreate 'blah'
+      comments = models.CommentSet.findOrCreate 'track-' + track.id
       @commentsView = new CommentsView comments, @app
       @commentsView.render()
       $commentsView = @$ '.comments-view'

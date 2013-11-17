@@ -63,12 +63,27 @@ define [
     template: template
     constructor: (model, @app) -> super { model }
 
+    initialize: ->
+      @model.fetch()
+
     viewModel: ->
       data = super
       data.loggedIn = @app.root.user?
       data
 
     afterRender: ->
+      $loggedinuser = @$ '.loggedinuser'
+
+      @userView = null
+      do updateUserView = =>
+        @userView?.destroy()
+        user = @app.root.user
+        @userView = user and new UserView
+          model: user
+        $loggedinuser.empty()
+        $loggedinuser.append @userView.el if @userView
+      @listenTo @app.root, 'change:user', updateUserView
+
       commentListView = new CommentListView
         collection: @model.comments
         el: @$('table.commentlist')
