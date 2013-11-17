@@ -58,6 +58,9 @@ define [
   class TrackRunsView extends ViewCollection
     view: TrackRunView
     childOffset: 1  # Ignore header <tr>.
+    initialize: ->
+      super
+      @listenTo @collection, 'change', => @render()
 
   class TrackView extends View
     # className: 'overlay'

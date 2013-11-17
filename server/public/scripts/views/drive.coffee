@@ -73,7 +73,6 @@ define [
     initialize: ->
       @replayRun = null
       @replayGame = null
-      @xpEndRace = (@app.root.xp.dimension3 is 1)
 
     destroy: ->
       Backbone.trigger 'statusbar:hidechallenge'
