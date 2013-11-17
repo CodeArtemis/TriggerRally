@@ -422,7 +422,7 @@
       @favorite_tracks and track.id in @favorite_tracks
     setFavoriteTrack: (track, favorite) ->
       @favorite_tracks ?= []
-      isFavorite = @isFavoriteTrack track.id
+      isFavorite = @isFavoriteTrack track
       if favorite and not isFavorite
         @favorite_tracks = @favorite_tracks.concat track.id
         track.count_fav += 1
