@@ -2,6 +2,9 @@ _ = require('underscore')
 bb = require('./public/scripts/models')
 Backbone = bb.Backbone
 
+# Disable all caching on the server.
+bb.Model::useCache = no
+
 # Attach backbone models to MongoDB via Mongoose.
 require('./backbone-mongoose') bb
 

@@ -60,10 +60,11 @@
       # console.log "findOrCreate #{@::constructor.name}:#{id} isNew = #{isNew}"
       model
 
-    cacheExpirySecs: 1
+    useCache: yes
+    cacheExpirySecs: 2
 
     fetch: (options = {}) ->
-      if @lastSync and not options?.force
+      if @useCache and @lastSync and not options?.force
         timeSinceLast = Date.now() - @lastSync
         if timeSinceLast < @cacheExpirySecs * 1000
           options.success? @, null, options

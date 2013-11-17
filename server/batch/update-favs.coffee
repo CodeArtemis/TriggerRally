@@ -9,7 +9,6 @@ db.tracks.find {}, {_id:1, count_fav:1}, (err, trackCursor) ->
 
   processTrack = (track, done) ->
     if track is null
-      console.log 'Done'
       return process.exit()
 
     db.users.count {'favorite_tracks': track._id}, (err, count_fav) ->

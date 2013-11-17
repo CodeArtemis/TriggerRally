@@ -5,10 +5,10 @@
       span.favorite
       | 
       span.name= name
-      |  &mdash; 
-      a.route(href="/track/#{id}/drive") &gt; Drive &lt;
 
-    h3 Track by 
+    h3
+      a.route.drivebutton(href="/track/#{id}/drive") &gt; Drive &lt;
+      |  this track by 
       span.author
 
     p
