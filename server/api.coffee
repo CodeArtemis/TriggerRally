@@ -106,6 +106,25 @@ module.exports =
         products = req.user?.user.products
         res.json car.toJSON { products }
 
+    app.post "#{base}/comments", (req, res) ->
+      return jsonError 401, res unless req.user?
+      findUser req.user.user.pub_id, (reqUser) ->
+        return jsonError 500, res unless reqUser
+        # TODO: Check that the comment parent/target actually exists.
+        comment = new bb.Comment
+          parent: req.body.parent
+          text: req.body.text
+        result = comment.save null,
+          user: req.user.user
+          success: (comment) ->
+            res.json comment
+          error: (model, err) ->
+            console.log "Error creating comment: #{err}"
+            jsonError 500, res
+        if result is false
+          console.log "Error creating comment: save failed"
+          jsonError 500, res
+
     app.get "#{base}/commentsets/:commentset_id", loadUrlCommentSet, (req, res) ->
       res.json req.fromUrl.commentSet
 

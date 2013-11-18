@@ -24,17 +24,6 @@ define [
     #   @root = @options.parent.options.root
     #   @listenTo @model, 'change', @render, @
 
-    # viewModel: ->
-    #   data = super
-    #   loading = '...'
-    #   data.name ?= loading
-    #   data.modified_ago ?= loading
-    #   data.count_copy ?= loading
-    #   data.count_drive ?= loading
-    #   data.count_fav ?= loading
-    #   data.user ?= null
-    #   data
-
     beforeRender: ->
       @userView?.destroy()
 
@@ -67,6 +56,7 @@ define [
 
     initialize: ->
       @model.fetch()
+      @listenTo @app.root, 'change:user', @render, @
 
     viewModel: ->
       data = super
@@ -74,17 +64,14 @@ define [
       data
 
     afterRender: ->
-      $loggedinuser = @$ '.loggedinuser'
+      console.log 'CommentsView afterRender'
 
-      @userView = null
-      do updateUserView = =>
-        @userView?.destroy()
-        user = @app.root.user
-        @userView = user and new UserView
+      user = @app.root.user
+      if user
+        userView = new UserView
           model: user
-        $loggedinuser.empty()
-        $loggedinuser.append @userView.el if @userView
-      @listenTo @app.root, 'change:user', updateUserView
+        $loggedinuser = @$ '.loggedinuser'
+        $loggedinuser.append userView.el
 
       commentListView = new CommentListView
         collection: @model.comments
@@ -93,6 +80,9 @@ define [
       commentListView.render()
 
       $postText = @$ 'input.comment-text'
-      $postButton = @$ 'button.comment-post'
-      $postButton.click =>
-        model.addComment @app.root.user, $postText.val()
+      # $postButton = @$ 'button.comment-post'
+      $form = @$ 'form.comment-form'
+      $form.submit (event) =>
+        @model.addComment @app.root.user, $postText.val()
+        $postText.val ''
+        event.preventDefault()

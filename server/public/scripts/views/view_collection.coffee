@@ -33,7 +33,7 @@ define [
     addModel: (model, index) ->
       view = @createView model
       view.render()
-      $target = @$el.children().eq index + @childOffset
+      $target = @$el.children().children().eq index + @childOffset
       if $target.length > 0
         $target.before view.el
       else

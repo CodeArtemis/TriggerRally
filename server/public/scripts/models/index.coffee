@@ -213,6 +213,7 @@
     buildProps @, [
       'car'
       'created'
+      'created_ago'
       'rank'  # Attribute generated when fetched.
       'record_i'
       'record_p'
@@ -443,10 +444,12 @@
     all: new (Collection.extend model: @)
     buildProps @, [
       'created'
+      'created_ago'
+      'parent'  # May be a pseudo-id like 'track-xyz'
       'text'
       'user'
     ]
-    # urlRoot: '/v1/comments'  # Cannot be fetched directly.
+    urlRoot: '/v1/comments'  # Cannot be fetched directly.
     parse: ->
       data = super
       return data unless data
@@ -474,7 +477,7 @@
       if data.comments
         comments = for commentData in data.comments
           comment = new Comment
-          comment.set com.parse commentData
+          comment.set comment.parse commentData
           comment
         data.comments = @comments.reset comments
       data
@@ -483,9 +486,12 @@
     #   data.tracks = (track.id for track in data.tracks.models) if data.tracks?
     #   data
     addComment: (user, text) ->
-      comment = new Comment { user, text }
-      @comments.add comment
-      comment
+      return unless text
+      parent = @id
+      created_ago = 'just now'
+      comment = new Comment { user, text, parent, created_ago }
+      @comments.add comment, at: 0
+      comment.save()
 
   models = {
     buildProps

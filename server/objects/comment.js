@@ -20,6 +20,11 @@ Comment.virtual('created')
     return new Date(parseInt(this._id.toHexString().substring(0, 8), 16) * 1000);
   });
 
+Comment.virtual('created_ago')
+  .get(function() {
+    return common.formatDateAgo(this.created);
+  });
+
 // Comment.pre('save', function(next) {
 //   if (this.isNew) {
 //     this._id = this._id || new mongodb.ObjectID();

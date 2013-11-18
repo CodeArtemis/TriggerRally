@@ -65,18 +65,40 @@ module.exports = (bb) ->
           parsed.user = parsed.user.id if parsed.user
           success parsed
 
+  bb.Comment::sync = makeSync
+    create: (model, success, error, options) ->
+      return error "Comment has no parent" unless model.parent
+      return error "Empty comment" unless model.text
+      return error "Comment too long" if model.text.length > 80
+      comment = new mo.Comment
+        parent: model.parent
+        text: model.text
+        user: options.user.id
+      comment.save (err) ->
+        if err
+          console.log "Error creating comment: #{err}"
+          return error null
+        parsed = parseMongoose comment
+        delete parsed.user
+        success parsed
+
   bb.CommentSet::sync = makeSync
     read: (model, success, error, options) ->
       # [ type, objId ] = model.id
       mo.Comment
         .find(parent: model.id)
+        .sort(_id: -1)
+        .limit(50)
+        .populate('user', 'pub_id')
         .exec (err, comments) ->
           return error err if err
           return error "Couldn't find comment set #{model.id}" unless comments
           parsed = parseMongoose comments
           for comment in parsed
             comment.user = comment.user.id if comment.user
-          success parsed
+          success
+            id: model.id
+            comments: parsed
 
   bb.Env::sync = makeSync
     read: (model, success, error, options) ->
