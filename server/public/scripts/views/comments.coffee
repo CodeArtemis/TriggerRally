@@ -1,5 +1,6 @@
 define [
   'backbone-full'
+  'cs!models/index'
   'cs!views/view'
   'cs!views/view_collection'
   'jade!templates/comments'
@@ -7,6 +8,7 @@ define [
   'cs!views/user'
 ], (
   Backbone
+  models
   View
   ViewCollection
   template
@@ -89,3 +91,8 @@ define [
         el: @$('table.commentlist')
         root: @app.root
       commentListView.render()
+
+      $postText = @$ 'input.comment-text'
+      $postButton = @$ 'button.comment-post'
+      $postButton.click =>
+        model.addComment @app.root.user, $postText.val()

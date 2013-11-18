@@ -3,11 +3,12 @@
 _ = require 'underscore'
 mongoose = require 'mongoose'
 mo = do ->
-  Car:   mongoose.model 'Car'
-  Env:   mongoose.model 'Environment'
-  Run:   mongoose.model 'Run'
-  Track: mongoose.model 'Track'
-  User:  mongoose.model 'User'
+  Car:     mongoose.model 'Car'
+  Comment: mongoose.model 'Comment'
+  Env:     mongoose.model 'Environment'
+  Run:     mongoose.model 'Run'
+  Track:   mongoose.model 'Track'
+  User:    mongoose.model 'User'
 
 favhot = require './util/favhot'
 
@@ -62,6 +63,19 @@ module.exports = (bb) ->
           return error "Couldn't find env #{model.id}" unless car
           parsed = parseMongoose car
           parsed.user = parsed.user.id if parsed.user
+          success parsed
+
+  bb.CommentSet::sync = makeSync
+    read: (model, success, error, options) ->
+      # [ type, objId ] = model.id
+      mo.Comment
+        .find(parent: model.id)
+        .exec (err, comments) ->
+          return error err if err
+          return error "Couldn't find comment set #{model.id}" unless comments
+          parsed = parseMongoose comments
+          for comment in parsed
+            comment.user = comment.user.id if comment.user
           success parsed
 
   bb.Env::sync = makeSync

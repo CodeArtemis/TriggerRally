@@ -463,7 +463,6 @@
   class CommentSet extends Model
     all: new (Collection.extend model: @)
     buildProps @, [
-      'name'
       'comments'
     ]
     urlRoot: '/v1/commentsets'
@@ -483,6 +482,10 @@
     #   data = super
     #   data.tracks = (track.id for track in data.tracks.models) if data.tracks?
     #   data
+    addComment: (user, text) ->
+      comment = new Comment { user, text }
+      @comments.add comment
+      comment
 
   models = {
     buildProps

@@ -17,13 +17,14 @@ findModel = (Model, pub_id, done) ->
     error:   -> done null
   done null if result is false
 
-findCar       = -> findModel(bb.Car,       arguments...)
-findEnv       = -> findModel(bb.Env,       arguments...)
-findRun       = -> findModel(bb.Run,       arguments...)
-findTrack     = -> findModel(bb.Track,     arguments...)
-findTrackRuns = -> findModel(bb.TrackRuns, arguments...)
-findTrackSet  = -> findModel(bb.TrackSet,  arguments...)
-findUser      = -> findModel(bb.User,      arguments...)
+findCar         = -> findModel(bb.Car,        arguments...)
+findCommentSet  = -> findModel(bb.CommentSet, arguments...)
+findEnv         = -> findModel(bb.Env,        arguments...)
+findRun         = -> findModel(bb.Run,        arguments...)
+findTrack       = -> findModel(bb.Track,      arguments...)
+findTrackRuns   = -> findModel(bb.TrackRuns,  arguments...)
+findTrackSet    = -> findModel(bb.TrackSet,   arguments...)
+findUser        = -> findModel(bb.User,       arguments...)
 
 # This public-facing API is responsible for validating requests and data.
 
@@ -52,6 +53,8 @@ module.exports =
         req.fromUrl[attrib] = obj
         next()
 
+    loadUrlCommentSet = (req, res, next) ->
+      loadUrl findCommentSet, 'commentset_id', 'commentSet', req, res, next
     loadUrlRun = (req, res, next) ->
       loadUrl findRun, 'run_id', 'run', req, res, next
     loadUrlTrack = (req, res, next) ->
@@ -102,6 +105,9 @@ module.exports =
         return jsonError 404, res unless car?
         products = req.user?.user.products
         res.json car.toJSON { products }
+
+    app.get "#{base}/commentsets/:commentset_id", loadUrlCommentSet, (req, res) ->
+      res.json req.fromUrl.commentSet
 
     app.get "#{base}/envs/:env_id", (req, res) ->
       findEnv req.params['env_id'], (env) ->

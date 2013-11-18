@@ -1,24 +1,24 @@
 define [
   'jquery'
   'backbone-full'
+  'cs!models/index'
   'cs!views/comments'
   'cs!views/favorite'
   'cs!views/user'
   'cs!views/view'
   'cs!views/view_collection'
-  'cs!models/index'
   'jade!templates/track'
   'jade!templates/trackrun'
   'cs!util/popup'
 ], (
   $
   Backbone
+  models
   CommentsView
   FavoriteView
   UserView
   View
   ViewCollection
-  models
   template
   templateRun
   popup

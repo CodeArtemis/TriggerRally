@@ -12,6 +12,7 @@ var common = require('./common');
 // TODO: Clean up validate so we don't have to require it twice.
 var validate = require('./validate');
 
+_.extend(exports, require('./comment'));
 _.extend(exports, require('./track'));
 _.extend(exports, require('./user'));
 _.extend(exports, require('./validate'));
