@@ -613,10 +613,13 @@ io.of('/drive').on 'connection', (socket) ->
   lastCall = Date.now()
   awardCreditThrottled = ->
     now = Date.now()
-    elapsed = now - lastCall
+    elapsed = (now - lastCall) / 1000
     lastCall = now
 
-    cdf = Math.min 1, Math.pow(elapsed / 5000, 2)
+    k = 2 * 2
+    x2 = elapsed * elapsed
+    cdf = x2 / (x2 + k)
+    # cdf = Math.min 1, Math.pow(elapsed / 5000, 2)
 
     if Math.random() < cdf
       setTimeout awardCredit, 800
