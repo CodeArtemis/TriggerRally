@@ -26,6 +26,7 @@ stats =
   users: 0
   runs: 0
   tracks: 0
+  comments: 0
 
 
 require('async').series [
@@ -40,6 +41,10 @@ require('async').series [
   (done) ->
     db.tracks.count (err, tracks) ->
       stats.tracks = tracks
+      done()
+  (done) ->
+    db.comments.count (err, comments) ->
+      stats.comments = comments
       done()
   (done) ->
     db.tracks.find({}, { count_fav: 1, count_drive: 1, count_copy: 1 }).each (err, track) ->

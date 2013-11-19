@@ -14,7 +14,7 @@ db.tracks.find {}, {_id:1, count_fav:1}, (err, trackCursor) ->
     db.users.count {'favorite_tracks': track._id}, (err, count_fav) ->
       return console.log err if err
       return done() if count_fav is track.count_fav
-      console.log "#{track._id}: Updating count_fav from #{track.count_fav} to #{count_fav}"
+      # console.log "#{track._id}: Updating count_fav from #{track.count_fav} to #{count_fav}"
       db.tracks.update { _id: track._id }, { $set: { count_fav } }, (err) ->
         console.log err if err
         done()

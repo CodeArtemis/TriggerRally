@@ -608,9 +608,20 @@ io.of('/drive').on 'connection', (socket) ->
       credits: credits
     return
 
-  awardCreditThrottled = _.throttle awardCredit, 1500, leading: no
+  # awardCreditThrottled = _.throttle awardCredit, 1500, leading: no
+
+  lastCall = Date.now()
+  awardCreditThrottled = ->
+    now = Date.now()
+    elapsed = now - lastCall
+    lastCall = now
+
+    cdf = Math.min 1, Math.pow(elapsed / 5000, 2)
+
+    if Math.random() < cdf
+      setTimeout awardCredit, 800
 
   socket.on 'advance', (data) ->
     return unless user
     return unless data.cp > 0
-    awardCreditThrottled() if Math.random() < 0.4
+    awardCreditThrottled()
