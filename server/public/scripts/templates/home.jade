@@ -2,6 +2,9 @@
   unless loggedIn
     a.twitter-promo.outgoing(href="https://twitter.com/jareiko", target="_blank")
       img(src="/images/i-made-this.svg")
+  a.wikia-promo.outgoing(href="http://trigger-rally.wikia.com/", target="_blank")
+    img(src="/images/wikia.svg")
+    //- .new-marker New!
   menu
     //- div Code Artemis presents
     //- .promo-donate Donations welcome at BTC 1ATrJJfJjfxhD5VbtT3yCrYCMBkWPKCPsm :)
@@ -27,7 +30,7 @@
       //-   a.btn.route(href="/tracklist/featured") Featured tracks
       li
         a.btn.route(href="/tracklist/favhot") Most favorited
-          .new-marker New!
+          //- .new-marker New!
       li
         a.btn.route(href="/tracklist/recent") Published tracks
       li
