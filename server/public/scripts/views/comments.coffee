@@ -64,8 +64,6 @@ define [
       data
 
     afterRender: ->
-      console.log 'CommentsView afterRender'
-
       user = @app.root.user
       if user
         userView = new UserView
