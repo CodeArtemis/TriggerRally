@@ -616,9 +616,10 @@ io.of('/drive').on 'connection', (socket) ->
     elapsed = (now - lastCall) / 1000
     lastCall = now
 
-    k = 2 * 2
+    k = 4
+    k2 = k * k
     x2 = elapsed * elapsed
-    cdf = x2 / (x2 + k)
+    cdf = x2 / (x2 + k2)
     # cdf = Math.min 1, Math.pow(elapsed / 5000, 2)
 
     if Math.random() < cdf
