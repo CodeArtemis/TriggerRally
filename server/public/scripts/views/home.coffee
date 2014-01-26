@@ -1,9 +1,11 @@
 define [
   'cs!views/view'
   'jade!templates/home'
+  'cs!util/popup'
 ], (
   View
   template
+  popup
 ) ->
   class HomeView extends View
     className: 'overlay'
@@ -40,5 +42,14 @@ define [
       @$('.purchasebutton a').on 'click', (event) =>
         @app.showCreditPurchaseDialog()
         false
+
+      donateUrl = "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WT7DH7FMW7DQ6"
+
+      @$('.donate-button').on 'click', =>
+        ga 'send', 'event', 'donate', 'click'
+        result = popup.create donateUrl, "Donate", (autoclosed) =>
+          @destroy() if autoclosed
+        alert 'Popup window was blocked!' unless result
+        return false
 
       return

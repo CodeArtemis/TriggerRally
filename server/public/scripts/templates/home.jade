@@ -2,6 +2,15 @@
   unless loggedIn
     a.twitter-promo.outgoing(href="https://twitter.com/jareiko", target="_blank")
       img(src="/images/i-made-this.svg")
+  //- a(class="coinbase-button",
+    data-code="d643757174823d79851bb34cd8a489e6",
+    data-button-style="donation_large",
+    href="https://coinbase.com/checkouts/d643757174823d79851bb34cd8a489e6") Donate Bitcoins
+  form(action="https://www.paypal.com/cgi-bin/webscr", method="post", target="_top")
+    input(type="hidden", name="cmd", value="_s-xclick")
+    input(type="hidden", name="hosted_button_id", value="WT7DH7FMW7DQ6")
+    input.donate-button(type="image", src="/images/btn_donateCC_LG.gif", border="0", name="submit", alt="PayPal - The safer, easier way to pay online!")
+    //- img(alt="", border="0", src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif", width="1", height="1")
   a.wikia-promo.outgoing(href="http://trigger-rally.wikia.com/", target="_blank")
     img(src="/images/wikia.svg")
     //- .new-marker New!

@@ -7,7 +7,7 @@ trackModified = (track) ->
 
 trackScore = (track, timeNow = Date.now()) ->
   # Hacker News algorithm: http://amix.dk/blog/post/19574
-  gravity = 1.2
+  gravity = 1.5
   time = trackModified(track).getTime()
   ageDays = Math.round (timeNow - time) / (1000 * 60 * 60 * 24)
   count_fav = track.count_fav ? 0
