@@ -32,6 +32,7 @@ db.bind 'runs'
 byTrack = {}
 # iterator = (a, b) -> a[0] - b[0]
 counter = 0
+removed = 0
 
 db.runs.find({}, {time:1, track:1}).each (err, run) ->
   # if ++counter % 1000 is 0 then console.log counter
@@ -39,13 +40,13 @@ db.runs.find({}, {time:1, track:1}).each (err, run) ->
   unless run
     # console.log value for value in _.last sorted, 20
     for own track, runs of byTrack
-      console.log runs.length + ' runs'
+      removed += runs.length
       for i in [10...runs.length]
         run = runs[i]
         continue unless run?
         db.runs.remove _id: run._id
       # break
-    console.log 'Done'
+    console.log "Removed #{removed} runs"
     return process.exit()
   run.time ?= Infinity
   runs = (byTrack[run.track] ?= [])
