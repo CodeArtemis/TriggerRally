@@ -316,11 +316,16 @@ addCredits = (credits, cost) ->
     credits: credits
     currency: 'USD'
 
-addCredits '80',   '0.99'
-addCredits '200',  '1.99'
-addCredits '550',  '4.99'
-addCredits '1200', '9.99'
-addCredits '2000', '14.99'
+# addCredits '80',   '0.99'
+# addCredits '200',  '1.99'
+# addCredits '550',  '4.99'
+# addCredits '1200', '9.99'
+# addCredits '2000', '14.99'
+addCredits '80',   '0.29'
+addCredits '200',  '0.59'
+addCredits '550',  '1.49'
+addCredits '1200', '2.99'
+addCredits '2000', '4.99'
 
 # Add an 'id' field matching the pack key.
 pack.id = id for own id, pack of availablePacks
@@ -464,10 +469,7 @@ paypalResponse_DoExpressCheckoutPayment = (bbUser, req, res, err, nvp_res) ->
   bbUser.save saveData,
     success: ->
       log "PURCHASE COMPLETE for user #{bbUser.id}"
-      if req.query.popup
-        res.redirect '/closeme'
-      else
-        res.send 200
+      res.redirect '/closeme'
     error: ->
       log "user: #{JSON.stringify bbUser}"
       failure res, 500, "COMPLETE BUT FAILED TO RECORD - VERY BAD!!"

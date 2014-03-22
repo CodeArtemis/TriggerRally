@@ -7,6 +7,7 @@ define [
   'cs!views/notfound'
   'cs!views/purchase'
   'cs!views/unified'
+  'cs!util/popup'
 ], (
   $
   _
@@ -16,6 +17,7 @@ define [
   NotFoundView
   PurchaseView
   UnifiedView
+  popup
 ) ->
   jsonClone = (obj) -> JSON.parse JSON.stringify obj
 
@@ -175,7 +177,11 @@ define [
       document.title = if title then "#{title} - #{main}" else main
 
     showCreditPurchaseDialog: ->
-      purchaseView = new PurchaseView @root.user, @, @unifiedView.client
-      @unifiedView.setDialog purchaseView
-      purchaseView.render()
+      if @root.user
+        purchaseView = new PurchaseView @root.user, @, @unifiedView.client
+        @unifiedView.setDialog purchaseView
+        purchaseView.render()
+      else
+        popup.create "/login?popup=1", "Login", ->
+          Backbone.trigger 'app:checklogin'
       return
