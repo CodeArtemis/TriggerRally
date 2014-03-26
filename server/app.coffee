@@ -332,7 +332,7 @@ addCredits '200',  '0.59'
 addCredits '400',  '1.15'
 addCredits '750',  '1.95'
 addCredits '1150', '2.95'
-addCredits '2000', '4.99'
+addCredits '2000', '4.49'
 
 # Add an 'id' field matching the pack key.
 pack.id = id for own id, pack of availablePacks
