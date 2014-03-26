@@ -321,10 +321,17 @@ addCredits = (credits, cost) ->
 # addCredits '550',  '4.99'
 # addCredits '1200', '9.99'
 # addCredits '2000', '14.99'
-addCredits '80',   '0.29'
+
+# addCredits '80',   '0.29'
+# addCredits '200',  '0.59'
+# addCredits '550',  '1.49'
+# addCredits '1200', '2.99'
+# addCredits '2000', '4.99'
+
 addCredits '200',  '0.59'
-addCredits '550',  '1.49'
-addCredits '1200', '2.99'
+addCredits '400',  '1.15'
+addCredits '750',  '1.95'
+addCredits '1150', '2.95'
 addCredits '2000', '4.99'
 
 # Add an 'id' field matching the pack key.
