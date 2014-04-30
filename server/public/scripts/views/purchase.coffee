@@ -53,6 +53,9 @@ define [
       creditsVal = =>
         parseInt @$('input[name=credits]:checked').val()
 
+      creditsPrice = (credits) ->
+        pricing[credits]?[1]
+
       checkoutUrl = =>
         "/checkout?method=paypal&cur=USD&pack=credits#{creditsVal()}&popup=1"
 
@@ -63,6 +66,29 @@ define [
           root.user.fetch
             force: yes
         alert 'Popup window was blocked!' unless result
+        return false
+
+      # Stripe
+
+      console.log root.user
+
+      handler = StripeCheckout.configure
+        key: 'pk_test_Egw8Gsn2RhjFo6PXvPdXbdQ4'
+        image: 'https://triggerrally.com/images/logo.jpg'
+        token: (token, args) =>
+          console.log arguments
+          # Use the token to create the charge with a server-side script.
+          # You can access the token ID with `token.id`
+
+      @$('button.checkout-stripe').on 'click', (e) =>
+        e.preventDefault()
+        cVal = creditsVal()
+        cPrice = creditsPrice(cVal)
+        ga 'send', 'event', 'purchase', 'click', 'checkoutStripe', cVal
+        handler.open
+          name: "Purchase #{cVal} credits"
+          # description: "#{cVal} credits ($#{cPrice})"
+          amount: Math.round(cPrice * 100)
         return false
 
       ga 'send', 'pageview',

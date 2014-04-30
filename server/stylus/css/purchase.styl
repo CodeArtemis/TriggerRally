@@ -84,18 +84,41 @@ a.buybutton:active
   height 0.8em
 
 .purchasecredits input
+.purchasecredits button
   font-size inherit
 
-.purchasecredits .paypal-logo
-.purchasecredits input.checkout
+.purchasecredits .checkout-buttons
   position absolute
-  // width 1.11em * 3
-  // height 0.69em * 3
   bottom 0.5em
   right 0.5em
+
+//.purchasecredits .paypal-logo
+//.purchasecredits input.checkout
+//  position absolute
+//  // width 1.11em * 3
+//  // height 0.69em * 3
+//  bottom 0.5em
+//  right 0.5em
 
 .purchasecredits label
   border-radius 0.5em
 
 .purchasecredits label:hover
   background #fff
+
+.stripe-box
+  display inline-block
+
+input.checkout
+  margin-bottom -0.3em
+
+button.checkout-stripe
+  background #ddedff
+  background linear-gradient(to bottom, #ddedff 0%,#68aaed 100%)
+  border-radius 0.4em
+  padding 0.2em 0.4em
+  cursor pointer
+
+button.checkout-stripe > img
+  width 298em * 0.01
+  height 82 * 0.01
