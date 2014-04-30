@@ -24,6 +24,8 @@ config            = require './config'
 { makePubId }     = require './objects/common'
 routes            = require './routes'
 
+stripe            = require('stripe')(config.stripe.API_KEY)
+
 getIsodate = -> new Date().toISOString()
 express.logger.format 'isodate', (req, res) -> getIsodate()
 log = (msg) ->
@@ -337,6 +339,90 @@ addCredits '2000', '4.49'
 # Add an 'id' field matching the pack key.
 pack.id = id for own id, pack of availablePacks
 
+grantPackToUser = (pack, bbUser, method, res) ->
+  saveData = {}
+  if pack.products
+    saveData.products = _.union (bbUser.products ? []), pack.products
+  if pack.credits
+    saveData.credits = bbUser.credits + parseInt(pack.credits)
+  saveData.pay_history = bbUser.pay_history ? []
+  saveData.pay_history.push [ Date.now(), method, pack.currency, pack.cost, pack.id ]
+  console.log saveData
+  bbUser.save saveData,
+    success: ->
+      log "PURCHASE COMPLETE for user #{bbUser.id} using #{method}"
+      res.redirect '/closeme'
+    error: ->
+      log "user: #{JSON.stringify bbUser}"
+      failure res, 500, "COMPLETE BUT FAILED TO RECORD - VERY BAD!!"
+
+app.get '/checkout', (req, res) ->
+  return res.send 401 unless req.user
+  packId = req.query.pack
+
+  pack = availablePacks[packId]
+  return res.send 404 unless pack
+
+  if pack.products
+    # Check that user doesn't already have this pack. Prevents accidental double-purchase.
+    newProducts = _.difference pack.products, req.user.user.products
+    return res.send 409 if _.isEmpty newProducts
+
+  switch pack.currency
+    when 'USD'
+      switch req.query.method
+        when 'paypal' then paypalCheckout pack, req, res
+        when 'stripe' then stripeCheckout pack, req, res
+        else res.send 400
+    when 'credits' then creditsCheckout pack, req, res
+    else res.send 400
+
+# freeCheckout = (pack, req, res) ->
+#   return res.send 402 unless pack.cost in [ 0, '0' ]
+#   api.findUser req.user.user.pub_id, (bbUser) ->
+#     return failure 500 unless bbUser
+#     products = bbUser.products ? []
+#     products = _.union products, pack.products
+#     bbUser.save { products },
+#       success: ->
+#         res.redirect '/closeme'
+#       error: ->
+#         res.send 500
+
+creditsCheckout = (pack, req, res) ->
+  return failure res, 401 unless req.user
+  api.findUser req.user.user.pub_id, (bbUser) ->
+    return failure 500 unless bbUser
+    cost = parseInt(pack.cost)
+    return res.send 402 unless bbUser.credits >= cost
+    log "user #{bbUser.id} purchased #{pack.id} for #{cost} credits"
+    products = bbUser.products ? []
+    products = _.union products, pack.products
+    bbUser.save { products, credits: bbUser.credits - cost },
+      success: ->
+        log "saved user #{JSON.stringify bbUser}"
+        if req.query.popup
+          res.redirect '/closeme'
+        else
+          res.send 200
+      error: ->
+        res.send 500
+
+stripeCheckout = (pack, req, res) ->
+  return failure res, 401 unless req.user
+  api.findUser req.user.user.pub_id, (bbUser) ->
+    return failure res, 500 unless bbUser
+    charge = stripe.charges.create
+      amount: Math.round(pack.cost * 100)  # amount in cents
+      currency: "usd"
+      card: req.query.token
+      description: "Charge for user ID #{bbUser.id}"
+    , (err, charge) =>
+      if err
+        console.error err
+        return res.send 500
+      grantPackToUser pack, bbUser, 'stripe', res
+
 getPaymentParams = (pack) ->
   cost = pack.cost
   PAYMENTREQUEST_0_CUSTOM: pack.id
@@ -363,56 +449,6 @@ getPaymentParams = (pack) ->
   L_PAYMENTREQUEST_0_AMT0: cost
   L_PAYMENTREQUEST_0_DESC0: pack.description
   L_PAYMENTREQUEST_0_NAME0: pack.name
-
-app.get '/checkout', (req, res) ->
-  return res.send 401 unless req.user
-  packId = req.query.pack
-
-  pack = availablePacks[packId]
-  return res.send 404 unless pack
-
-  if pack.products
-    # Check that user doesn't already have this pack. Prevents accidental double-purchase.
-    newProducts = _.difference pack.products, req.user.user.products
-    return res.send 409 if _.isEmpty newProducts
-
-  switch pack.currency
-    when 'USD'
-      switch req.query.method
-        when 'paypal' then paypalCheckout pack, req, res
-        else res.send 400
-    when 'credits' then creditsCheckout pack, req, res
-    else res.send 400
-
-# freeCheckout = (pack, req, res) ->
-#   return res.send 402 unless pack.cost in [ 0, '0' ]
-#   api.findUser req.user.user.pub_id, (bbUser) ->
-#     return failure 500 unless bbUser
-#     products = bbUser.products ? []
-#     products = _.union products, pack.products
-#     bbUser.save { products },
-#       success: ->
-#         res.redirect '/closeme'
-#       error: ->
-#         res.send 500
-
-creditsCheckout = (pack, req, res) ->
-  api.findUser req.user.user.pub_id, (bbUser) ->
-    return failure 500 unless bbUser
-    cost = parseInt(pack.cost)
-    return res.send 402 unless bbUser.credits >= cost
-    log "user #{bbUser.id} purchased #{pack.id} for #{cost} credits"
-    products = bbUser.products ? []
-    products = _.union products, pack.products
-    bbUser.save { products, credits: bbUser.credits - cost },
-      success: ->
-        log "saved user #{JSON.stringify bbUser}"
-        if req.query.popup
-          res.redirect '/closeme'
-        else
-          res.send 200
-      error: ->
-        res.send 500
 
 paypalCheckout = (pack, req, res) ->
   params = getPaymentParams pack
@@ -465,21 +501,7 @@ paypalResponse_DoExpressCheckoutPayment = (bbUser, req, res, err, nvp_res) ->
   return failure res, 500, "#{method} error: #{err}" if err
   log "#{method} response: #{JSON.stringify nvp_res}"
   return failure res, 500 if nvp_res.ACK isnt 'Success'
-  saveData = {}
-  if pack.products
-    saveData.products = _.union (bbUser.products ? []), pack.products
-  if pack.credits
-    saveData.credits = bbUser.credits + parseInt(pack.credits)
-  saveData.pay_history = bbUser.pay_history ? []
-  saveData.pay_history.push [ Date.now(), 'paypal', pack.currency, pack.cost, pack.id ]
-  console.log saveData
-  bbUser.save saveData,
-    success: ->
-      log "PURCHASE COMPLETE for user #{bbUser.id}"
-      res.redirect '/closeme'
-    error: ->
-      log "user: #{JSON.stringify bbUser}"
-      failure res, 500, "COMPLETE BUT FAILED TO RECORD - VERY BAD!!"
+  grantPackToUser pack, bbUser,'paypal', res
 
 # app.post '/paypal/ipn', handleIPN
 

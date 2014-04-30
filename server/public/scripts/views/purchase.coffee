@@ -63,14 +63,11 @@ define [
         ga 'send', 'event', 'purchase', 'click', 'checkout', creditsVal()
         result = popup.create checkoutUrl(), "Checkout", (autoclosed) =>
           @destroy() if autoclosed
-          root.user.fetch
-            force: yes
+          root.user.fetch force: yes
         alert 'Popup window was blocked!' unless result
         return false
 
       # Stripe
-
-      console.log root.user
 
       handler = StripeCheckout.configure
         key: 'pk_test_Egw8Gsn2RhjFo6PXvPdXbdQ4'
@@ -79,6 +76,12 @@ define [
           console.log arguments
           # Use the token to create the charge with a server-side script.
           # You can access the token ID with `token.id`
+          email = encodeURIComponent token.email
+          $.ajax
+            url: "/checkout?method=stripe&cur=USD&pack=credits#{creditsVal()}&token=#{token.id}&email=#{email}"
+          .success (data, textStatus, jqXHR) =>
+            @destroy()
+            root.user.fetch force: yes
 
       @$('button.checkout-stripe').on 'click', (e) =>
         e.preventDefault()
