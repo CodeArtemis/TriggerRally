@@ -22,6 +22,7 @@
     "rethinkdb": "~1.2.6-1",
     "session-mongoose": "*",
     "socket.io": "*",
+    "stripe": "^2.5.2",
     "stylus": "*",
     "underscore": "~1.5.2"
   }
