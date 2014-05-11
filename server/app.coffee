@@ -324,7 +324,7 @@ addCredits = (credits, cost) ->
 # addCredits '1200', '9.99'
 # addCredits '2000', '14.99'
 
-addCredits '80',   '0.29'
+# addCredits '80',   '0.29'
 addCredits '200',  '0.59'
 addCredits '550',  '1.49'
 addCredits '1200', '2.99'

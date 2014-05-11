@@ -20,7 +20,7 @@ define [
     # TODO: Supply this data from the server in a centralized way.
 
     pricing =
-      80: ['0.99', '0.29']
+      # 80: ['0.99', '0.29']
       200: ['1.99', '0.59']
       550: ['4.99', '1.49']
       1200: ['9.99', '2.99']
