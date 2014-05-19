@@ -22,8 +22,8 @@
             label
               input(type="radio", name="credits", value="#{option.credits}")
               span.ca-credit= option.credits
-              span.muted  for USD 
-                span.strikethrough #{option.price[0]}
+              span.muted  for USD
+                //- span.strikethrough #{option.price[0]}
                 |  #{option.price[1]}
         .checkout-buttons
           //- img.paypal-logo(src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_111x69.jpg")

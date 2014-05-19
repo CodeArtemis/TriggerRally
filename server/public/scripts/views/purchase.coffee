@@ -20,7 +20,7 @@ define [
     # TODO: Supply this data from the server in a centralized way.
 
     pricing =
-      # 80: ['0.99', '0.29']
+      80: ['0.99', '0.29']
       200: ['1.99', '0.59']
       550: ['4.99', '1.49']
       1200: ['9.99', '2.99']
@@ -54,7 +54,7 @@ define [
         parseInt @$('input[name=credits]:checked').val()
 
       creditsPrice = (credits) ->
-        pricing[credits]?[1]
+        pricing[credits]?[0]
 
       checkoutUrl = =>
         "/checkout?method=paypal&cur=USD&pack=credits#{creditsVal()}&popup=1"
