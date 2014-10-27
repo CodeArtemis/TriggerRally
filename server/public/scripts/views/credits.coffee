@@ -37,8 +37,8 @@ define [
       @listenTo @app.root, 'change:user.credits', =>
         $userCredits.text @app.root.user?.credits
 
-      $creditsBox.on 'click', (event) =>
-        @app.showCreditPurchaseDialog()
-        false
+      # $creditsBox.on 'click', (event) =>
+      #   @app.showCreditPurchaseDialog()
+      #   false
 
       return
