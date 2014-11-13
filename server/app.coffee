@@ -369,11 +369,12 @@ app.get '/checkout', (req, res) ->
     return res.send 409 if _.isEmpty newProducts
 
   switch pack.currency
-    when 'USD'
-      switch req.query.method
-        when 'paypal' then paypalCheckout pack, req, res
-        when 'stripe' then stripeCheckout pack, req, res
-        else res.send 400
+    # Real currency payments are disabled.
+    # when 'USD'
+    #   switch req.query.method
+    #     when 'paypal' then paypalCheckout pack, req, res
+    #     when 'stripe' then stripeCheckout pack, req, res
+    #     else res.send 400
     when 'credits' then creditsCheckout pack, req, res
     else res.send 400
 
