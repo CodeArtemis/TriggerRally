@@ -14,7 +14,7 @@
     "mongoskin": "*",
     "passport": "*",
     "passport-facebook": "*",
-    "passport-google": "*",
+    "passport-google-oauth": "*",
     "passport-local": "*",
     "passport-twitter": "*",
     "quiver": "*",
