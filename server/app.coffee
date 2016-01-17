@@ -12,7 +12,7 @@ socketio          = require 'socket.io'
 stylus            = require 'stylus'
 passport          = require 'passport'
 FacebookStrategy  = require('passport-facebook').Strategy
-GoogleStrategy    = require('passport-google').Strategy
+GoogleStrategy    = require('passport-google-oauth').Strategy
 TwitterStrategy   = require('passport-twitter').Strategy
 LocalStrategy     = require('passport-local').Strategy
 
@@ -125,12 +125,11 @@ for i in ["", "/v1"]
     authenticateUser profile, done
   )
   passport.use "google#{i}", new GoogleStrategy(
-    returnURL: "#{URL_PREFIX}#{i}/auth/google/return"
-    realm: URL_PREFIX + '/'
-  , (identifier, profile, done) ->
-    # passport-oauth doesn't supply provider or id.
-    profile.identifier = identifier  # Old storage
-    profile.auth = { identifier }    # New unified auth
+    clientID: config.GOOGLE_CLIENT_ID,
+    clientSecret: config.GOOGLE_CLIENT_SECRET,
+    callbackURL: "#{URL_PREFIX}#{i}/auth/google/callback"
+  , (accessToken, refreshToken, profile, done) ->
+    profile.auth = { accessRoken, refreshToken }
     authenticateUser profile, done
   )
   passport.use "twitter#{i}", new TwitterStrategy(
