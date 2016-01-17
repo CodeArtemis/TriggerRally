@@ -39,9 +39,9 @@ define [
 
       @listenTo @app.root, 'change:user.products', updatePromo
 
-      @$('.purchasebutton a').on 'click', (event) =>
-        @app.showCreditPurchaseDialog()
-        false
+      # @$('.purchasebutton a').on 'click', (event) =>
+      #   @app.showCreditPurchaseDialog()
+      #   false
 
       # donateUrl = "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WT7DH7FMW7DQ6"
 
@@ -52,8 +52,8 @@ define [
       #   alert 'Popup window was blocked!' unless result
       #   return false
 
-      @$('.promo-discount').on 'click', (event) =>
-        @app.showCreditPurchaseDialog()
-        false
+      # @$('.promo-discount').on 'click', (event) =>
+      #   @app.showCreditPurchaseDialog()
+      #   false
 
       return

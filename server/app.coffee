@@ -51,8 +51,6 @@ Run = mongoose.model('Run')
 
 mongoose.connect config.MONGOOSE_URL
 
-# { handleIPN } = require './paypal/ipn'
-
 # Alternate DB connection
 dbUrl = "#{config.db.host}:#{config.db.port}/#{config.db.name}?auto_reconnect"
 db = mongoskin.db dbUrl, { safe: true }
@@ -285,7 +283,7 @@ app.get '/x/:idTrack/:idCar/drive', (req, res) ->
 
 app.get    '/login', routes.login
 
-ppec = require './paypal/expresscheckout'
+# ppec = require './paypal/expresscheckout'
 qs = require 'querystring'
 
 availablePacks =
@@ -369,11 +367,11 @@ app.get '/checkout', (req, res) ->
     return res.send 409 if _.isEmpty newProducts
 
   switch pack.currency
-    when 'USD'
-      switch req.query.method
-        when 'paypal' then paypalCheckout pack, req, res
-        when 'stripe' then stripeCheckout pack, req, res
-        else res.send 400
+    # when 'USD'
+    #   switch req.query.method
+    #     when 'paypal' then paypalCheckout pack, req, res
+    #     when 'stripe' then stripeCheckout pack, req, res
+    #     else res.send 400
     when 'credits' then creditsCheckout pack, req, res
     else res.send 400
 
@@ -408,20 +406,20 @@ creditsCheckout = (pack, req, res) ->
       error: ->
         res.send 500
 
-stripeCheckout = (pack, req, res) ->
-  return failure res, 401 unless req.user
-  api.findUser req.user.user.pub_id, (bbUser) ->
-    return failure res, 500 unless bbUser
-    charge = stripe.charges.create
-      amount: Math.round(pack.cost * 100)  # amount in cents
-      currency: "usd"
-      card: req.query.token
-      description: "Charge for user ID #{bbUser.id}"
-    , (err, charge) =>
-      if err
-        console.error err
-        return res.send 500
-      grantPackToUser pack, bbUser, 'stripe', res
+# stripeCheckout = (pack, req, res) ->
+#   return failure res, 401 unless req.user
+#   api.findUser req.user.user.pub_id, (bbUser) ->
+#     return failure res, 500 unless bbUser
+#     charge = stripe.charges.create
+#       amount: Math.round(pack.cost * 100)  # amount in cents
+#       currency: "usd"
+#       card: req.query.token
+#       description: "Charge for user ID #{bbUser.id}"
+#     , (err, charge) =>
+#       if err
+#         console.error err
+#         return res.send 500
+#       grantPackToUser pack, bbUser, 'stripe', res
 
 getPaymentParams = (pack) ->
   cost = pack.cost
@@ -450,60 +448,58 @@ getPaymentParams = (pack) ->
   L_PAYMENTREQUEST_0_DESC0: pack.description
   L_PAYMENTREQUEST_0_NAME0: pack.name
 
-paypalCheckout = (pack, req, res) ->
-  params = getPaymentParams pack
-  return res.send 404 unless params
-  params.METHOD = 'SetExpressCheckout'
-  log "Calling: #{JSON.stringify params}"
-  ppec.request params, (err, nvp_res) ->
-    if err
-      console.error "#{params.METHOD} error: #{err}"
-      return res.send 500
-    log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
-    return res.send 500 if nvp_res.ACK isnt 'Success'
-    TOKEN = nvp_res.TOKEN
-    return res.send 500 unless TOKEN
-    res.redirect ppec.redirectUrl TOKEN
+# paypalCheckout = (pack, req, res) ->
+#   params = getPaymentParams pack
+#   return res.send 404 unless params
+#   params.METHOD = 'SetExpressCheckout'
+#   log "Calling: #{JSON.stringify params}"
+#   ppec.request params, (err, nvp_res) ->
+#     if err
+#       console.error "#{params.METHOD} error: #{err}"
+#       return res.send 500
+#     log "#{params.METHOD} response: #{JSON.stringify nvp_res}"
+#     return res.send 500 if nvp_res.ACK isnt 'Success'
+#     TOKEN = nvp_res.TOKEN
+#     return res.send 500 unless TOKEN
+#     res.redirect ppec.redirectUrl TOKEN
 
 failure = (res, code, msg) ->
   console.error "PURCHASE FAILED: (#{code}) #{msg}"
   res.send code
 
-app.get '/checkout/return', (req, res) ->
-  return failure res, 401 unless req.user
-  api.findUser req.user.user.pub_id, (bbUser) ->
-    return failure res, 500 unless bbUser
-    params =
-      METHOD: 'GetExpressCheckoutDetails'
-      TOKEN: req.query.token
-    log "Calling: #{JSON.stringify params}"
-    ppec.request params, paypalResponse_GetExpressCheckoutDetails.bind null, bbUser, req, res
+# app.get '/checkout/return', (req, res) ->
+#   return failure res, 401 unless req.user
+#   api.findUser req.user.user.pub_id, (bbUser) ->
+#     return failure res, 500 unless bbUser
+#     params =
+#       METHOD: 'GetExpressCheckoutDetails'
+#       TOKEN: req.query.token
+#     log "Calling: #{JSON.stringify params}"
+#     ppec.request params, paypalResponse_GetExpressCheckoutDetails.bind null, bbUser, req, res
 
-paypalResponse_GetExpressCheckoutDetails = (bbUser, req, res, err, nvp_res) ->
-  method = 'GetExpressCheckoutDetails'
-  return failure res, 500, "#{method} error: #{err}" if err
-  log "#{method} response: #{nvp_res}"
-  return failure res, 500 if nvp_res.ACK isnt 'Success'
-  packId = nvp_res.PAYMENTREQUEST_0_CUSTOM
-  pack = availablePacks[packId]
-  # TODO: Check that price and description match what we expect?
-  params = getPaymentParams pack
-  return failure res, 500 unless params
-  params.METHOD = 'DoExpressCheckoutPayment'
-  params.TOKEN = nvp_res.TOKEN
-  params.PAYERID = nvp_res.PAYERID
-  params.RETURNFMFDETAILS = 1
-  log "Calling: #{JSON.stringify params}"
-  ppec.request params, paypalResponse_DoExpressCheckoutPayment.bind null, bbUser, req, res
+# paypalResponse_GetExpressCheckoutDetails = (bbUser, req, res, err, nvp_res) ->
+#   method = 'GetExpressCheckoutDetails'
+#   return failure res, 500, "#{method} error: #{err}" if err
+#   log "#{method} response: #{nvp_res}"
+#   return failure res, 500 if nvp_res.ACK isnt 'Success'
+#   packId = nvp_res.PAYMENTREQUEST_0_CUSTOM
+#   pack = availablePacks[packId]
+#   # TODO: Check that price and description match what we expect?
+#   params = getPaymentParams pack
+#   return failure res, 500 unless params
+#   params.METHOD = 'DoExpressCheckoutPayment'
+#   params.TOKEN = nvp_res.TOKEN
+#   params.PAYERID = nvp_res.PAYERID
+#   params.RETURNFMFDETAILS = 1
+#   log "Calling: #{JSON.stringify params}"
+#   ppec.request params, paypalResponse_DoExpressCheckoutPayment.bind null, bbUser, req, res
 
-paypalResponse_DoExpressCheckoutPayment = (bbUser, req, res, err, nvp_res) ->
-  method = 'DoExpressCheckoutPayment'
-  return failure res, 500, "#{method} error: #{err}" if err
-  log "#{method} response: #{JSON.stringify nvp_res}"
-  return failure res, 500 if nvp_res.ACK isnt 'Success'
-  grantPackToUser pack, bbUser,'paypal', res
-
-# app.post '/paypal/ipn', handleIPN
+# paypalResponse_DoExpressCheckoutPayment = (bbUser, req, res, err, nvp_res) ->
+#   method = 'DoExpressCheckoutPayment'
+#   return failure res, 500, "#{method} error: #{err}" if err
+#   log "#{method} response: #{JSON.stringify nvp_res}"
+#   return failure res, 500 if nvp_res.ACK isnt 'Success'
+#   grantPackToUser pack, bbUser,'paypal', res
 
 #
 #app.post('/login',

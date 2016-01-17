@@ -178,9 +178,10 @@ define [
 
     showCreditPurchaseDialog: ->
       if @root.user
-        purchaseView = new PurchaseView @root.user, @, @unifiedView.client
-        @unifiedView.setDialog purchaseView
-        purchaseView.render()
+        alert "Not enough credits"
+        # purchaseView = new PurchaseView @root.user, @, @unifiedView.client
+        # @unifiedView.setDialog purchaseView
+        # purchaseView.render()
       else
         popup.create "/login?popup=1", "Login", ->
           Backbone.trigger 'app:checklogin'
