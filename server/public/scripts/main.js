@@ -1,7 +1,7 @@
 // Copyright (C) 2012 jareiko / http://www.jareiko.net/
 
 requirejs.config({
-  baseUrl: '/scripts',
+  //baseUrl: '/scripts',
   shim: {
     'underscore': {
       exports: '_',
