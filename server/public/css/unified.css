@@ -1,0 +1,997 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  background: #dec;
+  color: #000;
+  padding: 0;
+  margin: 0;
+  font-family: "Ubuntu", sans-serif;
+  text-shadow: 0 1px 0 #fff;
+}
+h1,
+h2 {
+  font-family: 'Ubuntu', sans-serif;
+  font-style: italic;
+  font-weight: bold;
+  margin: 0;
+}
+input {
+  font-family: 'Ubuntu', sans-serif;
+}
+.version {
+  opacity: 0.3;
+}
+.user img,
+img.inline {
+  width: 1.3em;
+  height: 1.3em;
+  margin-right: 0.32em;
+  vertical-align: -20%;
+  border-radius: 0.13em;
+}
+img.emoji {
+  width: 1.3em;
+  height: 1.3em;
+  vertical-align: -20%;
+}
+.gray {
+  -moz-filter: grayscale(1);
+  -webkit-filter: grayscale(1);
+  filter: grayscale(1);
+}
+img.profilepic {
+  width: 70px;
+  height: 70px;
+  border-radius: 7px;
+}
+a,
+a:visited {
+  color: #140;
+  text-decoration: none;
+  cursor: pointer;
+}
+a:hover {
+  color: #000;
+  text-shadow: 0 0 4px #6f1;
+}
+a:active {
+  color: #684;
+}
+a.disabled,
+a.disabled:hover,
+a.disabled:active,
+a.disabled:visited {
+  color: #777;
+  text-shadow: inherit;
+  cursor: default;
+}
+.hidden {
+  display: none !important;
+}
+.float-left {
+  float: left;
+}
+.float-right {
+  float: right;
+}
+.clear-both {
+  clear: both;
+}
+.no-pointer-events {
+  pointer-events: none;
+}
+.gui-container.drive > * {
+  color: #000;
+  position: absolute;
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  z-index: 2;
+}
+.checkpoints {
+  top: 0.5em;
+  left: 1em;
+  font-size: 2em;
+}
+.timer {
+  color: #040;
+  bottom: 0.3em;
+  right: 1em;
+  font-size: 2em;
+  -moz-transition: -moz-transform 2s;
+  -moz-transform-origin: bottom right;
+  -moz-transform: scale(2);
+  -webkit-transition: -webkit-transform 2s;
+  -webkit-transform-origin: bottom right;
+  -webkit-transform: scale(2);
+}
+.timer.running {
+  color: #000;
+  -moz-transform: scale(1);
+  -webkit-transform: scale(1);
+}
+.split-time {
+  border-radius: 0.2em;
+  padding: 0.1em 0.3em;
+  right: 2em;
+  text-align: right;
+  top: 5em;
+  background: rgba(128,0,0,0.3);
+}
+.split-time.minus {
+  background: rgba(0,255,0,0.3);
+  text-shadow: 0 0 0.1em #0f0, 0 0 0.4em #fff;
+}
+.speedo {
+  bottom: 1em;
+  left: 0;
+  font-size: 1em;
+  color: #040;
+  text-align: center;
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  width: 6em;
+}
+.countdown {
+  top: 1em;
+  left: 0;
+  right: 0;
+  font-size: 3em;
+  text-align: center;
+  opacity: 1;
+}
+.countdown.fadeout {
+  transition: all 0.5s ease-in 0.3s;
+  transform: translateY(-0.7em);
+  -moz-transition: all 0.5s ease-in 0.3s;
+  -moz-transform: translateY(-0.7em);
+  -webkit-transition: all 0.5s ease-in 0.3s;
+  -webkit-transform: translateY(-0.7em);
+  opacity: 0;
+}
+#editor-container {
+  font-size: initial;
+}
+#editor-helpbox-wrapper,
+#editor-inspector {
+  top: 10px;
+}
+#editor-helpbox,
+#editor-inspector,
+.close-tab {
+  padding: 10px;
+  border-radius: 4px;
+  opacity: 0.9;
+}
+#editor-helpbox-wrapper {
+  position: absolute;
+  z-index: 4;
+  width: 600px;
+  right: -620px;
+  transition: right 0.5s;
+  -moz-transition: right 0.5s;
+  -webkit-transition: right 0.5s;
+}
+#editor-helpbox-wrapper.visible {
+  right: 10px;
+}
+#editor-helpbox {
+  z-index: 4;
+  width: 600px;
+  height: 510px;
+  overflow-y: scroll;
+}
+#editor-helpbox table {
+  border-spacing: 0;
+}
+#editor-helpbox td {
+  border-bottom: 1px solid rgba(0,0,0,0.3);
+  margin: 0;
+  vertical-align: top;
+}
+#editor-helpbox td:first-child {
+  padding-right: 1em;
+}
+.close-tab {
+  z-index: -1;
+  width: 80px;
+  padding: 5px;
+  right: 600px;
+  top: 20px;
+  cursor: pointer;
+}
+#editor-inspector {
+  z-index: 3;
+  left: 10px;
+  width: 270px;
+}
+.warning {
+  font-weight: bold;
+  color: #d00;
+  border: 1px solid #d00;
+  border-radius: 4px;
+  background: #fdd;
+  padding: 0.5em;
+  margin: 0.5em 0;
+}
+#editor-inspector .warning {
+  font-size: 80%;
+}
+#editor-inspector h3 {
+  margin: 0;
+}
+#editor-inspector hr {
+  margin: 0.3em 0;
+}
+#editor-inspector .attrib {
+  display: none;
+}
+#editor-inspector .attrib.visible {
+  display: block;
+}
+#editor-inspector .label {
+  position: relative;
+}
+#editor-inspector .content {
+  position: absolute;
+  left: 110px;
+  width: 150px;
+}
+.tooltip {
+  border-bottom: 1px dotted #333;
+  position: relative;
+}
+.tooltip .tooltip-text {
+  display: none;
+  position: absolute;
+  opacity: 0.95;
+  left: 2em;
+  top: 1em;
+  background: #ee9;
+  font-size: 80%;
+  padding: 0 12px;
+  border: 1px solid #440;
+  color: #000;
+  border-radius: 4px;
+  width: 300px;
+  z-index: 3;
+}
+.tooltip:hover .tooltip-text {
+  display: inline-block;
+}
+.profile-card {
+  background: #fff;
+  box-shadow: inset 0 0 4em rgba(0,0,0,0.3), 0 0.3em 1em #000;
+  border-radius: 0.8em;
+  font-size: 0.75em;
+  position: absolute;
+  width: 21em;
+  height: 13em;
+  top: 1.1em;
+  left: 10.833333333333332em;
+  border: 0.3em solid #9b9;
+  overflow: hidden;
+  opacity: 0.95;
+}
+.profile-card.purchased {
+  border-color: #e21;
+}
+.profile-card > * {
+  position: absolute;
+  font-size: 0.77em;
+  margin: 0;
+  padding: 0;
+  z-index: 2;
+}
+.profile-card .picture {
+  top: 1em;
+  left: 1em;
+  width: 7em;
+  height: 7em;
+  border: 0.1em solid #000;
+  border-radius: 0.4em;
+  background-size: cover;
+}
+.profile-card.editable.purchased .picture {
+  cursor: pointer;
+}
+.profile-card.editable.purchased .picture:hover {
+  box-shadow: 0 0 0.4em #6f1;
+}
+.profile-card .picture .img-overlay {
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0%;
+  padding: 0.5em;
+  text-align: center;
+  pointer-events: none;
+  transition: 0.4s;
+}
+.profile-card .picture .img-overlay a {
+  pointer-events: initial;
+}
+.profile-card.editable.purchased .picture .img-overlay {
+  top: 40%;
+  opacity: 0;
+}
+.profile-card.editable.purchased .picture:hover .img-overlay {
+  top: 100%;
+  opacity: 1;
+}
+.profile-card h1 {
+  left: 9em;
+  top: 1em;
+}
+.profile-card h1 > div {
+  font-size: 1.7em;
+}
+.profile-card .category {
+  left: 9em;
+  top: 6em;
+}
+.profile-card .category a {
+  display: none;
+}
+.profile-card.editable .category a {
+  display: initial;
+}
+.profile-card .user-name {
+  left: 9em;
+  right: 1em;
+  top: 4em;
+  height: 1em;
+}
+.profile-card.editable div.user-name {
+  cursor: pointer;
+}
+.profile-card.editable div.user-name:hover {
+  text-shadow: 0 0 0.2em #6f1;
+}
+.profile-card input.user-name {
+  height: 1.3em;
+}
+.profile-card input.user-name.invalid {
+  background: #fbb;
+}
+.profile-card .user-name-error {
+  left: 9em;
+  right: 1em;
+  top: 3em;
+  color: #800;
+}
+.profile-card .user-id {
+  right: 1em;
+  top: 6em;
+  color: #aaa;
+}
+.profile-card .issued {
+  left: 9em;
+  top: 6em;
+}
+.profile-card .tracks {
+  left: 9em;
+  top: 7em;
+}
+.profile-card .badges {
+  top: 9em;
+  left: 1em;
+  right: 1em;
+  bottom: 1em;
+  border: 0.1em dashed #ddd;
+  border-radius: 0.4em;
+  text-align: center;
+}
+.profile-card .badges .label {
+  position: absolute;
+  width: 100%;
+  z-index: -1;
+  text-align: left;
+  font-family: monospace;
+  font-size: 1.5em;
+  color: #ddd;
+}
+.profile-card .badges img {
+  width: 6em;
+  height: 6em;
+}
+#credits {
+  position: absolute;
+  right: 1em;
+  top: 1em;
+  z-index: 2;
+}
+.credits-box {
+  background: #fff;
+  color: #000;
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  border-radius: 0.5em;
+  padding: 0.2em 0.4em;
+  opacity: 0.7;
+  transition: opacity 1.5s;
+}
+.credits-box:hover,
+.credits-box.flash {
+  opacity: 1;
+  transition: opacity 0;
+}
+span.ca-credit {
+  background: url("/images/ca-credit.png");
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: left center;
+  padding-left: 1.2em;
+}
+.purchasebutton {
+  margin-left: 0.1em;
+  text-align: center;
+}
+.purchasebutton .plus {
+  display: inline-block;
+  background: #140;
+  color: #fff;
+  border-radius: 0.2em;
+  width: 0.8em;
+  height: 0.8em;
+  position: relative;
+  top: 0.2em;
+}
+.purchasebutton .plus {
+  color: #fff;
+}
+.purchasebutton .plus > span {
+  position: relative;
+  top: -0.25em;
+}
+a.buybutton {
+  background: #140;
+  border-radius: 0.2em;
+  padding: 0.1em 0.3em;
+}
+a.buybutton,
+a.buybutton:visited {
+  color: #fff;
+}
+a.buybutton:hover,
+a.buybutton:active {
+  background: #684;
+}
+.purchasecredits input[type="radio"] {
+  font-size: inherit;
+  width: 0.8em;
+  height: 0.8em;
+}
+.purchasecredits input,
+.purchasecredits button {
+  font-size: inherit;
+}
+.purchasecredits .checkout-buttons {
+  position: absolute;
+  bottom: 0.5em;
+  right: 0.5em;
+}
+.purchasecredits label {
+  border-radius: 0.5em;
+}
+.purchasecredits label:hover {
+  background: #fff;
+}
+.stripe-box {
+  display: inline-block;
+}
+input.checkout {
+  margin-bottom: -0.3em;
+}
+button.checkout-stripe {
+  background: #ddedff;
+  background: linear-gradient(to bottom, #ddedff 0%, #68aaed 100%);
+  border-radius: 0.4em;
+  padding: 0.2em 0.4em;
+  cursor: pointer;
+}
+button.checkout-stripe > img {
+  width: 2.98em;
+  height: 0.8200000000000001;
+}
+table.list {
+  border-spacing: 0.1em;
+  font-size: 0.8em;
+}
+table.list tr {
+  background: #eee;
+}
+table.list tr:first-child {
+  background: #ddd;
+}
+table.list td {
+  padding: 0 0.7em;
+}
+table.list input,
+table.list button {
+  font-size: inherit;
+}
+label.favorite input {
+  width: 1.3em;
+  height: 1.3em;
+  vertical-align: -20%;
+  padding: 0;
+  font-size: 1em;
+  background-image: url("/emojis/star.png");
+  background-size: cover;
+  appearance: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+label.favorite input:not(:checked) {
+  filter: grayscale(1);
+  -moz-filter: grayscale(1);
+  -webkit-filter: grayscale(1);
+}
+body {
+  background: #888;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+h2 {
+  display: inline;
+}
+input[type="range"] {
+  width: 60%;
+}
+#statusbar,
+#editor-inspector,
+#editor-helpbox,
+.close-tab {
+  background: #fda;
+  position: absolute;
+}
+#editor-inspector,
+#editor-helpbox,
+.close-tab {
+  box-shadow: 0 0 10px #000;
+}
+#statusbar {
+  top: 0;
+  width: 100%;
+  z-index: 4;
+  font-weight: bold;
+}
+#statusbar > table {
+  border-spacing: 0;
+  width: 100%;
+}
+#statusbar > table td:nth-child(1) {
+  width: 12em;
+}
+#statusbar > table td:last-child {
+  text-align: right;
+}
+#statusbar .status {
+  font-weight: initial;
+}
+#statusbar > table td.navigation > * {
+  margin: 0 0.5em;
+}
+.dropdownmenu {
+  position: relative;
+}
+.dropdownmenu > menu {
+  font-weight: initial;
+  position: absolute;
+  left: -1em;
+  top: 100%;
+  width: 20em;
+  background: rgba(255,221,170,0.95);
+  margin: 0;
+  padding: 0.8em 0 0.4em;
+  display: none;
+  border-radius: 0 0 0.4em 0.4em;
+}
+.dropdownmenu:hover > menu {
+  display: inline-block;
+}
+.dropdownmenu > menu > * {
+  padding: 0.1em 1em;
+}
+.dropdownmenu > menu > hr {
+  padding: 0;
+  margin: 0.4em 1em;
+}
+.dropdownmenu > menu label {
+  border-radius: 0.4em;
+}
+.dropdownmenu > menu label:hover {
+  background: #fec;
+}
+.dropdownmenu > menu .label {
+  font-style: italic;
+  opacity: 0.5;
+}
+.dropdownmenu > menu > ul {
+  padding-left: 2.5em;
+}
+audio {
+  width: 18em;
+}
+.callout {
+  background: rgba(255,255,255,0.5);
+  border-radius: 0.4em;
+  padding: 0.5em;
+}
+.musiccontrol {
+  background-color: rgba(255,255,255,0.5);
+  background-position: center;
+  background-size: cover;
+  border: 1px solid #000;
+  border-radius: 0.3em;
+  cursor: pointer;
+  display: inline-block;
+  width: 2em;
+  height: 1.3em;
+  margin: 0 0.2em;
+  vertical-align: -20%;
+}
+.musiccontrol:hover {
+  background-color: #fff;
+}
+.musiccontrol.play {
+  background-image: url("/icons/appbar.control.play.png");
+}
+.musiccontrol.pause {
+  background-image: url("/icons/appbar.control.pause.png");
+}
+.musiccontrol.next {
+  background-image: url("/icons/appbar.control.fastforward.png");
+}
+#unified-child {
+  position: relative;
+  height: 0;
+}
+.modal {
+  z-index: 2;
+}
+.modal-blocker {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+.gui-container {
+  position: absolute;
+  width: 32em;
+  height: 18em;
+  overflow: auto;
+  left: 50%;
+  margin-left: -16em;
+}
+.gui-container h1 {
+  margin: 0.2em 0;
+  text-shadow: 0 1px 0 #fff, 0 0 0.2em #fff, 0 0 0.4em #fff;
+}
+.text-panel {
+  user-select: auto;
+  -moz-user-select: auto;
+  -webkit-user-select: auto;
+  user-select: auto;
+  font-size: 0.6em;
+  background: #fff;
+  opacity: 0.95;
+  padding: 1em;
+  cursor: auto;
+}
+img.github {
+  float: right;
+  width: 8em;
+  height: 8em;
+  margin-top: -1em;
+  margin-right: -1em;
+}
+.gui-container menu {
+  position: absolute;
+  width: 100%;
+  z-index: 2;
+  font-size: 1em;
+  margin: auto;
+  padding: 0.6em 0;
+  text-align: center;
+}
+.gui-container menu.home-left {
+  width: 45%;
+  left: 0;
+}
+.gui-container menu.home-right {
+  width: 45%;
+  right: 0;
+}
+.gui-container menu a.btn {
+  display: block;
+  margin: 0.3em auto;
+  padding: 0.3em;
+  width: 70%;
+  color: #000;
+  text-shadow: 0 0 0.3em #6f1;
+  background: #fff;
+  border-radius: 0.5em;
+  opacity: 0.7;
+  position: relative;
+}
+.gui-container menu a.btn:hover {
+  opacity: 1;
+}
+menu > li {
+  list-style: none;
+  display: block;
+}
+.gui-container .new-marker,
+.gui-container .label-marker {
+  background: #f00;
+  border-radius: 0.4em;
+  color: #fff;
+  font-size: 0.8em;
+  left: 0;
+  padding: 0 0.2em;
+  position: absolute;
+  top: 0;
+  left: -1em;
+  transform: rotate(-20deg);
+  -moz-transform: rotate(-20deg);
+  -webkit-transform: rotate(-20deg);
+  transition: 0.1s;
+}
+.gui-container .label-marker {
+  background: #f83;
+}
+.gui-container a:hover .new-marker {
+  transform: rotate(-10deg);
+  -moz-transform: rotate(-10deg);
+  -webkit-transform: rotate(-10deg);
+}
+#view3d {
+  background: #808080;
+  position: absolute;
+  width: 100%;
+}
+.highlight {
+  font-weight: bold;
+  color: #f33;
+}
+#track-list {
+  max-height: 7.5em;
+  overflow: auto;
+}
+#track-list .track.selected {
+  background: #fec;
+}
+#webgl-warning img.browserlogo {
+  width: 5em;
+  height: 5em;
+}
+table.credits {
+  border-spacing: 0;
+}
+table.credits td {
+  padding-bottom: 0.7em;
+  vertical-align: top;
+}
+table.credits td:first-child {
+  padding-right: 3em;
+}
+.checkout-box,
+.purchased-thanks {
+  display: inline-block;
+  background: #dfd;
+  border-radius: 0.5em;
+  padding: 1em;
+  border: 1px solid #000;
+}
+.checkout-box {
+  margin: 1em 3em;
+  background-color: #f0f8ff;
+}
+.checkout-box table {
+  border-spacing: 0;
+}
+.checkout-box td {
+  vertical-align: top;
+}
+.checkout-box .checkout-buttons {
+  text-align: center;
+}
+.checkout-box img.pack {
+  width: 4em;
+  height: 4em;
+}
+.checkout-box .price {
+  display: inline-block;
+  padding: 0.8em 1em;
+}
+.checkout-box input[type="radio"] {
+  font-size: inherit;
+  width: 0.8em;
+  height: 0.8em;
+}
+.checkout-box input[type="text"].customprice {
+  font-size: inherit;
+  width: 8em;
+  margin: 0 0.5em;
+  opacity: 1;
+  transition: opacity 0.5s;
+}
+.checkout-box .zeroalpha {
+  opacity: 0 !important;
+}
+.checkout-box .message {
+  background: #fff;
+  font-size: 0.8em;
+  border: 1px solid rgba(0,0,0,0.4);
+  border-radius: 0.5em;
+  margin: 0.2em;
+  padding: 0.2em;
+  width: 22em;
+  transition: opacity 0.5s;
+}
+a.checkout img,
+input.checkout {
+  font-size: inherit;
+  width: 7.25em;
+  height: 1.2000000000000002em;
+}
+.ignition-promo-image {
+  display: inline-block;
+  float: right;
+  width: 21em;
+  height: 13.325em;
+  background-image: url("/images/ignition-promo.jpg");
+  background-size: cover;
+  border-radius: 0.5em;
+}
+.mayhem-promo-image {
+  display: inline-block;
+  float: right;
+  width: 21em;
+  height: 13.325em;
+  background-image: url("/images/promo-mayhem.jpg");
+  background-size: cover;
+  border-radius: 0.5em;
+}
+.packa-promo-image {
+  display: inline-block;
+  float: right;
+  margin-left: 0.5em;
+  width: 21em;
+  height: 13.325em;
+  background-image: url("/images/promo-mayhem.jpg");
+  background-size: cover;
+  border-radius: 0.5em;
+}
+.smaller {
+  font-size: 0.6em;
+}
+#status-message {
+  color: #000;
+  position: absolute;
+  top: 2em;
+  left: 0;
+  right: 0;
+  font-size: 1.5em;
+  font-weight: bold;
+  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  text-align: center;
+  z-index: 2;
+  opacity: 1;
+}
+#status-message.fadeout {
+  transition: all 1.5s ease-in 0.5s;
+  transform: translateY(-0.7em);
+  -moz-transition: all 1.5s ease-in 0.5s;
+  -moz-transform: translateY(-0.7em);
+  -webkit-transition: all 1.5s ease-in 0.5s;
+  -webkit-transform: translateY(-0.7em);
+  opacity: 0;
+}
+.twitter-promo {
+  bottom: 0;
+  left: 0.5em;
+  position: absolute;
+}
+.twitter-promo img {
+  width: 5em;
+}
+.promo-wikia {
+  bottom: 0.5em;
+  right: 0.5em;
+  position: absolute;
+}
+.promo-wikia img {
+  width: 5em;
+}
+.promo-discount {
+  position: absolute;
+  left: 4em;
+  top: 0.3em;
+  opacity: 0.6;
+  z-index: 3;
+}
+.promo-discount img {
+  width: 4em;
+}
+.promo-ludo {
+  position: absolute;
+  bottom: 0.5em;
+  left: 0.5em;
+}
+.promo-ludo img {
+  width: 5em;
+}
+.promo-ludo {
+  bottom: 1em;
+  left: 1em;
+  background: #fff;
+  border-radius: 0.2em;
+  padding: 0.5em 1em;
+  font-size: 0.8em;
+}
+.donate-button {
+  font-size: inherit;
+  bottom: 0.5em;
+  right: 6.5em;
+  position: absolute;
+  width: 5em;
+}
+.dialog {
+  background: #fff;
+  box-shadow: inset 0 0 4em rgba(0,0,0,0.3), 0 0.3em 1em #000;
+  border-radius: 0.8em;
+  font-size: 0.75em;
+  position: absolute;
+  width: 21em;
+  height: 13em;
+  top: 1.1em;
+  left: 10.833333333333332em;
+  border: 0.3em solid #fda;
+  overflow: hidden;
+  opacity: 0.95;
+}
+.dialogpadding {
+  padding: 0.5em;
+}
+.muted {
+  opacity: 0.6;
+}
+.sharebutton {
+  background-repeat: no-repeat;
+  background-size: 1.2em 1.2em;
+  background-position: left center;
+  padding: 0.1em 0.1em 0.1em 1.7em;
+}
+.sharebutton.facebook {
+  background-image: url("/images/facebook_64.png");
+}
+.sharebutton.twitter {
+  background-image: url("/images/twitter.svg");
+}
+.linespacing {
+  line-height: 1.5em;
+}
+.promo-donate {
+  font-size: 0.5em;
+  text-shadow: none;
+  -moz-user-select: initial;
+  -webkit-user-select: initial;
+  user-select: initial;
+  cursor: initial;
+}
+.drivebutton {
+  background: #cfc;
+  border-radius: 0.5em;
+}
+.strikethrough {
+  text-decoration: line-through;
+}
