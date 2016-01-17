@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Trigger Rally</title>
+    <meta name="description" content="Fast arcade rally racing action! Play in your browser with WebGL 3D graphics.">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,400italic,700italic" type="text/css">
+    <link rel="stylesheet" href="/css/unified.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-29310119-1']);
+      //- _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+      
+    </script>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      
+      ga('create', 'UA-29310119-2');
+      //- ga('send', 'pageview');
+      
+    </script>
+    <script src="https://checkout.stripe.com/checkout.js"></script>
+  </head>
+  <body>
+    <div id="unified-container"></div><img src="/images/icon-128.png" style="display:none" title="Trigger Rally icon">
+    <script src="/socket.io/socket.io.js"></script>
+    <script data-main="/scripts/main" src="/js/require.js"></script>
+  </body>
+</html>
