@@ -12,7 +12,7 @@ socketio          = require 'socket.io'
 stylus            = require 'stylus'
 passport          = require 'passport'
 FacebookStrategy  = require('passport-facebook').Strategy
-GoogleStrategy    = require('passport-google').Strategy
+GoogleStrategy    = require('passport-google-oauth').OAuth2Strategy
 TwitterStrategy   = require('passport-twitter').Strategy
 LocalStrategy     = require('passport-local').Strategy
 
@@ -125,12 +125,11 @@ for i in ["", "/v1"]
     authenticateUser profile, done
   )
   passport.use "google#{i}", new GoogleStrategy(
-    returnURL: "#{URL_PREFIX}#{i}/auth/google/return"
-    realm: URL_PREFIX + '/'
-  , (identifier, profile, done) ->
-    # passport-oauth doesn't supply provider or id.
-    profile.identifier = identifier  # Old storage
-    profile.auth = { identifier }    # New unified auth
+    clientID: config.GOOGLE_CLIENT_ID
+    clientSecret: config.GOOGLE_CLIENT_SECRET
+    callbackURL: "#{URL_PREFIX}#{i}/auth/google/callback"
+  , (token, refreshToken, profile, done) ->
+    profile.auth = { token, refreshToken }
     authenticateUser profile, done
   )
   passport.use "twitter#{i}", new TwitterStrategy(
@@ -219,8 +218,8 @@ app.get    '/v1/auth/facebook', passport.authenticate('facebook/v1')
 app.get    '/v1/auth/facebook/callback', passport.authenticate('facebook/v1',
   failureRedirect: '/login?popup=1'
 ), authenticationSuccessfulAPI
-app.get    '/v1/auth/google', passport.authenticate('google/v1')
-app.get    '/v1/auth/google/return', passport.authenticate('google/v1',
+app.get    '/v1/auth/google', passport.authenticate('google/v1', { scope : ['profile', 'email'] })
+app.get    '/v1/auth/google/callback', passport.authenticate('google/v1',
   failureRedirect: '/login?popup=1'
 ), authenticationSuccessfulAPI
 app.get    '/v1/auth/twitter', passport.authenticate('twitter/v1')
@@ -236,8 +235,8 @@ app.get    '/auth/facebook', passport.authenticate('facebook')
 app.get    '/auth/facebook/callback', passport.authenticate('facebook',
   failureRedirect: '/login'
 ), authenticationSuccessful
-app.get    '/auth/google', passport.authenticate('google')
-app.get    '/auth/google/return', passport.authenticate('google',
+app.get    '/auth/google', passport.authenticate('google', { scope : ['profile', 'email'] })
+app.get    '/auth/google/callback', passport.authenticate('google',
   failureRedirect: '/login'
 ), authenticationSuccessful
 app.get    '/auth/twitter', passport.authenticate('twitter')
