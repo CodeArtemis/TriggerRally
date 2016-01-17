@@ -367,6 +367,7 @@ app.get '/checkout', (req, res) ->
     return res.send 409 if _.isEmpty newProducts
 
   switch pack.currency
+    # Real currency payments are disabled.
     # when 'USD'
     #   switch req.query.method
     #     when 'paypal' then paypalCheckout pack, req, res
