@@ -37,23 +37,24 @@ define [
       super()
 
     routes:
+      # TODO: Figure out how to add a base path across all of these.
       "TriggerRally/server/public/": "home"
-      "about": "about"
-      "ignition": "ignition"
-      "license": "license"
-      "mayhem": "mayhem"
+      "TriggerRally/server/public/about": "about"
+      "TriggerRally/server/public/ignition": "ignition"
+      "TriggerRally/server/public/license": "license"
+      "TriggerRally/server/public/mayhem": "mayhem"
       # "purchase": "packA"
-      "run/:runId/replay": "runReplay"
-      "track/:trackId": "track"
-      "track/:trackId/": "track"
-      "track/:trackId/edit": "trackEdit"
-      "track/:trackId/drive": "trackDrive"
-      "track/:trackId/drive/vs/:runId": "trackDrive"
-      "tracklist/:setId": "trackset"
-      "user/:userId": "user"
-      "user/:userId/": "user"
-      "user/:userId/tracks": "userTracks"
-      "user/:userId/favorites": "userFavTracks"
+      "TriggerRally/server/public/run/:runId/replay": "runReplay"
+      "TriggerRally/server/public/track/:trackId": "track"
+      "TriggerRally/server/public/track/:trackId/": "track"
+      "TriggerRally/server/public/track/:trackId/edit": "trackEdit"
+      "TriggerRally/server/public/track/:trackId/drive": "trackDrive"
+      "TriggerRally/server/public/track/:trackId/drive/vs/:runId": "trackDrive"
+      "TriggerRally/server/public/tracklist/:setId": "trackset"
+      "TriggerRally/server/public/user/:userId": "user"
+      "TriggerRally/server/public/user/:userId/": "user"
+      "TriggerRally/server/public/user/:userId/tracks": "userTracks"
+      "TriggerRally/server/public/user/:userId/favorites": "userFavTracks"
 
     setSpin: ->
       unless @uni.getView3D() instanceof SpinView
