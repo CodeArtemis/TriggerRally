@@ -37,7 +37,7 @@ define [
       super()
 
     routes:
-      "": "home"
+      "TriggerRally/server/public/": "home"
       "about": "about"
       "ignition": "ignition"
       "license": "license"
