@@ -50,13 +50,13 @@ define [
       return
 
     _setup: ->
-      diffuseDirtTex = THREE.ImageUtils.loadTexture('/a/textures/dirt.jpg')
+      diffuseDirtTex = THREE.ImageUtils.loadTexture('/TriggerRally/server/public/a/textures/dirt.jpg')
       diffuseDirtTex.wrapS = THREE.RepeatWrapping
       diffuseDirtTex.wrapT = THREE.RepeatWrapping
       if @glAniso then diffuseDirtTex.onUpdate = =>
         @gl.texParameteri @gl.TEXTURE_2D, @glAniso.TEXTURE_MAX_ANISOTROPY_EXT, 4
 
-      diffuseRockTex = THREE.ImageUtils.loadTexture('/a/textures/rock.jpg')
+      diffuseRockTex = THREE.ImageUtils.loadTexture('/TriggerRally/server/public/a/textures/rock.jpg')
       diffuseRockTex.wrapS = THREE.RepeatWrapping
       diffuseRockTex.wrapT = THREE.RepeatWrapping
 

@@ -460,7 +460,7 @@ define [
           value: 1000
         tMap:
           type: 't'
-          value: THREE.ImageUtils.loadTexture "/a/textures/dust.png"
+          value: THREE.ImageUtils.loadTexture "/TriggerRally/server/public/a/textures/dust.png"
       attributes =
         aColor:
           type: 'v4'
