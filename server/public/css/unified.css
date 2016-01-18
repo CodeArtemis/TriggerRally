@@ -417,7 +417,7 @@ a.disabled:visited {
   transition: opacity 0;
 }
 span.ca-credit {
-  background: url("/images/ca-credit.png");
+  background: url("/TriggerRally/server/public/images/ca-credit.png");
   background-repeat: no-repeat;
   background-size: contain;
   background-position: left center;
@@ -517,7 +517,7 @@ label.favorite input {
   vertical-align: -20%;
   padding: 0;
   font-size: 1em;
-  background-image: url("/emojis/star.png");
+  background-image: url("/TriggerRally/server/public/emojis/star.png");
   background-size: cover;
   appearance: none;
   -moz-appearance: none;
@@ -642,13 +642,13 @@ audio {
   background-color: #fff;
 }
 .musiccontrol.play {
-  background-image: url("/icons/appbar.control.play.png");
+  background-image: url("/TriggerRally/server/public/icons/appbar.control.play.png");
 }
 .musiccontrol.pause {
-  background-image: url("/icons/appbar.control.pause.png");
+  background-image: url("/TriggerRally/server/public/icons/appbar.control.pause.png");
 }
 .musiccontrol.next {
-  background-image: url("/icons/appbar.control.fastforward.png");
+  background-image: url("/TriggerRally/server/public/icons/appbar.control.fastforward.png");
 }
 #unified-child {
   position: relative;
@@ -972,10 +972,10 @@ input.checkout {
   padding: 0.1em 0.1em 0.1em 1.7em;
 }
 .sharebutton.facebook {
-  background-image: url("/images/facebook_64.png");
+  background-image: url("/TriggerRally/server/public/images/facebook_64.png");
 }
 .sharebutton.twitter {
-  background-image: url("/images/twitter.svg");
+  background-image: url("/TriggerRally/server/public/images/twitter.svg");
 }
 .linespacing {
   line-height: 1.5em;
