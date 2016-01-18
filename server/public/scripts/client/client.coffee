@@ -589,11 +589,11 @@ define [
       @audio = new clientAudio.Audio()
       @audio.mute() unless prefs.audio
       @checkpointBuffer = null
-      @audio.loadBuffer '/a/sounds/checkpoint.ogg', (buffer) => @checkpointBuffer = buffer
+      @audio.loadBuffer '/TriggerRally/server/public/a/sounds/checkpoint.ogg', (buffer) => @checkpointBuffer = buffer
       @kachingBuffer = null
-      @audio.loadBuffer '/a/sounds/kaching.ogg', (buffer) => @kachingBuffer = buffer
+      @audio.loadBuffer '/TriggerRally/server/public/a/sounds/kaching.ogg', (buffer) => @kachingBuffer = buffer
       @voiceBuffer = null
-      @audio.loadBuffer '/a/sounds/voice.ogg', (buffer) =>
+      @audio.loadBuffer '/TriggerRally/server/public/a/sounds/voice.ogg', (buffer) =>
         @voiceBuffer = buffer
         # @speak 'welcome'
       @audio.setGain prefs.volume
