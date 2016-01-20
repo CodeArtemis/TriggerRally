@@ -43,7 +43,6 @@ define [
       "TriggerRally/server/public/ignition": "ignition"
       "TriggerRally/server/public/license": "license"
       "TriggerRally/server/public/mayhem": "mayhem"
-      # "purchase": "packA"
       "TriggerRally/server/public/run/:runId/replay": "runReplay"
       "TriggerRally/server/public/track/:trackId": "track"
       "TriggerRally/server/public/track/:trackId/": "track"

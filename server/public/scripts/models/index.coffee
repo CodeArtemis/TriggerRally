@@ -102,8 +102,10 @@
 
   class Collection extends Backbone.Collection
 
+  BASE_PATH = "/TriggerRally/server/public/v1/"
+
   class PathCollection extends Collection
-    url: "/v1/#{@path}"
+    url: BASE_PATH + @path
 
   class CarCollection extends PathCollection
     path: 'cars'
@@ -171,7 +173,7 @@
   class Car extends Model
     all: new (Collection.extend model: @)
     buildProps @, [ 'config', 'name', 'user', 'product' ]
-    urlRoot: '/v1/cars'
+    urlRoot: BASE_PATH + 'cars'
     toJSON: (options) ->
       data = super
       delete data.created
@@ -184,7 +186,7 @@
   class Env extends Model
     all: new (Collection.extend model: @)
     buildProps @, [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]
-    urlRoot: '/v1/envs'
+    urlRoot: BASE_PATH + 'envs'
     defaults: ->
       cars: new CarCollection
     toJSON: (options) ->
@@ -224,7 +226,7 @@
       'track'
       'user'
     ]
-    urlRoot: '/v1/runs'
+    urlRoot: BASE_PATH + 'runs'
     parse: ->
       data = super
       return data unless data
@@ -258,7 +260,7 @@
       'user'
     ]
     bubbleAttribs: [ 'config', 'env' ]
-    urlRoot: '/v1/tracks'
+    urlRoot: BASE_PATH + 'tracks'
     # initialize: ->
     #   # @config = new TrackConfig
     #   super
@@ -314,7 +316,7 @@
     buildProps @, [
       'runs'
     ]
-    url: -> "/v1/tracks/#{@id}/runs"
+    url: -> BASE_PATH + "tracks/#{@id}/runs"
     defaults: ->
       runs: new RunCollection
     parse: ->
@@ -336,7 +338,7 @@
       'name'
       'tracks'
     ]
-    urlRoot: '/v1/tracksets'
+    urlRoot: BASE_PATH + 'tracksets'
     # cacheExpirySecs: 2
     defaults: ->
       tracks: new TrackCollection
@@ -370,7 +372,7 @@
       'tracks'
     ]
     bubbleAttribs: [ 'tracks' ]
-    urlRoot: '/v1/users'
+    urlRoot: BASE_PATH + 'users'
     defaults: ->
       tracks: new TrackCollectionSortName
     validate: ->
@@ -449,7 +451,7 @@
       'text'
       'user'
     ]
-    urlRoot: '/v1/comments'  # Cannot be fetched directly.
+    urlRoot: BASE_PATH + 'comments'  # Cannot be fetched directly.
     parse: ->
       data = super
       return data unless data
@@ -468,7 +470,7 @@
     buildProps @, [
       'comments'
     ]
-    urlRoot: '/v1/commentsets'
+    urlRoot: BASE_PATH + 'commentsets'
     defaults: ->
       comments: new CommentCollection
     parse: ->

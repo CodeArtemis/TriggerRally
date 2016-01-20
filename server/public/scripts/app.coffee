@@ -148,7 +148,7 @@ define [
       track.trigger 'change'
 
     checkUserLogin: ->
-      $.ajax('/v1/auth/me')
+      $.ajax('/TriggerRally/server/public/v1/auth/me')
       .done (data) =>
         if data.user
           _gaq.push ['_setCustomVar', 1, 'User Type', 'Registered', 2]
