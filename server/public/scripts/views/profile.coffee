@@ -25,6 +25,7 @@ define [
       @listenTo @app.root, 'change:user', => @render()
       @model.fetch
         error: ->
+          console.error('profile loading error')
           Backbone.trigger 'app:notfound'
 
     editable: -> @model.id is @app.root.user?.id

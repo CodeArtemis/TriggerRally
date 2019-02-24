@@ -35,13 +35,16 @@ define [
       @listenTo root, 'change:track.', updateStartPos
 
       unless root.track
-        track = models.Track.findOrCreate 'RF87t6b6'
+        track = models.Track.findOrCreate 'uUJTPz6M'
         track.fetch
           success: =>
             track.env.fetch
               success: =>
                 return if root.track
                 Backbone.trigger 'app:settrack', track
+          error: =>
+            console.log 'ERROR LOADING TRACK'
+
 
       @renderCar = null
       do updateCar = =>

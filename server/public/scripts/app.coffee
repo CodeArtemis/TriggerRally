@@ -109,6 +109,7 @@ define [
         ga 'send', 'pageview'
 
       Backbone.on 'app:settrack', @setTrack, @
+      Backbone.on 'app:settrackid', @setTrackId, @
       Backbone.on 'app:checklogin', @checkUserLogin, @
       Backbone.on 'app:logout', @logout, @
       Backbone.on 'app:settitle', @setTitle, @
@@ -118,7 +119,9 @@ define [
 
       @checkUserLogin()
       found = Backbone.history.start pushState: yes
-      Backbone.trigger 'app:notfound' unless found
+      unless found
+        console.error('app.coffee:route not found')
+        Backbone.trigger 'app:notfound'
 
       unless @unifiedView.client.renderer
         # WebGL failed to initialize.
@@ -130,6 +133,7 @@ define [
       @router.uni.setViewChild (new NotFoundView).render()
 
     setTrack: (track, fromRouter) ->
+      console.log 'setting track', track, fromRouter
       lastTrack = @root.track
       if track is lastTrack
         # Just notify that track has been reset.
@@ -147,8 +151,22 @@ define [
       track.trigger 'change:config.scenery.'
       track.trigger 'change'
 
+    setTrackId: (@trackId) ->
+      console.log 'setting track by id', trackId
+      track = models.Track.findOrCreate trackId
+      track.fetch
+        success: =>
+          track.env.fetch
+            success: =>
+              return if @destroyed
+              Backbone.trigger 'app:settrack', track
+              Backbone.trigger 'app:settitle', track.name
+        error: ->
+          console.error('setTrackId loading error')
+          Backbone.trigger 'app:notfound'
+
     checkUserLogin: ->
-      $.ajax('/TriggerRally/server/public/v1/auth/me')
+      $.ajax('/v1/auth/me')
       .done (data) =>
         if data.user
           _gaq.push ['_setCustomVar', 1, 'User Type', 'Registered', 2]
@@ -158,7 +176,7 @@ define [
           user.set user.parse data.user
           @root.user = user
           Backbone.trigger 'app:status', 'Logged in'
-          # user.tracks.each (track) ->
+          # user.root.tracks.each (track) ->
           #   track.fetch()
           # @listenTo root, 'add:user.tracks.', (track) ->
           #   track.fetch()

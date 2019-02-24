@@ -1,10 +1,16 @@
 "use strict"
 
 _                 = require 'underscore'
+bodyParser        = require 'body-parser'
+cookieParser      = require 'cookie-parser'
 connect           = require 'connect'
+compression       = require 'compression'
 cookie            = require 'cookie'
 express           = require 'express'
+expressSession    = require 'express-session'
 http              = require 'http'
+logger            = require 'morgan'
+methodOverride    = require 'method-override'
 mongoose          = require 'mongoose'
 mongoskin         = require 'mongoskin'
 session_mongoose  = require 'session-mongoose'
@@ -24,13 +30,15 @@ config            = require './config'
 { makePubId }     = require './objects/common'
 routes            = require './routes'
 
-stripe            = require('stripe')(config.stripe.API_KEY)
+# stripe            = require('stripe')(config.stripe.API_KEY)
 
 getIsodate = -> new Date().toISOString()
-express.logger.format 'isodate', (req, res) -> getIsodate()
+logger.format 'isodate', (req, res) -> getIsodate()
 log = (msg) ->
   isodate = getIsodate()
   console.log "[#{isodate}] #{msg}"
+
+mongoose.set 'debug', true
 
 mongoose.connection.on "error", (err) ->
   log "Could not connect to mongo server!"
@@ -115,31 +123,31 @@ authenticationSuccessful = (req, res) ->
 #    done null, user
 #)
 
-for i in ["", "/v1"]
-  passport.use "facebook#{i}", new FacebookStrategy(
-    clientID: config.FACEBOOK_APP_ID
-    clientSecret: config.FACEBOOK_APP_SECRET
-    callbackURL: "#{URL_PREFIX}#{i}/auth/facebook/callback"
-  , (accessToken, refreshToken, profile, done) ->
-    profile.auth = { accessToken, refreshToken }
-    authenticateUser profile, done
-  )
-  passport.use "google#{i}", new GoogleStrategy(
-    clientID: config.GOOGLE_CLIENT_ID
-    clientSecret: config.GOOGLE_CLIENT_SECRET
-    callbackURL: "#{URL_PREFIX}#{i}/auth/google/callback"
-  , (token, refreshToken, profile, done) ->
-    profile.auth = { token, refreshToken }
-    authenticateUser profile, done
-  )
-  passport.use "twitter#{i}", new TwitterStrategy(
-    consumerKey: config.TWITTER_APP_KEY
-    consumerSecret: config.TWITTER_APP_SECRET
-    callbackURL: "#{URL_PREFIX}#{i}/auth/twitter/callback"
-  , (token, tokenSecret, profile, done) ->
-    profile.auth = { token, tokenSecret }
-    authenticateUser profile, done
-  )
+# for i in ["", "/v1"]
+#  passport.use "facebook#{i}", new FacebookStrategy(
+#    clientID: config.FACEBOOK_APP_ID
+#    clientSecret: config.FACEBOOK_APP_SECRET
+#    callbackURL: "#{URL_PREFIX}#{i}/auth/facebook/callback"
+#  , (accessToken, refreshToken, profile, done) ->
+#    profile.auth = { accessToken, refreshToken }
+#    authenticateUser profile, done
+#  )
+#  passport.use "google#{i}", new GoogleStrategy(
+#    clientID: config.GOOGLE_CLIENT_ID
+#    clientSecret: config.GOOGLE_CLIENT_SECRET
+#    callbackURL: "#{URL_PREFIX}#{i}/auth/google/callback"
+#  , (token, refreshToken, profile, done) ->
+#    profile.auth = { token, refreshToken }
+#    authenticateUser profile, done
+#  )
+#  passport.use "twitter#{i}", new TwitterStrategy(
+#    consumerKey: config.TWITTER_APP_KEY
+#    consumerSecret: config.TWITTER_APP_SECRET
+#    callbackURL: "#{URL_PREFIX}#{i}/auth/twitter/callback"
+#  , (token, tokenSecret, profile, done) ->
+#    profile.auth = { token, tokenSecret }
+#    authenticateUser profile, done
+#  )
 
 passport.serializeUser (userPassport, done) ->
   done null, userPassport.id
@@ -151,9 +159,9 @@ passport.deserializeUser (id, done) ->
     .exec (error, userPassport) ->
       done error, userPassport
 
-app.use express.logger(format: '[:isodate] :status :response-time ms :res[content-length] :method :url :referrer')
+app.use logger('[:isodate] :status :response-time ms :res[content-length] :method :url :referrer', format: '[:isodate] :status :response-time ms :res[content-length] :method :url :referrer')
 app.disable 'x-powered-by'
-app.use express.compress()
+app.use compression()
 app.use stylus.middleware(
   src: __dirname + '/stylus'
   dest: __dirname + '/public'
@@ -166,9 +174,16 @@ app.use (req, res, next) ->
   # req.setEncoding('utf8')
   req.on 'data', (chunk) -> req.rawBody += chunk
   next()
-app.use express.bodyParser()
-app.use express.cookieParser(config.SESSION_SECRET)
-app.use express.session(
+app.use bodyParser.urlencoded({
+  extended: true
+})
+app.use bodyParser.json();
+
+app.use cookieParser(config.SESSION_SECRET)
+app.use expressSession(
+  secret: 'asecret'
+  saveUninitialized: true
+  resave: true
   cookie:
     maxAge: 4 * 7 * 24 * 60 * 60 * 1000
 
@@ -176,7 +191,7 @@ app.use express.session(
 )
 app.use passport.initialize()
 app.use passport.session()
-app.use express.methodOverride()
+app.use methodOverride()
 app.use (req, res, next) ->
   # Enable Chrome Frame if installed.
   res.setHeader 'X-UA-Compatible', 'chrome=1'
@@ -201,14 +216,14 @@ app.use app.router
 # TODO: Make the app show a 404 as appropriate.
 app.use routes.unified
 
-app.configure 'development', ->
+if app.get('env') is 'development'
   app.use (err, req, res, next) ->
     console.error err
     res.json 500,
       error: "Internal Server Error"
       call_stack: err.stack?.split('\n')
 
-app.configure 'production', ->
+if app.get('env') is 'production'
   app.use (err, req, res, next) ->
     console.error err
     res.json 500,

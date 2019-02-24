@@ -126,6 +126,7 @@ define [
           car = models.Car.findOrCreate run.car.id
           car.fetch success: done
         error: ->
+          console.error('replay after render loading error')
           Backbone.trigger 'app:notfound'
 
     restartGame: ->

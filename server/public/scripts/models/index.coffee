@@ -73,7 +73,7 @@
       if xhr
         # Bind handlers to in-progress fetch.
         xhr.done (data, textStatus, jqXHR) => options.success? @, data, options
-        xhr.fail (data, textStatus, errorThrown) => options.error? @, null, options
+        xhr.fail (data, textStatus, errorThrown) => console.error errorThrown # options.error? @, errorThrown, options
       else
         # Perform fetch. (Will also call success/error.)
         xhr = super
@@ -102,7 +102,7 @@
 
   class Collection extends Backbone.Collection
 
-  BASE_PATH = "/TriggerRally/server/public/v1/"
+  BASE_PATH = "/v1/"
 
   class PathCollection extends Collection
     url: BASE_PATH + @path
