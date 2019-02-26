@@ -22,3 +22,13 @@ Copyright & License
 Copyright (c) 2012-2013 [Code Artemis](https://github.com/CodeArtemis) unless otherwise attributed.
 
 See [LICENSE.md](LICENSE.md).
+
+To Run
+-------------------
+
+Install MongoDB
+
+cd server
+npm i
+npm i -g coffee-script
+npm start

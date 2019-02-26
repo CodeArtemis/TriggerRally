@@ -1,5 +1,5 @@
 {
-	"_id" : ObjectId("502bb2555b4a4bdd0a544e1f"),
+	"_id" : {"$oid":"502bb2555b4a4bdd0a544e1f"},
 	"config" : {
 		"mass" : 1350,
 		"scale" : 1,
@@ -236,5 +236,5 @@
 	},
 	"name" : "Arbusu G",
 	"pub_id" : "ArbusuG",
-	"user" : ObjectId("4f82ac71461ee1ae7100000c")
+	"user" : {"$oid":"4f82ac71461ee1ae7100000c"}
 }

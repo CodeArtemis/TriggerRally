@@ -10,7 +10,7 @@ requirejs.config({
       }
     },
     'backbone': {
-      deps: ['underscore'],
+      deps: ['jquery', 'underscore'],
       exports: 'Backbone'
     },
     'jquery': {

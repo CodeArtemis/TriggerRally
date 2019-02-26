@@ -297,6 +297,7 @@ define [
               Backbone.trigger 'app:settrack', track
               Backbone.trigger 'app:settitle', track.name
         error: ->
+          console.error('drive: loading error')
           Backbone.trigger 'app:notfound'
 
     setRunId: (runId) ->

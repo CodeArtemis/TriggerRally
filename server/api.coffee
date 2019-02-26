@@ -14,7 +14,8 @@ findModel = (Model, pub_id, done) ->
   model = Model.findOrCreate pub_id
   result = model.fetch
     success: -> done model
-    error:   -> done null
+    error:(e1, e2) ->
+      console.error('Error when loading model', pub_id)
   done null if result is false
 
 findCar         = -> findModel(bb.Car,        arguments...)

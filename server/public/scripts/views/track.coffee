@@ -84,6 +84,7 @@ define [
             success: ->
               Backbone.trigger 'app:settrack', track
         error: ->
+          console.error('track:initialize loading error')
           Backbone.trigger 'app:notfound'
 
     viewModel: ->

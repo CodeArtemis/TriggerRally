@@ -460,7 +460,7 @@ define [
           value: 1000
         tMap:
           type: 't'
-          value: THREE.ImageUtils.loadTexture "/TriggerRally/server/public/a/textures/dust.png"
+          value: THREE.ImageUtils.loadTexture "/a/textures/dust.png"
       attributes =
         aColor:
           type: 'v4'
@@ -589,11 +589,11 @@ define [
       @audio = new clientAudio.Audio()
       @audio.mute() unless prefs.audio
       @checkpointBuffer = null
-      @audio.loadBuffer '/TriggerRally/server/public/a/sounds/checkpoint.ogg', (buffer) => @checkpointBuffer = buffer
+      @audio.loadBuffer '/a/sounds/checkpoint.ogg', (buffer) => @checkpointBuffer = buffer
       @kachingBuffer = null
-      @audio.loadBuffer '/TriggerRally/server/public/a/sounds/kaching.ogg', (buffer) => @kachingBuffer = buffer
+      @audio.loadBuffer '/a/sounds/kaching.ogg', (buffer) => @kachingBuffer = buffer
       @voiceBuffer = null
-      @audio.loadBuffer '/TriggerRally/server/public/a/sounds/voice.ogg', (buffer) =>
+      @audio.loadBuffer '/a/sounds/voice.ogg', (buffer) =>
         @voiceBuffer = buffer
         # @speak 'welcome'
       @audio.setGain prefs.volume
@@ -766,7 +766,7 @@ define [
       @renderer.render @sceneHUD, @cameraHUD
 
     cubeMesh: ->
-      path = "/TriggerRally/server/public/a/textures/miramar-z-512/miramar_"
+      path = "/a/textures/miramar-z-512/miramar_"
       format = '.jpg'
       urls = (path + part + format for part in ['rt','lf','ft','bk','up','dn'])
       textureCube = THREE.ImageUtils.loadTextureCube urls
