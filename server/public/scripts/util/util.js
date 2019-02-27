@@ -57,8 +57,8 @@ function(THREE) {
   exports.QuatFromEuler = function(angles) {
     var q = new Quat();
     q.setFromAxisAngle(new Vec3(1,0,0), angles.x);
-    q.multiplySelf(new Quat().setFromAxisAngle(new Vec3(0,1,0), angles.y));
-    q.multiplySelf(new Quat().setFromAxisAngle(new Vec3(0,0,1), angles.z));
+    q.multiply(new Quat().setFromAxisAngle(new Vec3(0,1,0), angles.y));
+    q.multiply(new Quat().setFromAxisAngle(new Vec3(0,0,1), angles.z));
     return q;
   };
 

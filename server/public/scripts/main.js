@@ -19,6 +19,14 @@ requirejs.config({
     'THREE': {
       exports: 'THREE'
     },
+    'THREE-json-loader': {
+      deps: ['THREE'],
+      export: 'JSONLoader'
+    },
+    'THREE-scene-loader': {
+      deps: ['THREE', 'THREE-json-loader'],
+      export: 'SceneLoader'
+    },
     'async': {
       exports: 'async'
     }
@@ -37,7 +45,9 @@ define('backbone-full',
 require(
   {
     paths: {
-        'THREE': '../js/three-r54'  // .min
+        'THREE': '../js/three-r101'  // .min
+      , 'THREE-json-loader': '../js/three-json-loader'  // .min
+      , 'THREE-scene-loader': '../js/three-scene-loader'  // .min
       , 'async': '../js/async'  // .min
       , 'cs': '../js/cs'
       , 'coffee-script': '../js/coffee-script'

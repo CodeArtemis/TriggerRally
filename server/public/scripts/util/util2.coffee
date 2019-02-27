@@ -24,7 +24,7 @@ define [
     lambda = tmpVec3.dot(normal) / dot
     return null if lambda < ray.near
     isect = ray.direction.clone()
-    isect.multiplyScalar(lambda).addSelf(ray.origin)
+    isect.multiplyScalar(lambda).add(ray.origin)
     isect.x = pos.x
     isect.y = pos.y
     pos: isect
@@ -35,9 +35,9 @@ define [
     lambda = (pos.z - ray.origin.z) / ray.direction.z
     return null if lambda < ray.near
     isect = ray.direction.clone()
-    isect.multiplyScalar(lambda).addSelf(ray.origin)
+    isect.multiplyScalar(lambda).add(ray.origin)
     isect.z = pos.z  # Make sure no arithmetic error creeps in.
-    diff = isect.clone().subSelf pos
+    diff = isect.clone().sub pos
     #if diff.length() > 20
     #  debugger
     pos: isect

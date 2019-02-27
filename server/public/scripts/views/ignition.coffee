@@ -25,6 +25,7 @@ define [
     viewModel: ->
       products = @app.root.user?.products ? []
       purchased: 'packa' in products or productId in products
+      # set both as true to unblock cars (won't load with the latest Three)
       user: @app.root.user
 
     afterRender: ->

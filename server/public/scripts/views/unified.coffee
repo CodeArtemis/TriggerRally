@@ -45,7 +45,7 @@ define [
       $scaledUi = @$('#scaled-ui')
 
       client = @client = new TriggerClient $view3d[0], @app.root
-      client.camera.eulerOrder = 'ZYX'
+      client.camera.rotation.order = 'ZYX'
 
       creditsView = new CreditsView @app, client
       creditsView.render()
@@ -127,10 +127,8 @@ define [
       @currentDialog?.update? deltaTime, time
 
       @client.update deltaTime
-      try
-        @client.render()
-      catch e
-        Backbone.trigger 'app:webglerror'
+
+      @client.render()
 
       requestAnimationFrame @update
 

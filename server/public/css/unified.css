@@ -1,3 +1,15 @@
+@font-face {
+  font-family: 'BENNB';
+  src: url('../font/bianco/BENNB.eot');
+  src: local('BENNB'), url('../font/bianco/BENNB.woff') format('woff'), url('../font/bianco/BENNB.ttf') format('truetype');
+}
+/* use this class to attach this font to any element i.e. <p class="fontsforweb_fontid_572">Text with this font applied</p> */
+.fontsforweb_fontid_572 {
+  font-family: 'BENNB' !important;
+}
+
+/* Font downloaded from FontsForWeb.com */
+
 * {
   box-sizing: border-box;
 }
@@ -7,14 +19,17 @@ body {
   padding: 0;
   margin: 0;
   font-family: "Ubuntu", sans-serif;
-  text-shadow: 0 1px 0 #fff;
+  /*text-shadow: 0 1px 0 #fff;*/
 }
 h1,
 h2 {
-  font-family: 'Ubuntu', sans-serif;
+  font-family: 'BENNB',fantasy, 'Ubuntu', sans-serif;
   font-style: italic;
   font-weight: bold;
+  color: rgba(50, 25, 0, 1);
   margin: 0;
+  -webkit-text-stroke-width: 0.5px;
+  -webkit-text-stroke-color: rgba(150, 100, 50, 0.3);
 }
 input {
   font-family: 'Ubuntu', sans-serif;
@@ -53,7 +68,7 @@ a:visited {
 }
 a:hover {
   color: #000;
-  text-shadow: 0 0 4px #6f1;
+  /*text-shadow: 0 0 4px #6f1;*/
 }
 a:active {
   color: #684;
@@ -63,7 +78,7 @@ a.disabled:hover,
 a.disabled:active,
 a.disabled:visited {
   color: #777;
-  text-shadow: inherit;
+  /*text-shadow: inherit;*/
   cursor: default;
 }
 .hidden {
@@ -84,7 +99,7 @@ a.disabled:visited {
 .gui-container.drive > * {
   color: #000;
   position: absolute;
-  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  /*text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;*/
   z-index: 2;
 }
 .checkpoints {
@@ -119,7 +134,7 @@ a.disabled:visited {
 }
 .split-time.minus {
   background: rgba(0,255,0,0.3);
-  text-shadow: 0 0 0.1em #0f0, 0 0 0.4em #fff;
+  /*text-shadow: 0 0 0.1em #0f0, 0 0 0.4em #fff;*/
 }
 .speedo {
   bottom: 1em;
@@ -127,7 +142,7 @@ a.disabled:visited {
   font-size: 1em;
   color: #040;
   text-align: center;
-  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  /*text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;*/
   width: 6em;
 }
 .countdown {
@@ -673,7 +688,7 @@ audio {
 }
 .gui-container h1 {
   margin: 0.2em 0;
-  text-shadow: 0 1px 0 #fff, 0 0 0.2em #fff, 0 0 0.4em #fff;
+  /*text-shadow: 0 1px 0 #fff, 0 0 0.2em #fff, 0 0 0.4em #fff;*/
 }
 .text-panel {
   user-select: auto;
@@ -713,12 +728,13 @@ img.github {
 .gui-container menu a.btn {
   display: block;
   margin: 0.3em auto;
-  padding: 0.3em;
+  padding: 0.4em;
   width: 70%;
-  color: #000;
-  text-shadow: 0 0 0.3em #6f1;
+  color: #222;
+  /* text-shadow: 0 0 0.3em #6f1; */
   background: #fff;
-  border-radius: 0.5em;
+  text-transform: uppercase;
+  border-radius: 0.1em;
   opacity: 0.7;
   position: relative;
 }
@@ -882,7 +898,7 @@ input.checkout {
   right: 0;
   font-size: 1.5em;
   font-weight: bold;
-  text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;
+  /*text-shadow: 0 0 0.1em #fff, 0 0 0.4em #fff;*/
   text-align: center;
   z-index: 2;
   opacity: 1;

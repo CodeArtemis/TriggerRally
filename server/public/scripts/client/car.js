@@ -5,7 +5,9 @@
 
 define([
   'THREE',
-  'util/util'
+  'util/util',
+  'THREE-json-loader',
+  'THREE-scene-loader'
 ],
 function(THREE, util) {
   var exports = {};
@@ -24,7 +26,6 @@ function(THREE, util) {
 
     this.aud = audio;
     this.root = new THREE.Object3D();
-    this.root.useQuaternion = true;
 
     scene.add(this.root);
 
@@ -48,13 +49,14 @@ function(THREE, util) {
     };
 
     this.loadPartsJSON = function(meshes, callback) {
-      var loader = new THREE.JSONLoader();
+      var loader = new THREE.LegacyJSONLoader(); // geometries must be converted to buffer geometries
       var sceneLoader = new THREE.SceneLoader();
       var texturePath = '/a/textures';
+      loader.setPath(texturePath);
       async.parallel({
         body: function(cb) {
           if (meshes.body) {
-            loader.load(meshes.body, function() { cb(null, arguments); }, texturePath);
+            loader.load(meshes.body, function() { cb(null, arguments); });
           } else if (meshes.scene) {
             sceneLoader.load(meshes.scene, function() { cb(null, arguments); });
           } else {
@@ -63,7 +65,7 @@ function(THREE, util) {
         },
         wheel: function(cb) {
           if (meshes.wheel) {
-            loader.load(meshes.wheel, function() { cb(null, arguments); }, texturePath);
+            loader.load(meshes.wheel, function() { cb(null, arguments); });
           } else {
             cb(null, null);
           }
@@ -113,22 +115,21 @@ function(THREE, util) {
         for (var k in children) {
           var mesh = children[k]
           meshes[children[k].name] = mesh;
-          mesh.useQuaternion = false;
           mesh.castShadow = true;
           mesh.receiveShadow = true;
         }
         this.root.add(meshes.Body);
         meshes.Body.rotation.x = -Math.PI/2;
-        meshes.Body.position.subSelf(center);
+        meshes.Body.position.sub(center);
         meshes.Body.add(meshes.BodyNR);
         meshes.Body.add(meshes.Glass);
         meshes.Body.add(meshes.WingLI);
         meshes.Body.add(meshes.WingRI);
         if (this.config.wings) {
           meshes.WingLI.add(meshes.WingLO);
-          meshes.WingLO.position.subSelf(meshes.WingLI.position);
+          meshes.WingLO.position.sub(meshes.WingLI.position);
           meshes.WingRI.add(meshes.WingRO);
-          meshes.WingRO.position.subSelf(meshes.WingRI.position);
+          meshes.WingRO.position.sub(meshes.WingRI.position);
         }
         this.meshes = meshes;
         bodyMaterial = meshes.Body.material;
@@ -139,9 +140,9 @@ function(THREE, util) {
       } else {
         // Support for older (non-scene) car models.
         this.bodyMesh = new THREE.Mesh(this.bodyGeometry, this.bodyMaterials[0]);
-        this.bodyMesh.material.ambient.copy(this.bodyMesh.material.color);
+        // this.bodyMesh.material.ambient.copy(this.bodyMesh.material.color);
         this.bodyMesh.material.map.flipY = false;
-        this.bodyMesh.position.subSelf(center);
+        this.bodyMesh.position.sub(center);
         this.bodyMesh.scale.set(s, s, s);
         if (!isGhost) {
           this.bodyMesh.castShadow = true;
@@ -156,7 +157,7 @@ function(THREE, util) {
         var wheel = {};
         wheel.cfg = cfg;
         wheel.mesh = new THREE.Mesh(wheelGeom, wheelMaterial);
-        wheel.mesh.material.ambient = wheel.mesh.material.color;
+        // wheel.mesh.material.ambient = wheel.mesh.material.color;
         wheel.mesh.material.map.flipY = false;
         wheel.mesh.scale.set( s, s, s );
         if (cfg.flip) wheel.mesh.rotation.z = Math.PI;
@@ -166,7 +167,7 @@ function(THREE, util) {
         }
         wheel.root = new THREE.Object3D();
   			wheel.root.position = new THREE.Vector3(cfg.pos[0], cfg.pos[1], cfg.pos[2]);
-        wheel.root.position.subSelf(center);
+        wheel.root.position.sub(center);
         wheel.root.add(wheel.mesh);
         this.root.add(wheel.root);
         this.wheels.push(wheel);
@@ -193,7 +194,7 @@ function(THREE, util) {
           });
           var mesh = new THREE.Mesh(geom, mat)
           mesh.position.set(clip.pos[0], clip.pos[1], clip.pos[2]);
-          mesh.position.subSelf(center);
+          mesh.position.sub(center);
           mesh.scale.set(clip.radius, clip.radius, clip.radius);
           this.root.add(mesh);
         }
@@ -279,10 +280,10 @@ function(THREE, util) {
         this.root.updateMatrixWorld();
         if (dust && fold == 0) {
           tmpVec3a.set(0.45, 1.45, 0);
-          meshes.WingLO.matrixWorld.multiplyVector3(tmpVec3a);
+          tmpVec3a.applyMatrix4(meshes.WingLO.matrixWorld);
           dust.spawnContrail(tmpVec3a, vehic.body.getLinearVelAtPoint(tmpVec3a).multiplyScalar(0.95));
           tmpVec3a.set(-0.45, 1.45, 0);
-          meshes.WingRO.matrixWorld.multiplyVector3(tmpVec3a);
+          tmpVec3a.applyMatrix4(meshes.WingRO.matrixWorld);
           dust.spawnContrail(tmpVec3a, vehic.body.getLinearVelAtPoint(tmpVec3a).multiplyScalar(0.95));
         }
       }

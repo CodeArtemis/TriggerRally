@@ -15,13 +15,13 @@ define [
   do ->
     ringGeom = new THREE.CylinderGeometry 16, 16, 1, 32, 1, true
     ringMesh = new THREE.Mesh ringGeom, checkpointMat
-    ringMesh.eulerOrder = 'ZYX'
+    ringMesh.rotation.order = 'ZYX'
     ringMesh.rotation.x = 1.1
-    THREE.GeometryUtils.merge checkpointGeom, ringMesh
+    checkpointGeom.merge(ringMesh.geometry)
     ringMesh.rotation.z = Math.PI * 2 / 3
-    THREE.GeometryUtils.merge checkpointGeom, ringMesh
+    checkpointGeom.merge(ringMesh.geometry)
     ringMesh.rotation.z = Math.PI * 4 / 3
-    THREE.GeometryUtils.merge checkpointGeom, ringMesh
+    checkpointGeom.merge(ringMesh.geometry)
 
   selectionGeom = new THREE.IcosahedronGeometry 1, 2
   selectionMat = new THREE.MeshBasicMaterial

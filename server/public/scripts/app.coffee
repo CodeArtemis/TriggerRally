@@ -114,6 +114,7 @@ define [
       Backbone.on 'app:logout', @logout, @
       Backbone.on 'app:settitle', @setTitle, @
       Backbone.on 'app:webglerror', ->
+        console.error('WEBGL ERROR')
         Backbone.history.navigate '/about', trigger: yes
       Backbone.on 'app:notfound', @notFound, @
 

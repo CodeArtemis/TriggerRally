@@ -11,19 +11,19 @@ define [
       @wireframe = false
 
     doubleTriangles: () ->
-      indices = @attributes["index"].array
-      newIndices = []
+      indices = @index.array
+      newIndices = new Uint32Array(indices.length)
       i = 0
       while i < indices.length - 2
         newIndices.push indices[i+0], indices[i+1], indices[i+1]
         newIndices.push indices[i+2], indices[i+2], indices[i+0]
         i += 3
-      @attributes["index"].array = newIndices
+      @index.array = newIndices
       return
 
     removeIndices: ->
-      indices = @attributes['index'].array
-      delete @attributes['index']
+      indices = @index.array
+      delete @index
 
       for key, attrib of @attributes
         itemSize = attrib.itemSize
@@ -40,7 +40,7 @@ define [
       # Destrutively chop up index array to fit UNSIGNED_SHORT limit.
       # TODO: Add OES_element_index_uint support.
       if @wireframe then @doubleTriangles()
-      @offsets = []
+      @groups = []
       offset =
         count: 0
         start: 0
@@ -49,13 +49,13 @@ define [
       MAX_INDEX = 65535
       minIndexFound = Infinity
       maxIndexFound = 0
-      indices = @attributes["index"].array
+      indices = @index.array
       maxElem = indices.length - PRIMITIVE_SIZE + 1
       addOffset = =>
         offset.index = minIndexFound
         for i in [offset.start...elem]
           indices[i] -= minIndexFound
-        @offsets.push offset
+        @groups.push offset
       while elem < maxElem
         primMinIndex = Infinity
         primMaxIndex = 0
@@ -79,8 +79,8 @@ define [
         offset.count += PRIMITIVE_SIZE
       # Save final offset.
       addOffset() if offset.count > 0
-      #if @offsets.length > 1
-      #  console.log 'ArrayGeometry with ' + indices.length/3 + ' triangles split into ' + @offsets.length + ' DrawElements calls.'
+      #if @groups.length > 1
+      #  console.log 'ArrayGeometry with ' + indices.length/3 + ' triangles split into ' + @groups.length + ' DrawElements calls.'
 
       for key, attrib of @attributes
         type = if key is "index" then Uint16Array else Float32Array
@@ -88,10 +88,10 @@ define [
       return
 
     addGeometry: (geom) ->
-      @attributes["index"] ?= { array: [] }
-      @attributes["position"] ?= { array: [], itemSize: 3 }
-      @attributes["normal"] ?= { array: [], itemSize: 3 }
-      @attributes["uv"] ?= { array: [], itemSize: 2 }
+      @addAttribute("index", new THREE.BufferAttribute(new Uint32Array(100), 1)) unless @index
+      @addAttribute("position", new THREE.BufferAttribute(new Float32Array(300), 3)) unless @attributes["position"]
+      @addAttribute("normal", new THREE.BufferAttribute(new Float32Array(300), 3)) unless @attributes["normal"]
+      @addAttribute("uv", new THREE.BufferAttribute(new Float32Array(200), 1)) unless @attributes["uv"]
 
       pts = [ 'a', 'b', 'c', 'd' ]
       offsetPosition = @attributes["position"].array.length
@@ -101,10 +101,10 @@ define [
 
       for face, faceIndex in geom.faces
         if face.d?
-          @attributes["index"].array.push face.a, face.b, face.d
-          @attributes["index"].array.push face.b, face.c, face.d
+          @index.array.push face.a, face.b, face.d
+          @index.array.push face.b, face.c, face.d
         else
-          @attributes["index"].array.push face.a, face.b, face.c
+          @index.array.push face.a, face.b, face.c
 
         for norm, pt in face.vertexNormals
           @attributes["normal"].array[face[pts[pt]] * 3 + 0] = norm.x
@@ -119,10 +119,10 @@ define [
       return
 
     mergeMesh: (mesh) ->
-      @attributes["index"] ?= { array: [] }
-      @attributes["position"] ?= { array: [], itemSize: 3 }
-      @attributes["normal"] ?= { array: [], itemSize: 3 }
-      @attributes["uv"] ?= { array: [], itemSize: 2 }
+      @addAttribute("index", new THREE.BufferAttribute(new Uint32Array(100), 1)) unless @index
+      @addAttribute("position", new THREE.BufferAttribute(new Float32Array(300), 3)) unless @attributes["position"]
+      @addAttribute("normal", new THREE.BufferAttribute(new Float32Array(300), 3)) unless @attributes["normal"]
+      @addAttribute("uv", new THREE.BufferAttribute(new Float32Array(200), 1)) unless @attributes["uv"]
 
       vertexOffset = @attributes["position"].array.length / 3
       geom2 = mesh.geometry
@@ -143,18 +143,18 @@ define [
       hasNorms = norms? and norms.length == posns.length
       while i < posns.length
         tmpVec3.set posns[i + 0], posns[i + 1], posns[i + 2]
-        matrix.multiplyVector3 tmpVec3
+        tmpVec3.applyMatrix4 matrix
         positionArray.push tmpVec3.x, tmpVec3.y, tmpVec3.z
         if hasNorms
           tmpVec3.set norms[i + 0], norms[i + 1], norms[i + 2]
-          matrixRotation.multiplyVector3 tmpVec3
+          tmpVec3.applyMatrix4 matrixRotation
           normalArray.push tmpVec3.x, tmpVec3.y, tmpVec3.z
         i += 3
       @attributes["uv"].array = @attributes["uv"].array.concat geom2.attributes["uv"].array
 
       # Copy indices.
-      indexArray = @attributes["index"].array
-      for idx in geom2.attributes["index"].array
+      indexArray = @index.array
+      for idx in geom2.index.array
         indexArray.push idx + vertexOffset
       return
 

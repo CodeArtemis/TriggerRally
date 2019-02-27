@@ -61,7 +61,6 @@ define [
     afterRender: ->
       client = @client
       client.camera.idealFov = 75
-      client.camera.useQuaternion = no
       client.updateCamera()
 
       @camControl = new EditorCameraControl client.camera
@@ -195,7 +194,7 @@ define [
         else
           util2.intersectZPlane viewRay, cursorPos
         return unless planeHit
-        relMotion = planeHit.pos.clone().subSelf cursorPos
+        relMotion = planeHit.pos.clone().sub cursorPos
 
         if rotateMode
           @camControl.rotate cursorPos, angX, angZ
@@ -206,7 +205,7 @@ define [
 
     scroll: (scrollY, event) ->
       return unless @cursor.hit
-      vec = @camControl.pos.clone().subSelf @cursor.pos
+      vec = @camControl.pos.clone().sub @cursor.pos
       vec.multiplyScalar Math.exp(scrollY * -0.002) - 1
       @camControl.translate vec
       event.preventDefault()

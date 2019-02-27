@@ -138,8 +138,8 @@ function(LFIB4, THREE, _, gameScenery, gameTerrain, uImg, quiver, util) {
       var pts = checkpoints.slice(0);
 
       // Add bonus checkpoints.
-      pts[-1] = pts[0].clone().multiplyScalar(2).subSelf(pts[1]);
-      pts[pts.length] = pts[pts.length-1].clone().multiplyScalar(2).subSelf(pts[pts.length-2]);
+      pts[-1] = pts[0].clone().multiplyScalar(2).sub(pts[1]);
+      pts[pts.length] = pts[pts.length-1].clone().multiplyScalar(2).sub(pts[pts.length-2]);
 
       // First we compute the chord length of the curve.
       var totalLength = 0;
@@ -147,7 +147,7 @@ function(LFIB4, THREE, _, gameScenery, gameTerrain, uImg, quiver, util) {
       var numChords = checkpoints.length - 1;
       var i;
       for (i = 0; i < numChords; ++i) {
-        var chordLength = new Vec2().sub(pts[i+1], pts[i]).length();
+        var chordLength = new Vec2().copy(pts[i+1]).sub(pts[i]).length();
         chords.push(chordLength);
         totalLength += chordLength;
       }

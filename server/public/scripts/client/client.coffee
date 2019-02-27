@@ -14,7 +14,8 @@ define [
   'cs!game/synchro'
   'util/pubsub'
   'cs!util/quiver'
-  'util/util'
+  'util/util',
+  'THREE-scene-loader'
 ], (
   THREE
   _
@@ -28,6 +29,7 @@ define [
   pubsub
   quiver
   util
+  THREESceneLoader
 ) ->
   Vec2 = THREE.Vector2
   Vec3 = THREE.Vector3
@@ -36,8 +38,6 @@ define [
   MAP_RANGE = util.MAP_RANGE
   KEYCODE = util.KEYCODE
   deadZone = util.deadZone
-
-  projector = new THREE.Projector
 
   tmpVec3a = new Vec3
 
@@ -99,7 +99,7 @@ define [
       geom.vertices.push new Vec3(-0.1, 0.02, 0)
       geom.vertices.push new Vec3(-0.1, -0.02, 0)
       geom.faces.push new THREE.Face3(0, 1, 2)
-      geom.computeCentroids()
+      # geom.computeCentroids()
       mat = new THREE.MeshBasicMaterial
         color: 0x206020
         blending: THREE.AdditiveBlending
@@ -159,7 +159,8 @@ define [
       geom.vertices.push new Vec3(0.1, 0, -0.2)
       geom.vertices.push new Vec3(-0.1, 0, -0.2)
       geom.faces.push new THREE.Face3(0, 2, 1)
-      geom.faces.push new THREE.Face4(1, 2, 4, 3)
+      geom.faces.push new THREE.Face3(1, 2, 4)
+      geom.faces.push new THREE.Face3(1, 3, 4)
       @meshArrow = new THREE.Mesh(geom, mat)
       @meshArrow.position.set(0, 1, -2)
       @meshArrow2 = new THREE.Mesh(geom, mat2)
@@ -212,7 +213,6 @@ define [
         pos.z += el[2] * x + el[6] * y + el[10] * z
 
       pullCameraQuat = (cam, car, amount) ->
-        cam.useQuaternion = true
         pullTransformedQuat cam.quaternion, car.root.quaternion, amount
         cam.updateMatrix()
 
@@ -225,18 +225,27 @@ define [
         update: (cam, car, delta) ->
           car.bodyMesh?.visible = yes
           targetPos = car.root.position.clone()
-          targetPos.addSelf car.vehic.body.linVel.clone().multiplyScalar .17
+          targetPos.add car.vehic.body.linVel.clone().multiplyScalar .17
           offset = car.config.chaseCamOffset or [ 0, 1.2, -2.9 ]
           matrix = car.root.matrix
-          targetPos.addSelf matrix.getColumnX().multiplyScalar offset[0]
-          targetPos.addSelf matrix.getColumnY().multiplyScalar offset[1]
-          targetPos.addSelf matrix.getColumnZ().multiplyScalar offset[2]
+
+          targetPos.x += matrix.elements[0] * offset[0];
+          targetPos.y += matrix.elements[1] * offset[0];
+          targetPos.z += matrix.elements[2] * offset[0];
+
+          targetPos.x += matrix.elements[4] * offset[1];
+          targetPos.y += matrix.elements[5] * offset[1];
+          targetPos.z += matrix.elements[6] * offset[1];
+
+          targetPos.x += matrix.elements[8] * offset[2];
+          targetPos.y += matrix.elements[9] * offset[2];
+          targetPos.z += matrix.elements[10] * offset[2];
+
           camDelta = delta * 5
           cam.position.x = PULLTOWARD cam.position.x, targetPos.x, camDelta
           cam.position.y = PULLTOWARD cam.position.y, targetPos.y, camDelta
           cam.position.z = PULLTOWARD cam.position.z, targetPos.z, camDelta
 
-          cam.useQuaternion = false
           pullTransformedQuat cam.quaternion, car.root.quaternion, 1
           lookPos = car.root.position.clone()
           translate lookPos, car.root.matrix, 0, 0.7, 0
@@ -394,27 +403,27 @@ define [
       # sunLight.shadowCascadeCount = 3
       # sunLight.shadowCascadeOffset = 10
 
-      sunLight.shadowCameraNear = -20
-      sunLight.shadowCameraFar = 60
-      sunLight.shadowCameraLeft = -24
-      sunLight.shadowCameraRight = 24
-      sunLight.shadowCameraTop = 24
-      sunLight.shadowCameraBottom = -24
+      sunLight.shadow.camera.near = -20
+      sunLight.shadow.camera.far = 60
+      sunLight.shadow.camera.left = -24
+      sunLight.shadow.camera.right = 24
+      sunLight.shadow.camera.top = 24
+      sunLight.shadow.camera.bottom = -24
 
-      #sunLight.shadowCameraVisible = true
+      #sunLight.shadow.camera.visible = true
 
-      #sunLight.shadowBias = -0.001
-      sunLight.shadowDarkness = 0.3
+      # sunLight.shadowBias = -0.001
+      # sunLight.shadowDarkness = 0.3
 
-      sunLight.shadowMapWidth = 1024
-      sunLight.shadowMapHeight = 1024
+      sunLight.shadow.mapSize.width = 1024
+      sunLight.shadow.mapSize.height = 1024
 
       scene.add sunLight
       return
 
     update: (camera, delta) ->
       @sunLight.target.position.copy camera.position
-      @sunLight.position.copy(camera.position).addSelf @sunLightPos
+      @sunLight.position.copy(camera.position).add @sunLightPos
       @sunLight.updateMatrixWorld()
       @sunLight.target.updateMatrixWorld()
       return
@@ -461,7 +470,7 @@ define [
         tMap:
           type: 't'
           value: THREE.ImageUtils.loadTexture "/a/textures/dust.png"
-      attributes =
+      attribute =
         aColor:
           type: 'v4'
           value: []
@@ -469,8 +478,8 @@ define [
           type: 'v2'
           value: []
       @geom = new THREE.Geometry()
-      @aColor = attributes.aColor
-      @aAngSize = attributes.aAngSize
+      @aColor = attribute.aColor
+      @aAngSize = attribute.aAngSize
       @other = []
       @length = 200
       for i in [0...@length]
@@ -480,11 +489,13 @@ define [
         @other.push
           angVel: 0
           linVel: new Vec3
-      params = { @uniforms, attributes, vertexShader, fragmentShader }
+      params = { @uniforms, attribute, vertexShader, fragmentShader }
       params.transparent = yes
       params.depthWrite = no
-      mat = new THREE.ShaderMaterial params
-      @particleSystem = new THREE.ParticleSystem @geom, mat
+      mat = new THREE.MeshBasicMaterial
+        color: 0x0000FF
+      # new THREE.ShaderMaterial params
+      @particleSystem = new THREE.Points @geom, mat
       @particleSystem.sortParticles = yes
       scene.add @particleSystem
       @idx = 0
@@ -533,7 +544,7 @@ define [
       while idx < length
         linVel = other[idx].linVel
         linVel.multiplyScalar linVelScale
-        vertices[idx].addSelf tmpVec3a.copy(linVel).multiplyScalar(delta)
+        vertices[idx].add tmpVec3a.copy(linVel).multiplyScalar(delta)
         aColor[idx].w -= delta * 1
         aAngSize[idx].x += other[idx].angVel * delta
         if aColor[idx].w <= 0
@@ -718,9 +729,9 @@ define [
           premultipliedAlpha: false
           clearColor: 0xffffff
         r.devicePixelRatio = prefs.pixeldensity
-        r.shadowMapEnabled = prefs.shadows
+        r.shadowMap.enabled = prefs.shadows
         # r.shadowMapCullFrontFaces = false
-        r.shadowMapCullFace = THREE.CullFaceBack
+        # r.shadowMapCullFace = THREE.CullFaceBack
         r.autoClear = false
         r
       catch e
@@ -770,8 +781,11 @@ define [
       format = '.jpg'
       urls = (path + part + format for part in ['rt','lf','ft','bk','up','dn'])
       textureCube = THREE.ImageUtils.loadTextureCube urls
-      cubeShader = THREE.ShaderUtils.lib["cube"]
+      cubeShader = THREE.ShaderLib["cube"]
       cubeShader.uniforms["tCube"].value = textureCube
+      # cubeMaterial = new THREE.MeshBasicMaterial
+      #   color: 0x0000FF
+      #   side: THREE.BackSide
       cubeMaterial = new THREE.ShaderMaterial
         fog: yes
         side: THREE.BackSide
@@ -783,12 +797,14 @@ define [
 
           uniform samplerCube tCube;
           uniform float tFlip;
-          varying vec3 vWorldPosition;
+          varying vec3 vWorldDirection;
+          vec3 worldVec;
           void main() {
-            gl_FragColor = textureCube( tCube, vec3( tFlip * vWorldPosition.x, vWorldPosition.yz ) );
-            vec3 worldVec = normalize(vWorldPosition);
+            gl_FragColor = textureCube( tCube, vec3( tFlip * vWorldDirection.x, vWorldDirection.yz ) );
+            worldVec = normalize(vWorldDirection);
             gl_FragColor.rgb = mix(fogColor, gl_FragColor.rgb, smoothstep(0.05, 0.15, worldVec.z));
           }
+
           """
       cubeMaterial.transparent = yes
       cubeMesh = new THREE.Mesh(
@@ -812,8 +828,8 @@ define [
 
     viewRay: (viewX, viewY) ->
       vec = @viewToEye new Vec3 viewX, viewY, 0.9
-      projector.unprojectVector vec, @camera
-      vec.subSelf(@camera.position)
+      vec.unproject(@camera)
+      vec.sub(@camera.position)
       vec.normalize()
       new THREE.Ray @camera.position, vec
 
@@ -847,7 +863,7 @@ define [
 
       terrainContact = (lambda) =>
         test = ray.direction.clone().multiplyScalar lambda
-        test.addSelf ray.origin
+        test.add ray.origin
         {
           test
           contact: @track.terrain.getContact test
@@ -895,7 +911,7 @@ define [
 
     intersectSphere: (ray, center, radiusSq) ->
       # Destructive to center.
-      center.subSelf ray.origin
+      center.sub ray.origin
       # We assume unit length ray direction.
       a = 1  # ray.direction.dot(ray.direction)
       along = ray.direction.dot center

@@ -37,15 +37,15 @@ define [
       rot.rotateZ -angZ + @ang.z + Math.PI
       rot.rotateX angX
       rot.rotateZ -@ang.z - Math.PI
-      @pos.subSelf origin
-      rot.multiplyVector3 @pos
-      @pos.addSelf origin
+      @pos.sub origin
+      @pos.applyMatrix4(rot)
+      @pos.add origin
       @ang.x -= angX
       @ang.z -= angZ
       @updateMatrix()
 
     translate: (vec) ->
-      @pos.addSelf vec
+      @pos.add vec
       @updateMatrix()
 
     updateMatrix: ->
@@ -67,14 +67,16 @@ define [
       if @autoTimer isnt -1
         @autoTimer = Math.min 1, @autoTimer + delta
         if @autoTimer < 1
-          @velTarget.sub @autoPos, @pos
+          @velTarget.subVectors @autoPos, @pos
           @velTarget.multiplyScalar delta * 10 * @autoTimer
-          @pos.addSelf @velTarget
+          @pos.add @velTarget
 
           @ang.z -= Math.round((@ang.z - @autoAng.z) / TWOPI) * TWOPI
-          @velTarget.sub @autoAng, @ang
+          @velTarget.subVectors @autoAng, @ang
           @velTarget.multiplyScalar delta * 10 * @autoTimer
-          @ang.addSelf @velTarget
+          @ang.x += @velTarget.x
+          @ang.y += @velTarget.y
+          @ang.z += @velTarget.z
         else
           @pos.copy @autoPos
           @ang.copy @autoAng
@@ -93,8 +95,12 @@ define [
         @angVel.y = @angVelTarget.y + (@angVel.y - @angVelTarget.y) * mult
         @angVel.z = @angVelTarget.z + (@angVel.z - @angVelTarget.z) * mult
 
-        @pos.addSelf tmpVec3.copy(@vel).multiplyScalar delta
+        @pos.add tmpVec3.copy(@vel).multiplyScalar delta
 
-        @ang.addSelf tmpVec3.copy(@angVel).multiplyScalar delta
+        tmpVec3.copy(@angVel).multiplyScalar delta
+
+        @ang.x += tmpVec3.x
+        @ang.y += tmpVec3.y
+        @ang.z += tmpVec3.z
 
       @ang.x = Math.max 0, Math.min 2, @ang.x

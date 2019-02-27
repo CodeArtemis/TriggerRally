@@ -47,11 +47,11 @@ define [
         max.x = Math.max max.x, pt.x + rad
         max.y = Math.max max.y, pt.y + rad
         max.z = Math.max max.z, pt.z + rad
-      center = min.clone().addSelf(max).multiplyScalar(0.5)
+      center = min.clone().add(max).multiplyScalar(0.5)
       radius = 0
       # TODO: Stop subtracting center from all pts? It adds a lot of overhead later.
       for pt in @points
-        pt.subSelf center
+        pt.sub center
         radius = Math.max radius, pt.length() + pt.radius
       @bounds =
         center: center
@@ -67,7 +67,7 @@ define [
       return contacts unless tmpVec3a.length() < sl1.bounds.radius + sphere.radius
       for pt1 in sl1.points
         tmpVec3a.sub sphere, pt1
-        tmpVec3a.subSelf center1
+        tmpVec3a.sub center1
         dist = tmpVec3a.length()
         bothRadius = pt1.radius + sphere.radius
         continue unless dist < bothRadius
@@ -75,8 +75,8 @@ define [
         contact =
           normal: tmpVec3a.clone()
           depth: bothRadius - dist
-          pos1: tmpVec3a.clone().multiplyScalar(pt1.radius).addSelf(pt1).addSelf(center1)
-          pos2: tmpVec3a.clone().multiplyScalar(-sphere.radius).addSelf(sphere)
+          pos1: tmpVec3a.clone().multiplyScalar(pt1.radius).add(pt1).add(center1)
+          pos2: tmpVec3a.clone().multiplyScalar(-sphere.radius).add(sphere)
         contacts.push contact
       contacts
 
@@ -91,7 +91,7 @@ define [
       # Collide MxN sphere to sphere.
       for pt2 in sl2.points
         tmpPt2Vec.copy pt2
-        tmpPt2Vec.addSelf center2
+        tmpPt2Vec.add center2
         tmpPt2Vec.radius = pt2.radius
         Array::push.apply contacts, @collideSphere tmpPt2Vec
       contacts

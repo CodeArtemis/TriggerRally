@@ -74,7 +74,6 @@ define [
 
     update: (deltaTime) ->
       cam = @client.camera
-      cam.useQuaternion = no
       rot = cam.rotation
       pos = cam.position
 

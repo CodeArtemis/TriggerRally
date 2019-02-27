@@ -154,7 +154,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     vehicle.body.pos.set(startpos.pos[0], startpos.pos[1], startpos.pos[2]);
     var tmpQuat = new THREE.Quaternion().setFromAxisAngle(
         new Vec3(0,0,1), startpos.rot[2]);
-    vehicle.body.ori = tmpQuat.multiplySelf(vehicle.body.ori);
+    vehicle.body.ori = tmpQuat.multiply(vehicle.body.ori);
     vehicle.body.updateMatrices();
     vehicle.init();
   };

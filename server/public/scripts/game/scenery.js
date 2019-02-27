@@ -144,12 +144,12 @@ function(LFIB4, collision, hash2d, util, THREE) {
       for (i = 0; i < numpts; ++i) {
         pt = sl.points[i];
         pt.copy(thisSphereList.points[i]);
-        mat4.multiplyVector3(pt);
+        pt.applyMatrix4(mat4);
         pt.radius = thisSphereList.points[i].radius * objScale;
       }
       sl.bounds.center.copy(thisSphereList.bounds.center);
-      mat4.multiplyVector3(sl.bounds.center);
-      sl.bounds.center.addSelf(object.position);
+      sl.bounds.center.applyMatrix4(mat4);
+      sl.bounds.center.add(object.position);
       sl.bounds.radius = thisSphereList.bounds.radius * objScale;
       contactArrays.push(sl.collideSphere(sphere));
     });
@@ -177,12 +177,12 @@ function(LFIB4, collision, hash2d, util, THREE) {
       for (i = 0; i < numpts; ++i) {
         pt = sl.points[i];
         pt.copy(thisSphereList.points[i]);
-        mat4.multiplyVector3(pt);
+        pt.applyMatrix4(mat4);
         pt.radius = thisSphereList.points[i].radius * objScale;
       }
       sl.bounds.center.copy(thisSphereList.bounds.center);
-      mat4.multiplyVector3(sl.bounds.center);
-      sl.bounds.center.addSelf(object.position);
+      sl.bounds.center.applyMatrix4(mat4);
+      sl.bounds.center.add(object.position);
       sl.bounds.radius = thisSphereList.bounds.radius * objScale;
       contactArrays.push(sl.collideSphereList(sphereList));
     });
@@ -197,7 +197,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
     var add = this.trackScenery.add;
     add && add.forEach(function(obj, idx) {
       var vec = new Vec3(obj.pos[0], obj.pos[1], obj.pos[2]);
-      vec.subSelf(ray.origin);
+      vec.sub(ray.origin);
       var a = 1;//ray.direction.dot(ray.direction);
       var along = ray.direction.dot(vec);
       var b = -2 * along;

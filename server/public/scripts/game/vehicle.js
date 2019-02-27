@@ -43,6 +43,7 @@ function(THREE, psim, collision, util) {
 
   var tmpVec3a = new Vec3();
   var tmpVec3b = new Vec3();
+  var tmpVec3c = new Vec3();
   var tmpVec2a = new Vec2();
   var tmpWheelPos = new Vec3();
   var plusXVec3 = new Vec3(1, 0, 0);
@@ -296,7 +297,7 @@ function(THREE, psim, collision, util) {
       var angleY = Math.atan2(body.oriMat.elements[8], body.oriMat.elements[0]);
       var ninetyDeg = new Quat(1, 0, 0, 1).normalize();
       var newOri = new Quat().setFromAxisAngle(plusYVec3, Math.PI - angleY);
-      newOri = ninetyDeg.multiplySelf(newOri);
+      newOri = ninetyDeg.multiply(newOri);
       // newOri.set(0,0,0,1);
 
       // Make sure we take the shortest path.
@@ -311,7 +312,7 @@ function(THREE, psim, collision, util) {
       // TODO: Transfer this to config.
       posOffset.set(0, 0, 4);
       state = this.recoverState = {
-        pos: body.pos.clone().addSelf(posOffset),
+        pos: body.pos.clone().add(posOffset),
         ori: newOri
       };
       this.disabled = true;
@@ -539,7 +540,7 @@ function(THREE, psim, collision, util) {
 
       tmpVec3b.copy(tmpVec3a).multiplyScalar(turnRateA);
       this.body.addLocTorque(tmpVec3b);
-      tmpVec3a.subSelf(locAngVel).multiplyScalar(logFwdVel * turnRateB);
+      tmpVec3a.sub(locAngVel).multiplyScalar(logFwdVel * turnRateB);
       this.body.addLocTorque(tmpVec3a);
 
       // Fin effect (torque due to drag).
@@ -621,9 +622,9 @@ function(THREE, psim, collision, util) {
   var getSurfaceBasis = function(normal, right) {
     // TODO: Return a matrix type.
     tmpBasis.w.copy(normal);  // Assumed to be normalized.
-    tmpBasis.v.cross(normal, right);
+    tmpBasis.v.copy(normal).cross(right);
     tmpBasis.v.normalize();
-    tmpBasis.u.cross(tmpBasis.v, normal);
+    tmpBasis.u.copy(tmpBasis.v).cross(normal);
     tmpBasis.u.normalize();
     return tmpBasis;
   }
@@ -663,8 +664,8 @@ function(THREE, psim, collision, util) {
 
       // Not bothering to clone at this point.
       var force = surf.w.multiplyScalar(perpForce);
-      force.addSelf(surf.u.multiplyScalar(friction.x));
-      force.addSelf(surf.v.multiplyScalar(friction.y));
+      force.add(surf.u.multiplyScalar(friction.x));
+      force.add(surf.v.multiplyScalar(friction.y));
 
       this.body.addForceAtPoint(force, contactPoint);
 
@@ -697,10 +698,10 @@ function(THREE, psim, collision, util) {
     // tmpVec3a.cross(sideways, plusZVec3);
     // tmpVec3b.cross(tmpVec3a, sideways);
     var wheelRight = this.getWheelRightVector(wheel);
-    tmpVec3a.cross(wheelRight, plusZVec3);
-    tmpVec3b.cross(wheelRight, tmpVec3a);
+    tmpVec3a.copy(wheelRight).cross(plusZVec3);
+    tmpVec3b.copy(wheelRight).cross(tmpVec3a);
     tmpVec3b.multiplyScalar(wheel.cfg.radius);
-    clipPos.addSelf(tmpVec3b);
+    clipPos.add(tmpVec3b);
     Array.prototype.push.apply(contacts, this.sim.collidePoint(clipPos));
     if (contacts.length == 0) return;
     var wheelSurfaceVel = wheel.spinVel * wheel.cfg.radius;
@@ -720,9 +721,10 @@ function(THREE, psim, collision, util) {
 
       contactVelSurf.y += wheelSurfaceVel;
       // This is wrong if there are multiple contacts.
-      contactVel.addSelf(tmpVec3b.copy(surf.v).multiplyScalar(wheelSurfaceVel));
+      contactVel.add(tmpVec3b.copy(surf.v).multiplyScalar(wheelSurfaceVel));
 
-      var suspensionDotContact = contact.normal.dot(this.body.oriMat.getColumnY());
+      tmpVec3c.set(this.body.oriMat.elements[4], this.body.oriMat.elements[5], this.body.oriMat.elements[6]);
+      var suspensionDotContact = contact.normal.dot(tmpVec3c);
       wheel.ridePos += suspensionDotContact * contact.depth;
 
       var perpForce;
@@ -774,12 +776,12 @@ function(THREE, psim, collision, util) {
           friction.multiplyScalar(maxFriction / leng);
         }
 
-        wheel.frictionForce.addSelf(friction);
+        wheel.frictionForce.add(friction);
 
         // surf is corrupted by these calculations.
         var force = surf.w.multiplyScalar(perpForce);
-        force.addSelf(surf.u.multiplyScalar(friction.x));
-        force.addSelf(surf.v.multiplyScalar(friction.y));
+        force.add(surf.u.multiplyScalar(friction.x));
+        force.add(surf.v.multiplyScalar(friction.y));
 
         this.body.addForceAtPoint(force, clipPos);
 
@@ -798,12 +800,11 @@ function(THREE, psim, collision, util) {
     var turnPos = this.getWheelTurnPos(wheel);
     var cosTurn = Math.cos(turnPos);
     var sinTurn = Math.sin(turnPos);
-    var left = this.body.oriMat.getColumnX().clone();
-    var fwd = this.body.oriMat.getColumnZ();
+    var mat = this.body.oriMat.elements;
     tmpWheelRight.set(
-        left.x * cosTurn - fwd.x * sinTurn,
-        left.y * cosTurn - fwd.y * sinTurn,
-        left.z * cosTurn - fwd.z * sinTurn
+        mat[0] * cosTurn - mat[8] * sinTurn,
+        mat[1] * cosTurn - mat[9] * sinTurn,
+        mat[2] * cosTurn - mat[10] * sinTurn
     );
     return tmpWheelRight;
   };

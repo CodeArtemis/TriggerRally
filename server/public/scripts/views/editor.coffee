@@ -55,7 +55,6 @@ define [
       @objs = []
 
       client.camera.idealFov = 75
-      client.camera.useQuaternion = no
       client.updateCamera()
 
       camControl = new EditorCameraControl client.camera
@@ -268,7 +267,7 @@ define [
           else
             util2.intersectZPlane viewRay, cursorPos
           return unless planeHit
-          relMotion = planeHit.pos.clone().subSelf cursorPos
+          relMotion = planeHit.pos.clone().sub cursorPos
           if selection.contains cursor
             cursorPos.copy planeHit.pos
             for selModel in selection.models
@@ -322,7 +321,7 @@ define [
 
       scroll = (scrollY, event) ->
         return unless cursor
-        vec = camControl.pos.clone().subSelf cursorMesh.position
+        vec = camControl.pos.clone().sub cursorMesh.position
         vec.multiplyScalar Math.exp(scrollY * -0.002) - 1
         camControl.translate vec
         event.preventDefault()
