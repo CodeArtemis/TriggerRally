@@ -8,6 +8,7 @@ define [
   'cs!util/quiver'
 ], (THREE, array_geometry, quiver) ->
 
+  tmpVec3 = new THREE.Vector3()
   RenderScenery: class RenderScenery
     constructor: (@scene, @scenery, @loadFunc) ->
       @fadeSpeed = 2
@@ -44,9 +45,10 @@ define [
             mesh.scale.copy object.scale
             if renderConfig.scale? then mesh.scale.multiplyScalar renderConfig.scale
             mesh.scale.multiplyScalar entity.scale
-            mesh.position.sub entity.position, tile.position
-            mesh.rotation.add object.rotation, entity.rotation
+            mesh.position.subVectors entity.position, tile.position
+            mesh.rotation.copy tmpVec3.addVectors(object.rotation, entity.rotation)
             mergedGeom.mergeMesh mesh
+
           mergedGeom.updateOffsets()
           # Clone the material so that we can adjust opacity per tile.
           material = object.material.clone()

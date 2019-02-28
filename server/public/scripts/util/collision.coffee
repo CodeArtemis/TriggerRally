@@ -63,10 +63,10 @@ define [
       sl1 = @
       contacts = []
       center1 = sl1.bounds.center
-      tmpVec3a.sub sphere, center1
+      tmpVec3a.subVectors sphere, center1
       return contacts unless tmpVec3a.length() < sl1.bounds.radius + sphere.radius
       for pt1 in sl1.points
-        tmpVec3a.sub sphere, pt1
+        tmpVec3a.subVectors sphere, pt1
         tmpVec3a.sub center1
         dist = tmpVec3a.length()
         bothRadius = pt1.radius + sphere.radius
@@ -86,7 +86,7 @@ define [
       contacts = []
       center1 = sl1.bounds.center
       center2 = sl2.bounds.center
-      tmpVec3a.sub center2, center1
+      tmpVec3a.subVectors center2, center1
       return contacts unless tmpVec3a.length() < sl1.bounds.radius + sl2.bounds.radius
       # Collide MxN sphere to sphere.
       for pt2 in sl2.points

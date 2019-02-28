@@ -102,7 +102,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
       addObjects.forEach(function(obj) {
         var object = {
           position: new Vec3(obj.pos[0], obj.pos[1], obj.pos[2]),
-          rotation: new Vec3(obj.rot[0], obj.rot[1], obj.rot[2]),
+          rotation: new THREE.Euler(obj.rot[0], obj.rot[1], obj.rot[2]),
           scale: obj.scale || 1
         };
         this.add.addObject(object.position.x, object.position.y, object);
@@ -139,7 +139,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
     var scale = new Vec3(), pt;
     objects.forEach(function(object) {
       var objScale = object.scale;
-      mat4.setRotationFromEuler(object.rotation);
+      mat4.makeRotationFromEuler(object.rotation);
       mat4.scale(scale.set(objScale, objScale, objScale));
       for (i = 0; i < numpts; ++i) {
         pt = sl.points[i];
@@ -172,7 +172,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
     var scale = new Vec3(), pt;
     objects.forEach(function(object) {
       var objScale = object.scale;
-      mat4.setRotationFromEuler(object.rotation);
+      mat4.makeRotationFromEuler(object.rotation);
       mat4.scale(scale.set(objScale, objScale, objScale));
       for (i = 0; i < numpts; ++i) {
         pt = sl.points[i];
@@ -320,7 +320,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
       }
       if (drop) continue;
 
-      object.rotation = new Vec3(0, 0, random() * 2 * Math.PI);
+      object.rotation = new THREE.Euler(0, 0, random() * 2 * Math.PI);
       objects.push(object);
     }
     return objects;

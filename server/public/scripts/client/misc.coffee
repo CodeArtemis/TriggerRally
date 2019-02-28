@@ -17,11 +17,19 @@ define [
     ringMesh = new THREE.Mesh ringGeom, checkpointMat
     ringMesh.rotation.order = 'ZYX'
     ringMesh.rotation.x = 1.1
-    checkpointGeom.merge(ringMesh.geometry)
+    ringMesh.updateMatrix();
+    matrix = ringMesh.matrix;
+    checkpointGeom.merge(ringMesh.geometry, matrix)
+
     ringMesh.rotation.z = Math.PI * 2 / 3
-    checkpointGeom.merge(ringMesh.geometry)
+    ringMesh.updateMatrix();
+    matrix = ringMesh.matrix;
+    checkpointGeom.merge(ringMesh.geometry, matrix)
+
     ringMesh.rotation.z = Math.PI * 4 / 3
-    checkpointGeom.merge(ringMesh.geometry)
+    ringMesh.updateMatrix();
+    matrix = ringMesh.matrix;
+    checkpointGeom.merge(ringMesh.geometry, matrix)
 
   selectionGeom = new THREE.IcosahedronGeometry 1, 2
   selectionMat = new THREE.MeshBasicMaterial

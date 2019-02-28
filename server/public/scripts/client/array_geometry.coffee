@@ -88,43 +88,58 @@ define [
       return
 
     addGeometry: (geom) ->
-      @addAttribute("index", new THREE.BufferAttribute(new Uint32Array(100), 1)) unless @index
-      @addAttribute("position", new THREE.BufferAttribute(new Float32Array(300), 3)) unless @attributes["position"]
-      @addAttribute("normal", new THREE.BufferAttribute(new Float32Array(300), 3)) unless @attributes["normal"]
-      @addAttribute("uv", new THREE.BufferAttribute(new Float32Array(200), 1)) unless @attributes["uv"]
+      index = [];
+      position = [];
+      normal = [];
+      uv = [];
+
+      index = Array.prototype.slice(@index.array) if @index
+      position = Array.prototype.slice(@attributes["position"].array) if @attributes["position"]
+      normal = Array.prototype.slice(@attributes["normal"].array) if @attributes["normal"]
+      uv = Array.prototype.slice(@attributes["uv"].array) if @attributes["uv"]
 
       pts = [ 'a', 'b', 'c', 'd' ]
-      offsetPosition = @attributes["position"].array.length
+      offsetPosition = position.length
 
       for v in geom.vertices
-        @attributes["position"].array.push v.x, v.y, v.z
+        position.push v.x, v.y, v.z
 
       for face, faceIndex in geom.faces
         if face.d?
-          @index.array.push face.a, face.b, face.d
-          @index.array.push face.b, face.c, face.d
+          index.push face.a, face.b, face.d
+          index.push face.b, face.c, face.d
         else
-          @index.array.push face.a, face.b, face.c
+          index.push face.a, face.b, face.c
 
         for norm, pt in face.vertexNormals
-          @attributes["normal"].array[face[pts[pt]] * 3 + 0] = norm.x
-          @attributes["normal"].array[face[pts[pt]] * 3 + 1] = norm.y
-          @attributes["normal"].array[face[pts[pt]] * 3 + 2] = norm.z
+          normal[face[pts[pt]] * 3 + 0] = norm.x
+          normal[face[pts[pt]] * 3 + 1] = norm.y
+          normal[face[pts[pt]] * 3 + 2] = norm.z
 
         # We support only one channel of UVs.
         uvs = geom.faceVertexUvs[0][faceIndex]
         for uv, pt in uvs
-          @attributes["uv"].array[face[pts[pt]] * 2 + 0] = uv.x
-          @attributes["uv"].array[face[pts[pt]] * 2 + 1] = uv.y
+          uv[face[pts[pt]] * 2 + 0] = uv.x
+          uv[face[pts[pt]] * 2 + 1] = uv.y
+
+      @setIndex(new THREE.BufferAttribute(new Uint32Array(index), 1))
+      @addAttribute("position", new THREE.BufferAttribute(new Float32Array(position), 3))
+      @addAttribute("normal", new THREE.BufferAttribute(new Float32Array(normal), 3))
+      @addAttribute("uv", new THREE.BufferAttribute(new Float32Array(uv), 2))
       return
 
     mergeMesh: (mesh) ->
-      @addAttribute("index", new THREE.BufferAttribute(new Uint32Array(100), 1)) unless @index
-      @addAttribute("position", new THREE.BufferAttribute(new Float32Array(300), 3)) unless @attributes["position"]
-      @addAttribute("normal", new THREE.BufferAttribute(new Float32Array(300), 3)) unless @attributes["normal"]
-      @addAttribute("uv", new THREE.BufferAttribute(new Float32Array(200), 1)) unless @attributes["uv"]
+      index = [];
+      position = [];
+      normal = [];
+      uv = [];
 
-      vertexOffset = @attributes["position"].array.length / 3
+      index = Array.prototype.slice(@index.array) if @index
+      position = Array.prototype.slice(@attributes["position"].array) if @attributes["position"]
+      normal = Array.prototype.slice(@attributes["normal"].array) if @attributes["normal"]
+      uv = Array.prototype.slice(@attributes["uv"].array) if @attributes["uv"]
+
+      vertexOffset = position.length / 3
       geom2 = mesh.geometry
       tmpVec3 = new THREE.Vector3
 
@@ -136,13 +151,13 @@ define [
 
       # Copy vertex data.
       i = 0
-      posns = geom2.attributes["position"].array
+      positions2 = geom2.attributes["position"].array
       norms = geom2.attributes["normal"].array
-      positionArray = @attributes["position"].array
-      normalArray = @attributes["normal"].array
-      hasNorms = norms? and norms.length == posns.length
-      while i < posns.length
-        tmpVec3.set posns[i + 0], posns[i + 1], posns[i + 2]
+      positionArray = position
+      normalArray = normal
+      hasNorms = norms? and norms.length == positions2.length
+      while i < positions2.length
+        tmpVec3.set positions2[i + 0], positions2[i + 1], positions2[i + 2]
         tmpVec3.applyMatrix4 matrix
         positionArray.push tmpVec3.x, tmpVec3.y, tmpVec3.z
         if hasNorms
@@ -150,12 +165,18 @@ define [
           tmpVec3.applyMatrix4 matrixRotation
           normalArray.push tmpVec3.x, tmpVec3.y, tmpVec3.z
         i += 3
-      @attributes["uv"].array = @attributes["uv"].array.concat geom2.attributes["uv"].array
+      uv = uv.concat geom2.attributes["uv"].array
 
       # Copy indices.
-      indexArray = @index.array
+      indexArray = index
       for idx in geom2.index.array
         indexArray.push idx + vertexOffset
+
+      @setIndex(new THREE.BufferAttribute(new Uint32Array(index), 1))
+      @addAttribute("position", new THREE.BufferAttribute(new Float32Array(position), 3))
+      @addAttribute("normal", new THREE.BufferAttribute(new Float32Array(normal), 3))
+      @addAttribute("uv", new THREE.BufferAttribute(new Float32Array(uv), 2))
+
       return
 
     computeBoundingSphere: -> @computeBounds()
@@ -166,12 +187,12 @@ define [
         max: new THREE.Vector3(-Infinity, -Infinity, -Infinity)
       maxRadius = 0
       i = 0
-      posns = @attributes["position"].array
-      numVerts = posns.length
+      positions2 = @attributes["position"].array
+      numVerts = positions2.length
       while i < numVerts
-        x = posns[i + 0]
-        y = posns[i + 1]
-        z = posns[i + 2]
+        x = positions2[i + 0]
+        y = positions2[i + 1]
+        z = positions2[i + 2]
         bb.min.x = Math.min bb.min.x, x
         bb.max.x = Math.max bb.max.x, x
         bb.min.y = Math.min bb.min.y, y
@@ -185,4 +206,5 @@ define [
       @boundingBox = bb
       @boundingSphere =
         radius: maxRadius
+        center: new THREE.Vector2()
       return
