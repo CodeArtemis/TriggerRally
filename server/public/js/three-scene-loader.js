@@ -14,7 +14,7 @@ THREE.SceneLoader = function () {
   this.geometryHandlerMap = {};
   this.hierarchyHandlerMap = {};
 
-  this.addGeometryHandler( "ascii", THREE.LegacyJSONLoader );
+  this.addGeometryHandler( "ascii", THREE.JSONLoader );
   // this.addGeometryHandler( "binary", THREE.BinaryLoader );
 
 };
@@ -336,7 +336,6 @@ THREE.SceneLoader.prototype.parse = function ( json, callbackFinished, url ) {
               if ( quat ) {
 
                 object.quaternion.set( quat[0], quat[1], quat[2], quat[3] );
-                object.useQuaternion = true;
 
               } else {
 
@@ -441,7 +440,6 @@ THREE.SceneLoader.prototype.parse = function ( json, callbackFinished, url ) {
           if ( quat ) {
 
             object.quaternion.set( quat[0], quat[1], quat[2], quat[3] );
-            object.useQuaternion = true;
 
           } else {
 
@@ -506,7 +504,6 @@ THREE.SceneLoader.prototype.parse = function ( json, callbackFinished, url ) {
     if ( q ) {
 
       node.quaternion.set( q[0], q[1], q[2], q[3] );
-      node.useQuaternion = true;
 
     } else {
 
@@ -814,8 +811,7 @@ THREE.SceneLoader.prototype.parse = function ( json, callbackFinished, url ) {
 
     } else if ( geoJSON.type === "embedded" ) {
 
-      var modelJson = data.embeds[ geoJSON.id ],
-        texture_path = "";
+      var modelJson = data.embeds[ geoJSON.id ];
 
       // pass metadata along to jsonLoader so it knows the format version
 
@@ -824,9 +820,9 @@ THREE.SceneLoader.prototype.parse = function ( json, callbackFinished, url ) {
       if ( modelJson ) {
 
         var jsonLoader = this.geometryHandlerMap[ "ascii" ][ "loaderObject" ];
-        jsonLoader.setPath(texture_path);
-        jsonLoader.load( modelJson, create_callback_embed( geoID ) );
-
+        jsonLoader.setTexturePath(urlBase);
+        var thasd = jsonLoader.parse( modelJson, urlBase );
+        create_callback_embed( geoID )(thasd.geometry, thasd.materials);
       }
 
     }

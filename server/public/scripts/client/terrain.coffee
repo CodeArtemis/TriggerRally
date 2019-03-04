@@ -69,7 +69,6 @@ define [
 
         uniforms: _.extend( THREE.UniformsUtils.merge( [
             THREE.UniformsLib['lights'],
-            THREE.UniformsLib['shadowmap'],
             THREE.UniformsLib['fog'],
           ]),
           tHeight:
@@ -117,6 +116,9 @@ define [
           '#extension GL_OES_standard_derivatives : enable' + '\n' +
           THREE.ShaderChunk.shadowmap_pars_vertex + '\n' +
           """
+
+          #define MAX_SHADOWS 1
+
           const int NUM_LAYERS = #{@numLayers};
           const float RING_WIDTH = #{@ringWidth}.0;
 
@@ -224,7 +226,7 @@ define [
 
             #ifdef USE_SHADOWMAP
             for( int i = 0; i < MAX_SHADOWS; i ++ ) {
-              vShadowCoord[ i ] = shadowMatrix[ i ] * vec4( worldPosition, 1.0 );
+              vDirectionalShadowCoord[ i ] = directionalShadowMatrix[ i ] * vec4( worldPosition, 1.0 );
             }
             #endif
           }
@@ -232,13 +234,16 @@ define [
         fragmentShader:
           """
 
+          #define MAX_SHADOWS 1
 
           """ +
           THREE.ShaderChunk.common + '\n' +
           THREE.ShaderChunk.bsdfs + '\n' +
+          THREE.ShaderChunk.packing + '\n' +
           THREE.ShaderChunk.fog_pars_fragment + '\n' +
-          THREE.ShaderChunk.lights_phong_pars_fragment + '\n' +
           THREE.ShaderChunk.shadowmap_pars_fragment + '\n' +
+          # THREE.ShaderChunk.lights_phong_pars_fragment + '\n' +
+          # THREE.ShaderChunk.shadowmap_pars_fragment + '\n' +
           """
 
           uniform sampler2D tSurface;
@@ -253,6 +258,7 @@ define [
 
           varying vec4 eyePosition;
           varying vec3 worldPosition;
+          uniform mat4 projectionMatrix;
 
           vec2 worldToMapSpace(vec2 coord, vec2 size, vec2 scale) {
             return (coord / scale + 0.5) / size;
@@ -348,36 +354,36 @@ define [
             vec3 shadowColor = vec3(1.0);
             #ifdef USE_SHADOWMAP
             for( int i = 0; i < MAX_SHADOWS; i ++ ) {
-              vec3 shadowCoord = vShadowCoord[ i ].xyz / vShadowCoord[ i ].w;
+              vec3 shadowCoord = vDirectionalShadowCoord[ i ].xyz / vDirectionalShadowCoord[ i ].w;
               bvec4 inFrustumVec = bvec4 ( shadowCoord.x >= 0.0, shadowCoord.x <= 1.0, shadowCoord.y >= 0.0, shadowCoord.y <= 1.0 );
               bool inFrustum = all( inFrustumVec );
               bvec2 frustumTestVec = bvec2( inFrustum, shadowCoord.z <= 1.0 );
               bool frustumTest = all( frustumTestVec );
               if ( frustumTest ) {
-                shadowCoord.z += shadowBias[ i ];
+                shadowCoord.z += directionalLights[i].shadowBias;
                 float shadow = 0.0;
                 const float shadowDelta = 1.0 / 9.0;
-                float xPixelOffset = 1.0 / shadowMapSize[ i ].x;
-                float yPixelOffset = 1.0 / shadowMapSize[ i ].y;
+                float xPixelOffset = 1.0 / directionalLights[i].shadowMapSize.x;
+                float yPixelOffset = 1.0 / directionalLights[i].shadowMapSize.y;
                 float dx0 = -1.25 * xPixelOffset;
                 float dy0 = -1.25 * yPixelOffset;
                 float dx1 = 1.25 * xPixelOffset;
                 float dy1 = 1.25 * yPixelOffset;
-                fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( dx0, dy0 ) ) );
+                fDepth = unpackRGBAToDepth( texture2D( directionalShadowMap[ i ], shadowCoord.xy + vec2( dx0, dy0 ) ) );
                 if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
-                fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( 0.0, dy0 ) ) );
+                fDepth = unpackRGBAToDepth( texture2D( directionalShadowMap[ i ], shadowCoord.xy + vec2( 0.0, dy0 ) ) );
                 if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
-                fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( dx1, dy0 ) ) );
+                fDepth = unpackRGBAToDepth( texture2D( directionalShadowMap[ i ], shadowCoord.xy + vec2( dx1, dy0 ) ) );
                 if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
-                fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( dx0, 0.0 ) ) );
+                fDepth = unpackRGBAToDepth( texture2D( directionalShadowMap[ i ], shadowCoord.xy + vec2( dx0, 0.0 ) ) );
                 if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
-                fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy ) );
+                fDepth = unpackRGBAToDepth( texture2D( directionalShadowMap[ i ], shadowCoord.xy ) );
                 if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
-                fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( dx0, dy1 ) ) );
+                fDepth = unpackRGBAToDepth( texture2D( directionalShadowMap[ i ], shadowCoord.xy + vec2( dx0, dy1 ) ) );
                 if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
-                fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( 0.0, dy1 ) ) );
+                fDepth = unpackRGBAToDepth( texture2D( directionalShadowMap[ i ], shadowCoord.xy + vec2( 0.0, dy1 ) ) );
                 if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
-                fDepth = unpackDepth( texture2D( shadowMap[ i ], shadowCoord.xy + vec2( dx1, dy1 ) ) );
+                fDepth = unpackRGBAToDepth( texture2D( directionalShadowMap[ i ], shadowCoord.xy + vec2( dx1, dy1 ) ) );
                 if ( fDepth < shadowCoord.z ) shadow += shadowDelta;
 
                 // Fade out the edges of the shadow.
@@ -400,20 +406,20 @@ define [
             for ( int i = 0; i < NUM_DIR_LIGHTS; i ++ ) {
               directionalLight = directionalLights[ i ];
 
-              vec4 lDirection = viewMatrix * vec4(directionalLight.direction, 0.0);
-              vec3 dirVector = normalize(lDirection.xyz);
-              directIllum += max(dot(normalDetail2, directionalLight.direction), 0.0);
+              // hardcoding this as .9 because in three directionalLights[i].direction seems to be turning together with the view
+              vec3 dirVector = normalize(vec3(.9, .9, .9));
+              directIllum += max(dot(normalDetail2, dirVector), 0.0);
               specularIllum += specular *
                   pow(max(0.0, dot(normalDetail2,
-                                   normalize(eyeVec + directionalLight.direction))),
+                                   normalize(eyeVec + dirVector))),
                       20.0);
               directIllum *= directionalLight.color;
-              float mask = step(0.0, dot(normalDetail, directionalLight.direction)) *
-                           step(0.0, dot(normalRegion, directionalLight.direction));
+              float mask = step(0.0, dot(normalDetail, dirVector)) *
+                           step(0.0, dot(normalRegion, dirVector));
               //directIllum *= mask;
               specularIllum *= mask;
             }
-            vec3 totalIllum = directIllum * shadowColor;
+            vec3 totalIllum = ambientLightColor + directIllum * shadowColor;
             gl_FragColor.rgb = gl_FragColor.rgb * totalIllum + specularIllum * shadowColor;
             #endif
 
@@ -421,13 +427,104 @@ define [
             fogFactor = clamp( 1.0 - fogFactor, 0.0, 1.0 );
             gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor, fogFactor);
           }
+
           """
       # lineMat = new THREE.MeshBasicMaterial# color: 0x000000, wireframe: true
       # lineMat.wireframe = true
       # @material.wireframe = true
+      lights_pars_begin = """
+
+        "vec4 lDirection = viewMatrix * vec4( directionalLightDirection[ i ], 0.0 );",
+        "vec3 dirVector = normalize( lDirection.xyz );",
+
+        // diffuse
+
+        "float dotProduct = dot( normal, dirVector );",
+
+        "#ifdef WRAP_AROUND",
+
+          "float dirDiffuseWeightFull = max( dotProduct, 0.0 );",
+          "float dirDiffuseWeightHalf = max( 0.5 * dotProduct + 0.5, 0.0 );",
+
+          "vec3 dirDiffuseWeight = mix( vec3( dirDiffuseWeightFull ), vec3( dirDiffuseWeightHalf ), wrapRGB );",
+
+        "#else",
+
+          "float dirDiffuseWeight = max( dotProduct, 0.0 );",
+
+        "#endif",
+
+        "dirDiffuse  += diffuse * directionalLightColor[ i ] * dirDiffuseWeight;",
+
+        // specular
+
+        "vec3 dirHalfVector = normalize( dirVector + viewPosition );",
+        "float dirDotNormalHalf = max( dot( normal, dirHalfVector ), 0.0 );",
+        "float dirSpecularWeight = specularStrength * max( pow( dirDotNormalHalf, shininess ), 0.0 );",
+
+
+
+      uniform vec3 ambientLightColor;
+      vec3 getAmbientLightIrradiance( const in vec3 ambientLightColor ) {
+        vec3 irradiance = ambientLightColor;
+        #ifndef PHYSICALLY_CORRECT_LIGHTS
+          irradiance *= PI;
+        #endif
+        return irradiance;
+    }
+      #if NUM_DIR_LIGHTS > 0
+        struct DirectionalLight {
+            vec3 direction;
+          vec3 color;
+          int shadow;
+          float shadowBias;
+          float shadowRadius;
+          vec2 shadowMapSize;
+        };
+        uniform DirectionalLight directionalLights[ NUM_DIR_LIGHTS ];
+        void getDirectionalDirectLightIrradiance( const in DirectionalLight directionalLight, const in GeometricContext geometry, out IncidentLight directLight ) {
+            directLight.color = directionalLight.color;
+          directLight.direction = directionalLight.direction;
+          directLight.visible = true;
+        }
+      #endif
+
+      GeometricContext geometry;
+      geometry.position = - vViewPosition;
+      geometry.normal = normal;
+      geometry.viewDir = normalize( vViewPosition );
+      IncidentLight directLight;
+      #if ( NUM_DIR_LIGHTS > 0 ) && defined( RE_Direct )
+        DirectionalLight directionalLight;
+        #pragma unroll_loop
+        for ( int i = 0; i < NUM_DIR_LIGHTS; i ++ ) {
+            directionalLight = directionalLights[ i ];
+          getDirectionalDirectLightIrradiance( directionalLight, geometry, directLight );
+          #ifdef USE_SHADOWMAP
+          directLight.color *= all( bvec2( directionalLight.shadow, directLight.visible ) ) ? getShadow( directionalShadowMap[ i ], directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;
+          #endif
+          RE_Direct( directLight, geometry, material, reflectedLight );
+        }
+      #endif
+      #if defined( RE_IndirectDiffuse )
+        vec3 irradiance = getAmbientLightIrradiance( ambientLightColor );
+        #if ( NUM_HEMI_LIGHTS > 0 )
+          #pragma unroll_loop
+          for ( int i = 0; i < NUM_HEMI_LIGHTS; i ++ ) {
+              irradiance += getHemisphereLightIrradiance( hemisphereLights[ i ], geometry );
+          }
+        #endif
+      #endif
+      #if defined( RE_IndirectSpecular )
+        vec3 radiance = vec3( 0.0 );
+        vec3 clearCoatRadiance = vec3( 0.0 );
+      #endif
+
+      """;
+
       obj = new THREE.Mesh @geom, @material
-      obj.frustumCulled = no
-      obj.receiveShadow = yes
+      obj.frustumCulled = false
+      obj.receiveShadow = true
       @scene.add obj
 
       threeFmt = (channels) ->

@@ -83,7 +83,7 @@ define [
     initialize: ->
       @fetch()
       @save()
-      ga 'set', _.omit @attributes, 'id'
+      # ga 'set', _.omit @attributes, 'id'
     defaults: ->
       # 'dimension1'                  # RESERVED as User Type: 'Visitor' or 'Registered'
       'dimension2': 0                 # Twitter promo: 0 old, 1 new. Ended 20131104
@@ -105,8 +105,8 @@ define [
       @router = new Router @
 
       @router.on 'route', ->
-        window._gaq.push ['_trackPageview']
-        ga 'send', 'pageview'
+        # window._gaq.push ['_trackPageview']
+        # ga 'send', 'pageview'
 
       Backbone.on 'app:settrack', @setTrack, @
       Backbone.on 'app:settrackid', @setTrackId, @
@@ -170,8 +170,8 @@ define [
       $.ajax('/v1/auth/me')
       .done (data) =>
         if data.user
-          _gaq.push ['_setCustomVar', 1, 'User Type', 'Registered', 2]
-          ga 'set', 'dimension1', 'Registered'
+          # _gaq.push ['_setCustomVar', 1, 'User Type', 'Registered', 2]
+          # ga 'set', 'dimension1', 'Registered'
           # ga 'send', 'event', 'login', 'Log In'
           user = models.User.findOrCreate data.user.id
           user.set user.parse data.user
@@ -185,8 +185,8 @@ define [
           @logout()
 
     logout: ->
-      _gaq.push ['_setCustomVar', 1, 'User Type', 'Visitor', 2]
-      ga 'set', 'dimension1', 'Visitor'
+      # _gaq.push ['_setCustomVar', 1, 'User Type', 'Visitor', 2]
+      # ga 'set', 'dimension1', 'Visitor'
       # ga 'send', 'event', 'login', 'Log Out'
       @root.user = null
       Backbone.trigger 'app:status', 'Logged out'

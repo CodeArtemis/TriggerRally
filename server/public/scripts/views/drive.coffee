@@ -252,8 +252,8 @@ define [
           @$countdown.removeClass 'fadeout'
           if fade then _.defer => @$countdown.addClass 'fadeout'
 
-      window._gaq.push ['_trackEvent', 'Tracks', 'Drive Advance', "#{@app.root.track.id}: #{text}"]
-      ga 'send', 'event', 'Drive', 'Checkpoint', "#{@app.root.track.id}: #{text}", cpNext
+      # window._gaq.push ['_trackEvent', 'Tracks', 'Drive Advance', "#{@app.root.track.id}: #{text}"]
+      # ga 'send', 'event', 'Drive', 'Checkpoint', "#{@app.root.track.id}: #{text}", cpNext
 
       return unless @progress.isFinished()
       throw new Error 'Simulation error' unless @progress.nextCpIndex > 0  # Just a sanity check.

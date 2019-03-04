@@ -159,8 +159,8 @@ define [
       geom.vertices.push new Vec3(0.1, 0, -0.2)
       geom.vertices.push new Vec3(-0.1, 0, -0.2)
       geom.faces.push new THREE.Face3(0, 2, 1)
-      geom.faces.push new THREE.Face3(1, 2, 4)
-      geom.faces.push new THREE.Face3(1, 3, 4)
+      geom.faces.push new THREE.Face3(1, 2, 3)
+      geom.faces.push new THREE.Face3(2, 4, 3)
       @meshArrow = new THREE.Mesh(geom, mat)
       @meshArrow.position.set(0, 1, -2)
       @meshArrow2 = new THREE.Mesh(geom, mat2)
@@ -226,7 +226,7 @@ define [
           car.bodyMesh?.visible = yes
           targetPos = car.root.position.clone()
           targetPos.add car.vehic.body.linVel.clone().multiplyScalar .17
-          offset = car.config.chaseCamOffset or [ 0, 1.2, -2.9 ]
+          offset = car.config.chaseCamOffset or [ 0, 1.2, -3 ]
           matrix = car.root.matrix
 
           targetPos.x += matrix.elements[0] * offset[0];
@@ -463,80 +463,91 @@ define [
       }
       """
     constructor: (scene) ->
-      @uniforms =
-        fScale:
-          type: 'f'
-          value: 1000
-        tMap:
-          type: 't'
-          value: THREE.ImageUtils.loadTexture "/a/textures/dust.png"
-      attribute =
-        aColor:
-          type: 'v4'
-          value: []
-        aAngSize:
-          type: 'v2'
-          value: []
-      @geom = new THREE.Geometry()
-      @aColor = attribute.aColor
-      @aAngSize = attribute.aAngSize
-      @other = []
       @length = 200
+      @geom = new THREE.BufferGeometry();
+      @geom.addAttribute('position', new THREE.BufferAttribute(new Float32Array(@length * 3), 3).setDynamic(true))
+      @geom.addAttribute('aColor', new THREE.BufferAttribute(new Float32Array(@length * 4), 4).setDynamic(true))
+      @geom.addAttribute('aAngSize', new THREE.BufferAttribute(new Float32Array(@length * 2), 2).setDynamic(true))
+
+      @aColor = @geom.attributes.aColor
+      @aAngSize = @geom.attributes.aAngSize
+      @other = []
       for i in [0...@length]
-        @geom.vertices.push new Vec3
-        @aColor.value.push new Vec4
-        @aAngSize.value.push new Vec2
         @other.push
           angVel: 0
           linVel: new Vec3
-      params = { @uniforms, attribute, vertexShader, fragmentShader }
-      params.transparent = yes
-      params.depthWrite = no
-      mat = new THREE.MeshBasicMaterial
-        color: 0x0000FF
-      # new THREE.ShaderMaterial params
+
+      @uniforms =
+        fScale:
+          value: 1000
+        tMap:
+          value: THREE.ImageUtils.loadTexture "/a/textures/dust.png"
+      params = { @uniforms, vertexShader, fragmentShader }
+      params.transparent = true
+      params.depthWrite = false
+
+      mat = new THREE.ShaderMaterial params
       @particleSystem = new THREE.Points @geom, mat
-      @particleSystem.sortParticles = yes
       scene.add @particleSystem
       @idx = 0
 
     spawnDust: (pos, vel) ->
-      verts = @geom.vertices
+      verts = @geom.attributes.position.array
       idx = @idx
-      verts[idx].copy pos
-      @aColor.value[idx].set(
-        0.75 + 0.2 * Math.random(),
-        0.55 + 0.2 * Math.random(),
-        0.35 + 0.2 * Math.random(),
-        1)
-      ang = Math.random() * Math.PI * 2
-      @aAngSize.value[idx].set ang, 0.2
+
+      vertexOffset = idx * 3
+      verts[vertexOffset] = pos.x
+      verts[vertexOffset + 1] = pos.y
+      verts[vertexOffset + 2] = pos.z
+
+      aColorOffset = idx * 4
+      @aColor.array[aColorOffset] = 0.75 + 0.2 * Math.random()
+      @aColor.array[aColorOffset + 1] = 0.55 + 0.2 * Math.random()
+      @aColor.array[aColorOffset + 2] = 0.35 + 0.2 * Math.random()
+      @aColor.array[aColorOffset + 3] = 1;
+
+      aAngSizeOffset = idx * 2
+      @aAngSize.array[aAngSizeOffset] = Math.random() * Math.PI * 2
+      @aAngSize.array[aAngSizeOffset + 1] = 0.2
+
       other = @other[idx]
       other.angVel = Math.random() - 0.5
       other.linVel.copy vel
       other.linVel.z += 0.5
-      @idx = (idx + 1) % verts.length
+      @idx = (idx + 1) % (verts.length / 3)
 
     spawnContrail: (pos, vel) ->
-      verts = @geom.vertices
+      verts = @geom.attributes.position.array
       idx = @idx
-      verts[idx].copy pos
+
+      vertexOffset = idx * 3
+      verts[vertexOffset] = pos.x
+      verts[vertexOffset + 1] = pos.y
+      verts[vertexOffset + 2] = pos.z
+
       intensity = 1 - Math.random() * 0.05
-      @aColor.value[idx].set(intensity, intensity, intensity, 0.3)
-      ang = Math.random() * Math.PI * 2
-      @aAngSize.value[idx].set ang, 0
+      aColorOffset = idx * 4
+      @aColor.array[aColorOffset] = intensity
+      @aColor.array[aColorOffset + 1] = intensity
+      @aColor.array[aColorOffset + 2] = intensity
+      @aColor.array[aColorOffset + 3] = 0.3;
+
+      aAngSizeOffset = idx * 2
+      @aAngSize.array[aAngSizeOffset] = Math.random() * Math.PI * 2
+      @aAngSize.array[aAngSizeOffset + 1] = 0
+
       other = @other[idx]
       other.angVel = 0
       other.linVel.copy vel
       # other.linVel.z += 0.5
-      @idx = (idx + 1) % verts.length
+      @idx = (idx + 1) % (verts.length / 3)
 
     update: (camera, delta) ->
-      @uniforms.fScale.value = 100 / camera.degreesPerPixel
+      @uniforms.fScale.value = 1000 / camera.degreesPerPixel
       @particleSystem.position.copy camera.position
-      vertices = @geom.vertices
-      aColor = @aColor.value
-      aAngSize = @aAngSize.value
+      vertices = @geom.attributes.position.array
+      aColor = @aColor.array
+      aAngSize = @aAngSize.array
       other = @other
       linVelScale = 1 / (1 + delta * 1)
       idx = 0
@@ -544,17 +555,29 @@ define [
       while idx < length
         linVel = other[idx].linVel
         linVel.multiplyScalar linVelScale
-        vertices[idx].add tmpVec3a.copy(linVel).multiplyScalar(delta)
-        aColor[idx].w -= delta * 1
-        aAngSize[idx].x += other[idx].angVel * delta
-        if aColor[idx].w <= 0
-          aAngSize[idx].y = 0
+        tmpVec3a.copy(linVel).multiplyScalar(delta)
+        vertices[idx * 3] = tmpVec3a.x
+        vertices[idx * 3 + 1] = tmpVec3a.y
+        vertices[idx * 3 + 2] =tmpVec3a.z
+        aColor[idx * 4 + 3] -= delta * 1
+        aAngSize[idx * 2] += other[idx].angVel * delta
+        if aColor[idx * 4 + 3] <= 0
+          aAngSize[idx * 2 + 1] = 0
         else
-          aAngSize[idx].y += delta * 0.5
+          aAngSize[idx * 2 + 1] += delta * 0.5
         idx++
-      @geom.verticesNeedUpdate = yes
-      @aColor.needsUpdate = yes
-      @aAngSize.needsUpdate = yes
+
+      @geom.attributes.position.updateRange.offset = 0;
+      @aColor.updateRange.offset = 0;
+      @aAngSize.updateRange.offset = 0;
+
+      @geom.attributes.position.updateRange.count = -1;
+      @aColor.updateRange.count = -1;
+      @aAngSize.updateRange.count = -1;
+
+      @geom.attributes.position.needsUpdate = true
+      @aColor.needsUpdate = true
+      @aAngSize.needsUpdate = true
 
   keyWeCareAbout = (event) ->
     event.keyCode <= 255
@@ -806,14 +829,11 @@ define [
           }
 
           """
-      cubeMaterial.transparent = yes
+      cubeMaterial.transparent = false
       cubeMesh = new THREE.Mesh(
           new THREE.CubeGeometry(5000000, 5000000, 5000000), cubeMaterial)
-      cubeMesh.geometry.faces.splice(5, 1)
-      cubeMesh.flipSided = no
-      cubeMesh.doubleSided = yes
-      cubeMesh.position.set 0, 0, 20000
-      cubeMesh.renderDepth = 1000000  # Force draw at end.
+      cubeMesh.flipSided = false
+      cubeMesh.position.set 0, 0, 2000
       cubeMesh
 
     viewToEye: (vec) ->

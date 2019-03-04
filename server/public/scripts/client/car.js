@@ -49,10 +49,8 @@ function(THREE, util) {
     };
 
     this.loadPartsJSON = function(meshes, callback) {
-      var loader = new THREE.LegacyJSONLoader(); // geometries must be converted to buffer geometries
+      var loader = new THREE.JSONLoader(); // geometries must be converted to buffer geometries
       var sceneLoader = new THREE.SceneLoader();
-      var texturePath = '/a/textures';
-      loader.setPath(texturePath);
       async.parallel({
         body: function(cb) {
           if (meshes.body) {
@@ -166,7 +164,7 @@ function(THREE, util) {
           wheel.mesh.receiveShadow = true;
         }
         wheel.root = new THREE.Object3D();
-  			wheel.root.position = new THREE.Vector3(cfg.pos[0], cfg.pos[1], cfg.pos[2]);
+  			wheel.root.position.set(cfg.pos[0], cfg.pos[1], cfg.pos[2]);
         wheel.root.position.sub(center);
         wheel.root.add(wheel.mesh);
         this.root.add(wheel.root);
