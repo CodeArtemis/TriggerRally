@@ -14,7 +14,7 @@ THREE.SceneLoader = function () {
   this.geometryHandlerMap = {};
   this.hierarchyHandlerMap = {};
 
-  this.addGeometryHandler( "ascii", THREE.JSONLoader );
+  this.addGeometryHandler( "ascii", THREE.LegacyJSONLoader );
   // this.addGeometryHandler( "binary", THREE.BinaryLoader );
 
 };
@@ -811,7 +811,8 @@ THREE.SceneLoader.prototype.parse = function ( json, callbackFinished, url ) {
 
     } else if ( geoJSON.type === "embedded" ) {
 
-      var modelJson = data.embeds[ geoJSON.id ];
+      var modelJson = data.embeds[ geoJSON.id ],
+        texture_path = "";
 
       // pass metadata along to jsonLoader so it knows the format version
 
@@ -820,9 +821,10 @@ THREE.SceneLoader.prototype.parse = function ( json, callbackFinished, url ) {
       if ( modelJson ) {
 
         var jsonLoader = this.geometryHandlerMap[ "ascii" ][ "loaderObject" ];
-        jsonLoader.setTexturePath(urlBase);
-        var thasd = jsonLoader.parse( modelJson, urlBase );
-        create_callback_embed( geoID )(thasd.geometry, thasd.materials);
+        jsonLoader.setPath(texture_path);
+        var res = jsonLoader.parse( modelJson );
+        create_callback_embed( geoID )(res.geometry, res.geometry);
+
       }
 
     }

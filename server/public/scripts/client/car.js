@@ -49,7 +49,7 @@ function(THREE, util) {
     };
 
     this.loadPartsJSON = function(meshes, callback) {
-      var loader = new THREE.JSONLoader(); // geometries must be converted to buffer geometries
+      var loader = new THREE.LegacyJSONLoader(); // geometries must be converted to buffer geometries
       var sceneLoader = new THREE.SceneLoader();
       async.parallel({
         body: function(cb) {

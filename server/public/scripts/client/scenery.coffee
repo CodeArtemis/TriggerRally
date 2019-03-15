@@ -20,8 +20,7 @@ define [
       render = src.config.render
       @loadFunc render["scene-r54"] or render["scene"], (result) ->
         for mesh in result.scene.children
-          geom = new array_geometry.ArrayGeometry()
-          geom.addGeometry mesh.geometry
+          geom = mesh.geometry
           #geom.material = mesh.material
           mesh.geometry = geom
           meshes.push mesh
@@ -39,17 +38,20 @@ define [
       if entities.length > 0
         for object in layer.meshes
           # We merge copies of each object into a single mesh.
-          mergedGeom = new array_geometry.ArrayGeometry()
+          mergedGeom = new THREE.Geometry()
           mesh = new THREE.Mesh object.geometry
           for entity in entities
             mesh.scale.copy object.scale
             if renderConfig.scale? then mesh.scale.multiplyScalar renderConfig.scale
             mesh.scale.multiplyScalar entity.scale
             mesh.position.subVectors entity.position, tile.position
-            mesh.rotation.copy tmpVec3.addVectors(object.rotation, entity.rotation)
-            mergedGeom.mergeMesh mesh
+            tmpVec3.addVectors(object.rotation, entity.rotation)
+            mesh.rotation.set tmpVec3.x, tmpVec3.y, tmpVec3.z
+            mesh.updateMatrix();
+            mergedGeom.merge mesh.geometry, mesh.matrix
 
-          mergedGeom.updateOffsets()
+          mergedGeom = new THREE.BufferGeometry().fromGeometry(mergedGeom);
+          # mergedGeom.updateOffsets()
           # Clone the material so that we can adjust opacity per tile.
           material = object.material.clone()
           material.opacity = tile.opacity
