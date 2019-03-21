@@ -5,7 +5,7 @@
 define([
   'THREE',
   'game/sim',
-  'cs!util/collision',
+  'util/collision',
   'util/util'
 ],
 function(THREE, psim, collision, util) {

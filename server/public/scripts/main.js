@@ -49,8 +49,6 @@ require(
       , 'THREE-json-loader': '../js/three-json-loader'  // .min
       , 'THREE-scene-loader': '../js/three-scene-loader'  // .min
       , 'async': '../js/async'  // .min
-      , 'cs': '../js/cs'
-      , 'coffee-script': '../js/coffee-script'
       , 'backbone': '../js/backbone'  // -min
       , 'jade': '../js/require-jade'
       , 'jquery': '../js/jquery-2.0.0'  // .min
@@ -58,7 +56,7 @@ require(
     }
   },
   [
-    'cs!app'
+    'app'
   ],
   function main(App) {
     new App();

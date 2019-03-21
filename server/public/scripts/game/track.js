@@ -9,7 +9,7 @@ define([
   'game/scenery',
   'game/terrain',
   'util/image',
-  'cs!util/quiver',
+  'util/quiver',
   'util/util'
 ],
 function(LFIB4, THREE, _, gameScenery, gameTerrain, uImg, quiver, util) {

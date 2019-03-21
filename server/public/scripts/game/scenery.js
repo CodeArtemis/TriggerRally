@@ -4,8 +4,8 @@
 
 define([
   'util/LFIB4',
-  'cs!util/collision',
-  'cs!util/hash2d',
+  'util/collision',
+  'util/hash2d',
   'util/util',
   'THREE'
 ],
