@@ -6,7 +6,7 @@ define([
   'THREE',
   'async',
   'util/image',
-  'cs!util/quiver',
+  'util/quiver',
   'util/util'
 ],
 function(THREE, async, uImg, quiver, util) {

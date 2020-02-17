@@ -22,7 +22,7 @@
     }
   },
   paths: {
-      "THREE": "../js/three-r54"  // .min
+      "THREE": "../js/three-r101"  // .min
     , "async": "../js/async.min"  // .min
     , "backbone": "../js/backbone-min"  // -min
     , "cs": "../js/cs"

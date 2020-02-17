@@ -3,14 +3,13 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "coffee app.coffee"
+    "start": "babel-node app.js"
   },
   "dependencies": {
     "async": "*",
-    "backbone": "~1.0.0",
+    "backbone": "^1.4.0",
     "body-parser": "^1.18.3",
     "bson": "^4.0.1",
-    "coffee-script": "^1.12.7",
     "compression": "^1.7.3",
     "connect": "^2.19.5",
     "cookie-parser": "^1.4.4",
@@ -36,5 +35,9 @@
     "stripe": "^2.5.2",
     "stylus": "*",
     "underscore": "~1.5.2"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.7.0"
   }
 }

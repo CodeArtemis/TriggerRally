@@ -29,6 +29,6 @@ To Run
 Install MongoDB
 
 cd server
+npm i -g babel-cli
 npm i
-npm i -g coffee-script
 npm start

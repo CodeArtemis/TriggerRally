@@ -4,8 +4,8 @@
 
 define([
   'util/LFIB4',
-  'cs!util/collision',
-  'cs!util/hash2d',
+  'util/collision',
+  'util/hash2d',
   'util/util',
   'THREE'
 ],
@@ -102,7 +102,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
       addObjects.forEach(function(obj) {
         var object = {
           position: new Vec3(obj.pos[0], obj.pos[1], obj.pos[2]),
-          rotation: new Vec3(obj.rot[0], obj.rot[1], obj.rot[2]),
+          rotation: new THREE.Euler(obj.rot[0], obj.rot[1], obj.rot[2]),
           scale: obj.scale || 1
         };
         this.add.addObject(object.position.x, object.position.y, object);
@@ -139,17 +139,17 @@ function(LFIB4, collision, hash2d, util, THREE) {
     var scale = new Vec3(), pt;
     objects.forEach(function(object) {
       var objScale = object.scale;
-      mat4.setRotationFromEuler(object.rotation);
+      mat4.makeRotationFromEuler(object.rotation);
       mat4.scale(scale.set(objScale, objScale, objScale));
       for (i = 0; i < numpts; ++i) {
         pt = sl.points[i];
         pt.copy(thisSphereList.points[i]);
-        mat4.multiplyVector3(pt);
+        pt.applyMatrix4(mat4);
         pt.radius = thisSphereList.points[i].radius * objScale;
       }
       sl.bounds.center.copy(thisSphereList.bounds.center);
-      mat4.multiplyVector3(sl.bounds.center);
-      sl.bounds.center.addSelf(object.position);
+      sl.bounds.center.applyMatrix4(mat4);
+      sl.bounds.center.add(object.position);
       sl.bounds.radius = thisSphereList.bounds.radius * objScale;
       contactArrays.push(sl.collideSphere(sphere));
     });
@@ -172,17 +172,17 @@ function(LFIB4, collision, hash2d, util, THREE) {
     var scale = new Vec3(), pt;
     objects.forEach(function(object) {
       var objScale = object.scale;
-      mat4.setRotationFromEuler(object.rotation);
+      mat4.makeRotationFromEuler(object.rotation);
       mat4.scale(scale.set(objScale, objScale, objScale));
       for (i = 0; i < numpts; ++i) {
         pt = sl.points[i];
         pt.copy(thisSphereList.points[i]);
-        mat4.multiplyVector3(pt);
+        pt.applyMatrix4(mat4);
         pt.radius = thisSphereList.points[i].radius * objScale;
       }
       sl.bounds.center.copy(thisSphereList.bounds.center);
-      mat4.multiplyVector3(sl.bounds.center);
-      sl.bounds.center.addSelf(object.position);
+      sl.bounds.center.applyMatrix4(mat4);
+      sl.bounds.center.add(object.position);
       sl.bounds.radius = thisSphereList.bounds.radius * objScale;
       contactArrays.push(sl.collideSphereList(sphereList));
     });
@@ -197,7 +197,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
     var add = this.trackScenery.add;
     add && add.forEach(function(obj, idx) {
       var vec = new Vec3(obj.pos[0], obj.pos[1], obj.pos[2]);
-      vec.subSelf(ray.origin);
+      vec.sub(ray.origin);
       var a = 1;//ray.direction.dot(ray.direction);
       var along = ray.direction.dot(vec);
       var b = -2 * along;
@@ -320,7 +320,7 @@ function(LFIB4, collision, hash2d, util, THREE) {
       }
       if (drop) continue;
 
-      object.rotation = new Vec3(0, 0, random() * 2 * Math.PI);
+      object.rotation = new THREE.Euler(0, 0, random() * 2 * Math.PI);
       objects.push(object);
     }
     return objects;

@@ -94,7 +94,7 @@ function(THREE, pubsub, util) {
       if (obj.getContact) {
         var contact = obj.getContact(pt);
         if (contact) {
-          tmpVec3a.sub(contact.surfacePos, pt)
+          tmpVec3a.copy(contact.surfacePos).sub(pt)
           contact.depth = tmpVec3a.dot(contact.normal);
           if (contact.depth > 0) {
             contacts.push(contact);
@@ -121,9 +121,9 @@ function(THREE, pubsub, util) {
     var contactsArrays = [];
     // Collide points first.
     var tmpVec3 = new Vec3();
-    var offset = new Vec3(0, 0, -sphereList.radius).addSelf(sphereList.bounds.center);
+    var offset = new Vec3(0, 0, -sphereList.radius).add(sphereList.bounds.center);
     sphereList.points.forEach(function(point) {
-      tmpVec3.add(point, offset);
+      tmpVec3.copy(point).add(offset);
       tmpVec3.z -= point.radius;
       contactsArrays.push(this.collidePoint(tmpVec3));
     }, this);
@@ -149,7 +149,7 @@ function(THREE, pubsub, util) {
 
   exports.ReferenceFrame.prototype.updateMatrices = function() {
     this.ori.normalize();
-    this.oriMat.setRotationFromQuaternion(this.ori);
+    this.oriMat.makeRotationFromQuaternion(this.ori);
     this.oriMatInv.copy(this.oriMat).transpose();
   };
 
@@ -157,26 +157,26 @@ function(THREE, pubsub, util) {
   var tmpVec3c = new Vec3();
   exports.ReferenceFrame.prototype.getLocToWorldVector = function(vec) {
     var v = tmpVec3c.copy(vec);
-    this.oriMat.multiplyVector3(v);
+    v.applyMatrix4(this.oriMat);
     return v;
   };
   var tmpVec3d = new Vec3();
   exports.ReferenceFrame.prototype.getWorldToLocVector = function(vec) {
     var v = tmpVec3d.copy(vec);
-    this.oriMatInv.multiplyVector3(v);
+    v.applyMatrix4(this.oriMatInv);
     return v;
   };
   var tmpVec3e = new Vec3();
   exports.ReferenceFrame.prototype.getLocToWorldPoint = function(pt) {
     var v = tmpVec3e.copy(pt);
-    this.oriMat.multiplyVector3(v);
-    v.addSelf(this.pos);
+    v.applyMatrix4(this.oriMat);
+    v.add(this.pos);
     return v;
   };
   var tmpVec3f = new Vec3();
   exports.ReferenceFrame.prototype.getWorldToLocPoint = function(pt) {
-    var v = tmpVec3f.sub(pt, this.pos);
-    this.oriMatInv.multiplyVector3(v);
+    var v = tmpVec3f.copy(pt).sub(this.pos);
+    v.applyMatrix4(this.oriMatInv);
     return v;
   };
 
@@ -291,7 +291,7 @@ function(THREE, pubsub, util) {
   };
 
   exports.RigidBody.prototype.addForce = function(frc) {
-    this.accumForce.addSelf(frc);
+    this.accumForce.add(frc);
   };
 
   exports.RigidBody.prototype.addLocForce = function(frc) {
@@ -299,9 +299,9 @@ function(THREE, pubsub, util) {
   };
 
   exports.RigidBody.prototype.addForceAtPoint = function(frc, pt) {
-    this.accumForce.addSelf(frc);
-    var ptOffset = new Vec3().sub(pt, this.pos);
-    var torque = new Vec3().cross(ptOffset, frc);
+    this.accumForce.add(frc);
+    var ptOffset = new Vec3().copy(pt).sub(this.pos);
+    var torque = new Vec3().copy(ptOffset).cross(frc);
     this.addTorque(torque);
   };
 
@@ -319,7 +319,7 @@ function(THREE, pubsub, util) {
   };
 
   exports.RigidBody.prototype.addTorque = function(trq) {
-    this.accumTorque.addSelf(trq);
+    this.accumTorque.add(trq);
   };
 
   exports.RigidBody.prototype.addLocTorque = function(trq) {
@@ -327,10 +327,10 @@ function(THREE, pubsub, util) {
   };
 
   exports.RigidBody.prototype.getLinearVelAtPoint = function(pt) {
-    var ptOffset = pt.clone().subSelf(this.pos);
+    var ptOffset = pt.clone().sub(this.pos);
     //var angVel2 = this.getLocToWorldVector(this.angVel);
-    var cross = tmpVec3b.cross(this.angVel, ptOffset);
-    return cross.addSelf(this.linVel);
+    var cross = tmpVec3b.copy(this.angVel).cross(ptOffset);
+    return cross.add(this.linVel);
   };
 
   exports.RigidBody.prototype.tick = function(delta) {
@@ -338,14 +338,14 @@ function(THREE, pubsub, util) {
 
     // Linear components.
     var linAccel = tmpVec3a.copy(this.accumForce).divideScalar(this.mass);
-    linAccel.addSelf(this.sim.gravity);
+    linAccel.add(this.sim.gravity);
 
-    this.linVel.addSelf(linAccel.multiplyScalar(delta));
+    this.linVel.add(linAccel.multiplyScalar(delta));
 
-    this.pos.addSelf(tmpVec3a.copy(this.linVel).multiplyScalar(delta));
+    this.pos.add(tmpVec3a.copy(this.linVel).multiplyScalar(delta));
 
     // Integrate angular momentum.
-    this.angMom.addSelf(this.accumTorque.multiplyScalar(delta));
+    this.angMom.add(this.accumTorque.multiplyScalar(delta));
 
     // Angular momentum damping.
     var scaleFactor = 1 / (1 + this.angMom.lengthSq() * delta * this.angDamping);
@@ -353,16 +353,16 @@ function(THREE, pubsub, util) {
 
     // Calculate ang velocity from ang momentum.
     angVel.copy(this.angMom);
-    this.oriMatInv.multiplyVector3(angVel);
-    angVel.multiplySelf(this.angMassInv);
-    this.oriMat.multiplyVector3(angVel);
+    angVel.applyMatrix4(this.oriMatInv);
+    angVel.multiply(this.angMassInv);
+    angVel.applyMatrix4(this.oriMat);
 
     // Integrate orientation.
     var halfDelta = 0.5 * delta;
     var omega = new Quat(angVel.x * halfDelta,
                          angVel.y * halfDelta,
                          angVel.z * halfDelta, 0);
-    var spin = tmpQuat.multiply(omega, this.ori);
+    var spin = tmpQuat.multiplyQuaternions(omega, this.ori);
 
     // TODO: Add an add method to Quaternion.
     this.ori.x += spin.x;
