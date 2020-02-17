@@ -19,7 +19,7 @@
     "jade": "*",
     "method-override": "^3.0.0",
     "mongodb": "*",
-    "mongoose": "^3.8.40",
+    "mongoose": "^5.7.5",
     "mongoskin": "*",
     "morgan": "^1.9.1",
     "passport": "*",
