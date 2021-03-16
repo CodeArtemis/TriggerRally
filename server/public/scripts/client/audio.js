@@ -54,6 +54,7 @@ function(util) {
   };
 
   prot.loadBuffer = function(url, callback) {
+    url = window.BASE_PATH + url
     if (url in this.buffers) {
       var buffer = this.buffers[url];
       if (buffer instanceof CallbackQueue) {

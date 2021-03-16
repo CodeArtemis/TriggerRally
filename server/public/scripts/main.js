@@ -1,4 +1,5 @@
 // Copyright (C) 2012 jareiko / http://www.jareiko.net/
+window.BASE_PATH = window.location.href.slice(window.location.origin.length).replace(/\/$/, '')
 
 requirejs.config({
   //baseUrl: '/scripts',

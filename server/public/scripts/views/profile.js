@@ -33,7 +33,7 @@ define([
         loadingText = '...';
         pictureSrc = function(picture) {
           if (picture == null) { picture = 'blank'; }
-          return `/images/profile/${picture}.jpg`;
+          return `${window.BASE_PATH}/images/profile/${picture}.jpg`;
         };
         issueDate = function(created) {
           const isoDate = function(d) {

@@ -92,10 +92,16 @@ function(THREE, async, uImg, quiver, util) {
 
   exports.ImageSource.prototype.setConfig = function(config) {
     var maps = this.maps;
-
     for (var k in config) {
       if (!Object.prototype.hasOwnProperty.call(config, k)) continue;
-      if (config[k].url) maps[k].url = config[k].url;
+
+      if (config[k].url) {
+        let url = config[k].url
+        if (url[0] !== '/') {
+          url = '/' + url
+        }
+        maps[k].url = window.BASE_PATH + url;
+      }
       maps[k].scale = new Vec3(config[k].scale[0],
                                config[k].scale[1],
                                config[k].scale[2]);

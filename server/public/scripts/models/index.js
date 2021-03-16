@@ -142,11 +142,11 @@
 
   class Collection extends Backbone.Collection {}
 
-  const BASE_PATH = "/v1/";
+  const basePath = window.BASE_PATH + '/v1/';
 
   class PathCollection extends Collection {
     static initClass() {
-      this.prototype.url = BASE_PATH + this.path;
+      this.prototype.url = basePath + this.path;
     }
   }
   PathCollection.initClass();
@@ -278,7 +278,7 @@
     static initClass() {
       this.prototype.all = new (Backbone.Collection.extend({model: this}));
       buildProps(this, [ 'config', 'name', 'user', 'product' ]);
-      this.prototype.urlRoot = BASE_PATH + 'cars';
+      this.prototype.urlRoot = basePath + 'cars';
     }
     toJSON(options) {
       const data = super.toJSON(...arguments);
@@ -296,7 +296,7 @@
     static initClass() {
       this.prototype.all = new (Backbone.Collection.extend({model: this}));
       buildProps(this, [ 'desc', 'name', 'cars', 'gameversion', 'scenery', 'terrain' ]);
-      this.prototype.urlRoot = BASE_PATH + 'envs';
+      this.prototype.urlRoot = basePath + 'envs';
     }
     defaults() {
       return {cars: new CarCollection};
@@ -350,7 +350,7 @@
         'track',
         'user'
       ]);
-      this.prototype.urlRoot = BASE_PATH + 'runs';
+      this.prototype.urlRoot = basePath + 'runs';
     }
     parse() {
       const data = super.parse(...arguments);
@@ -390,7 +390,7 @@
         'user'
       ]);
       this.prototype.bubbleAttribs = [ 'config', 'env' ];
-      this.prototype.urlRoot = BASE_PATH + 'tracks';
+      this.prototype.urlRoot = basePath + 'tracks';
       // initialize: ->
       //   # @config = new TrackConfig
       //   super
@@ -465,7 +465,7 @@
         'runs'
       ]);
     }
-    url() { return BASE_PATH + `tracks/${this.id}/runs`; }
+    url() { return basePath + `tracks/${this.id}/runs`; }
     defaults() {
       return {runs: new RunCollection};
     }
@@ -499,7 +499,7 @@
         'name',
         'tracks'
       ]);
-      this.prototype.urlRoot = BASE_PATH + 'tracksets';
+      this.prototype.urlRoot = basePath + 'tracksets';
     }
     // cacheExpirySecs: 2
     defaults() {
@@ -547,7 +547,7 @@
         'tracks'
       ]);
       this.prototype.bubbleAttribs = [ 'tracks' ];
-      this.prototype.urlRoot = BASE_PATH + 'users';
+      this.prototype.urlRoot = basePath + 'users';
     }
     defaults() {
       return {tracks: new TrackCollectionSortName};
@@ -651,7 +651,7 @@
         'text',
         'user'
       ]);
-      this.prototype.urlRoot = BASE_PATH + 'comments';
+      this.prototype.urlRoot = basePath + 'comments';
         // Cannot be fetched directly.
     }
     parse() {
@@ -681,7 +681,7 @@
       buildProps(this, [
         'comments'
       ]);
-      this.prototype.urlRoot = BASE_PATH + 'commentsets';
+      this.prototype.urlRoot = basePath + 'commentsets';
     }
     defaults() {
       return {comments: new CommentCollection};
