@@ -29,7 +29,6 @@ Environment.pre('save', function(next) {
   next();
 });
 
-
 var Track = new Schema({
     pub_id          : { type: String, index: { unique: true } }
   , name            : { type: String, trim: true }

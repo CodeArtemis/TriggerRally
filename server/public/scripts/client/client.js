@@ -601,7 +601,7 @@ void main() {
             value: 1000
           },
           tMap: {
-            value: THREE.ImageUtils.loadTexture("/a/textures/dust.png")
+            value: THREE.ImageUtils.loadTexture(window.BASE_PATH + '/a/textures/dust.png')
           }
         };
         const params = { uniforms: this.uniforms, vertexShader, fragmentShader };
@@ -785,7 +785,7 @@ void main() {
         this.track = new gameTrack.Track(this.root);
 
         const sceneLoader = new THREE.SceneLoader();
-        const loadFunc = (url, callback) => sceneLoader.load(url, callback);
+        const loadFunc = (url, callback) => sceneLoader.load(window.BASE_PATH + url, callback);
         if (this.renderer) {
           this.add(new clientTerrain.RenderTerrain(
               this.scene, this.track.terrain, this.renderer.context, prefs.terrainhq)
@@ -978,7 +978,7 @@ void main() {
       }
 
       cubeMesh() {
-        const path = "/a/textures/miramar-z-512/miramar_";
+        const path = window.BASE_PATH + "/a/textures/miramar-z-512/miramar_";
         const format = '.jpg';
         const urls = (['rt','lf','ft','bk','up','dn'].map((part) => path + part + format));
         const textureCube = THREE.ImageUtils.loadTextureCube(urls);

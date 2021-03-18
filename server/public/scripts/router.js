@@ -44,8 +44,7 @@ define([
     Router = class Router extends Backbone.Router {
       static initClass() {
   
-        this.prototype.routes = {
-          // TODO: Figure out how to add a base path across all of these.
+        const routes = {
           "": "home",
           "about": "about",
           "ignition": "ignition",
@@ -63,6 +62,14 @@ define([
           "user/:userId/tracks": "userTracks",
           "user/:userId/favorites": "userFavTracks"
         };
+
+        // Hack add the base path (includes addresses without base path too for internal links that don't contain it)
+        const prefix = window.BASE_PATH.replace(/^\//, '') + '/'
+        this.prototype.routes = {}
+        Object.keys(routes).forEach(route => {
+          this.prototype.routes[route] = routes[route]
+          this.prototype.routes[prefix + route] = routes[route]
+        })
       }
 
       constructor(app) {

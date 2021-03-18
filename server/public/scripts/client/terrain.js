@@ -67,14 +67,14 @@ define([
 
       _setup() {
         let detailNode, heightNode, surfaceNode;
-        const diffuseDirtTex = THREE.ImageUtils.loadTexture('/a/textures/dirt.jpg');
+        const diffuseDirtTex = THREE.ImageUtils.loadTexture(window.BASE_PATH + '/a/textures/dirt.jpg');
         diffuseDirtTex.wrapS = THREE.RepeatWrapping;
         diffuseDirtTex.wrapT = THREE.RepeatWrapping;
         if (this.glAniso) { diffuseDirtTex.onUpdate = () => {
           return this.gl.texParameteri(this.gl.TEXTURE_2D, this.glAniso.TEXTURE_MAX_ANISOTROPY_EXT, 4);
         }; }
 
-        const diffuseRockTex = THREE.ImageUtils.loadTexture('/a/textures/rock.jpg');
+        const diffuseRockTex = THREE.ImageUtils.loadTexture(window.BASE_PATH + '/a/textures/rock.jpg');
         diffuseRockTex.wrapS = THREE.RepeatWrapping;
         diffuseRockTex.wrapT = THREE.RepeatWrapping;
 

@@ -48,13 +48,15 @@ function(THREE, util) {
       this.loadPartsJSON(this.config.meshes, callback);
     };
 
+    let BASE_PATH = window.BASE_PATH
+
     this.loadPartsJSON = function(meshes, callback) {
       var loader = new THREE.LegacyJSONLoader(); // geometries must be converted to buffer geometries
       var sceneLoader = new THREE.SceneLoader();
       async.parallel({
         body: function(cb) {
           if (meshes.body) {
-            loader.load(meshes.body, function() { cb(null, arguments); });
+            loader.load(BASE_PATH + meshes.body, function() { cb(null, arguments); });
           } else if (meshes.scene) {
             sceneLoader.load(meshes.scene, function() { cb(null, arguments); });
           } else {
@@ -63,7 +65,7 @@ function(THREE, util) {
         },
         wheel: function(cb) {
           if (meshes.wheel) {
-            loader.load(meshes.wheel, function() { cb(null, arguments); });
+            loader.load(BASE_PATH + meshes.wheel, function() { cb(null, arguments); });
           } else {
             cb(null, null);
           }

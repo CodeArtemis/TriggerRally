@@ -34,7 +34,7 @@ define([
       }
 
       viewModel() {
-        const img_src = `/images/profile/${(this.model != null ? this.model.picture : undefined) != null ? (this.model != null ? this.model.picture : undefined) : "blank"}.jpg`;
+        const img_src = `${window.BASE_PATH}/images/profile/${(this.model != null ? this.model.picture : undefined) != null ? (this.model != null ? this.model.picture : undefined) : "blank"}.jpg`;
         return {
           user: this.model,
           img_src
