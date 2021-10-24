@@ -34,7 +34,7 @@
     "socket.io": "*",
     "stripe": "^2.5.2",
     "stylus": "*",
-    "underscore": "~1.5.2"
+    "underscore": "~1.12.1"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
