@@ -195,7 +195,7 @@ define([
           },
           error() {
             console.error('trackEdit loading error');
-            return Backbone.trigger('app:notfound');
+            // return Backbone.trigger('app:notfound');
           }
         });
       }

@@ -378,7 +378,7 @@ define([
           },
           error() {
             console.error('drive: loading error');
-            return Backbone.trigger('app:notfound');
+            //return Backbone.trigger('app:notfound');
           }
         });
       }

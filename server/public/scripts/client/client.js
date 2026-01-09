@@ -1043,10 +1043,10 @@ void main() {
       // TODO: Does this intersection stuff belong in client?
       intersectRay(ray) {
         let isect = [];
+        isect = isect.concat(this.intersectStartPosition(ray));
         isect = isect.concat(this.track.scenery.intersectRay(ray));
         isect = isect.concat(this.intersectCheckpoints(ray));
-        isect = isect.concat(this.intersectTerrain(ray));
-        isect = isect.concat(this.intersectStartPosition(ray));
+        isect = isect.concat(this.intersectTerrain(ray));      
         return [].concat.apply([], isect);
       }
 

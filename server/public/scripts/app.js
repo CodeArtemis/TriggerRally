@@ -130,6 +130,25 @@ define([
         xp: new ExperimentsModel
       });
 
+      if (localStorage.getItem("user") == null) {
+        localStorage.setItem("user", "Guest")
+      }
+
+      const userData = {
+        "user"            : "Guest",
+        "id"              : "Guest",
+        "admin"           : "false",
+        "picture"         : null,
+        "products"        : [],
+        "favorite_tracks" : [],
+        "credits"         : 0
+      }
+      
+      const user = models.User.findOrCreate(userData.id);
+      user.set(user.parse(userData));
+      this.root.user = user;
+
+
       this.root.prefs.fetch();  // Assume sync because it's localStorage.
       this.root.prefs.on('change', () => this.root.prefs.save());
 

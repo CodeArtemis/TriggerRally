@@ -283,8 +283,7 @@ define([
 
         const findObject = function(mouseX, mouseY) {
           const isect = client.findObject(mouseX, mouseY);
-          for (let obj of Array.from(isect)) { if (obj.type === 'terrain') { obj.distance += 10; } }
-          isect.sort((a, b) => a.distance > b.distance);
+          // selecting by distance allows loosing objects below terrain
           return isect[0];
         };
 

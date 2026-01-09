@@ -196,8 +196,28 @@ define([
       cmdDelete.$content.click(() => Ops.delete(root.track, selection));
 
       cmdCopyTrack.$content.click(function() {
-        const newTrack = new models.Track({
-          parent: root.track});
+
+        const newRawTrack = root.track.toJSON()
+
+        newRawTrack.id = "MyTrack"
+        newRawTrack.count_fav = 0,
+        newRawTrack.demo = true,
+        newRawTrack.modified = new Date().toISOString()
+        newRawTrack.name = newRawTrack.name + " copy",
+        newRawTrack.parent = root.track.id,
+        newRawTrack.user = root.user,
+        newRawTrack.prevent_copy = false,
+        newRawTrack.count_copy = 0,
+        newRawTrack.count_drive = 0,
+        newRawTrack.published = false,
+        newRawTrack.modified_ago = "",
+        newRawTrack.created_ago = "",
+        newRawTrack.created = new Date().toISOString()
+
+        const newTrack = new models.Track(newRawTrack, { parse: true }) 
+        Backbone.trigger("app:settrack", newTrack)
+
+        
         return newTrack.save(null, {
           success() {
             root.user.tracks.add(newTrack);

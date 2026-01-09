@@ -91,8 +91,14 @@ define([
           this.ang.z += this.velTarget.z;
         } else {
           this.pos.copy(this.autoPos);
-          this.ang.copy(this.autoAng);
+          this.ang.x = this.autoAng.x;
+          this.ang.y = this.autoAng.y;
+          this.ang.z = this.autoAng.z;
+
           this.autoTimer = -1;
+          
+          // this.ang is Euler, this.autoAng is Vector3
+          // copying directly breaks the camera
         }
       } else {
         this.velTarget.set(
