@@ -44,14 +44,14 @@
       //- li
       //-   a.btn.route(href="/tracklist/featured") Featured tracks
       li
-        a.btn.route(href="tracklist/favhot") Most favorited
+        a.btn.route(href="user/_/favorites") My favorites
           //- .new-marker New!
-      //- li
-      //-   a.btn.route(href="tracklist/recent") Published tracks
+      //li
+      //  a.btn.route(href="tracklist/recent") Published tracks
       li
         a.btn.route(href="tracklist/all") All tracks
       li
         a.btn.route(href="track/v3base2/edit") Create a track
       li
-        a.btn.route.uploadbutton(href="") Upload track
-        input#track-file-input(type="file", style="display:none")
+        a.btn.route.uploadbutton(href="") Upload tracks/runs
+        input#track-file-input(type="file", multiple="multiple", style="display:none")

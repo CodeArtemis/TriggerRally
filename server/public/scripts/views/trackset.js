@@ -6,6 +6,7 @@
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
+
 define([
   'backbone-full',
   'views/view',
@@ -13,7 +14,10 @@ define([
   'jade!templates/trackset',
   'jade!templates/tracksetentry',
   'views/favorite',
-  'views/user'
+  'views/user',
+  'util/util',
+  'util/localDB'
+  
 ], function(
   Backbone,
   View,
@@ -21,7 +25,9 @@ define([
   template,
   templateEntry,
   FavoriteView,
-  UserView
+  UserView,
+  Util,
+  localDB
 ) {
   let TrackSetView;
   class TrackSetEntryView extends View {
@@ -39,11 +45,12 @@ define([
     viewModel() {
       const data = super.viewModel(...arguments);
       const loading = '...';
-      if (data.name == null) { data.name = loading; }
+      //console.log("data:", data)
+      if (data.name == null)         { data.name         = loading; }
       if (data.modified_ago == null) { data.modified_ago = loading; }
-      if (data.count_copy == null) { data.count_copy = loading; }
-      if (data.count_drive == null) { data.count_drive = loading; }
-      if (data.count_fav == null) { data.count_fav = loading; }
+      if (data.count_copy   == null) { data.count_copy   = loading; }
+      if (data.count_drive  == null) { data.count_drive  = loading; }
+      if (data.count_fav    == null) { data.count_fav    = loading; }
       if (data.user == null) { data.user = null; }
       return data;
     }
@@ -74,7 +81,32 @@ define([
 
       const $favorite = this.$('.favorite');
       this.favoriteView = new FavoriteView(track, this.options.parent.options.root);
-      return $favorite.html(this.favoriteView.el);
+      this.favoriteView.updateChecked()
+
+      const $modified_ago = this.$('.modified_ago');
+      $modified_ago.text(Util.formatDateAgo(this.model.modified));
+      $favorite.html(this.favoriteView.el);
+
+      this.$('.download a').on('click', (e) => {
+        e.preventDefault();
+        const json = JSON.stringify(this.model.toJSON());
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+      
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${this.model.get('name') || 'track'}.json`;
+        a.click();
+      
+        URL.revokeObjectURL(url);
+      });
+      
+      this.$('.delete a').on('click', (e) => {
+        e.preventDefault();
+        //if (!confirm('Delete this track?')) return; 
+        localDB.deleteTrack(this.model.id)
+        //this.model.destroy();  // destroying should happen only when user confirms
+      });
     }
 
       // $count_fav = @$('count_fav')
@@ -103,7 +135,7 @@ define([
         this.prototype.template = template;
       }
       constructor(model, app) {
-        super({ model });
+        super({ model }, app);
       }
 
       initialize(options, app) {

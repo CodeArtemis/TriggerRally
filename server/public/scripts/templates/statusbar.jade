@@ -17,11 +17,14 @@ table
             |  by 
             span.author
           ul
+            // TODO: make these controls universal
             li
               a.route.drive Drive
               span.label  (<b>R</b> to restart)
             li: a.route.info Top times and Comments
-            li: a.route.edit Edit
+            li
+              a.route.edit Edit
+              //span.label  (<b>E</b> to edit)
           hr
           .label Other tracks:
           //- li: a.route(href="/tracklist/featured") Featured Tracks
@@ -30,7 +33,7 @@ table
           li: a.route(href="/tracklist/all") All Tracks
           li: a.route.mytracks(href="") My Tracks
           li: a.route.myfavorites(href="") My Favorites 
-            img.emoji(src="/emojis/star.png")
+            img.emoji(src="emojis/star.png")
       span.dropdownmenu Cars &blacktriangledown;
         menu.trackinfo
           .car-section

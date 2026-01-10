@@ -21,7 +21,8 @@ define([
   'models/index',
   'views/view',
   'jade!templates/drive',
-  'util/recorder'
+  'util/recorder',
+  'util/localDB'
 ], function(
   $,
   Backbone,
@@ -34,7 +35,8 @@ define([
   models,
   View,
   template,
-  recorder
+  recorder,
+  localDB
 ) {
   let Drive;
   const { KEYCODE } = util;
@@ -95,6 +97,7 @@ define([
       initialize(options, app, client) {
         this.record_i = this.record_i.bind(this);
         this.record_p = this.record_p.bind(this);
+        this.local_record_p = []
         this.app = app;
         this.client = client;
         this.replayRun = null;
@@ -128,6 +131,8 @@ define([
           case KEYCODE['R']:
             if (this.game) { return this.restartGame(); }
             break;
+          case KEYCODE['E']:
+            this.app.router.navigate(`track/${this.app.root.track.id}/edit`, { trigger: true });
         }
       }
 
@@ -147,10 +152,16 @@ define([
         this.$splitTime = this.$('.split-time');
         this.$restartButton = this.$('.restartbutton');
         this.$nextButton = this.$('.nextbutton');
+        this.$topTimesButton = this.$('.topTimesButton');
 
         this.$restartButton.on('click', () => {
           if (this.game) { return this.restartGame(); }
         });
+
+        this.$topTimesButton.attr(
+          'href',
+          `/track/${root.track ? root.track.id : ''}`
+        );
 
         (updateChallenge = () => {
           this.$runTimer.toggleClass('hidden', root.prefs.challenge === 'none');
@@ -252,6 +263,15 @@ define([
       }
 
       restartGame() {
+
+        if (this.replayGame){
+          this.replayGame.replayRunStep = 0
+          this.replayGame.restart()
+        }
+        
+        this.local_record_p = []
+        this.game.replayRunStep = 0
+        
         this.updateTimer = true;
         this.$runTimer.addClass('running');
         this.$('.racecomplete').addClass('hidden');
@@ -356,15 +376,39 @@ define([
         const { startTime } = this.game;
         const times = ((() => {
           const result = [];
-          for (time of Array.from(this.progress.cpTimes)) {             result.push(time - startTime);
+          for (time of Array.from(this.progress.cpTimes)) { 
+            result.push(time - startTime);
           }
           return result;
         })());
+
+        const timeNow = new Date().toISOString()
+        const run = {
+          id: this.app.root.user.get('user') + "-" + timeNow,
+          car: 'ArbusuG',
+          created: timeNow,
+          created_ago: '',
+          rank: 0,
+          record_i: [],
+          record_p: [],
+          local_record_p: this.local_record_p,
+          status: '',
+          time: times[times.length - 1],
+          time_readable: finishTime,
+          times: times,
+          track: this.app.root.track.id,
+          user: this.app.root.user.get('user'),
+        }
+
+        localDB.storeRun(run)
+
         return this.socket.emit('times', { times });
       }
 
       setTrackId(trackId) {
         this.trackId = trackId;
+
+        // TODO: clean this:
         const track = models.Track.findOrCreate(trackId);
         return track.fetch({
           success: () => {
@@ -382,9 +426,9 @@ define([
           }
         });
       }
-
-      setRunId(runId) {
-        return this.setRun(models.Run.findOrCreate(runId));
+      
+      setRunId(trackId, runId) {
+        localDB.getRun(runId, run => {this.setRun(run)})
       }
 
       useChallengeRun() {
@@ -426,14 +470,8 @@ define([
 
         if (!run) { return this.cleanUrl(); }
 
-        if (run.record_p) {
+        if (run.local_record_p) {
           return this.setRunInternal(run);
-        } else {
-          return run.fetch({
-            force: true,
-            success: () => this.setRunInternal(run),
-            error: () => this.cleanUrl()
-          });
         }
       }
 
@@ -446,13 +484,11 @@ define([
         // TODO: Check that replayGame matches replayRun?
         if (this.replayGame) { return; }
         if (!this.replayRun || !this.game) { return; }
-        const car = models.Car.findOrCreate(this.replayRun.car.id);
+        const car = models.Car.findOrCreate(this.replayRun.car);
         return car.fetch({success: () => {
           if (this.destroyed) { return; }
-          this.replayGame = new gameGame.Game(this.client.track);
-          this.replayGame.addCarConfig(car.config, progress => {
-            return this.syncReplayGame(progress);
-          });
+          this.replayGame = new gameGame.Game(this.client.track, this.replayRun);
+          this.replayGame.addCarConfig(car.config, progress => {});
           return this.client.addGame(this.replayGame, {isGhost: true});
         }
         });
@@ -462,6 +498,17 @@ define([
         if (!this.game) { return; }
         if (this.updateTimer) {
           const raceTime = this.game.interpolatedRaceTime();
+          
+          this.local_record_p.push({
+            raceTime: raceTime,
+            pos:    { ...this.progress.vehicle.body.pos    },
+            ori:    { ...this.progress.vehicle.body.ori    },
+            linVel: { ...this.progress.vehicle.body.linVel },
+            angMom: { ...this.progress.vehicle.body.angMom }
+          })
+          this.progress.vehicle.body.linVel
+          this.progress.vehicle.body.angMom
+          
           if (raceTime >= 0) {
             if (this.lastRaceTime < 0) {
               this.client.speak('go');

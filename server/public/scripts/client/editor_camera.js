@@ -55,6 +55,7 @@ define([
     }
 
     translate(vec) {
+      this.autoTimer = -1  // cuts camera animation when the user translates
       this.pos.add(vec);
       return this.updateMatrix();
     }

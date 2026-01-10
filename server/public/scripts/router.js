@@ -21,7 +21,8 @@ define([
   'views/replay',
   'views/spin',
   'views/track',
-  'views/trackset'
+  'views/trackset',
+  'util/localDB'
 ], function(
   Backbone,
   models,
@@ -37,7 +38,8 @@ define([
   ReplayView,
   SpinView,
   TrackView,
-  TrackSetView
+  TrackSetView,
+  localDB
 ) {
   let Router;
   return Router = (function() {
@@ -148,64 +150,67 @@ define([
       }
 
       track(trackId) {
-        this.setSpin();
-        const track = models.Track.findOrCreate(trackId);
-        const view = new TrackView(track, this.app, this.uni.client);
-        return this.uni.setViewChild(view.render());
+        localDB.getTrack(trackId, (response) => {
+          const track = new models.Track(response, { parse: true });
+          const view = new TrackView(track, this.app, this.uni.client);
+          //track.trigger('change:env');
+          //if (track.env !== (lastTrack != null ? lastTrack.env : undefined)) {
+          //  track.trigger('change:env'); console.log("changing env")
+          //}
+          Backbone.trigger('app:status', 'Changed');
+          return this.uni.setViewChild(view.render());
+        })
       }
 
       trackDrive(trackId, runId) {
-        let view = this.uni.getView3D();
-        if (!(view instanceof DriveView) ||
-               (view !== this.uni.getViewChild())) {
-          view = new DriveView(this.app, this.uni.client);
+
+        localDB.getTrack(trackId, (response) => {
+          const track = new models.Track(response, { parse: true });
+          const view = new DriveView(this.app, this.uni.client);
           this.uni.setViewBoth(view);
           view.render();
-        }
-        view.setTrackId(trackId);
-        if (runId) {
-          return view.setRunId(runId);
-        } else {
-          return view.useChallengeRun();
-        }
+          console.log("step 5")
+          
+          if (this.app.root.track.id != track.id) {
+            Backbone.trigger('app:settrack', track);
+          }
+          console.log()
+
+          if (runId) {
+            view.setRunId(trackId, runId);
+          } else {
+            return view.useChallengeRun();
+          }
+        })
       }
 
       trackEdit(trackId) {
-        if (!(this.uni.getView3D() instanceof EditorView) ||
-               (this.uni.getView3D() !== this.uni.getViewChild())) {
+        localDB.getTrack(trackId, (response) => {
+          //if (!(this.uni.getView3D() instanceof EditorView) ||
+          //     (this.uni.getView3D() !== this.uni.getViewChild())) {
+          //
+          //}
+          const track = new models.Track(response, { parse: true });
           const view = new EditorView(this.app, this.uni.client);
           this.uni.setViewBoth(view);
           view.render();
-        }
 
-        // TODO: Let the editor do this itself.
-        const track = models.Track.findOrCreate(trackId);
-        return track.fetch({
-          success() {
-            return track.env.fetch({
-              success() {
-                Backbone.trigger("app:settrack", track, true);
-                return Backbone.trigger('app:settitle', `Edit ${track.name}`);
-              },
-              error() {
-                console.error('trackEdit environment loading error');
-                return Backbone.trigger('app:notfound');
-              }
-            });
-          },
-          error() {
-            console.error('trackEdit loading error');
-            // return Backbone.trigger('app:notfound');
-          }
-        });
+          Backbone.trigger('app:settrack', track);
+        })
       }
 
       trackset(setId) {
         this.setSpin();
-        const trackSet = models.TrackSet.findOrCreate(setId);
-        trackSet.fetch();
-        const view = new TrackSetView(trackSet, this.app, this.uni.client);
-        return this.uni.setViewChild(view.render());
+        const trackSet = new models.TrackSet()//.findOrCreate(setId);
+
+        localDB.getAllTracks(allTracks => {
+          allTracks.sort((a, b) => a.modified > b.modified ? -1 : 1)
+          for (var track of allTracks) {
+            trackSet.tracks.add(new models.Track(track, { parse: true }))
+          }
+          const view = new TrackSetView(trackSet, this.app, this.uni.client);
+          return this.uni.setViewChild(view.render());
+        })
       }
 
       user(userId) {
@@ -217,43 +222,39 @@ define([
 
       userFavTracks(userId) {
         this.setSpin();
-        const user = models.User.findOrCreate(userId);
-        return user.fetch({
-          success: () => {
-            const favTracks = (Array.from(user.favorite_tracks).map((trackId) => models.Track.findOrCreate(trackId)));
-            const trackSet = new models.TrackSet({
-              name: `${user.name}'s Favorites`,
-              tracks: new models.TrackCollection(favTracks)
-            });
-            // trackSet.tracks.on 'change:modified', -> trackSet.tracks.sort()
+        const trackSet = new models.TrackSet()//.findOrCreate(setId);
+
+        localDB.getAllTracks(allTracks => {
+          localDB.getAllFavs(AllFavs => {
+            allTracks.sort((a, b) => a.modified > b.modified ? -1 : 1)
+            for (var track of allTracks) {
+              // is this line too inefficient?
+              if (AllFavs.some(o => o.id === track.id)) {
+                trackSet.tracks.add(new models.Track(track, { parse: true }))  
+              }
+            }
+  
             const view = new TrackSetView(trackSet, this.app, this.uni.client);
             return this.uni.setViewChild(view.render());
-          },
-          error() {
-            console.error('userfav tracks loading error');
-            return Backbone.trigger('app:notfound');
-          }
-        });
+          })
+        })
+        return
       }
 
       userTracks(userId) {
         this.setSpin();
-        const user = models.User.findOrCreate(userId);
-        return user.fetch({
-          success: () => {
-            const trackSet = new models.TrackSet({
-              name: `${user.name}'s Tracks`,
-              tracks: new models.TrackCollectionSortModified(user.tracks.models)
-            });
-            trackSet.tracks.on('change:modified', () => trackSet.tracks.sort());
-            const view = new TrackSetView(trackSet, this.app, this.uni.client);
-            return this.uni.setViewChild(view.render());
-          },
-          error() {
-            console.error('userTrack loading error');
-            return Backbone.trigger('app:notfound');
+        const trackSet = new models.TrackSet()
+        localDB.getAllTracks(allTracks => {
+          allTracks.sort((a, b) => a.modified > b.modified ? -1 : 1)
+          for (var track of allTracks) {
+            if (track.user == userId) {
+              trackSet.tracks.add(new models.Track(track, { parse: true }))  
+            }
           }
-        });
+
+          const view = new TrackSetView(trackSet, this.app, this.uni.client);
+          return this.uni.setViewChild(view.render());
+        })
       }
     };
     Router.initClass();

@@ -1,5 +1,6 @@
 {
   "__v" : 0,
+  "id" : "RF87t6b6",
   "_id" : {"$oid":"51cd5e96de612e2be6000001"},
   "config" : {
     "scenery" : {
@@ -418,5 +419,7 @@
   "prevent_copy" : false,
   "pub_id" : "RF87t6b6",
   "published" : false,
-  "user" : {"$oid":"4f82ac71461ee1ae7100000c"}
+  "user" : "jareiko",
+  "modified":"2013-05-17T17:05:16.545Z",
+  "created":"2013-01-20T19:24:47.000Z"
 }

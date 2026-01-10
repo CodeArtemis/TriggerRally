@@ -2,10 +2,15 @@ td
   a.route(href="/track/#{id}") &rArr; 
     strong.trackname= name
 td.trackuser
-td= modified_ago
+td.modified_ago
 td= count_drive
 td= count_copy
 td
   span.favorite
-  | 
-  span.count_fav= count_fav
+  //| 
+  //span.count_fav= count_fav
+td.download
+  a.download-link(href="#") ⬇
+
+td.delete
+  a.delete-link(href="#") ✖

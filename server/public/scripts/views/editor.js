@@ -1,3 +1,5 @@
+//const { transpose } = require("underscore");
+
 /*
  * decaffeinate suggestions:
  * DS001: Remove Babel/TypeScript constructor workaround
@@ -22,7 +24,8 @@ define([
   'models/index',
   'views/inspector',
   'views/view',
-  'jade!templates/editor'
+  'jade!templates/editor',
+  'util/localDB'
 ], function(
   _,
   Backbone,
@@ -35,7 +38,8 @@ define([
   models,
   InspectorView,
   View,
-  template
+  template,
+  localDB
 ) {
   let EditorView;
   const { MB } = util2;
@@ -96,10 +100,14 @@ define([
 
         this.objs.push(client.addEditorCheckpoints(editorObjects));
 
-        const doSave = _.debounce(function() {
+        const doSave = _.debounce(() => {
           if ((root.user !== root.track.user) || root.track.published) {
             return Backbone.trigger('app:status', 'Read only');
           }
+          root.track.set('modified', new Date().toISOString(), { silent: true, dontSave: true})
+          localDB.updateTrack(root.track)
+          console.log("Saving track")
+
           Backbone.trigger('app:status', 'Saving...');
           const result = root.track.save(null, {
             success(model, response, options) {
@@ -425,6 +433,31 @@ define([
         this.inspectorView.destroy();
         this.client.scene.remove(this.editorObjects);
         return this.client.destroyObjects(this.objs);
+      }
+
+      onKeyDown(event) {
+        const ctrlPressed = event.ctrlKey || event.metaKey
+        if (event.altKey) { return; }
+        switch (event.keyCode) {
+          case KEYCODE['Z']:
+            // TODO: implement ctrl+Z
+            if (ctrlPressed){
+              if (!event.shiftKey){
+                // this.undo()
+              }
+              else {
+                // this.redo()
+              }
+            }
+          case KEYCODE['R']:
+            if (event.target instanceof HTMLInputElement ||
+              event.target instanceof HTMLTextAreaElement ||
+              event.target.isContentEditable)
+              { break }
+            this.app
+            this.app.router.navigate(`track/${this.app.root.track.id}/drive`, { trigger: true });
+            break;
+        }
       }
     };
     EditorView.initClass();

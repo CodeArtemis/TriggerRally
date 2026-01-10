@@ -17,7 +17,9 @@ define([
   'views/view_collection',
   'jade!templates/track',
   'jade!templates/trackrun',
-  'util/popup'
+  'util/util',
+  'util/popup',
+  'util/localDB'
 ], function(
   $,
   Backbone,
@@ -29,10 +31,12 @@ define([
   ViewCollection,
   template,
   templateRun,
-  popup
+  util,
+  popup,
+  localDB
 ) {
   let TrackView;
-  const loadingText = '...';
+  const loadingText = '.-.';
 
   class TrackRunView extends View {
     static initClass() {
@@ -41,13 +45,13 @@ define([
     }
 
     initialize() {
-      return this.model.fetch();
+      //return this.model.fetch();
     }
 
     viewModel() {
       const data = super.viewModel(...arguments);
       if (data.name == null) { data.name = loadingText; }
-      if (data.modified_ago == null) { data.modified_ago = loadingText; }
+      data.created_ago = util.formatDateAgo(data.created);
       if (data.user == null) { data.user = null; }
       return data;
     }
@@ -62,17 +66,31 @@ define([
       // @listenTo run, 'change', @render, @
 
       const $runuser = this.$('.runuser');
+      $runuser.text(run.get('user'))
       this.userView = null;
-      (updateUserView = () => {
-        if (this.userView != null) {
-          this.userView.destroy();
-        }
-        this.userView = run.user && new UserView({
-          model: run.user});
-        $runuser.empty();
-        if (this.userView) { return $runuser.append(this.userView.el); }
-      })();
-      return this.listenTo(run, 'change:user', updateUserView);
+
+      // download run
+      this.$('.download a').on('click', (e) => {
+        e.preventDefault();
+    
+        const json = JSON.stringify(run.toJSON());
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+    
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `run-${run.id}.json`;
+        a.click();
+    
+        URL.revokeObjectURL(url);
+      });
+    
+      // delete run
+      this.$('.delete a').on('click', (e) => {
+        e.preventDefault();
+        localDB.deleteRun(run.id)
+        run.destroy();
+      });
     }
 
     destroy() {
@@ -111,21 +129,9 @@ define([
 
         Backbone.trigger('app:settitle', this.model.name);
         this.listenTo(this.model, 'change:name', () => Backbone.trigger('app:settitle', this.model.name));
-        this.listenTo(this.model, 'change:id', () => this.render());
+        //this.listenTo(this.model, 'change:id', () => this.render());
         const track = this.model;
-        return track.fetch({
-          success() {
-            return track.env.fetch({
-              success() {
-                return Backbone.trigger('app:settrack', track);
-              }
-            });
-          },
-          error() {
-            console.error('track:initialize loading error');
-            return Backbone.trigger('app:notfound');
-          }
-        });
+        return Backbone.trigger('app:settrack', track);
       }
 
       viewModel() {
@@ -142,13 +148,19 @@ define([
       afterRender() {
         let updateUserView;
         const track = this.model;
-        const trackRuns = models.TrackRuns.findOrCreate(track.id);
-        const trackRunsView = new TrackRunsView({
-          collection: trackRuns.runs,
+        const trackId = track.get('id');
+
+        this.runs = new models.RunCollection();
+
+        this.trackRunsView = new TrackRunsView({
+          collection: this.runs,
           el: this.$('table.runlist')
         });
-        trackRunsView.render();
-        trackRuns.fetch();
+        this.trackRunsView.render();
+
+        localDB.getRuns(trackId, runs => {
+          this.runs.reset(runs);
+        });
 
         const $author = this.$('.author');
         this.userView = null;

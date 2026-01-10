@@ -15,7 +15,8 @@ define([
   'views/notfound',
   'views/purchase',
   'views/unified',
-  'util/popup'
+  'util/popup',
+  'util/localDB'
 ], function(
   $,
   _,
@@ -25,7 +26,8 @@ define([
   NotFoundView,
   PurchaseView,
   UnifiedView,
-  popup
+  popup,
+  localDB
 ) {
   let App;
   const jsonClone = obj => JSON.parse(JSON.stringify(obj));
@@ -126,6 +128,7 @@ define([
       this.root = new RootModel({
         user: null,
         track: null,
+        //track: models.Track.findOrCreate('RF87t6b6'),
         prefs: new PrefsModel,
         xp: new ExperimentsModel
       });
@@ -135,8 +138,8 @@ define([
       }
 
       const userData = {
-        "user"            : "Guest",
-        "id"              : "Guest",
+        "user"            : localStorage.getItem("user"),
+        "id"              : localStorage.getItem("user"),
         "admin"           : "false",
         "picture"         : null,
         "products"        : [],
@@ -172,7 +175,13 @@ define([
       Backbone.on('app:notfound', this.notFound, this);
 
       this.checkUserLogin();
-      const found = Backbone.history.start({pushState: true});
+
+      const found = Backbone.history.start({
+        pushState: true,
+        //root: window.BASE_PATH
+        //silent: true
+      }); 
+
       if (!found) {
         console.error('app:route not found');
         Backbone.trigger('app:notfound');
@@ -185,8 +194,9 @@ define([
         }
       }
 
+      // TODO: find the moment the app is ready to navigate instead of estimating time
       setTimeout(() => {
-        if (window.__INITIAL_PATH__ != window.BASE_PATH) {
+        if (window.__INITIAL_PATH__.replace(/\/$/, '') != window.BASE_PATH) {
           const path = window.__INITIAL_PATH__
           Backbone.history.navigate(path, { trigger: true });
         }
@@ -221,23 +231,12 @@ define([
 
     setTrackId(trackId) {
       this.trackId = trackId;
-      console.log('setting track by id', trackId);
-      const track = models.Track.findOrCreate(trackId);
-      return track.fetch({
-        success: () => {
-          return track.env.fetch({
-            success: () => {
-              if (this.destroyed) { return; }
-              Backbone.trigger('app:settrack', track);
-              return Backbone.trigger('app:settitle', track.name);
-            }
-          });
-        },
-        error() {
-          console.error('setTrackId loading error');
-          return Backbone.trigger('app:notfound');
-        }
-      });
+
+      localDB.getTrack(trackId, (response) => {
+        const track = new models.Track(response, { parse: true });
+        Backbone.trigger('app:settrack', track);
+        return Backbone.trigger('app:settitle', track.name);
+      })
     }
 
     checkUserLogin() {

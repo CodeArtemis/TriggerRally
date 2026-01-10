@@ -10,13 +10,15 @@
 define([
   'views/view',
   'jade!templates/home',
+  'util/popup',
   'models/index',
-  'util/popup'
+  'util/localDB'
 ], function(
   View,
   template,
+  popup,
   models,
-  popup
+  localDB
 ) {
   let HomeView;
   return HomeView = (function() {
@@ -62,29 +64,39 @@ define([
         
         this.$('.uploadbutton').on('click', (e) => {
           e.preventDefault();
+          $fileInput[0].value = null; // allows re-uploading same files
           $fileInput[0].click();
         });
 
         $fileInput.on('change', (e) => {
 
-          const file = e.target.files[0]
-          const reader = new FileReader();
+          for (const file of e.target.files) {
+            const reader = new FileReader();
 
-          reader.onload = (evt) => {
-            const text = evt.target.result;
+            reader.onload = (evt) => {
+              const text = evt.target.result;
 
-            try {
-              const data = JSON.parse(text);
-              const track = new models.Track(data, { parse: true });
-              Backbone.trigger('app:settrack', track);
+              try {
+                const data = JSON.parse(text);
 
-            } catch (err) {
-              console.error("Invalid JSON:", err, file.name);
+                // track
+                if (data.config) {
+                  const track = new models.Track(data, { parse: true });
+                  localDB.storeTrack(track, this.app.root.user.get('id'));
+                }
+
+                // run
+                else if (data.time) {
+                  localDB.storeRun(data);
+                }
+
+              } catch (err) {
+                console.error("Invalid JSON:", err, file.name);
+              }
             };
 
+            reader.readAsText(file);
           }
-          reader.readAsText(file);
-          
         });
 
         (updatePromo = () => {
