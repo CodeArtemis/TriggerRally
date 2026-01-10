@@ -51,7 +51,7 @@ define([
       this.listenTo(root, 'change:track.', updateStartPos);
 
       if (!root.track) {
-        const track = models.Track.findOrCreate('uUJTPz6M');
+        const track = models.Track.findOrCreate('RF87t6b6');
         track.fetch({
           success: () => {
             return track.env.fetch({

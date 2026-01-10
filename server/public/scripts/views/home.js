@@ -10,10 +10,12 @@
 define([
   'views/view',
   'jade!templates/home',
+  'models/index',
   'util/popup'
 ], function(
   View,
   template,
+  models,
   popup
 ) {
   let HomeView;
@@ -54,6 +56,35 @@ define([
         this.listenTo(this.app.root, 'change:user.credits', () => {
           // TODO: Animate credit gains.
           return $userCredits.text(this.app.root.user != null ? this.app.root.user.credits : undefined);
+        });
+
+        const $fileInput = this.$('#track-file-input');
+        
+        this.$('.uploadbutton').on('click', (e) => {
+          e.preventDefault();
+          $fileInput[0].click();
+        });
+
+        $fileInput.on('change', (e) => {
+
+          const file = e.target.files[0]
+          const reader = new FileReader();
+
+          reader.onload = (evt) => {
+            const text = evt.target.result;
+
+            try {
+              const data = JSON.parse(text);
+              const track = new models.Track(data, { parse: true });
+              Backbone.trigger('app:settrack', track);
+
+            } catch (err) {
+              console.error("Invalid JSON:", err, file.name);
+            };
+
+          }
+          reader.readAsText(file);
+          
         });
 
         (updatePromo = () => {

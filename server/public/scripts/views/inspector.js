@@ -81,6 +81,7 @@ define([
       const cmdCopy           = attrib('#cmd-copy');
       const cmdDelete         = attrib('#cmd-delete');
       const cmdCopyTrack      = attrib('#cmd-copy-track');
+      const cmdDownloadTrack  = attrib('#cmd-download-track');
       const cmdPublishTrack   = attrib('#cmd-publish-track');
       const cmdClearRuns      = attrib('#cmd-clear-runs');
       const cmdDeleteTrack    = attrib('#cmd-delete-track');
@@ -194,6 +195,12 @@ define([
       cmdCopy.$content.click(() => Ops.copy(root.track, selection));
 
       cmdDelete.$content.click(() => Ops.delete(root.track, selection));
+
+      cmdDownloadTrack.$content.click(function() {
+        const str = JSON.stringify(root.track.toJSON(), null, 2);
+        const url = URL.createObjectURL(new Blob([str], {type: "application/json"}));
+        Object.assign(document.createElement("a"), { href: url, download: `${root.track.name}.json` }).click();
+      });
 
       cmdCopyTrack.$content.click(function() {
 

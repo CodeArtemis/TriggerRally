@@ -184,6 +184,13 @@ define([
           Backbone.trigger('app:webglerror');
         }
       }
+
+      setTimeout(() => {
+        if (window.__INITIAL_PATH__ != window.BASE_PATH) {
+          const path = window.__INITIAL_PATH__
+          Backbone.history.navigate(path, { trigger: true });
+        }
+      }, 1500);
     }
 
     notFound() {
