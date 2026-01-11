@@ -1,4 +1,4 @@
 span.user
   a.route(href="/user/#{user.id}")
     img(src=img_src)
-    span.username #{user.user}
+    span.username #{user.user || user.id}

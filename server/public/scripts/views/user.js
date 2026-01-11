@@ -35,7 +35,8 @@ define([
 
       viewModel() {
         const attrs = this.model ? this.model.toJSON() : {};
-        const img_src = `${window.BASE_PATH}/images/profile/${attrs.picture || 'blank'}.jpg`;
+        //const img_src = `${window.BASE_PATH}/images/profile/${attrs.picture || 'blank'}.jpg`;
+        const img_src = `${window.BASE_PATH}/images/profile/blank.jpg`;
       
         return {
           user: attrs,
