@@ -84,11 +84,13 @@ define([
       const cmdAdd            = attrib('#cmd-add');
       const cmdCopy           = attrib('#cmd-copy');
       const cmdDelete         = attrib('#cmd-delete');
+      const cmdSaveTrack      = attrib('#cmd-save-track');
       const cmdCopyTrack      = attrib('#cmd-copy-track');
       const cmdDownloadTrack  = attrib('#cmd-download-track');
       const cmdPublishTrack   = attrib('#cmd-publish-track');
       const cmdClearRuns      = attrib('#cmd-clear-runs');
       const cmdDeleteTrack    = attrib('#cmd-delete-track');
+      const $cmdSaveTrack     = $inspector.find('#cmd-save-track');
       const $cmdCopyTrack     = $inspector.find('#cmd-copy-track');
       const $cmdPublishTrack  = $inspector.find('#cmd-publish-track');
       const $cmdClearRuns     = $inspector.find('#cmd-clear-runs');
@@ -132,6 +134,7 @@ define([
         const published = isOwnTrack && root.track.published;
         const editable = isOwnTrack && !published;
         enableItem(selTitle.$content, editable);
+        enableItem(cmdSaveTrack.$content, editable);
         enableItem(cmdCopyTrack.$content, isOwnTrack || ((root.track != null) && !root.track.prevent_copy));
         enableItem(cmdPublishTrack.$content, editable);
         enableItem(cmdClearRuns.$content, editable);
@@ -215,6 +218,13 @@ define([
         const url = URL.createObjectURL(new Blob([str], {type: "application/json"}));
         Object.assign(document.createElement("a"), { href: url, download: `${root.track.name}.json` }).click();
       });
+
+      cmdSaveTrack.$content.click(function() {
+          root.track.set('modified', new Date().toISOString(), { silent: true, dontSave: true})
+          localDB.updateTrack(root.track)
+          // TODO: warn the user if saving failed
+          //console.log("saving track")
+      })
 
       cmdCopyTrack.$content.click(function() {
 

@@ -104,23 +104,9 @@ define([
           if ((root.user !== root.track.user) || root.track.published) {
             return Backbone.trigger('app:status', 'Read only');
           }
-          root.track.set('modified', new Date().toISOString(), { silent: true, dontSave: true})
-          localDB.updateTrack(root.track)
-          console.log("Saving track")
-
-          Backbone.trigger('app:status', 'Saving...');
-          const result = root.track.save(null, {
-            success(model, response, options) {
-              return Backbone.trigger('app:status', 'OK');
-            },
-            error(model, xhr, options) {
-              return Backbone.trigger('app:status', `ERROR: ${xhr.statusText} (${xhr.status})`);
-            }
-          }
-          );
-          if (!result) {
-            return Backbone.trigger('app:status', 'ERROR: save failed');
-          }
+          //root.track.set('modified', new Date().toISOString(), { silent: true, dontSave: true})
+          //localDB.updateTrack(root.track)
+          //console.log("saving track")
         }
         , 1000);
 

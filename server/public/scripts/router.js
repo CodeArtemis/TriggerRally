@@ -169,12 +169,10 @@ define([
           const view = new DriveView(this.app, this.uni.client);
           this.uni.setViewBoth(view);
           view.render();
-          console.log("step 5")
           
           if (this.app.root.track.id != track.id) {
             Backbone.trigger('app:settrack', track);
           }
-          console.log()
 
           if (runId) {
             view.setRunId(trackId, runId);
@@ -195,7 +193,9 @@ define([
           this.uni.setViewBoth(view);
           view.render();
 
-          Backbone.trigger('app:settrack', track);
+          if (this.app.root.track.id != track.id) {
+            Backbone.trigger('app:settrack', track);
+          }
         })
       }
 
