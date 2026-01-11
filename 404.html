@@ -1,44 +1,10 @@
-<!-- 2 -->
-
-
-
 <!doctype html>
 <html>
   <head>
     <script>
       // Preserve the original path
-      //window.alert("404 2. location: "+ location)
-      //window.alert("404 2. redirect: "+ sessionStorage.redirect)
       sessionStorage.redirect = location.pathname + location.search;
       location.replace("/");
     </script>
   </head>
 </html>
-
-
-<!--
-<!doctype html>
-<html>
-  <head>
-    <script>
-      console.log("asdadjshaksdasdh")
-      window.confirm(location.origin + location.pathname.split("/")[1] + "/")
-      sessionStorage.redirect = location.pathname + location.search + location.hash;
-      location.replace(location.origin + location.pathname.split("/")[1] + "/");
-
-      //sessionStorage.redirect = "this/is/redirect" //location.pathname + location.search + location.hash;
-      
-      //location.replace("TriggerRally/server/public");
-    </script>
-  </head>
-</html>
--->
-
-<!--
-<!doctype html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0; url=/" />
-  </head>
-</html>
--->

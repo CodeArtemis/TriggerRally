@@ -160,7 +160,7 @@ define([
 
         this.$topTimesButton.attr(
           'href',
-          `/track/${root.track ? root.track.id : ''}`
+          `${window.BASE_PATH}/track/${root.track ? root.track.id : ''}`
         );
 
         (updateChallenge = () => {
@@ -202,7 +202,7 @@ define([
           this.trackId = root.track.id;
           const nextTrackId = root.track.next_track != null ? root.track.next_track.id : undefined;
           this.$nextButton.toggleClass('hidden', !nextTrackId);
-          this.$nextButton.attr('href', `/track/${nextTrackId}/drive`);
+          this.$nextButton.attr('href', `${window.BASE_PATH}/track/${nextTrackId}/drive`);
           if (this.replayRun && (this.replayRun.track.id !== root.track.id)) { this.setRun(null); }
           this.carId = (carId = (left = root.getCarId()) != null ? left : 'ArbusuG');
           const carModel = models.Car.findOrCreate(carId);
@@ -457,7 +457,7 @@ define([
         //   @setRun run
 
       cleanUrl() {
-        return Backbone.history.navigate(`/track/${this.trackId}/drive`);
+        return Backbone.history.navigate(`${window.BASE_PATH}/track/${this.trackId}/drive`);
       }
 
       setRun(run) {

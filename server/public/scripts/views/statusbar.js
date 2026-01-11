@@ -175,10 +175,10 @@ define([
         });
         this.listenTo(root, 'change:track.id', function() {
           const { id } = root.track;
-          $trackName.attr('href', `/track/${id}`);
-          $trackLinkDrive.attr('href', `/track/${id}/drive`);
-          $trackLinkEdit.attr('href', `/track/${id}/edit`);
-          return $trackLinkInfo.attr('href', `/track/${id}`);
+          $trackName.attr('href', `${window.BASE_PATH}/track/${id}`);
+          $trackLinkDrive.attr('href', `${window.BASE_PATH}/track/${id}/drive`);
+          $trackLinkEdit.attr('href', `${window.BASE_PATH}/track/${id}/edit`);
+          return $trackLinkInfo.attr('href', `${window.BASE_PATH}/track/${id}`);
         });
         this.listenTo(root, 'change:track.name', () => $trackName.text(root.track.name));
         let trackUserView = null;
@@ -198,14 +198,14 @@ define([
         const $myTracks = this.$('.mytracks');
         (updateMyTracks = function() {
           $myTracks.toggleClass('hidden', !root.user);
-          if (root.user) { return $myTracks.attr('href', `/user/${root.user.id}/tracks`); }
+          if (root.user) { return $myTracks.attr('href', `${window.BASE_PATH}/user/${root.user.id}/tracks`); }
         })();
         this.listenTo(root, 'change:user', updateMyTracks);
 
         const $myFavorites = this.$('.myfavorites');
         (updateMyFavorites = function() {
           $myFavorites.toggleClass('hidden', !root.user);
-          if (root.user) { return $myFavorites.attr('href', `/user/${root.user.id}/favorites`); }
+          if (root.user) { return $myFavorites.attr('href', `${window.BASE_PATH}/user/${root.user.id}/favorites`); }
         })();
         this.listenTo(root, 'change:user', updateMyFavorites);
 

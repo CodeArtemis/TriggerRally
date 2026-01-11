@@ -238,7 +238,10 @@ define([
         const newTrack = new models.Track(newRawTrack, { parse: true }) 
         localDB.storeTrack(newTrack, root.user.get('id'))
 
-        return Backbone.trigger("app:settrack", newTrack);
+        Backbone.trigger("app:settrack", newTrack);
+
+        // clean url
+        Backbone.history.navigate(`${window.BASE_PATH}/track/${root.track.id}/edit`);
       });
 
       cmdDeleteTrack.$content.click(function() {

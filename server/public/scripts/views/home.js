@@ -50,7 +50,7 @@ define([
         let updateDriveButton, updatePromo;
         (updateDriveButton = () => {
           const trackId = this.app.root.track != null ? this.app.root.track.id : undefined;
-          if (trackId) { return this.$('.drivebutton').attr('href', `/track/${trackId}/drive`); }
+          if (trackId) { return this.$('.drivebutton').attr('href', `${window.BASE_PATH}/track/${trackId}/drive`); }
         })();
         this.listenTo(this.app.root, 'change:track.', updateDriveButton);
 
