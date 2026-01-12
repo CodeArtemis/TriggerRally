@@ -157,8 +157,9 @@ define([
           //if (track.env !== (lastTrack != null ? lastTrack.env : undefined)) {
           //  track.trigger('change:env'); console.log("changing env")
           //}
-          Backbone.trigger('app:status', 'Changed');
-          return this.uni.setViewChild(view.render());
+          
+          //Backbone.trigger('app:status', 'Changed');
+          this.uni.setViewChild(view.render());
         })
       }
 

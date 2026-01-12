@@ -128,11 +128,13 @@ define([
         this.app = app;
         this.client = client;
 
-        Backbone.trigger('app:settitle', this.model.name);
-        this.listenTo(this.model, 'change:name', () => Backbone.trigger('app:settitle', this.model.name));
-        //this.listenTo(this.model, 'change:id', () => this.render());
-        const track = this.model;
-        return Backbone.trigger('app:settrack', track);
+        if (this.model.id != app.root.track.id) {
+          Backbone.trigger('app:settitle', this.model.name);
+          this.listenTo(this.model, 'change:name', () => Backbone.trigger('app:settitle', this.model.name));
+          //this.listenTo(this.model, 'change:id', () => this.render());
+          const track = this.model;
+          Backbone.trigger('app:settrack', track);
+        }
       }
 
       viewModel() {
