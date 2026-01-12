@@ -79,10 +79,11 @@ define([
     
         const a = document.createElement('a');
         a.href = url;
-        a.download = `run-${run.id}.json`;
-        a.click();
-    
-        URL.revokeObjectURL(url);
+        localDB.getTrack(run.get("track"), track =>{
+          a.download = `${run.get("user")} - ${track.name} - ${run.get("time_readable")}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+        })
       });
     
       // delete run
