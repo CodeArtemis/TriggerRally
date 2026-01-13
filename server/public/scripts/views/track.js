@@ -95,7 +95,9 @@ define([
     }
 
     destroy() {
-      this.userView.destroy();
+      if (this.userView) {
+        this.userView.destroy();
+      }
       return super.destroy(...arguments);
     }
   }
@@ -127,6 +129,7 @@ define([
       initialize(options, app, client) {
         this.app = app;
         this.client = client;
+        this.runs_data = []
 
         if (this.model.id != app.root.track.id) {
           Backbone.trigger('app:settitle', this.model.name);
@@ -162,7 +165,8 @@ define([
         this.trackRunsView.render();
 
         localDB.getRuns(trackId, runs => {
-          this.runs.reset(runs);
+          this.runs_data = runs
+          this.resetRunsList()
         });
 
         const $author = this.$('.author');
@@ -202,11 +206,85 @@ define([
           return $count_fav.text(value);
         });
 
+        
+        // why are the events triggering twice?
+        const $radio_all_times = this.$('.radioAllTimes');
+        $radio_all_times.on('click', event => {
+          localStorage.setItem("runsListOptions", "allTimes")
+          this.resetRunsList()
+        })
+
+        const $radio_my_times = this.$('.radioMyTimes');
+        $radio_my_times.on('click', event => {
+          localStorage.setItem("runsListOptions", "myTimes")
+          this.resetRunsList()
+        })
+
+        const $radio_leaderboard = this.$('.radioLeaderboard');
+        $radio_leaderboard.on('click', event => {
+          localStorage.setItem("runsListOptions", "leaderboard")
+          this.resetRunsList()
+        })
+
+        switch (localStorage.getItem("runsListOptions")) {
+          case "allTimes":
+            $radio_all_times.click()
+            break;
+          case "myTimes":
+              $radio_my_times.click()
+              break;
+          case "leaderboard":
+              $radio_leaderboard.click()
+              break;
+          default:
+            $radio_all_times.click()
+            break;
+        }
+
+
         const comments = models.CommentSet.findOrCreate(`track-${track.id}`);
         this.commentsView = new CommentsView(comments, this.app);
         this.commentsView.render();
         const $commentsView = this.$('.comments-view');
         return $commentsView.html(this.commentsView.el);
+      }
+
+      resetRunsList(){
+
+        // filter data
+        let displayRuns = [];
+        switch (localStorage.getItem('runsListOptions')) {
+
+          case 'allTimes':
+            displayRuns = this.runs_data
+            break;
+          
+          case 'myTimes':
+            displayRuns = this.runs_data.filter(run => run.user == this.app.root.user.get('id'))
+            break;
+
+          case 'leaderboard':
+            const usersBestRun = {}
+            for (let run of this.runs_data){
+              if (!usersBestRun[run.user] || usersBestRun[run.user].time > run.time){
+                usersBestRun[run.user] = run
+              }
+            }
+            displayRuns = Object.values(usersBestRun)
+            break;
+          
+          default:
+            displayRuns = this.runs_data
+        }
+        
+        // sort and rank
+        displayRuns.sort((a, b) => a.time - b.time)
+        for (let i=0; i<displayRuns.length; i++){
+          displayRuns[i].rank = i+1
+        }
+        
+        this.runs.reset(displayRuns);
+
       }
     };
     TrackView.initClass();

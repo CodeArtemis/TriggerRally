@@ -1028,3 +1028,9 @@ input.checkout {
     font-size: 1.2em;
     color: #bb392b;
 }
+
+.radioAllTimes,
+.radioMyTimes,
+.radioLeaderboard {
+  margin-right: 1.2rem;
+}

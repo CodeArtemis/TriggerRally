@@ -20,6 +20,17 @@
 
     //- h3 Top Times
 
+    form
+      label.radioAllTimes
+        input(type='radio', name="runsListOptions", value='all times')
+        | All times
+      label.radioMyTimes
+        input(type='radio', name="runsListOptions", value='my times')
+        | My times
+      label.radioLeaderboard
+        input(type='radio', name="runsListOptions", value='ranking')
+        | Leaderboard
+
     table.runlist.list
       tr
         td
