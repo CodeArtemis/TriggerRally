@@ -423,7 +423,13 @@ define([
 
       onKeyDown(event) {
         const ctrlPressed = event.ctrlKey || event.metaKey
-        if (event.altKey) { return; }
+
+        if (event.altKey ||
+            event.target instanceof HTMLInputElement ||
+            event.target instanceof HTMLTextAreaElement ||
+            event.target.isContentEditable
+        ) { return; }
+
         switch (event.keyCode) {
           case KEYCODE['Z']:
             // TODO: implement ctrl+Z
@@ -436,13 +442,18 @@ define([
               }
             }
           case KEYCODE['R']:
-            if (event.target instanceof HTMLInputElement ||
-              event.target instanceof HTMLTextAreaElement ||
-              event.target.isContentEditable)
-              { break }
             this.app
             this.app.router.navigate(`track/${this.app.root.track.id}/drive`, { trigger: true });
             break;
+          case KEYCODE['P']:
+            
+            window.experimentalPictureMode = (!window.experimentalPictureMode)
+            if (window.experimentalPictureMode) {
+              window.alert("Entering Experimental Picture mode, exit the editor and return to see the changes.\n")
+            }
+            else {
+              window.alert("Exiting Experimental Picture mode, exit the editor and return to see the changes.\n")
+            }
         }
       }
     };

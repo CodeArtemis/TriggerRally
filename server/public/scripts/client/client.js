@@ -65,6 +65,7 @@ define([
         }
         const checkpoints = __guard__(root.track != null ? root.track.config : undefined, x => x.course.checkpoints.models);
         if (!checkpoints) { return; }
+        if (window.experimentalPictureMode){ return; }
         return meshes = (() => {
           const result = [];
           for (let cp of Array.from(checkpoints)) {
