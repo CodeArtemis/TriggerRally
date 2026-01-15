@@ -443,7 +443,7 @@ define([
             }
           case KEYCODE['R']:
             this.app
-            this.app.router.navigate(`track/${this.app.root.track.id}/drive`, { trigger: true });
+            this.app.router.navigate(`/TriggerRally/server/public/track/${this.app.root.track.id}/drive`, { trigger: true });
             break;
           case KEYCODE['P']:
             

@@ -132,7 +132,7 @@ define([
             if (this.game) { return this.restartGame(); }
             break;
           case KEYCODE['E']:
-            this.app.router.navigate(`track/${this.app.root.track.id}/edit`, { trigger: true });
+            this.app.router.navigate(`/TriggerRally/server/public/track/${this.app.root.track.id}/edit`, { trigger: true });
         }
       }
 
