@@ -8,10 +8,12 @@
  */
 define([
   'views/view',
-  'jade!templates/favorite'
+  'jade!templates/favorite',
+  'util/localDB'
 ], function(
   View,
-  template
+  template,
+  localDB
 ) {
   let FavoriteView;
   return FavoriteView = (function() {
@@ -41,13 +43,16 @@ define([
 
       updateChecked() {
         const $favorite = this.$('.favorite input');
-        return $favorite[0].checked = this.root.user != null ? this.root.user.isFavoriteTrack(this.model) : undefined;
+        localDB.isFav(this.model.get('id'), result => {
+          $favorite[0].checked = result
+        })
       }
 
       afterRender() {
         const $favorite = this.$('.favorite input');
         return $favorite.click(event => {
           if (this.root.user) {
+            localDB.setFavoriteTrack(this.model, $favorite[0].checked)
             this.root.user.setFavoriteTrack(this.model, $favorite[0].checked);
             this.root.user.save();
           } else {

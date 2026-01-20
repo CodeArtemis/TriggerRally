@@ -1,0 +1,36 @@
+{
+    "id":"v3base2",
+    "config":{
+        "course":{
+            "startposition":{"pos":[1553.1234393995235,-1375.339526929015,116.97927917409028],"rot":[0,0,5.201565935735218]},
+            "checkpoints":[
+                {"pos":[1555.8211612680773,-1380.8796261611647,116.12118082472188],"surf":{"radius":14.9253731343284,"hardness":0.641791044776119,"strength":0.45555555555555605},"disp":{"radius":31.1111111111111,"hardness":0.45555555555555605,"strength":0.597014925373134}},
+                {"pos":[1598.5338369801077,-1460.5572287299628,116.12118082472188],"surf":{"radius":14.9253731343284,"hardness":0.641791044776119,"strength":0.45555555555555605},"disp":{"radius":31.1111111111111,"hardness":0.45555555555555605,"strength":0.597014925373134}}
+            ]
+        },
+        "scenery":{
+            "arches":{"add":[
+                {"scale":1,"rot":[0,0,0.4730609984012384],"pos":[1560.861432301255,-1390.712697303161,115.63054006624205]}
+            ]},
+            "conifer-1":{"add":[]},
+            "chevrons":{"add":[]},
+            "conifer-2":{"add":[]},
+            "woodenfence":{"add":[]}
+        },
+        "gameversion":3
+    },
+    "count_fav":0,
+    "demo":true,
+    "env":"alp",
+    "modified":"2026-01-08T01:20:29.391Z",
+    "name":"Base",
+    "parent":"uUJTPz6M",
+    "user":"TomyV",
+    "prevent_copy":false,
+    "count_copy":0,
+    "count_drive":0,
+    "published":false,
+    "modified_ago":"",
+    "created_ago":"",
+    "created":"2026-01-08T01:19:43.668Z"
+}

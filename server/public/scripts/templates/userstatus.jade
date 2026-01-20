@@ -2,13 +2,17 @@ if user
   //- Unfortunately, Jade client-side includes aren't working.
     //include ./user
   span.user
-    a.route(href="/user/#{user.pub_id || user.id}")
-      img_src = user.picture ? user.picture : "blank"
-      img_src = "/images/profile/" + img_src + ".jpg"
+    a.route(href="/TriggerRally/server/public/user/#{user.pub_id || user.id}")
+      //img_src = user.picture ? user.picture : "blank"
+      //img_src = "images/profile/" + img_src + ".jpg"
+      img_src = "/TriggerRally/server/public/images/profile/blank.jpg"
       img(src=img_src)
-      span.username #{user.name}
+      //username = user.user ? user.user : user
+      span.username #{user.user}
+      //span.username #{username}
   span &nbsp;&mdash;&nbsp;
-  a.logout(href='/logout') Log out&nbsp;
+  //a.logout(href='/logout') Log out&nbsp;
+  a.changeUser(href='/') Change username&nbsp;
 else
   span
     a.login(href="/login")

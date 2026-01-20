@@ -17,13 +17,17 @@ define([
   'views/view',
   'views/tracklist',
   'views/user',
-  'models/index'
+  'models/index',
+  'util/util',
+  'util/localDB'
 ], function(
   Ops,
   View,
   TrackListView,
   UserView,
-  models
+  models,
+  util,
+  localDB
 ) {
   let InspectorView;
   const deepClone = obj => JSON.parse(JSON.stringify(obj));
@@ -80,10 +84,13 @@ define([
       const cmdAdd            = attrib('#cmd-add');
       const cmdCopy           = attrib('#cmd-copy');
       const cmdDelete         = attrib('#cmd-delete');
+      const cmdSaveTrack      = attrib('#cmd-save-track');
       const cmdCopyTrack      = attrib('#cmd-copy-track');
+      const cmdDownloadTrack  = attrib('#cmd-download-track');
       const cmdPublishTrack   = attrib('#cmd-publish-track');
       const cmdClearRuns      = attrib('#cmd-clear-runs');
       const cmdDeleteTrack    = attrib('#cmd-delete-track');
+      const $cmdSaveTrack     = $inspector.find('#cmd-save-track');
       const $cmdCopyTrack     = $inspector.find('#cmd-copy-track');
       const $cmdPublishTrack  = $inspector.find('#cmd-publish-track');
       const $cmdClearRuns     = $inspector.find('#cmd-clear-runs');
@@ -127,6 +134,7 @@ define([
         const published = isOwnTrack && root.track.published;
         const editable = isOwnTrack && !published;
         enableItem(selTitle.$content, editable);
+        enableItem(cmdSaveTrack.$content, editable);
         enableItem(cmdCopyTrack.$content, isOwnTrack || ((root.track != null) && !root.track.prevent_copy));
         enableItem(cmdPublishTrack.$content, editable);
         enableItem(cmdClearRuns.$content, editable);
@@ -152,7 +160,17 @@ define([
         return selTitle.$content.val(root.track.name);
       })();
       this.listenTo(root, 'change:track.name', updateName);
-      selTitle.$content.on('input', () => root.track.name = selTitle.$content.val());
+      
+      selTitle.$content.on('input', () => {
+        root.track.set('name', selTitle.$content.val())
+        localDB.updateTrack(root.track)
+      });
+      selTitle.$content.on('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          selTitle.$content.blur();
+        }
+      });
 
       const bindSlider = function(type, slider, eachSel) {
         const { $content } = slider;
@@ -195,21 +213,45 @@ define([
 
       cmdDelete.$content.click(() => Ops.delete(root.track, selection));
 
+      cmdDownloadTrack.$content.click(function() {
+        const str = JSON.stringify(root.track.toJSON(), null, 2);
+        const url = URL.createObjectURL(new Blob([str], {type: "application/json"}));
+        Object.assign(document.createElement("a"), { href: url, download: `${root.track.name}.json` }).click();
+      });
+
+      cmdSaveTrack.$content.click(function() {
+          root.track.set('modified', new Date().toISOString(), { silent: true, dontSave: true})
+          localDB.updateTrack(root.track)
+          // TODO: warn the user if saving failed
+          //console.log("saving track")
+      })
+
       cmdCopyTrack.$content.click(function() {
-        const newTrack = new models.Track({
-          parent: root.track});
-        return newTrack.save(null, {
-          success() {
-            root.user.tracks.add(newTrack);
-            return Backbone.trigger("app:settrack", newTrack);
-          },
-          error(model, xhr) {
-            const data = JSON.parse(xhr.responseText);
-            const msg = (data != null ? data.error : undefined) != null ? (data != null ? data.error : undefined) : xhr.statusText;
-            return Backbone.trigger("app:status", `Copy failed: ${msg} (${xhr.status})`);
-          }
-        }
-        );
+
+        const newRawTrack = root.track.toJSON()
+
+        newRawTrack.id = util.randomId()
+        newRawTrack.count_fav = 0,
+        newRawTrack.demo = true,
+        newRawTrack.modified = new Date().toISOString()
+        newRawTrack.name = newRawTrack.name + " copy",
+        newRawTrack.parent = root.track.id,
+        newRawTrack.user = root.user.get('id'),
+        newRawTrack.prevent_copy = false,
+        newRawTrack.count_copy = 0,
+        newRawTrack.count_drive = 0,
+        newRawTrack.published = false,
+        newRawTrack.modified_ago = "",
+        newRawTrack.created_ago = "",
+        newRawTrack.created = new Date().toISOString()
+
+        const newTrack = new models.Track(newRawTrack, { parse: true }) 
+        localDB.storeTrack(newTrack, root.user.get('id'))
+
+        Backbone.trigger("app:settrack", newTrack);
+
+        // clean url
+        Backbone.history.navigate(`${window.BASE_PATH}/track/${root.track.id}/edit`);
       });
 
       cmdDeleteTrack.$content.click(function() {
@@ -226,7 +268,8 @@ define([
 
       cmdPublishTrack.$content.click(function() {
         if (!window.confirm("Publishing a track will lock it and allow players to start competing for top times. Are you sure?")) { return; }
-        return root.track.save({published: true});
+        root.track.set({published: true});
+        localDB.updateTrack(root.track);
       });
 
       (updateSnap = () => { return this.snapToGround = $flagSnap[0].checked; })();

@@ -3,10 +3,21 @@ Trigger Rally Online Edition
 
 http://triggerrally.com
 
+Current status
+--------------
+
+The game currently runs fully client-side.  
+No MongoDB or server setup is required to run the game.  
+Tracks and runs are stored locally (IndexedDB).  
+Tracks and runs can be shared via JSON files.  
+Online features are not currently available.  
+  
+Run with a static file server (examples: `npx serve .` or `python -m http.server`)
+
 Code structure
 --------------
 
-Trigger uses JavaScript on both the client and server.
+Trigger Rally uses JavaScript on both the client and server.
 
 All code now lives under [server/](https://github.com/CodeArtemis/TriggerRally/tree/v3/server).  
 Client-only code is in [server/public/scripts/](https://github.com/CodeArtemis/TriggerRally/tree/v3/server/public/scripts)  
@@ -23,7 +34,7 @@ Copyright (c) 2012-2013 [Code Artemis](https://github.com/CodeArtemis) unless ot
 
 See [LICENSE.md](LICENSE.md).
 
-To Run
+Legacy server setup
 -------------------
 
 Install MongoDB

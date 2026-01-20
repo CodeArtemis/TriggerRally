@@ -125,11 +125,14 @@ a.disabled:visited {
   -webkit-transform: scale(1);
 }
 .split-time {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
   border-radius: 0.2em;
   padding: 0.1em 0.3em;
-  right: 2em;
   text-align: right;
-  top: 5em;
   background: rgba(128,0,0,0.3);
 }
 .split-time.minus {
@@ -425,6 +428,7 @@ a.disabled:visited {
   padding: 0.2em 0.4em;
   opacity: 0.7;
   transition: opacity 1.5s;
+  display: none
 }
 .credits-box:hover,
 .credits-box.flash {
@@ -532,7 +536,7 @@ label.favorite input {
   vertical-align: -20%;
   padding: 0;
   font-size: 1em;
-  background-image: url("/emojis/star.png");
+  background-image: url("../emojis/star.png");
   background-size: cover;
   appearance: none;
   -moz-appearance: none;
@@ -1010,4 +1014,23 @@ input.checkout {
 }
 .strikethrough {
   text-decoration: line-through;
+}
+
+.download-link,
+.download-link:visited{
+    color: #0b74b9;
+    font-size: 1.35em;
+    font-weight: bold;
+}
+
+.delete-link,
+.delete-link:visited {
+    font-size: 1.2em;
+    color: #bb392b;
+}
+
+.radioAllTimes,
+.radioMyTimes,
+.radioLeaderboard {
+  margin-right: 1.2rem;
 }

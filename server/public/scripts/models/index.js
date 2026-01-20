@@ -208,6 +208,9 @@
     static initClass() {
       this.prototype.model = Checkpoint;
     }
+    toJSON() {
+      return this.models.map((m => m.toJSON()))
+    }
   }
   CheckpointsCollection.initClass();
 
@@ -251,6 +254,12 @@
       }
       return data;
     }
+    toJSON() {
+      const data = super.toJSON(...arguments);
+      if (data.startposition != null) {data.startposition = data.startposition.toJSON()}
+      if (data.checkpoints != null) {data.checkpoints = data.checkpoints.toJSON()}
+      return data
+    }
   }
   Course.initClass();
 
@@ -270,6 +279,11 @@
         data.course = course.set(course.parse(data.course));
       }
       return data;
+    }
+    toJSON() {
+      const data = super.toJSON(...arguments);
+      if (data.course != null) {data.course = data.course.toJSON()}
+      return data
     }
   }
   TrackConfig.initClass();
@@ -449,6 +463,7 @@
     }
     toJSON() {
       const data = super.toJSON(...arguments);
+      if (data.config != null) { data.config = data.config.toJSON(); }
       if (data.env != null) { data.env = data.env.id; }
       if (data.parent != null) { data.parent = data.parent.id; }
       if (data.user != null) { data.user = data.user.id; }

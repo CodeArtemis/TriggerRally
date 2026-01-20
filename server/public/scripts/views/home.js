@@ -10,11 +10,15 @@
 define([
   'views/view',
   'jade!templates/home',
-  'util/popup'
+  'util/popup',
+  'models/index',
+  'util/localDB'
 ], function(
   View,
   template,
-  popup
+  popup,
+  models,
+  localDB
 ) {
   let HomeView;
   return HomeView = (function() {
@@ -46,7 +50,7 @@ define([
         let updateDriveButton, updatePromo;
         (updateDriveButton = () => {
           const trackId = this.app.root.track != null ? this.app.root.track.id : undefined;
-          if (trackId) { return this.$('.drivebutton').attr('href', `/track/${trackId}/drive`); }
+          if (trackId) { return this.$('.drivebutton').attr('href', `${window.BASE_PATH}/track/${trackId}/drive`); }
         })();
         this.listenTo(this.app.root, 'change:track.', updateDriveButton);
 
@@ -54,6 +58,45 @@ define([
         this.listenTo(this.app.root, 'change:user.credits', () => {
           // TODO: Animate credit gains.
           return $userCredits.text(this.app.root.user != null ? this.app.root.user.credits : undefined);
+        });
+
+        const $fileInput = this.$('#track-file-input');
+        
+        this.$('.uploadbutton').on('click', (e) => {
+          e.preventDefault();
+          $fileInput[0].value = null; // allows re-uploading same files
+          $fileInput[0].click();
+        });
+
+        $fileInput.on('change', (e) => {
+
+          for (const file of e.target.files) {
+            const reader = new FileReader();
+
+            reader.onload = (evt) => {
+              const text = evt.target.result;
+
+              try {
+                const data = JSON.parse(text);
+
+                // track
+                if (data.config) {
+                  const track = new models.Track(data, { parse: true });
+                  localDB.storeTrack(track, this.app.root.user.get('id'));
+                }
+
+                // run
+                else if (data.time) {
+                  localDB.storeRun(data);
+                }
+
+              } catch (err) {
+                console.error("Invalid JSON:", err, file.name);
+              }
+            };
+
+            reader.readAsText(file);
+          }
         });
 
         (updatePromo = () => {

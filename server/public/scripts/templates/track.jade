@@ -7,7 +7,7 @@
       span.name= name
 
     h3
-      a.route.drivebutton(href="/track/#{id}/drive") &gt; Drive &lt;
+      a.route.drivebutton(href="/TriggerRally/server/public/track/#{id}/drive") &gt; Drive &lt;
       |  this track by 
       span.author
       |  (Drive: 
@@ -20,6 +20,17 @@
 
     //- h3 Top Times
 
+    form
+      label.radioAllTimes
+        input(type='radio', name="runsListOptions", value='all times')
+        | All times
+      label.radioMyTimes
+        input(type='radio', name="runsListOptions", value='my times')
+        | My times
+      label.radioLeaderboard
+        input(type='radio', name="runsListOptions", value='ranking')
+        | Leaderboard
+
     table.runlist.list
       tr
         td
@@ -28,6 +39,8 @@
         td Car
         td
         td Recorded
+        td
+        td
 
     h3 Comments
 

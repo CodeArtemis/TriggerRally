@@ -119,6 +119,7 @@ define([
         $document.on('click', 'a.route', function(event) {
           // TODO: Find a way to handle 404s.
           Backbone.history.navigate(this.pathname, {trigger: true});
+          //Backbone.history.navigate($(this).attr('href'), { trigger: true });
           return false;
         });
 
@@ -141,6 +142,16 @@ define([
           .done(data => Backbone.trigger('app:logout'));
           return false;
         });
+        
+        $document.on('click', 'a.changeUser', e => {
+          const inputUser = window.prompt("Set username:")
+          if (!inputUser) { return false }
+          localStorage.setItem("user", inputUser)
+          this.app.root.user.set('id',   localStorage.getItem('user'))
+          this.app.root.user.set('user', localStorage.getItem('user'))
+          return false
+        });
+
 
         Backbone.on('app:status', function(msg) {
           $statusMessage.text(msg);

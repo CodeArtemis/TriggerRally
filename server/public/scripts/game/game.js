@@ -82,7 +82,7 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     };
   })();
 
-  exports.Game = function(track) {
+  exports.Game = function(track, replayRun) {
     this.id = makeId();
     this.track = track;
     this.progs = [];
@@ -90,14 +90,86 @@ function(THREE, track, psim, pvehicle, pubsub, http) {
     this.sim = new psim.Sim(1 / 150);
     this.sim.addStaticObject(this.track.terrain);
     this.sim.addStaticObject(this.track.scenery);
+    this.sim.parent = this
     this.startTime = 3;
     this.sim.pubsub.subscribe('step', this.onSimStep.bind(this));
     this.simRate = 1;
+    this.replayRun = replayRun
+    this.replayRunStep = 0
   };
+
+  exports.Game.prototype.setRunPos = function() {
+
+    // TODO: define these functions somewhere else
+    function mulVec(v, c){
+      return {
+        x: v.x * c,
+        y: v.y * c,
+        z: v.z * c
+      }
+    }
+
+    function mulQuat(q, c){
+      return {
+        _x: q._x * c,
+        _y: q._y * c,
+        _z: q._z * c,
+        _w: q._w * c
+      }
+    }
+    
+    function addVec(v1, v2){
+      return {
+        x:v1.x + v2.x,
+        y:v1.y + v2.y,
+        z:v1.z + v2.z
+      }
+    }
+
+    function addQuat(q1, q2) {
+      return {
+        _x:q1._x + q2._x,
+        _y:q1._y + q2._y,
+        _z:q1._z + q2._z,
+        _w:q1._w + q2._w
+      }
+    }
+    
+    const time = this.sim.time - this.startTime
+    const local_record_p = this.replayRun.local_record_p
+    const pos = this.sim.objects[0].pos
+    const ori = this.sim.objects[0].ori
+    const linVel = this.sim.objects[0].linVel
+    const angMom = this.sim.objects[0].angMom
+    
+    while (local_record_p[this.replayRunStep+1] &&
+           local_record_p[this.replayRunStep+1].raceTime < time) {
+      this.replayRunStep++;
+    }
+    if (!local_record_p[this.replayRunStep+1]){
+      return
+    }
+
+    const obj1 = local_record_p[this.replayRunStep    ]
+    const obj2 = local_record_p[this.replayRunStep + 1]
+
+    const t1 = obj1.raceTime
+    const t2 = obj2.raceTime
+    const x = (time - t1) / (t2 - t1)
+    
+    Object.assign(pos,    addVec (mulVec (obj1.pos   , (1-x)), mulVec (obj2.pos   , x)))
+    Object.assign(ori,    addQuat(mulQuat(obj1.ori   , (1-x)), mulQuat(obj2.ori   , x)))
+    Object.assign(linVel, addVec (mulVec (obj1.linVel, (1-x)), mulVec (obj2.linVel, x)))
+    Object.assign(angMom, addVec (mulVec (obj1.angMom, (1-x)), mulVec (obj2.angMom, x)))
+
+  }
 
   exports.Game.prototype.update = function(delta) {
     if (this.track.ready) {
       this.sim.tick(delta * this.simRate);
+      if (this.replayRun){
+        this.setRunPos()
+      }
     }
   };
 

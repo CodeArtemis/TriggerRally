@@ -1,3 +1,5 @@
+//const { transpose } = require("underscore");
+
 /*
  * decaffeinate suggestions:
  * DS001: Remove Babel/TypeScript constructor workaround
@@ -22,7 +24,8 @@ define([
   'models/index',
   'views/inspector',
   'views/view',
-  'jade!templates/editor'
+  'jade!templates/editor',
+  'util/localDB'
 ], function(
   _,
   Backbone,
@@ -35,7 +38,8 @@ define([
   models,
   InspectorView,
   View,
-  template
+  template,
+  localDB
 ) {
   let EditorView;
   const { MB } = util2;
@@ -96,23 +100,13 @@ define([
 
         this.objs.push(client.addEditorCheckpoints(editorObjects));
 
-        const doSave = _.debounce(function() {
+        const doSave = _.debounce(() => {
           if ((root.user !== root.track.user) || root.track.published) {
             return Backbone.trigger('app:status', 'Read only');
           }
-          Backbone.trigger('app:status', 'Saving...');
-          const result = root.track.save(null, {
-            success(model, response, options) {
-              return Backbone.trigger('app:status', 'OK');
-            },
-            error(model, xhr, options) {
-              return Backbone.trigger('app:status', `ERROR: ${xhr.statusText} (${xhr.status})`);
-            }
-          }
-          );
-          if (!result) {
-            return Backbone.trigger('app:status', 'ERROR: save failed');
-          }
+          //root.track.set('modified', new Date().toISOString(), { silent: true, dontSave: true})
+          //localDB.updateTrack(root.track)
+          //console.log("saving track")
         }
         , 1000);
 
@@ -283,8 +277,7 @@ define([
 
         const findObject = function(mouseX, mouseY) {
           const isect = client.findObject(mouseX, mouseY);
-          for (let obj of Array.from(isect)) { if (obj.type === 'terrain') { obj.distance += 10; } }
-          isect.sort((a, b) => a.distance > b.distance);
+          // selecting by distance allows loosing objects below terrain
           return isect[0];
         };
 
@@ -426,6 +419,42 @@ define([
         this.inspectorView.destroy();
         this.client.scene.remove(this.editorObjects);
         return this.client.destroyObjects(this.objs);
+      }
+
+      onKeyDown(event) {
+        const ctrlPressed = event.ctrlKey || event.metaKey
+
+        if (event.altKey ||
+            event.target instanceof HTMLInputElement ||
+            event.target instanceof HTMLTextAreaElement ||
+            event.target.isContentEditable
+        ) { return; }
+
+        switch (event.keyCode) {
+          case KEYCODE['Z']:
+            // TODO: implement ctrl+Z
+            if (ctrlPressed){
+              if (!event.shiftKey){
+                // this.undo()
+              }
+              else {
+                // this.redo()
+              }
+            }
+          case KEYCODE['R']:
+            this.app
+            this.app.router.navigate(`/TriggerRally/server/public/track/${this.app.root.track.id}/drive`, { trigger: true });
+            break;
+          case KEYCODE['P']:
+            
+            window.experimentalPictureMode = (!window.experimentalPictureMode)
+            if (window.experimentalPictureMode) {
+              window.alert("Entering Experimental Picture mode, exit the editor and return to see the changes.\n")
+            }
+            else {
+              window.alert("Exiting Experimental Picture mode, exit the editor and return to see the changes.\n")
+            }
+        }
       }
     };
     EditorView.initClass();

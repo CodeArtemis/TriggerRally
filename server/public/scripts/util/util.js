@@ -126,5 +126,33 @@ function(THREE) {
     return JSON.parse(JSON.stringify(obj));
   };
 
+  exports.formatDateAgo = function(date) {
+    // Original code by jareiko
+    // Internationalize this, I dare you!
+    function pl(c) { return c == 1 ? '' : 's'; }
+    var c = Date.now() - Date.parse(date);
+    c = Math.floor(c / 1000);
+    if (c < 60) return 'just now';
+    c = Math.floor(c / 60);
+    if (c < 60) return c + ' minute' + pl(c) + ' ago';
+    c = Math.floor(c / 60);
+    if (c < 24) return c + ' hour' + pl(c) + ' ago';
+    c = Math.floor(c / 24);
+    if (c < 7) return c + ' day' + pl(c) + ' ago';
+    c = Math.floor(c / 7);
+    if (c < 365/7) return c + ' week' + pl(c) + ' ago';
+    c = Math.floor(c / (365/7));
+    return c + ' year' + pl(c) + ' ago';
+  }
+  
+  exports.randomId = function(len=8) {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let s = '';
+    for (let i = 0; i < len; i++) {
+      s += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return s;
+  }
+
   return exports;
 });

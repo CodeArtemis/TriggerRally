@@ -772,6 +772,8 @@ function(THREE, psim, collision, util) {
 
         this.skidLevel += Math.min(1, Math.max(0, leng / maxFriction - 0.75)) * perpForce;
 
+        // TODO: we probably want to change this into a smooth function
+        // the friction currently falls from static to dynamic instantly 
         if (leng > testFriction) {
           friction.multiplyScalar(maxFriction / leng);
         }

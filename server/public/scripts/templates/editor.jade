@@ -55,14 +55,14 @@
 
   #editor-inspector
     //-h3 Property inspector
-
-    details(open)
-      summary My Tracks
-
-      #track-list
-        //-.track.selected: a(href="#") Track 3
-
-    hr
+    // TODO: restore this list
+    // details(open)
+    //   summary My Tracks
+    // 
+    //   #track-list
+    //     //-.track.selected: a(href="#") Track 3
+    // 
+    // hr
 
     details(open)
       summary Track info
@@ -87,28 +87,36 @@
         span.label Track name:
         input.content(type="text")
 
+      #cmd-save-track
+        span.label &nbsp;
+        button.content(disabled) Save Track
+
       #cmd-copy-track
         span.label &nbsp;
         button.content(disabled) Copy Track
+
+      #cmd-download-track
+        span.label &nbsp;
+        button.content() Download Track
 
       #cmd-publish-track
         span.label &nbsp;
         button.content(disabled) Publish Track
 
-      #cmd-clear-runs
-        span.label &nbsp;
-        button.content(disabled) Clear Replays
+      //#cmd-clear-runs
+      //  span.label &nbsp;
+      //  //button.content(disabled) Clear Replays
 
-      #flag-prevent-copy
-        label
-          input(type="checkbox")
-          | Forbid copying of this track
+      //#flag-prevent-copy
+      //  label
+      //    input(type="checkbox")
+      //    | Forbid copying of this track
 
-      hr
+      //hr
 
-      #cmd-delete-track
-        span.label &nbsp;
-        button.content(disabled) Delete Track
+      //#cmd-delete-track
+      //  span.label &nbsp;
+      //  button.content(disabled) Delete Track
 
     hr
 

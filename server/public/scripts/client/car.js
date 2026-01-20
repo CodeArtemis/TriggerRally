@@ -174,10 +174,10 @@ function(THREE, util) {
       }
 
       if (isGhost) {
-        bodyMaterial.opacity = 0.4;
+        bodyMaterial.opacity = 0.25;
         bodyMaterial.transparent = true;
         bodyMaterial.depthWrite = false;
-        wheelMaterial.opacity = 0.4;
+        wheelMaterial.opacity = 0.25;
         wheelMaterial.transparent = true;
         wheelMaterial.depthWrite = false;
       }
